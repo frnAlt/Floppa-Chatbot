@@ -1,0 +1,98 @@
+{
+  "name": "@dongdev/fca-unofficial",
+  "version": "4.0.3",
+  "description": "Unofficial Facebook Chat API for Node.js - Interact with Facebook Messenger programmatically",
+  "main": "dist/cjs.cjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/cjs.cjs",
+      "import": "./dist/index.mjs",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist/",
+    "docs/",
+    "README.md",
+    "test/",
+    "LICENSE",
+    "fca-config.example.json"
+  ],
+  "scripts": {
+    "test": "node ./test/fca.test.cjs",
+    "test:build": "npm run build && node ./test/fca.test.cjs",
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.typecheck.json --noEmit",
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean --out-dir dist --external gradient-string && node scripts/cjs-bridge.cjs",
+    "build:types": "tsc -p tsconfig.build.json --emitDeclarationOnly"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dongp06/fca-unofficial.git"
+  },
+  "keywords": [
+    "facebook",
+    "chat",
+    "api",
+    "messenger",
+    "bot",
+    "unofficial",
+    "automation",
+    "facebook-api",
+    "facebook-chat",
+    "facebook-messenger",
+    "chatbot",
+    "nodejs",
+    "fca"
+  ],
+  "author": {
+    "name": "Donix",
+    "url": "https://www.facebook.com/minhdong.dev"
+  },
+  "contributors": [
+    {
+      "name": "DongDev",
+      "url": "https://github.com/dongp06"
+    }
+  ],
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/dongp06/fca-unofficial/issues"
+  },
+  "homepage": "https://github.com/dongp06/fca-unofficial#readme",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "dependencies": {
+    "axios": "^1.13.5",
+    "axios-cookiejar-support": "^5.0.5",
+    "bluebird": "^3.7.2",
+    "cheerio": "^1.0.0-rc.10",
+    "cli-progress": "^3.12.0",
+    "duplexify": "^4.1.3",
+    "gradient-string": "^3.0.0",
+    "https-proxy-agent": "^4.0.0",
+    "mqtt": "^4.3.8",
+    "ora": "^9.3.0",
+    "picocolors": "^1.1.1",
+    "sequelize": "^6.37.6",
+    "sqlite3": "^5.1.7",
+    "totp-generator": "^1.0.0",
+    "ws": "^8.18.1"
+  },
+  "devDependencies": {
+    "@types/cli-progress": "^3.11.6",
+    "@types/duplexify": "^3.6.5",
+    "@types/node": "^24.6.1",
+    "@types/ws": "^8.18.1",
+    "eslint": "^8.50.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.3"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
+}

@@ -22,16 +22,16 @@ module.exports = {
 
 	langs: {
 		vi: {
-			syntaxError: "⚠️ Vui lòng nhập prompt",
-			error: "❗ Đã có lỗi xảy ra, vui lòng thử lại sau:\n%1",
-			serverError: "❗ Server đang quá tải, vui lòng thử lại sau",
-			missingGoatApiKey: "❗ Chưa cài đặt apikey cho GoatBot, vui lòng truy cập goatbot.tk để lấy apikey và cài đặt vào file configCommands.json > envGlobal.goatbotApikey và lưu lại"
+			syntaxError: "⚠ Vui lòng nhập prompt",
+			error: "! Đã có lỗi xảy ra, vui lòng thử lại sau:\n%1",
+			serverError: "! Server đang quá tải, vui lòng thử lại sau",
+			missingGoatApiKey: "! Chưa cài đặt apikey cho GoatBot, vui lòng truy cập goatbot.tk để lấy apikey và cài đặt vào file configCommands.json > envGlobal.goatbotApikey và lưu lại"
 		},
 		en: {
-			syntaxError: "⚠️ Please enter prompt",
-			error: "❗ An error has occurred, please try again later:\n%1",
-			serverError: "❗ Server is overloaded, please try again later",
-			missingGoatApiKey: "❗ Not set apikey for GoatBot, please visit goatbot.tk to get apikey and set it to configCommands.json > envGlobal.goatbotApikey and save"
+			syntaxError: "⚠ Please enter prompt",
+			error: "! An error has occurred, please try again later:\n%1",
+			serverError: "! Server is overloaded, please try again later",
+			missingGoatApiKey: "! Not set apikey for GoatBot, please visit goatbot.tk to get apikey and set it to configCommands.json > envGlobal.goatbotApikey and save"
 		}
 	},
 
