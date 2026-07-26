@@ -2,7 +2,7 @@ const { graphQlQueryToJson } = require("graphql-query-to-json");
 const ora = require("ora");
 const { log, getText } = global.utils;
 const { config } = global.GoatBot;
-const databaseType = config.database.type;
+let databaseType = config.database.type;
 
 // with add null if not found data
 function fakeGraphql(query, data, obj = {}) {
