@@ -1,8 +1,11 @@
 # index.js
+Floppa.newVersionDetected=You are using version %1, the latest version is %2. Please update to use the bot better by typing into the console/cmd command: %3
+Floppa.autoRestart1=Bot will auto restart in %1
+Floppa.autoRestart2=Bot will auto restart by cron job: %1
 Goat.newVersionDetected=You are using version %1, the latest version is %2. Please update to use the bot better by typing into the console/cmd command: %3
 Goat.autoRestart1=Bot will auto restart in %1
 Goat.autoRestart2=Bot will auto restart by cron job: %1
-Goat.googleApiTokenExpired=Google API refresh token has expired or been revoked, please get a new token at https://developers.google.com/oauthplayground/
+GoogleApiTokenExpired=Google API refresh token has expired or been revoked, please get a new token at https://developers.google.com/oauthplayground/
 
 # bot/login/login.js
 login.currentlyLogged=Login in progress
@@ -89,29 +92,29 @@ handlerCheckData.cantCreateThread=Groups with id '%1' cannot be written to the d
 handlerCheckData.cantCreateUser=Users with id '%1' cannot be written to the database!
 
 # bot/handler/handlerEvents.js
-handlerEvents.userBanned=You have been banned from using the bot\n» Reason: %1\n» Time: %2\n» User ID: %3
-handlerEvents.threadBanned=This group has been banned from using the bot\n» Reason: %1\n» Time: %2\n» Thread ID: %3
-handlerEvents.onlyAdminBox=This group is currently enabled only group administrators can use the bot
-handlerEvents.onlyAdminBot=❌ | Currently only bot's admin can use bot
-handlerEvents.commandNotFound=Command "%1" does not exist, type %2help to see all available commands
-handlerEvents.commandNotFound2=The command you are using does not exist, type %1help to see all available commands
-handlerEvents.commandSyntaxError=The command you are using is wrong syntax, please type %1help %2 to see the details of how to use this command
-handlerEvents.onlyAdmin=❌ | Only group administrators can use the command "%1"
-handlerEvents.onlyAdminToUseOnReply=❌ | Only group administrators can use the reply function of the command "%1"
-handlerEvents.onlyAdminToUseOnReaction=❌ | Only group administrators can use the reaction function of the command "%1"
-handlerEvents.onlyAdminBot2=❌ | Only bot's admin can use the command "%1"
-handlerEvents.onlyAdminBot2ToUseOnReply=❌ | Only bot's admin can use the reply function of the command "%1"
-handlerEvents.onlyAdminBot2ToUseOnReaction=❌ | Only bot's admin can use the reaction function of the command "%1"
-handlerEvents.waitingForCommand=⏱ You are in the waiting time to use this command, please come back after %1s
-handlerEvents.errorOccurred=❌ [ %1 ]\nAn error occurred at command "%2"\n\n%3
-handlerEvents.errorOccurred2=❌ [ %1 ]\nAn error occurred at command onChat in command "%2"\n\n%3
-handlerEvents.errorOccurred3=❌ [ %1 ]\nAn error occurred when executing onReply at command "%2"\n\n%3
-handlerEvents.errorOccurred4=❌ [ %1 ]\nAn error occurred when executing onReaction at command "%2"\n\n%3
-handlerEvents.errorOccurred5=❌ [ %1 ]\nAn error occurred when executing onEvent at command "%2"\n\n%3
-handlerEvents.errorOccurred6=❌ [ %1 ]\nAn error occurred when executing onEvent at command "%2"\n\n%3
-handlerEvents.errorOccurred7=❌ [ %1 ]\nAn error occurred when executing onAnyEvent at command "%2"\n\n%3
-handlerEvents.cannotFindCommandName=❌ Cannot find command name to execute this reply!
-handlerEvents.cannotFindCommand=❌ Cannot find command "%1" to execute this reply!
+handlerEvents.userBanned=You are banned from using the bot.\nReason: %1\nTime: %2\nUser ID: %3
+handlerEvents.threadBanned=This group is banned from using the bot.\nReason: %1\nTime: %2\nThread ID: %3
+handlerEvents.onlyAdminBox=Only group admins can use the bot here.
+handlerEvents.onlyAdminBot=Only bot admins can use the bot.
+handlerEvents.commandNotFound=Unknown command "%1". Type %2help to see commands.
+handlerEvents.commandNotFound2=This command doesn't exist. Type %1help to see commands.
+handlerEvents.commandSyntaxError=Wrong syntax. Type %1help %2 for usage.
+handlerEvents.onlyAdmin=Only group admins can use "%1".
+handlerEvents.onlyAdminToUseOnReply=Only group admins can use reply for "%1".
+handlerEvents.onlyAdminToUseOnReaction=Only group admins can use reactions for "%1".
+handlerEvents.onlyAdminBot2=Only bot admins can use "%1".
+handlerEvents.onlyAdminBot2ToUseOnReply=Only bot admins can use reply for "%1".
+handlerEvents.onlyAdminBot2ToUseOnReaction=Only bot admins can use reactions for "%1".
+handlerEvents.waitingForCommand=Please wait %1s before using this command again.
+handlerEvents.errorOccurred=Error in "%2".\n\n%3
+handlerEvents.errorOccurred2=Error in onChat for "%2".\n\n%3
+handlerEvents.errorOccurred3=Error in onReply for "%2".\n\n%3
+handlerEvents.errorOccurred4=Error in onReaction for "%2".\n\n%3
+handlerEvents.errorOccurred5=Error in event "%2".\n\n%3
+handlerEvents.errorOccurred6=Error in onEvent for "%2".\n\n%3
+handlerEvents.errorOccurred7=Error in onAnyEvent for "%2".\n\n%3
+handlerEvents.cannotFindCommandName=Can't find the command for this reply!
+handlerEvents.cannotFindCommand=Can't find command "%1" for this reply!
 
 # bot/autoUptime.js
 autoUptime.autoUptimeTurnedOn=AutoUptime mode turned on
