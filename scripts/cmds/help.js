@@ -4,13 +4,13 @@ const path = require("path");
 module.exports = {
 	config: {
 		name: "help",
-		aliases: ["menu", "commands", "cmds"],
-		version: "5.5",
+		aliases: ["menu", "commands", "cmds", "mansu", "allcmds"],
+		version: "6.0",
 		author: "Gtajisan (Farhan Muh Tasim)",
-		shortDescription: "Show all available commands (Categorized, DM & Group aware)",
-		longDescription: "Displays a clean, categorized list of commands with Direct Message (DM) and Group chat distinction.",
+		shortDescription: "Show all available commands and full system info",
+		longDescription: "Displays a comprehensive categorized list of all commands along with system info, bot stats, and DM/Group distinction.",
 		category: "system",
-		guide: "{pn}help [command name]"
+		guide: "{pn}help [command name | mansu | all]"
 	},
 
 	onStart: async function ({ message, args, prefix, event }) {
@@ -54,8 +54,8 @@ module.exports = {
 			}
 		}
 
-		// Single Command Details View
-		if (args[0]) {
+		// Single Command Details View (if args[0] is a specific command and not "mansu" / "all")
+		if (args[0] && !["mansu", "all", "menu", "list"].includes(args[0].toLowerCase())) {
 			const query = args[0].toLowerCase();
 			const cmd =
 				allCommands.get(query) ||
@@ -106,50 +106,33 @@ module.exports = {
 			);
 		}
 
+		// Full Command Menu & System Info
+		const totalThreads = global.db?.allThreadData?.length || 0;
+		const totalUsers = global.db?.allUserData?.length || 0;
+		const uptime = global.utils?.convertTime(process.uptime() * 1000) || "Online";
+
+		let menuMsg = `🐱 𝗙𝗟𝗢𝗣𝗣𝗔-𝗖𝗛𝗔𝗧𝗕𝗢𝗧 (Full Command Menu) 🐱\n`;
+		menuMsg += `━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+		menuMsg += `👤 Developer : Gtajisan (Farhan Muh Tasim)\n`;
+		menuMsg += `⚡ Prefix    : ${prefix}\n`;
+		menuMsg += `📊 Mode      : ${isDM ? "Direct Message (DM)" : "Group Chat"}\n`;
+		menuMsg += `⏱️ Uptime    : ${uptime}\n`;
+		menuMsg += `📥 Commands  : ${allCommands.size} Total (${dmCommands.length} DM Supported)\n`;
+		menuMsg += `━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+
 		const formatCommands = (cmds) => cmds.sort().map((c) => `• ${c}`);
+		const sortedCategories = Object.keys(categories).sort();
 
-		if (isDM) {
-			// DM / Business Account Chat Layout
-			let dmMsg = `💬 𝗙𝗟𝗢𝗣𝗣𝗔-𝗖𝗛𝗔𝗧𝗕𝗢𝗧 (Business DM Mode)\n`;
-			dmMsg += `━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
-			dmMsg += `Direct Message Support Active!\n\n`;
-
-			const sortedCategories = Object.keys(categories).sort();
-			for (const cat of sortedCategories) {
-				const icon = emojiMap[cat] || "➥";
-				const catCmds = categories[cat].filter(c => !groupOnlyCommands.includes(c));
-				if (catCmds.length > 0) {
-					dmMsg += `╭──『 ${icon} ${cat.toUpperCase()} 』\n`;
-					dmMsg += `${formatCommands(catCmds).join("  ")}\n`;
-					dmMsg += `╰───────────────◊\n\n`;
-				}
-			}
-
-			if (groupOnlyCommands.length > 0) {
-				dmMsg += `👥 𝗚𝗥𝗢𝗨𝗣-𝗢𝗡𝗟𝗬 𝗖𝗢𝗠𝗠𝗔𝗡𝗗𝗦:\n`;
-				dmMsg += `${groupOnlyCommands.sort().map(c => `• ${c}`).join(", ")}\n\n`;
-			}
-
-			dmMsg += `💡 Type ${prefix}help [command] for details.`;
-			return message.reply(dmMsg);
-		} else {
-			// Group Chat Layout
-			let groupMsg = `🐱 𝗙𝗟𝗢𝗣𝗣𝗔-𝗖𝗛𝗔𝗧𝗕𝗢𝗧 (Group Mode)\n`;
-			groupMsg += `━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
-
-			const sortedCategories = Object.keys(categories).sort();
-			for (const cat of sortedCategories) {
-				const icon = emojiMap[cat] || "➥";
-				groupMsg += `\n╭──『 ${icon} ${cat.toUpperCase()} 』\n`;
-				groupMsg += `${formatCommands(categories[cat]).join("  ")}\n`;
-				groupMsg += `╰───────────────◊\n`;
-			}
-
-			groupMsg += `\n📥 Total Commands: ${allCommands.size} (${dmCommands.length} DM Supported)\n`;
-			groupMsg += `➥ Use: ${prefix}help [command] for details\n`;
-			groupMsg += `➥ Use: ${prefix}callad to contact bot admins`;
-
-			return message.reply(groupMsg);
+		for (const cat of sortedCategories) {
+			const icon = emojiMap[cat] || "➥";
+			menuMsg += `\n╭──『 ${icon} ${cat.toUpperCase()} 』\n`;
+			menuMsg += `${formatCommands(categories[cat]).join("  ")}\n`;
+			menuMsg += `╰───────────────◊\n`;
 		}
+
+		menuMsg += `\n💡 Type ${prefix}help [command] for specific command details.\n`;
+		menuMsg += `💬 Type ${prefix}callad to contact bot developers & admins.`;
+
+		return message.reply(menuMsg);
 	}
 };
