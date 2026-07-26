@@ -22,7 +22,12 @@ try {
 	login = defaultRequire("@dongdev/fca-unofficial").login;
 }
 const qr = new (defaultRequire("qrcode-reader"));
-const Canvas = defaultRequire("canvas");
+let Canvas;
+try {
+	Canvas = defaultRequire("canvas");
+} catch (e) {
+	Canvas = null;
+}
 const https = defaultRequire("https");
 
 async function getName(userID) {

@@ -225,8 +225,8 @@ module.exports = async function (api) {
 			catch (err) {
 				process.stderr.clearLine = defaultClearLine;
 				spin.stop();
-				log.err("SQLITE", getText("indexController", "connectMySQLError"), err);
-				process.exit();
+				log.warn("SQLITE", "Missing native C++ sqlite3 bindings. Automatically falling back to portable JSON Database engine.");
+				databaseType = "json";
 			}
 			break;
 		}
