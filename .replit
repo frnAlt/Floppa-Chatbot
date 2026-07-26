@@ -1,7 +1,14 @@
-modules = ["nodejs-20", "web"]
+run = "node index.js"
+entrypoint = "index.js"
+hidden = [".config", "package-lock.json"]
 
 [nix]
-channel = "stable-25_05"
+channel = "stable-23_11"
 
-[agent]
-expertMode = true
+[deployment]
+run = ["sh", "-c", "node index.js"]
+deploymentTarget = "cloudrun"
+
+[[ports]]
+localPort = 5000
+externalPort = 80

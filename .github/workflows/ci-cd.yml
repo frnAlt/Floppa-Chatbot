@@ -1,0 +1,49 @@
+name: Floppa-Chatbot CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  test-and-validate:
+    name: Build, Syntax & Diagnostic Verification
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Cache Node Modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Core System Syntax Verification
+        run: |
+          node --check index.js Floppa.js Goat.js utils.js
+          node --check bot/login/login.js bot/login/checkLiveCookie.js
+          node --check bot/handler/handlerAction.js bot/handler/handlerEvents.js
+          node --check dashboard/app.js dashboard/routes/api.js
+
+      - name: All Commands Syntax Check
+        run: node --check scripts/cmds/*.js
+
+      - name: All Events Syntax Check
+        run: node --check scripts/events/*.js
+
+      - name: Run Full Diagnostic Test Suite
+        run: node scratch/test_all_commands.js

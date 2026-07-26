@@ -1,0 +1,6 @@
+node_modules
+.git
+.gitignore
+TEST_LOGS.txt
+scratch/
+.env
