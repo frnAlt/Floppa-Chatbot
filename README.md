@@ -2,37 +2,60 @@
 
 ![Floppa-Chatbot Banner](assets/floppa.jpg)
 
+<br>
+
+<img src="assets/floppa-logo.jpg" width="140" height="140" style="border-radius: 50%; box-shadow: 0 0 20px rgba(0, 242, 254, 0.5);" alt="Floppa Logo">
+
 # 🐱 FLOPPA-CHATBOT
 
-**Next-Generation Facebook Messenger Bot Powered by Floppa Engine**
+**Next-Generation 24/7 Facebook Messenger & Business DM Bot Engine**
 
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D20.x-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
-[![Developer](https://img.shields.io/badge/Developer-Gtajisan%20(Farhan%20Muh%20Tasim)-ff69b4?style=for-the-badge)](https://github.com/frnAlt)
-[![FCA-API](https://img.shields.io/badge/FCA--API-Integrated%20in%20Repo-orange?style=for-the-badge)](#fca-api-integration)
+[![Developer](https://img.shields.io/badge/Developer-Gtajisan-ff69b4?style=for-the-badge)](https://github.com/frnAlt)
+[![Engine](https://img.shields.io/badge/Base%20Architecture-Goat%20Bot%20V2-orange?style=for-the-badge)](#-base-architecture--heritage)
 
 </div>
 
 ---
 
-## 🌟 Overview
+## 🌟 Base Architecture & Heritage
 
-**Floppa-Chatbot** is a fully rebuilt, high-performance, modular Facebook Messenger bot platform. Built on top of an updated core architecture with built-in **FCA API** integration (`fca/` directory directly inside the repository), Floppa-Chatbot ensures seamless session management, high availability, multi-account auto-switching, and extreme memory efficiency.
+**Floppa-Chatbot** is built upon the solid foundation of the **Goat Bot V2** base engine, completely modernized, optimized, and upgraded with:
+
+- ⚡ **Rebuilt Engine (`Floppa.js`)**: Memory leak prevention, aggressive V8 garbage collection management, and high-concurrency event loops.
+- 📦 **Native FCA API (`fca/`)**: Bundled directly into the repository, ensuring continuous 24/7 operation without external dependency failures.
+- 📱 **Mobile Agent Persona**: Simulates native Android Messenger mobile traffic for maximum account safety on personal & Facebook Business accounts.
+- 📥 **Direct Message (DM) & Business Account Mode**: Full support for 1-on-1 Messenger DMs and Business Page DMs with context-aware command dispatching.
 
 ### 👤 Developer & Maintainer
-- **Lead Developer:** **Gtajisan (Farhan Muh Tasim)**
+- **Developer:** **Gtajisan (Farhan Muh Tasim)**
 - **Repository:** [https://github.com/frnAlt/Floppa-Chatbot](https://github.com/frnAlt/Floppa-Chatbot)
+
+---
+
+## 📸 Screenshots & Visual Previews
+
+<div align="center">
+
+### 📊 Live Control Dashboard (No-Login Instant Telemetry & Chat Logs)
+![Dashboard Preview](assets/dashboard-preview.jpg)
+
+<br>
+
+### 💬 Messenger Bot Chat in Action (DM & Group Support)
+![Bot Chat Preview](assets/bot-chat-preview.jpg)
+
+</div>
 
 ---
 
 ## 🔥 Key Features
 
-- 🚀 **Integrated FCA API (`fca/`)**: Custom Facebook Chat API built directly into the repository for guaranteed stability without third-party package breaks.
-- ⚡ **Rebuilt Core System (`Floppa.js`)**: Modernized event loop, enhanced memory garbage collection management, zero memory leaks.
-- 🔄 **Multi-Account Manager**: Automatic account fallback & live cookie refresh support.
-- 🌐 **Web Dashboard**: Interactive web dashboard for bot configuration, monitoring, and live logs.
-- 🛠️ **Modular Command System**: Dynamic reloading for commands and event scripts without restarting the bot.
-- 🛡️ **Spam & Rate Protection**: Built-in command rate limiting, anti-inbox, whitelist mode, and security layers.
+- 📥 **Context-Aware DM & Group Help**: `~help` automatically formats distinct command lists for Direct Messages (DM) vs Group Chats.
+- 💡 **Did-You-Mean Command Suggestions**: Built-in Dice's Coefficient bigram matcher (`findSimilarCommand`) suggests closest command names when typos occur.
+- 🛠️ **Multi-Source Command Suite**: Integrated top utility and media commands (Catbox uploader, Terabox downloader, AI Logo generator, Pinterest search, Pair coupling, TinyURL shortener, Shazam music identifier, Uptime monitor).
+- 📊 **Real-Time Web Dashboard**: Integrated telemetry dashboard showing RAM usage, system uptime, active threads, registered users, and live Messenger message log streaming.
 
 ---
 
@@ -40,49 +63,44 @@
 
 ```
 Floppa-Chatbot/
-├── assets/                # Visual media assets (Floppa 2D Mascot)
-│   └── floppa.jpg
-├── fca/                   # Native Built-in FCA API Module
-│   ├── dist/
-│   ├── package.json
-│   └── README.md
+├── assets/                # Visual media assets (Floppa Banner, Logo & Previews)
+│   ├── floppa.jpg
+│   ├── floppa-logo.jpg
+│   ├── dashboard-preview.jpg
+│   └── bot-chat-preview.jpg
+├── fca/                   # Native Built-in FCA API Engine
 ├── bot/                   # Core bot handlers, login & multi-account manager
-├── dashboard/             # Integrated Express Web Dashboard
+├── dashboard/             # Live Control Dashboard & Real-Time Log Server
 ├── database/              # SQLite / MongoDB controllers
-├── func/                  # System utilities & memory management
+├── func/                  # System utilities, memory manager & suggestion matcher
 ├── languages/             # i18n support (English & Vietnamese)
 ├── scripts/
-│   ├── cmds/              # Command modules
+│   ├── cmds/              # Command modules (catbox, terabox, logo, pair, etc.)
 │   └── events/            # Event handling scripts
 ├── account.txt            # Facebook Session Cookies / Credentials
 ├── config.json            # Main Bot Configuration
-├── configCommands.json    # Command configuration & aliases
-├── Floppa.js              # Rebuilt Core System Runner
+├── Floppa.js              # Rebuilt Core Engine Runner
 ├── index.js               # Application Entry Point
-└── package.json           # Node.js Dependencies & Metadata
+└── package.json           # Project Dependencies & Metadata
 ```
 
 ---
 
-## ⚡ Quick Start & Installation
+## ⚡ Quick Start & Setup Guide
 
-### 1. Prerequisites
+### 1. Requirements
 - **Node.js**: `v20.0.0` or higher
 - **npm**: `v7.0.0` or higher
 
-### 2. Clone Repository
+### 2. Installation
 ```bash
 git clone https://github.com/frnAlt/Floppa-Chatbot.git
 cd Floppa-Chatbot
-```
-
-### 3. Install Dependencies
-```bash
 npm install
 ```
 
-### 4. Configure Facebook Account
-Export your Facebook account cookies using a browser extension (e.g. *Cookie Editor*) into JSON format, and save them into `account.txt`:
+### 3. Account Cookie Configuration
+Export your Facebook account cookies using a browser extension (e.g., *Cookie Editor*) into JSON format, and save into `account.txt`:
 
 ```json
 [
@@ -101,40 +119,17 @@ Export your Facebook account cookies using a browser extension (e.g. *Cookie Edi
 ]
 ```
 
-### 5. Launch Floppa-Chatbot
+### 4. Run Floppa-Chatbot
 ```bash
 npm start
 ```
 
----
-
-## 🛠️ Configuration (`config.json`)
-
-Customize bot settings in `config.json`:
-
-```json
-{
-  "prefix": "~",
-  "nickNameBot": "Floppa Bot 🐱",
-  "adminBot": ["61588057525081"],
-  "devUsers": ["61588057525081"],
-  "timeZone": "Asia/Dhaka",
-  "autoRestart": {
-    "time": null
-  }
-}
+### 5. Access Live Web Dashboard
+Open your browser and navigate to:
 ```
-
----
-
-## 🧩 FCA API Integration
-
-Floppa-Chatbot directly bundles the **FCA API** under `fca/`. The login module automatically fetches and executes the local FCA API code without relying on unverified external packages.
-
-To update or inspect FCA internal mechanics:
-```javascript
-const { login } = require('./fca');
+http://localhost:5000
 ```
+View live system metrics, active threads, and real-time Messenger chat logs instantly without login walls.
 
 ---
 
@@ -142,4 +137,4 @@ const { login } = require('./fca');
 
 This project is licensed under the **MIT License**.
 
-Developed with ❤️ by **Gtajisan (Farhan Muh Tasim)**.
+Built upon **Goat Bot V2** base architecture. Developed & maintained by **Gtajisan (Farhan Muh Tasim)**.
