@@ -119,3 +119,8 @@ addLog("SUMMARY", `====================================================`);
 const logFile = path.join(process.cwd(), "TEST_LOGS.txt");
 fs.writeFileSync(logFile, logLines.join("\n"), "utf-8");
 addLog("REPORT", `Full diagnostic report saved to: ${logFile}`);
+
+if (failedCmds > 0) {
+	process.exit(1);
+}
+

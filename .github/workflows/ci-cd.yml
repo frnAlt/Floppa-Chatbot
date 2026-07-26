@@ -40,10 +40,10 @@ jobs:
           node --check dashboard/app.js dashboard/routes/api.js
 
       - name: All Commands Syntax Check
-        run: node --check scripts/cmds/*.js
+        run: for file in scripts/cmds/*.js; do node --check "$file"; done
 
       - name: All Events Syntax Check
-        run: node --check scripts/events/*.js
+        run: for file in scripts/events/*.js; do node --check "$file"; done
 
       - name: Run Full Diagnostic Test Suite
         run: node scratch/test_all_commands.js
