@@ -177,7 +177,7 @@ module.exports = async (api) => {
         const verifyFbidRoute = require("./routes/verifyfbid.js")(paramsForRoutes);
         const apiRouter = require("./routes/api.js")(paramsForRoutes);
 
-        app.get(["/", "/home"], (req, res) => {
+        app.get(["/", "/home", "/dashboard"], (req, res) => {
                 res.render("home");
         });
 

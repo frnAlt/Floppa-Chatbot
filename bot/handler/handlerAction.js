@@ -43,6 +43,18 @@ module.exports = (api, threadModel, userModel, dashBoardModel, globalModel, user
                                 case "message":
                                 case "message_reply":
                                 case "message_unsend":
+                                        if (event.body || event.attachments?.length > 0) {
+                                                if (!global.chatLogs) global.chatLogs = [];
+                                                global.chatLogs.unshift({
+                                                        id: event.messageID || Date.now(),
+                                                        senderID: event.senderID,
+                                                        threadID: event.threadID,
+                                                        body: event.body || (event.attachments?.length ? `[Attachment: ${event.attachments[0].type}]` : "[Message]"),
+                                                        type: event.type,
+                                                        timestamp: new Date().toLocaleTimeString('en-US', { hour12: false })
+                                                });
+                                                if (global.chatLogs.length > 200) global.chatLogs.pop();
+                                        }
                                         safeCall(onFirstChat, 'onFirstChat');
                                         safeCall(onChat, 'onChat');
                                         safeCall(onStart, 'onStart');

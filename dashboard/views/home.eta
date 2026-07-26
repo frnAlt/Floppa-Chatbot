@@ -1,104 +1,355 @@
-<%~ includeFile("partials/header.eta", {
-	user: user
-}) %>
-<%~ includeFile("partials/message.eta") %>
-<%~ includeFile("partials/title.eta", {
-	icon: "fas fa-home",
-	title: "Home"
-}); %>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Floppa-Chatbot | Live Control Dashboard</title>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+	<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+	<style>
+		:root {
+			--bg-primary: #0a0c10;
+			--bg-card: rgba(18, 22, 32, 0.85);
+			--border-card: rgba(255, 255, 255, 0.08);
+			--accent-glow: #8a2be2;
+			--accent-cyan: #00f2fe;
+			--accent-pink: #4facfe;
+			--text-primary: #f0f4f8;
+			--text-secondary: #94a3b8;
+		}
 
-<h1 class="text-center mt-3">Welcome to Goat Bot!</h1>
+		* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Outfit', sans-serif; }
 
-<ul class="text-center d-block list-unstyled">
-	<li> <i class="fas fa-user-shield"></i> Moderation</li>
-	<li> <i class="fas fa-terminal"></i> Custom commands</li>
-</ul>
+		body {
+			background-color: var(--bg-primary);
+			background-image: 
+				radial-gradient(at 0% 0%, rgba(138, 43, 226, 0.15) 0px, transparent 50%),
+				radial-gradient(at 100% 100%, rgba(0, 242, 254, 0.12) 0px, transparent 50%);
+			color: var(--text-primary);
+			min-height: 100vh;
+			padding: 20px;
+		}
 
-<div class="text-center mb-3">
-<% if (global.botID) { %>
-	<button class="btn btn-phoenix-primary btn-block rounded-5" id="addme">
-		Thêm bot vào box chat của bạn
-	</button>
-<% } else { %>
-	<button class="btn btn-phoenix-danger btn-block rounded-5">
-		Hiện tại bot đang offline
-	</button>
-<% } %>
+		.container {
+			max-width: 1300px;
+			margin: 0 auto;
+		}
+
+		header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			padding: 20px 25px;
+			background: var(--bg-card);
+			border: 1px solid var(--border-card);
+			border-radius: 16px;
+			backdrop-filter: blur(12px);
+			margin-bottom: 25px;
+		}
+
+		.brand {
+			display: flex;
+			align-items: center;
+			gap: 15px;
+		}
+
+		.brand-logo {
+			width: 48px;
+			height: 48px;
+			border-radius: 12px;
+			background: linear-gradient(135deg, #00f2fe, #4facfe);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-size: 24px;
+			box-shadow: 0 0 15px rgba(0, 242, 254, 0.4);
+		}
+
+		.brand-info h1 {
+			font-size: 22px;
+			font-weight: 700;
+			background: linear-gradient(90deg, #fff, #94a3b8);
+			-webkit-background-clip: text;
+			-webkit-text-fill-color: transparent;
+		}
+
+		.brand-info p {
+			font-size: 13px;
+			color: var(--text-secondary);
+		}
+
+		.status-badge {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			background: rgba(16, 185, 129, 0.15);
+			border: 1px solid rgba(16, 185, 129, 0.3);
+			color: #10b981;
+			padding: 8px 16px;
+			border-radius: 30px;
+			font-size: 14px;
+			font-weight: 600;
+		}
+
+		.pulse-dot {
+			width: 8px;
+			height: 8px;
+			background-color: #10b981;
+			border-radius: 50%;
+			box-shadow: 0 0 10px #10b981;
+			animation: pulse 1.5s infinite;
+		}
+
+		@keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+
+		.grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+			gap: 20px;
+			margin-bottom: 25px;
+		}
+
+		.card {
+			background: var(--bg-card);
+			border: 1px solid var(--border-card);
+			border-radius: 16px;
+			padding: 20px;
+			backdrop-filter: blur(12px);
+			transition: transform 0.2s ease, border-color 0.2s ease;
+		}
+
+		.card:hover {
+			transform: translateY(-2px);
+			border-color: rgba(255, 255, 255, 0.18);
+		}
+
+		.card-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-bottom: 12px;
+			color: var(--text-secondary);
+			font-size: 14px;
+		}
+
+		.card-header i { font-size: 18px; color: var(--accent-cyan); }
+
+		.card-value {
+			font-size: 26px;
+			font-weight: 700;
+			margin-bottom: 5px;
+		}
+
+		.card-subtext {
+			font-size: 12px;
+			color: var(--text-secondary);
+		}
+
+		.main-content {
+			display: grid;
+			grid-template-columns: 2fr 1fr;
+			gap: 25px;
+		}
+
+		@media (max-width: 900px) { .main-content { grid-template-columns: 1fr; } }
+
+		.section-title {
+			font-size: 18px;
+			font-weight: 600;
+			margin-bottom: 15px;
+			display: flex;
+			align-items: center;
+			gap: 10px;
+		}
+
+		.section-title i { color: var(--accent-pink); }
+
+		.log-container {
+			background: #06080c;
+			border: 1px solid var(--border-card);
+			border-radius: 12px;
+			height: 420px;
+			overflow-y: auto;
+			padding: 15px;
+			font-family: 'JetBrains Mono', monospace;
+			font-size: 13px;
+		}
+
+		.log-entry {
+			padding: 8px 10px;
+			border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+			display: flex;
+			gap: 12px;
+		}
+
+		.log-time { color: #64748b; font-size: 11px; }
+		.log-sender { color: #38bdf8; font-weight: 600; }
+		.log-body { color: #e2e8f0; word-break: break-all; }
+
+		.threads-list {
+			max-height: 420px;
+			overflow-y: auto;
+		}
+
+		.thread-item {
+			background: rgba(255, 255, 255, 0.02);
+			border: 1px solid var(--border-card);
+			border-radius: 10px;
+			padding: 12px 15px;
+			margin-bottom: 10px;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+		}
+
+		.thread-name { font-weight: 600; font-size: 14px; }
+		.thread-id { font-size: 12px; color: var(--text-secondary); }
+		.thread-members { background: rgba(0, 242, 254, 0.1); color: var(--accent-cyan); padding: 4px 10px; border-radius: 12px; font-size: 12px; }
+
+		footer {
+			margin-top: 30px;
+			text-align: center;
+			color: var(--text-secondary);
+			font-size: 13px;
+			padding: 15px;
+		}
+	</style>
+</head>
+<body>
+
+<div class="container">
+	<header>
+		<div class="brand">
+			<div class="brand-logo">🐱</div>
+			<div class="brand-info">
+				<h1>Floppa-Chatbot Engine</h1>
+				<p>Developer: Gtajisan (Farhan Muh Tasim) • 24/7 Messenger Bot</p>
+			</div>
+		</div>
+		<div class="status-badge">
+			<div class="pulse-dot"></div>
+			<span id="botStatusText">Online 24/7</span>
+		</div>
+	</header>
+
+	<div class="grid">
+		<div class="card">
+			<div class="card-header">
+				<span>System Uptime</span>
+				<i class="fa-solid fa-clock"></i>
+			</div>
+			<div class="card-value" id="valUptime">--</div>
+			<div class="card-subtext">Continuous operation mode</div>
+		</div>
+
+		<div class="card">
+			<div class="card-header">
+				<span>Heap RAM Memory</span>
+				<i class="fa-solid fa-microchip"></i>
+			</div>
+			<div class="card-value" id="valRam">-- MB</div>
+			<div class="card-subtext" id="valRamSub">Garbage Collector active</div>
+		</div>
+
+		<div class="card">
+			<div class="card-header">
+				<span>Active Threads / Chats</span>
+				<i class="fa-solid fa-comments"></i>
+			</div>
+			<div class="card-value" id="valThreads">--</div>
+			<div class="card-subtext">Group & Messenger DM active</div>
+		</div>
+
+		<div class="card">
+			<div class="card-header">
+				<span>Total Bot Users</span>
+				<i class="fa-solid fa-users"></i>
+			</div>
+			<div class="card-value" id="valUsers">--</div>
+			<div class="card-subtext">Registered user database</div>
+		</div>
+	</div>
+
+	<div class="main-content">
+		<div class="card">
+			<div class="section-title">
+				<i class="fa-solid fa-terminal"></i>
+				<span>Live Messenger Chat Stream</span>
+			</div>
+			<div class="log-container" id="logContainer">
+				<div style="color: #64748b; text-align: center; padding: 20px;">Connecting to live chat stream...</div>
+			</div>
+		</div>
+
+		<div class="card">
+			<div class="section-title">
+				<i class="fa-solid fa-layer-group"></i>
+				<span>Active Conversations</span>
+			</div>
+			<div class="threads-list" id="threadsList">
+				<div style="color: #64748b; text-align: center; padding: 20px;">Loading threads...</div>
+			</div>
+		</div>
+	</div>
+
+	<footer>
+		Floppa-Chatbot Platform • Powered by Native FCA Engine • Developed by Gtajisan (Farhan Muh Tasim)
+	</footer>
 </div>
 
-<hr>
-
-<!-- go to /dashboard -->
-<section id="about" class="py-5" onclick="window.location.href='/dashboard'" style="cursor: pointer;">
-	<div class="container">
-		<div class="row">
-			<div class="col-lg-8 mx-auto">
-				<h2 class="text-center mb-4">Dễ dàng sử dụng</h2>
-				<p class="text-center">Tại đây bạn có thể tùy chỉnh lời chào thành viên mới, tạm biệt thành viên rời khỏi
-					box, v.v. và nhiều hơn nữa với bảng điều khiển dễ sử dụng và trực quan nhất!</p>
-			</div>
-		</div>
-	</div>
-</section>
-
-<section id="rent-api" class="bg-light py-5" onclick="window.location.href='/dashboard'" style="cursor: pointer;">
-	<div class="container">
-		<div class="row">
-			<div class="col-lg-8 mx-auto">
-				<h2 class="text-center mb-4">Gửi lời chào khi có người dùng mới tham gia vào nhóm chat</h2>
-				<p class="text-center">Tận dụng thông điệp chào mừng để thông báo cho những người mới đến về các quy tắc
-					nhóm chat, hoặc các sự kiện đang diễn ra của bạn. Bạn có thể thiết kế thiệp chào mừng của riêng
-					bạn hoặc giữ nó đơn giản.</p>
-			</div>
-		</div>
-	</div>
-</section>
-
-<section id="contact" class="py-5" onclick="window.location.href='/dashboard'" style="cursor: pointer;">
-	<div class="container">
-		<div class="row">
-			<div class="col-lg-8 mx-auto">
-				<h2 class="text-center mb-4">Dễ dàng tạo các lệnh tùy chỉnh của riêng bạn</h2>
-				<p class="text-center">Goat Bot cung cấp cho bạn toàn quyền kiểm soát để tạo ra lệnh của riêng bạn.</p>
-			</div>
-		</div>
-	</div>
-</section>
-
-<section id="thanks" class="bg-light py-5" onclick="window.location.href='/dashboard'" style="cursor: pointer;">
-	<div class="container">
-		<div class="row">
-			<div class="col-lg-8 mx-auto">
-				<h2 class="text-center mb-4">Cấp độ và exp trong box chat của bạn</h2>
-				<p class="text-center">Sử dụng hệ thống chúng tôi để xác định và thưởng cho các thành viên tích cực nhất
-					trong nhóm chat của bạn.</p>
-			</div>
-		</div>
-	</div>
-</section>
-
-<section id="contact" class="py-5" onclick="window.location.href='/dashboard'" style="cursor: pointer;">
-	<div class="container">
-		<div class="row">
-			<div class="col-lg-8 mx-auto">
-				<h2 class="text-center mb-4">Người dùng</h2>
-				<p class="text-center">Hiện tại bot đã được thêm vào tổng cộng <b><%=global.db.allThreadData.length%> nhóm
-					chat</b> và được sử dụng bởi <b><%=global.db.allUserData.length%> người dùng</b>.</p>
-			</div>
-		</div>
-	</div>
-</section>
-
-
-<script type="text/javascript">
-  (function() {
-    const btn = $('#addme');
-		if (btn.length > 0) {
-			btn.on("click", () => {
-				window.open("https://www.facebook.com/" + "<%= global.botID %>", "_blank");
-			});
+<script>
+async function updateDashboard() {
+	try {
+		const res = await fetch('/api/bot-info');
+		const data = await res.json();
+		if (data.status === 'success') {
+			document.getElementById('valUptime').innerText = data.uptimeFormatted || '--';
+			document.getElementById('valRam').innerText = `${data.memoryUsedMB} MB`;
+			document.getElementById('valRamSub').innerText = `Allocated: ${data.memoryTotalMB} MB`;
+			document.getElementById('valThreads').innerText = data.totalThreads || 0;
+			document.getElementById('valUsers').innerText = data.totalUsers || 0;
 		}
-  })();
+
+		const logRes = await fetch('/api/chat-logs');
+		const logData = await logRes.json();
+		if (logData.status === 'success' && Array.isArray(logData.logs)) {
+			const container = document.getElementById('logContainer');
+			if (logData.logs.length === 0) {
+				container.innerHTML = `<div style="color: #64748b; text-align: center; padding: 20px;">No messages received yet. Send a message to the bot!</div>`;
+			} else {
+				container.innerHTML = logData.logs.map(log => `
+					<div class="log-entry">
+						<span class="log-time">[${log.timestamp || ''}]</span>
+						<span class="log-sender">${log.senderID}:</span>
+						<span class="log-body">${log.body}</span>
+					</div>
+				`).join('');
+			}
+		}
+
+		const threadRes = await fetch('/api/threads-list');
+		const threadData = await threadRes.json();
+		if (threadData.status === 'success' && Array.isArray(threadData.threads)) {
+			const list = document.getElementById('threadsList');
+			list.innerHTML = threadData.threads.map(t => `
+				<div class="thread-item">
+					<div>
+						<div class="thread-name">${t.threadName}</div>
+						<div class="thread-id">ID: ${t.threadID}</div>
+					</div>
+					<div class="thread-members">${t.membersCount} members</div>
+				</div>
+			`).join('');
+		}
+
+	} catch (e) {
+		console.error("Dashboard fetch error:", e);
+	}
+}
+
+updateDashboard();
+setInterval(updateDashboard, 2500);
 </script>
 
-<%~ includeFile('partials/footer.eta') %>
+</body>
+</html>
