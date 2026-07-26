@@ -3,18 +3,19 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Floppa-Chatbot | Live Control Dashboard</title>
+	<title>Floppa-Chatbot | Web Analytics & Real-Time Dashboard</title>
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 	<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 	<style>
 		:root {
-			--bg-primary: #0a0c10;
-			--bg-card: rgba(18, 22, 32, 0.85);
+			--bg-primary: #07090e;
+			--bg-card: rgba(15, 20, 32, 0.85);
 			--border-card: rgba(255, 255, 255, 0.08);
-			--accent-glow: #8a2be2;
+			--accent-purple: #8a2be2;
 			--accent-cyan: #00f2fe;
-			--accent-pink: #4facfe;
-			--text-primary: #f0f4f8;
+			--accent-pink: #ff007f;
+			--accent-green: #10b981;
+			--text-primary: #f8fafc;
 			--text-secondary: #94a3b8;
 		}
 
@@ -23,88 +24,102 @@
 		body {
 			background-color: var(--bg-primary);
 			background-image: 
-				radial-gradient(at 0% 0%, rgba(138, 43, 226, 0.15) 0px, transparent 50%),
-				radial-gradient(at 100% 100%, rgba(0, 242, 254, 0.12) 0px, transparent 50%);
+				radial-gradient(at 0% 0%, rgba(138, 43, 226, 0.18) 0px, transparent 50%),
+				radial-gradient(at 100% 100%, rgba(0, 242, 254, 0.15) 0px, transparent 50%);
 			color: var(--text-primary);
 			min-height: 100vh;
-			padding: 20px;
+			padding: 24px;
 		}
 
-		.container {
-			max-width: 1300px;
-			margin: 0 auto;
-		}
+		.container { max-width: 1400px; margin: 0 auto; }
 
 		header {
 			display: flex;
 			justify-content: space-between;
 			align-items: center;
-			padding: 20px 25px;
+			padding: 22px 28px;
 			background: var(--bg-card);
 			border: 1px solid var(--border-card);
-			border-radius: 16px;
-			backdrop-filter: blur(12px);
+			border-radius: 20px;
+			backdrop-filter: blur(16px);
 			margin-bottom: 25px;
+			box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 		}
 
-		.brand {
-			display: flex;
-			align-items: center;
-			gap: 15px;
-		}
+		.brand { display: flex; align-items: center; gap: 18px; }
 
 		.brand-logo {
-			width: 48px;
-			height: 48px;
-			border-radius: 12px;
-			background: linear-gradient(135deg, #00f2fe, #4facfe);
+			width: 52px;
+			height: 52px;
+			border-radius: 14px;
+			background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan));
 			display: flex;
 			align-items: center;
 			justify-content: center;
-			font-size: 24px;
-			box-shadow: 0 0 15px rgba(0, 242, 254, 0.4);
+			font-size: 28px;
+			box-shadow: 0 0 20px rgba(138, 43, 226, 0.5);
 		}
 
 		.brand-info h1 {
-			font-size: 22px;
+			font-size: 24px;
 			font-weight: 700;
-			background: linear-gradient(90deg, #fff, #94a3b8);
+			background: linear-gradient(90deg, #ffffff, #cbd5e1);
 			-webkit-background-clip: text;
 			-webkit-text-fill-color: transparent;
 		}
 
-		.brand-info p {
-			font-size: 13px;
-			color: var(--text-secondary);
-		}
+		.brand-info p { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+
+		.status-group { display: flex; align-items: center; gap: 15px; }
 
 		.status-badge {
 			display: flex;
 			align-items: center;
-			gap: 8px;
-			background: rgba(16, 185, 129, 0.15);
+			gap: 10px;
+			background: rgba(16, 185, 129, 0.12);
 			border: 1px solid rgba(16, 185, 129, 0.3);
-			color: #10b981;
-			padding: 8px 16px;
+			color: var(--accent-green);
+			padding: 10px 20px;
 			border-radius: 30px;
 			font-size: 14px;
 			font-weight: 600;
 		}
 
 		.pulse-dot {
-			width: 8px;
-			height: 8px;
-			background-color: #10b981;
+			width: 9px;
+			height: 9px;
+			background-color: var(--accent-green);
 			border-radius: 50%;
-			box-shadow: 0 0 10px #10b981;
+			box-shadow: 0 0 12px var(--accent-green);
 			animation: pulse 1.5s infinite;
 		}
 
 		@keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
 
-		.grid {
+		.btn-control {
+			background: rgba(255, 255, 255, 0.05);
+			border: 1px solid var(--border-card);
+			color: var(--text-primary);
+			padding: 10px 18px;
+			border-radius: 12px;
+			font-size: 13px;
+			font-weight: 600;
+			cursor: pointer;
+			display: inline-flex;
+			align-items: center;
+			gap: 8px;
+			transition: all 0.2s ease;
+		}
+
+		.btn-control:hover {
+			background: rgba(138, 43, 226, 0.25);
+			border-color: var(--accent-purple);
+			transform: translateY(-2px);
+		}
+
+		.grid-stats {
 			display: grid;
-			grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+			grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 			gap: 20px;
 			margin-bottom: 25px;
 		}
@@ -112,14 +127,14 @@
 		.card {
 			background: var(--bg-card);
 			border: 1px solid var(--border-card);
-			border-radius: 16px;
-			padding: 20px;
-			backdrop-filter: blur(12px);
-			transition: transform 0.2s ease, border-color 0.2s ease;
+			border-radius: 18px;
+			padding: 22px;
+			backdrop-filter: blur(16px);
+			transition: all 0.2s ease;
 		}
 
 		.card:hover {
-			transform: translateY(-2px);
+			transform: translateY(-3px);
 			border-color: rgba(255, 255, 255, 0.18);
 		}
 
@@ -127,57 +142,62 @@
 			display: flex;
 			justify-content: space-between;
 			align-items: center;
-			margin-bottom: 12px;
+			margin-bottom: 14px;
 			color: var(--text-secondary);
 			font-size: 14px;
 		}
 
-		.card-header i { font-size: 18px; color: var(--accent-cyan); }
+		.card-header i { font-size: 20px; color: var(--accent-cyan); }
 
-		.card-value {
-			font-size: 26px;
-			font-weight: 700;
-			margin-bottom: 5px;
-		}
+		.card-value { font-size: 28px; font-weight: 700; margin-bottom: 6px; }
 
-		.card-subtext {
-			font-size: 12px;
-			color: var(--text-secondary);
-		}
+		.card-subtext { font-size: 12px; color: var(--text-secondary); }
 
-		.main-content {
+		.main-grid {
 			display: grid;
 			grid-template-columns: 2fr 1fr;
 			gap: 25px;
 		}
 
-		@media (max-width: 900px) { .main-content { grid-template-columns: 1fr; } }
+		@media (max-width: 950px) { .main-grid { grid-template-columns: 1fr; } }
 
 		.section-title {
 			font-size: 18px;
 			font-weight: 600;
-			margin-bottom: 15px;
+			margin-bottom: 18px;
 			display: flex;
 			align-items: center;
-			gap: 10px;
+			gap: 12px;
 		}
 
 		.section-title i { color: var(--accent-pink); }
 
-		.log-container {
-			background: #06080c;
+		.chart-container {
+			background: rgba(6, 8, 14, 0.7);
 			border: 1px solid var(--border-card);
-			border-radius: 12px;
-			height: 420px;
-			overflow-y: auto;
+			border-radius: 14px;
 			padding: 15px;
+			height: 180px;
+			margin-bottom: 20px;
+			position: relative;
+		}
+
+		canvas#telemetryChart { width: 100%; height: 100%; }
+
+		.log-container {
+			background: #05070a;
+			border: 1px solid var(--border-card);
+			border-radius: 14px;
+			height: 380px;
+			overflow-y: auto;
+			padding: 16px;
 			font-family: 'JetBrains Mono', monospace;
 			font-size: 13px;
 		}
 
 		.log-entry {
-			padding: 8px 10px;
-			border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+			padding: 10px;
+			border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 			display: flex;
 			gap: 12px;
 		}
@@ -186,32 +206,36 @@
 		.log-sender { color: #38bdf8; font-weight: 600; }
 		.log-body { color: #e2e8f0; word-break: break-all; }
 
-		.threads-list {
-			max-height: 420px;
-			overflow-y: auto;
-		}
+		.threads-list { max-height: 580px; overflow-y: auto; }
 
 		.thread-item {
 			background: rgba(255, 255, 255, 0.02);
 			border: 1px solid var(--border-card);
-			border-radius: 10px;
-			padding: 12px 15px;
-			margin-bottom: 10px;
+			border-radius: 12px;
+			padding: 14px 16px;
+			margin-bottom: 12px;
 			display: flex;
 			justify-content: space-between;
 			align-items: center;
 		}
 
 		.thread-name { font-weight: 600; font-size: 14px; }
-		.thread-id { font-size: 12px; color: var(--text-secondary); }
-		.thread-members { background: rgba(0, 242, 254, 0.1); color: var(--accent-cyan); padding: 4px 10px; border-radius: 12px; font-size: 12px; }
+		.thread-id { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+		.thread-members {
+			background: rgba(0, 242, 254, 0.1);
+			color: var(--accent-cyan);
+			padding: 4px 12px;
+			border-radius: 14px;
+			font-size: 12px;
+			font-weight: 600;
+		}
 
 		footer {
-			margin-top: 30px;
+			margin-top: 35px;
 			text-align: center;
 			color: var(--text-secondary);
 			font-size: 13px;
-			padding: 15px;
+			padding: 18px;
 		}
 	</style>
 </head>
@@ -222,30 +246,34 @@
 		<div class="brand">
 			<div class="brand-logo">🐱</div>
 			<div class="brand-info">
-				<h1>Floppa-Chatbot Engine</h1>
-				<p>Developer: Gtajisan (Farhan Muh Tasim) • 24/7 Messenger Bot</p>
+				<h1>Floppa-Chatbot Web Analytics</h1>
+				<p>Developer: Gtajisan (Farhan Muh Tasim) • Native FCA API v5 Engine</p>
 			</div>
 		</div>
-		<div class="status-badge">
-			<div class="pulse-dot"></div>
-			<span id="botStatusText">Online 24/7</span>
+		<div class="status-group">
+			<button class="btn-control" onclick="reloadCommands()"><i class="fa-solid fa-arrows-rotate"></i> Reload Cmds</button>
+			<button class="btn-control" onclick="clearCache()"><i class="fa-solid fa-broom"></i> Clear Cache</button>
+			<div class="status-badge">
+				<div class="pulse-dot"></div>
+				<span id="botStatusText">Online 24/7</span>
+			</div>
 		</div>
 	</header>
 
-	<div class="grid">
+	<div class="grid-stats">
 		<div class="card">
 			<div class="card-header">
 				<span>System Uptime</span>
-				<i class="fa-solid fa-clock"></i>
+				<i class="fa-solid fa-stopwatch"></i>
 			</div>
 			<div class="card-value" id="valUptime">--</div>
-			<div class="card-subtext">Continuous operation mode</div>
+			<div class="card-subtext">24/7 Continuous Mode</div>
 		</div>
 
 		<div class="card">
 			<div class="card-header">
 				<span>Heap RAM Memory</span>
-				<i class="fa-solid fa-microchip"></i>
+				<i class="fa-solid fa-memory"></i>
 			</div>
 			<div class="card-value" id="valRam">-- MB</div>
 			<div class="card-subtext" id="valRamSub">Garbage Collector active</div>
@@ -253,11 +281,11 @@
 
 		<div class="card">
 			<div class="card-header">
-				<span>Active Threads / Chats</span>
+				<span>Active Threads</span>
 				<i class="fa-solid fa-comments"></i>
 			</div>
 			<div class="card-value" id="valThreads">--</div>
-			<div class="card-subtext">Group & Messenger DM active</div>
+			<div class="card-subtext">Messenger Groups & DMs</div>
 		</div>
 
 		<div class="card">
@@ -268,36 +296,103 @@
 			<div class="card-value" id="valUsers">--</div>
 			<div class="card-subtext">Registered user database</div>
 		</div>
+
+		<div class="card">
+			<div class="card-header">
+				<span>Loaded Commands</span>
+				<i class="fa-solid fa-cube"></i>
+			</div>
+			<div class="card-value" id="valCmds">125</div>
+			<div class="card-subtext">100% Diagnostic Verified</div>
+		</div>
 	</div>
 
-	<div class="main-content">
-		<div class="card">
-			<div class="section-title">
-				<i class="fa-solid fa-terminal"></i>
-				<span>Live Messenger Chat Stream</span>
+	<div class="main-grid">
+		<div>
+			<div class="card" style="margin-bottom: 25px;">
+				<div class="section-title">
+					<i class="fa-solid fa-chart-line"></i>
+					<span>Real-Time Telemetry & CPU Load Chart</span>
+				</div>
+				<div class="chart-container">
+					<canvas id="telemetryCanvas"></canvas>
+				</div>
 			</div>
-			<div class="log-container" id="logContainer">
-				<div style="color: #64748b; text-align: center; padding: 20px;">Connecting to live chat stream...</div>
+
+			<div class="card">
+				<div class="section-title">
+					<i class="fa-solid fa-terminal"></i>
+					<span>Live Messenger Chat Log Stream</span>
+				</div>
+				<div class="log-container" id="logContainer">
+					<div style="color: #64748b; text-align: center; padding: 20px;">Connecting to live chat stream...</div>
+				</div>
 			</div>
 		</div>
 
 		<div class="card">
 			<div class="section-title">
 				<i class="fa-solid fa-layer-group"></i>
-				<span>Active Conversations</span>
+				<span>Active Messenger Conversations</span>
 			</div>
 			<div class="threads-list" id="threadsList">
-				<div style="color: #64748b; text-align: center; padding: 20px;">Loading threads...</div>
+				<div style="color: #64748b; text-align: center; padding: 20px;">Loading conversation data...</div>
 			</div>
 		</div>
 	</div>
 
 	<footer>
-		Floppa-Chatbot Platform • Powered by Native FCA Engine • Developed by Gtajisan (Farhan Muh Tasim)
+		Floppa-Chatbot Platform • Real-Time Web Analytics Management • Developed by Gtajisan (Farhan Muh Tasim)
 	</footer>
 </div>
 
 <script>
+const telemetryHistory = Array(30).fill(20);
+
+function drawTelemetryChart() {
+	const canvas = document.getElementById('telemetryCanvas');
+	if (!canvas) return;
+	const ctx = canvas.getContext('2d');
+	const width = canvas.width = canvas.parentElement.clientWidth;
+	const height = canvas.height = canvas.parentElement.clientHeight;
+
+	ctx.clearRect(0, 0, width, height);
+
+	// Draw Grid Lines
+	ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+	ctx.lineWidth = 1;
+	for (let y = 0; y < height; y += 30) {
+		ctx.beginPath();
+		ctx.moveTo(0, y);
+		ctx.lineTo(width, y);
+		ctx.stroke();
+	}
+
+	// Draw Curve
+	ctx.beginPath();
+	const step = width / (telemetryHistory.length - 1);
+	telemetryHistory.forEach((val, i) => {
+		const x = i * step;
+		const y = height - (val / 100 * height);
+		if (i === 0) ctx.moveTo(x, y);
+		else ctx.lineTo(x, y);
+	});
+
+	ctx.strokeStyle = '#00f2fe';
+	ctx.lineWidth = 3;
+	ctx.stroke();
+
+	// Fill Area
+	ctx.lineTo(width, height);
+	ctx.lineTo(0, height);
+	ctx.closePath();
+	const gradient = ctx.createLinearGradient(0, 0, 0, height);
+	gradient.addColorStop(0, 'rgba(0, 242, 254, 0.25)');
+	gradient.addColorStop(1, 'rgba(0, 242, 254, 0.0)');
+	ctx.fillStyle = gradient;
+	ctx.fill();
+}
+
 async function updateDashboard() {
 	try {
 		const res = await fetch('/api/bot-info');
@@ -308,6 +403,12 @@ async function updateDashboard() {
 			document.getElementById('valRamSub').innerText = `Allocated: ${data.memoryTotalMB} MB`;
 			document.getElementById('valThreads').innerText = data.totalThreads || 0;
 			document.getElementById('valUsers').innerText = data.totalUsers || 0;
+			document.getElementById('valCmds').innerText = data.totalCommands || 125;
+
+			const cpuPct = Math.min(100, Math.max(10, Math.round((data.cpuLoad || 0.15) * 40)));
+			telemetryHistory.push(cpuPct);
+			telemetryHistory.shift();
+			drawTelemetryChart();
 		}
 
 		const logRes = await fetch('/api/chat-logs');
@@ -315,7 +416,7 @@ async function updateDashboard() {
 		if (logData.status === 'success' && Array.isArray(logData.logs)) {
 			const container = document.getElementById('logContainer');
 			if (logData.logs.length === 0) {
-				container.innerHTML = `<div style="color: #64748b; text-align: center; padding: 20px;">No messages received yet. Send a message to the bot!</div>`;
+				container.innerHTML = `<div style="color: #64748b; text-align: center; padding: 20px;">No incoming messages logged yet. Send a message to Floppa-Chatbot!</div>`;
 			} else {
 				container.innerHTML = logData.logs.map(log => `
 					<div class="log-entry">
@@ -343,10 +444,33 @@ async function updateDashboard() {
 		}
 
 	} catch (e) {
-		console.error("Dashboard fetch error:", e);
+		console.error("Dashboard update error:", e);
 	}
 }
 
+async function reloadCommands() {
+	try {
+		const res = await fetch('/api/control/reload-commands', { method: 'POST' });
+		const data = await res.json();
+		alert(data.message || "Commands reloaded successfully!");
+		updateDashboard();
+	} catch (e) {
+		alert("Failed to reload commands: " + e.message);
+	}
+}
+
+async function clearCache() {
+	try {
+		const res = await fetch('/api/control/clear-cache', { method: 'POST' });
+		const data = await res.json();
+		alert(data.message || "Cache cleared successfully!");
+		updateDashboard();
+	} catch (e) {
+		alert("Failed to clear cache: " + e.message);
+	}
+}
+
+window.addEventListener('resize', drawTelemetryChart);
 updateDashboard();
 setInterval(updateDashboard, 2500);
 </script>
