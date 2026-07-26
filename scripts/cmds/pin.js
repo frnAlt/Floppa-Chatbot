@@ -1,5 +1,10 @@
 const axios = require("axios");
-const { createCanvas, loadImage } = require('canvas');
+let createCanvas, loadImage;
+try {
+	const canvas = require('canvas');
+	createCanvas = canvas.createCanvas;
+	loadImage = canvas.loadImage;
+} catch (e) {}
 const fs = require('fs-extra');
 const path = require('path');
 const { getStreamFromURL } = global.utils;

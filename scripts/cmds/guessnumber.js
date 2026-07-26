@@ -1,5 +1,5 @@
-const { randomString, getTime, convertTime } = global.utils;
-const { createCanvas } = require('canvas');
+let createCanvas;
+try { createCanvas = require('canvas').createCanvas; } catch (e) { createCanvas = null; }
 const rows = [
 	{
 		col: 4,

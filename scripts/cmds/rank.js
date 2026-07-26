@@ -1,4 +1,5 @@
-const Canvas = require("canvas");
+let Canvas;
+try { Canvas = require("canvas"); } catch (e) { Canvas = null; }
 const { uploadZippyshare } = global.utils;
 
 const defaultFontName = "BeVietnamPro-SemiBold";
@@ -6,12 +7,12 @@ const defaultPathFontName = `${__dirname}/assets/font/BeVietnamPro-SemiBold.ttf`
 const { randomString } = global.utils;
 const percentage = total => total / 100;
 
-Canvas.registerFont(`${__dirname}/assets/font/BeVietnamPro-Bold.ttf`, {
-	family: "BeVietnamPro-Bold"
-});
-Canvas.registerFont(defaultPathFontName, {
-	family: defaultFontName
-});
+if (Canvas && Canvas.registerFont) {
+	try {
+		Canvas.registerFont(`${__dirname}/assets/font/BeVietnamPro-Bold.ttf`, { family: "BeVietnamPro-Bold" });
+		Canvas.registerFont(defaultPathFontName, { family: defaultFontName });
+	} catch (e) {}
+}
 
 let deltaNext;
 const expToLevel = (exp, deltaNextLevel = deltaNext) => Math.floor((1 + Math.sqrt(1 + 8 * exp / deltaNextLevel)) / 2);

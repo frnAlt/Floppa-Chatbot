@@ -1,4 +1,10 @@
-const { createCanvas, loadImage, registerFont } = require('canvas');
+let createCanvas, loadImage, registerFont;
+try {
+	const canvas = require('canvas');
+	createCanvas = canvas.createCanvas;
+	loadImage = canvas.loadImage;
+	registerFont = canvas.registerFont;
+} catch (e) {}
 const fs = require('fs-extra');
 const path = require('path');
 const os = require('os');
@@ -6,11 +12,13 @@ const os = require('os');
 const fontDir = path.join(__dirname, 'assets', 'font');
 const cacheDir = path.join(__dirname, 'cache');
 
-registerFont(path.join(fontDir, 'BeVietnamPro-Bold.ttf'), { family: 'BeVietnamPro', weight: 'bold' });
-registerFont(path.join(fontDir, 'BeVietnamPro-SemiBold.ttf'), { family: 'BeVietnamPro', weight: '600' });
-registerFont(path.join(fontDir, 'BeVietnamPro-Regular.ttf'), { family: 'BeVietnamPro', weight: 'normal' });
-registerFont(path.join(fontDir, 'NotoSans-Bold.ttf'), { family: 'NotoSans', weight: 'bold' });
-registerFont(path.join(fontDir, 'NotoSans-SemiBold.ttf'), { family: 'NotoSans', weight: '600' });
+try {
+	if (registerFont && fs.existsSync(path.join(fontDir, 'BeVietnamPro-Bold.ttf'))) registerFont(path.join(fontDir, 'BeVietnamPro-Bold.ttf'), { family: 'BeVietnamPro', weight: 'bold' });
+	if (registerFont && fs.existsSync(path.join(fontDir, 'BeVietnamPro-SemiBold.ttf'))) registerFont(path.join(fontDir, 'BeVietnamPro-SemiBold.ttf'), { family: 'BeVietnamPro', weight: '600' });
+	if (registerFont && fs.existsSync(path.join(fontDir, 'BeVietnamPro-Regular.ttf'))) registerFont(path.join(fontDir, 'BeVietnamPro-Regular.ttf'), { family: 'BeVietnamPro', weight: 'normal' });
+	if (registerFont && fs.existsSync(path.join(fontDir, 'NotoSans-Bold.ttf'))) registerFont(path.join(fontDir, 'NotoSans-Bold.ttf'), { family: 'NotoSans', weight: 'bold' });
+	if (registerFont && fs.existsSync(path.join(fontDir, 'NotoSans-SemiBold.ttf'))) registerFont(path.join(fontDir, 'NotoSans-SemiBold.ttf'), { family: 'NotoSans', weight: '600' });
+} catch (e) {}
 
 function formatBytes(bytes, decimals = 2) {
     if (bytes === 0) return '0 B';

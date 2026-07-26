@@ -1,4 +1,10 @@
-const { createCanvas, loadImage, registerFont } = require("canvas");
+let createCanvas, loadImage, registerFont;
+try {
+	const canvas = require("canvas");
+	createCanvas = canvas.createCanvas;
+	loadImage = canvas.loadImage;
+	registerFont = canvas.registerFont;
+} catch (e) {}
 const fs = require("fs-extra");
 const path = require("path");
 const crypto = require("crypto");

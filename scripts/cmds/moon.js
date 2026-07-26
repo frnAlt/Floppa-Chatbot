@@ -2,7 +2,8 @@ const moment = require("moment-timezone");
 const fs = require("fs-extra");
 const axios = require("axios");
 const cheerio = require("cheerio");
-const Canvas = require("canvas");
+let Canvas;
+try { Canvas = require("canvas"); } catch (e) { Canvas = null; }
 const https = require("https");
 const agent = new https.Agent({
 	rejectUnauthorized: false
@@ -113,9 +114,11 @@ module.exports = {
 
 
 const pathFont = __dirname + "/assets/font/Kanit-SemiBoldItalic.ttf";
-Canvas.registerFont(pathFont, {
-	family: "Kanit SemiBold"
-});
+if (Canvas && Canvas.registerFont) {
+	try {
+		Canvas.registerFont(pathFont, { family: "Kanit SemiBold" });
+	} catch (e) {}
+}
 
 function getLines(ctx, text, maxWidth) {
 	const words = text.split(" ");

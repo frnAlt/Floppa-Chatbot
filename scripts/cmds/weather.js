@@ -1,16 +1,15 @@
 const axios = require("axios");
 const moment = require("moment-timezone");
-const Canvas = require("canvas");
+let Canvas;
+try { Canvas = require("canvas"); } catch (e) { Canvas = null; }
 const fs = require("fs-extra");
 
-Canvas.registerFont(
-	__dirname + "/assets/font/BeVietnamPro-SemiBold.ttf", {
-	family: "BeVietnamPro-SemiBold"
-});
-Canvas.registerFont(
-	__dirname + "/assets/font/BeVietnamPro-Regular.ttf", {
-	family: "BeVietnamPro-Regular"
-});
+if (Canvas && Canvas.registerFont) {
+	try {
+		Canvas.registerFont(__dirname + "/assets/font/BeVietnamPro-SemiBold.ttf", { family: "BeVietnamPro-SemiBold" });
+		Canvas.registerFont(__dirname + "/assets/font/BeVietnamPro-Regular.ttf", { family: "BeVietnamPro-Regular" });
+	} catch (e) {}
+}
 
 function convertFtoC(F) {
 	return Math.floor((F - 32) / 1.8);

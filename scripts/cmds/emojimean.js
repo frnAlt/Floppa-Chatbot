@@ -1,6 +1,7 @@
 const axios = require("axios");
 const cheerio = require("cheerio");
-const Canvas = require("canvas");
+let Canvas;
+try { Canvas = require("canvas"); } catch (e) { Canvas = null; }
 const fs = require("fs-extra");
 const langsSupported = [
 	'sq', 'ar', 'az', 'bn', 'bs', 'bg', 'my', 'zh-hans',

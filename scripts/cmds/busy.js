@@ -1,5 +1,5 @@
-if (!global.client.busyList)
-	global.client.busyList = {};
+if (!global.client) global.client = {};
+if (!global.client.busyList) global.client.busyList = {};
 
 module.exports = {
 	config: {

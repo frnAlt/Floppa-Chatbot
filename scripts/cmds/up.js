@@ -1,7 +1,8 @@
 const os = require("os");
 const path = require("path");
 const fs = require("fs");
-const { createCanvas } = require("canvas");
+let createCanvas;
+try { createCanvas = require("canvas").createCanvas; } catch (e) { createCanvas = null; }
 
 process.stderr.clearLine = process.stderr.clearLine || function () {};
 process.stdout.clearLine = process.stdout.clearLine || function () {};

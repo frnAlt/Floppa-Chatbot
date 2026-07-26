@@ -1,4 +1,5 @@
-const { createCanvas } = require('canvas');
+let createCanvas;
+try { createCanvas = require('canvas').createCanvas; } catch (e) { createCanvas = null; }
 const fs = require('fs-extra');
 const path = require('path');
 
