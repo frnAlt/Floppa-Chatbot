@@ -99,8 +99,10 @@ cd Floppa-Chatbot
 npm install
 ```
 
-### 3. Account Cookie Configuration
-Export your Facebook account cookies using a browser extension (e.g., *Cookie Editor*) into JSON format, and save into `account.txt`:
+### 3. Account Cookie Configuration (Safe Mobile Agent Mode)
+Export your Facebook account cookies using a browser extension (e.g., *Cookie Editor*) into JSON format, and save into `account.txt`.
+
+For detailed instructions on avoiding account locks, multi-account setup, and mobile agent stealth settings, see the **[Safe Cookie Guide](COOKIE_GUIDE.md)**:
 
 ```json
 [
