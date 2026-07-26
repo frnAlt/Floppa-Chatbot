@@ -17,9 +17,14 @@ const fs = defaultRequire("fs-extra");
 const toptp = defaultRequire("totp-generator");
 let login;
 try {
-	login = defaultRequire(path.join(process.cwd(), "fca")).login;
+	const localFca = defaultRequire(path.join(process.cwd(), "fca"));
+	login = localFca.login || (localFca.default && localFca.default.login) || localFca;
 } catch (e) {
-	login = defaultRequire("@dongdev/fca-unofficial").login;
+	try {
+		login = defaultRequire("@dongdev/fca-unofficial").login;
+	} catch (err) {
+		login = defaultRequire("@floppa/fca-native").login;
+	}
 }
 const qr = new (defaultRequire("qrcode-reader"));
 let Canvas;
