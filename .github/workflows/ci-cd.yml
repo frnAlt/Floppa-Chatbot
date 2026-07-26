@@ -2,6 +2,25 @@ name: Floppa-Chatbot CI/CD Pipeline
 
 on:
   workflow_dispatch:
+    inputs:
+      node_version:
+        description: 'Node.js version'
+        required: false
+        type: choice
+        options:
+          - '20'
+          - '22'
+        default: '20'
+      run_syntax_checks:
+        description: 'Run syntax check on core engine, commands and events'
+        required: false
+        type: boolean
+        default: true
+      run_full_diagnostics:
+        description: 'Run full diagnostic test suite'
+        required: false
+        type: boolean
+        default: true
 
 jobs:
   test-and-validate:
@@ -15,7 +34,7 @@ jobs:
       - name: Setup Node.js Environment
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: ${{ inputs.node_version || '20' }}
 
       - name: Cache Node Modules
         uses: actions/cache@v3
@@ -29,6 +48,7 @@ jobs:
         run: npm ci
 
       - name: Core System Syntax Verification
+        if: ${{ inputs.run_syntax_checks != false }}
         run: |
           node --check index.js Floppa.js Goat.js utils.js
           node --check bot/login/login.js bot/login/checkLiveCookie.js
@@ -36,10 +56,14 @@ jobs:
           node --check dashboard/app.js dashboard/routes/api.js
 
       - name: All Commands Syntax Check
+        if: ${{ inputs.run_syntax_checks != false }}
         run: for file in scripts/cmds/*.js; do node --check "$file"; done
 
       - name: All Events Syntax Check
+        if: ${{ inputs.run_syntax_checks != false }}
         run: for file in scripts/events/*.js; do node --check "$file"; done
 
       - name: Run Full Diagnostic Test Suite
+        if: ${{ inputs.run_full_diagnostics != false }}
         run: node scratch/test_all_commands.js
+
