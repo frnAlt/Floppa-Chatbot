@@ -1,15 +1,15 @@
 [
   {
     "key": "fr",
-    "value": "0zNLFtFMfVphLDKfh..BqPMR0..AAA.0.0.BqZixk.AWeuNkY9kiG9WC4YVTEcDRWEDlU",
+    "value": "0zNLFtFMfVphLDKfh..BqPMR0..AAA.0.0.BqZsSh.AWfJmqCkx9y13MmtQVLHE-VjrD0",
     "domain": "facebook.com",
     "path": "/",
     "hostOnly": false,
-    "creation": "2026-07-26T15:50:12.465Z",
-    "lastAccessed": "2026-07-26T15:50:12.465Z",
+    "creation": "2026-07-27T02:37:52.910Z",
+    "lastAccessed": "2026-07-27T02:38:25.949Z",
     "secure": true,
     "httpOnly": true,
-    "expires": "2026-10-24T15:48:52.000Z"
+    "expires": "2026-10-25T02:38:25.000Z"
   },
   {
     "key": "sb",
@@ -17,11 +17,11 @@
     "domain": "facebook.com",
     "path": "/",
     "hostOnly": false,
-    "creation": "2026-07-26T15:50:12.465Z",
-    "lastAccessed": "2026-07-26T15:50:12.465Z",
-    "secure": true,
-    "httpOnly": true,
-    "expires": "2027-08-30T15:48:47.000Z"
+    "creation": "2026-07-27T02:37:52.922Z",
+    "lastAccessed": "2026-07-27T02:38:25.949Z",
+    "secure": false,
+    "httpOnly": false,
+    "expires": "2027-07-27T02:38:25.000Z"
   },
   {
     "key": "datr",
@@ -29,10 +29,10 @@
     "domain": "facebook.com",
     "path": "/",
     "hostOnly": false,
-    "creation": "2026-07-26T15:50:12.465Z",
-    "lastAccessed": "2026-07-26T15:50:12.465Z",
-    "secure": true,
-    "httpOnly": true,
-    "expires": "2027-08-30T15:48:50.000Z"
+    "creation": "2026-07-27T02:37:52.923Z",
+    "lastAccessed": "2026-07-27T02:38:25.949Z",
+    "secure": false,
+    "httpOnly": false,
+    "expires": "2027-07-27T02:38:25.000Z"
   }
 ]
