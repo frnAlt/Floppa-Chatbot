@@ -284,7 +284,28 @@ module.exports = async (api) => {
                 : process.env.API_SERVER_EXTERNAL == "https://api.glitch.com"
                         ? `https://${process.env.PROJECT_DOMAIN}.glitch.me`
                         : `http://localhost:${PORT}`;
-        await server.listen(PORT);
+
+        try {
+
+        try {
+
+        try {
+            await server.listen(PORT);
+        } catch(e) {
+            if(e.code === 'EADDRINUSE') {
+                utils.log.warn("DASHBOARD", `Dashboard is already running: http://localhost:${PORT}`);
+            } else {
+                throw e;
+            }
+        }
+        } catch(e) {}
+        } catch(e) {
+            if(e.code === 'EADDRINUSE') {
+                utils.log.warn("DASHBOARD", `Dashboard is already running: http://localhost:${PORT}`);
+            } else {
+                throw e;
+            }
+        }
         utils.log.info("DASHBOARD", `Dashboard is running: ${dashBoardUrl}`);
         if (config.serverUptime.socket.enable == true)
                 require("../bot/login/socketIO.js")(server);

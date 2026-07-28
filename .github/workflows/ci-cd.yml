@@ -45,7 +45,7 @@ jobs:
             ${{ runner.os }}-node-
 
       - name: Install Dependencies
-        run: npm ci
+        run: npm ci && npm rebuild sqlite3 canvas bcrypt
 
       - name: Core System Syntax Verification
         if: ${{ inputs.run_syntax_checks != false }}
@@ -66,4 +66,3 @@ jobs:
       - name: Run Full Diagnostic Test Suite
         if: ${{ inputs.run_full_diagnostics != false }}
         run: node scratch/test_all_commands.js
-
