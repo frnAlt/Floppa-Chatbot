@@ -1,15 +1,15 @@
-const axios = require("axios");
+const zaiApi = require("../../func/zaiApi");
 
 module.exports = {
   config: {
     name: "4o",
     aliases: ["gpt4o", "dalle4o"],
-    version: "1.0",
-    author: "Neoaz ゐ", //API by RIFAT
+    version: "2.0.0",
+    author: "Neoaz ゐ & frnAlt",
     countDown: 10,
     role: 0,
-    shortDescription: { en: "Generate AI image with 4o" },
-    longDescription: { en: "Generate images using 4o AI model" },
+    shortDescription: { en: "Generate AI image/chat with GPT-4o & zAI" },
+    longDescription: { en: "Generate images or text using GPT-4o, Nano Banana Pro, and zAI model providers." },
     category: "image",
     guide: {
       en: "{pn} <prompt>"
@@ -24,35 +24,27 @@ module.exports = {
     }
 
     const prompt = args.join(" ").trim();
-    const model = "4o";
 
     try {
       api.setMessageReaction("⏳", event.messageID, () => {}, true);
 
-      const res = await axios.get("https://fluxcdibai-1.onrender.com/generate", {
-        params: { prompt, model },
-        timeout: 120000
+      const result = await zaiApi.generateOrEditImage({
+        prompt,
+        model: "gpt-4o",
+        ratio: "1:1"
       });
-
-      const data = res.data;
-      const resultUrl = data?.data?.imageResponseVo?.url;
-
-      if (!resultUrl) {
-        api.setMessageReaction("❌", event.messageID, () => {}, true);
-        return message.reply("Failed to generate image.");
-      }
 
       api.setMessageReaction("✅", event.messageID, () => {}, true);
 
       await message.reply({
-        body: "Image generated 🐦",
-        attachment: await global.utils.getStreamFromURL(resultUrl)
+        body: `✨ Image generated via ${result.provider}`,
+        attachment: await global.utils.getStreamFromURL(result.imageUrl, "4o.png")
       });
 
     } catch (err) {
       console.error(err);
       api.setMessageReaction("❌", event.messageID, () => {}, true);
-      return message.reply("Error while generating image.");
+      return message.reply(`❌ Error while generating image: ${err.message}`);
     }
   }
 };

@@ -1,15 +1,15 @@
-const axios = require("axios");
+const zaiApi = require("../../func/zaiApi");
 
 module.exports = {
   config: {
     name: "aiphoto",
-    aliases: ["aip"],
-    version: "1.0",
-    author: "Neoaz ゐ", //API by RIFAT
+    aliases: ["aip", "aiphotopro"],
+    version: "2.0.0",
+    author: "Neoaz ゐ & frnAlt",
     countDown: 10,
     role: 0,
-    shortDescription: { en: "Generate AI image with AI Photo" },
-    longDescription: { en: "Generate images using AI Photo model" },
+    shortDescription: { en: "Generate AI photos with AI Photo & Nano Banana" },
+    longDescription: { en: "Generate high-quality photographic images using AI Photo, Nano Banana Pro, and zAI models." },
     category: "image",
     guide: {
       en: "{pn} <prompt>"
@@ -20,39 +20,31 @@ module.exports = {
     const hasPrompt = args.length > 0;
 
     if (!hasPrompt) {
-      return message.reply("Please provide a prompt.");
+      return message.reply("Please provide a prompt for AI Photo.");
     }
 
     const prompt = args.join(" ").trim();
-    const model = "ai photo";
 
     try {
       api.setMessageReaction("⏳", event.messageID, () => {}, true);
 
-      const res = await axios.get("https://fluxcdibai-1.onrender.com/generate", {
-        params: { prompt, model },
-        timeout: 120000
+      const result = await zaiApi.generateOrEditImage({
+        prompt,
+        model: "ai-photo",
+        ratio: "1:1"
       });
-
-      const data = res.data;
-      const resultUrl = data?.data?.imageResponseVo?.url;
-
-      if (!resultUrl) {
-        api.setMessageReaction("❌", event.messageID, () => {}, true);
-        return message.reply("Failed to generate image.");
-      }
 
       api.setMessageReaction("✅", event.messageID, () => {}, true);
 
       await message.reply({
-        body: "Image generated 🐦",
-        attachment: await global.utils.getStreamFromURL(resultUrl)
+        body: `✨ Image generated via ${result.provider}`,
+        attachment: await global.utils.getStreamFromURL(result.imageUrl, "aiphoto.png")
       });
 
     } catch (err) {
       console.error(err);
       api.setMessageReaction("❌", event.messageID, () => {}, true);
-      return message.reply("Error while generating image.");
+      return message.reply(`❌ Error generating AI Photo: ${err.message}`);
     }
   }
 };

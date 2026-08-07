@@ -1,50 +1,80 @@
-const axios = require('axios');
+const zaiApi = require("../../func/zaiApi");
+
 module.exports = {
-    config: {
-        name: "nbpro",
-        version: "1.0",
-        aliases: ["edit", "nb", "nanobanana", "nanobanana-pro"],
-        author: "Tawsif~",
-        category: "ai",
-        countDown: 5,
-        role: 0,
-        description: {
-            en: "edit & generate images using Nano-banana Pro"
-        },
-        guide: {
-            en: " <prompt> | reply to image"
-        }
-    },
-    onStart: async function({
-        message, event, args
-    }) {
-        let prompt = args.join(" ");
-        if ((!event.messageReply && !event?.messageReply?.attachments[0]?.url && !prompt) || (event?.messageReply?.attachments[0]?.url && !prompt)) {
-            return message.reply('provide a prompt or reply to an image');
-        } else if (!event?.messageReply?.attachments[0] && prompt) {
-            let ratio = prompt?.split("--ar=")[1] || prompt?.split("--ar ")[1] || '1:1';
-            message.reaction("⏳", event.messageID);
-            try {
-                const gres = await axios.get(`https://tawsif.is-a.dev/gemini/nano-banana-pro-gen?prompt=${encodeURIComponent(prompt)}&ratio=${ratio}`);
-                message.reply({
-                    body: "✅ | Generated", attachment: await global.utils.getStreamFromURL(gres.data.imageUrl, 'gen.png')
-                });
-            } catch (e) {
-                message.reaction("❌", event.messageID);
-            }
-        } else {
-            let imgs = [];
-            for (let i = 0; i < event.messageReply.attachments.length; i++) {
-                imgs.push(event.messageReply.attachments[i].url);
-            }
-            try {
-                const eres = await axios.get(`https://tawsif.is-a.dev/gemini/nano-banana-pro-edit?prompt=${encodeURIComponent(prompt)}&urls=${encodeURIComponent(JSON.stringify(imgs))}`);
-                await message.reply({
-                    attachment: await global.utils.getStreamFromURL(eres.data.imageUrl, 'edit.png'), body: "✅ | image Edited"
-                });
-            } catch (error) {
-                message.reaction("❌", event.messageID);
-            }
-        }
+  config: {
+    name: "nbpro",
+    version: "2.0.0",
+    aliases: ["edit", "nb", "nanobanana", "nanobanana-pro", "nanobananapro", "g3pro", "aipedit"],
+    author: "Tawsif~ & frnAlt",
+    category: "ai",
+    countDown: 5,
+    role: 0,
+    shortDescription: { en: "Edit & generate images/text using Nano Banana Pro" },
+    longDescription: { en: "Generate high quality AI images or edit reply images using Nano Banana Pro, Gemini 3 Pro, and zAI models." },
+    guide: { en: "{pn} <prompt> [--ar=1:1] | reply to an image with prompt" }
+  },
+
+  onStart: async function ({ message, event, args }) {
+    let prompt = args.join(" ").trim();
+    const messageReply = event.messageReply;
+
+    const hasAttachment = messageReply && messageReply.attachments && messageReply.attachments.length > 0;
+
+    if (!prompt && !hasAttachment) {
+      return message.reply("🍌 Please provide a prompt or reply to an image.");
     }
+
+    let ratio = prompt.match(/--ar[= ](\d+:\d+)/)?.[1] || "1:1";
+    if (ratio) {
+      prompt = prompt.replace(/--ar[= ]\d+:\d+/, "").trim();
+    }
+
+    message.reaction("⏳", event.messageID);
+
+    try {
+      if (!hasAttachment) {
+        // Image generation or text response
+        const result = await zaiApi.generateOrEditImage({
+          prompt: prompt || "Generate a beautiful landscape",
+          model: "nano-banana-pro",
+          ratio
+        });
+
+        message.reaction("✅", event.messageID);
+        return message.reply({
+          body: `✅ | Generated via ${result.provider}`,
+          attachment: await global.utils.getStreamFromURL(result.imageUrl, "gen.png")
+        });
+      } else {
+        // Image editing mode
+        let imageUrls = [];
+        for (let i = 0; i < messageReply.attachments.length; i++) {
+          if (messageReply.attachments[i].type === "photo") {
+            imageUrls.push(messageReply.attachments[i].url);
+          }
+        }
+
+        if (imageUrls.length === 0) {
+          message.reaction("❌", event.messageID);
+          return message.reply("Please reply to a valid photo attachment.");
+        }
+
+        const result = await zaiApi.generateOrEditImage({
+          prompt: prompt || "Enhance this image",
+          model: "nano-banana-pro",
+          imageUrls,
+          ratio
+        });
+
+        message.reaction("✅", event.messageID);
+        return message.reply({
+          body: `✅ | Image Edited via ${result.provider}`,
+          attachment: await global.utils.getStreamFromURL(result.imageUrl, "edit.png")
+        });
+      }
+    } catch (error) {
+      message.reaction("❌", event.messageID);
+      return message.reply(`❌ Error processing request: ${error.message}`);
+    }
+  }
 };
