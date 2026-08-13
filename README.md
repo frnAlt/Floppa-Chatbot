@@ -12,8 +12,9 @@
 
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D20.x-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
-[![Developer](https://img.shields.io/badge/Developer-Gtajisan-ff69b4?style=for-the-badge)](https://github.com/frnAlt)
+[![Developers](https://img.shields.io/badge/Developers-frnAlt%20%26%20Gtajisan-ff69b4?style=for-the-badge)](https://github.com/frnAlt)
 [![Engine](https://img.shields.io/badge/Base%20Architecture-Goat%20Bot%20V2-orange?style=for-the-badge)](#-base-architecture--heritage)
+[![Commands](https://img.shields.io/badge/Commands-200%2B%20Loaded-brightgreen?style=for-the-badge)](#-featured-commands)
 
 </div>
 
@@ -23,39 +24,50 @@
 
 **Floppa-Chatbot** is built upon the solid foundation of the **Goat Bot V2** base engine, completely modernized, optimized, and upgraded with:
 
-- ⚡ **Rebuilt Engine (`Floppa.js`)**: Memory leak prevention, aggressive V8 garbage collection management, and high-concurrency event loops.
-- 📦 **Native FCA API (`fca/`)**: Bundled directly into the repository, ensuring continuous 24/7 operation without external dependency failures.
+- ⚡ **Rebuilt Core Engine (`Floppa.js`)**: Memory leak prevention, aggressive V8 garbage collection management, and high-concurrency event loops.
+- 📦 **Native FCA API (`fca/`)**: Bundled directly into `@floppa/fca-native`, ensuring continuous 24/7 operation without external dependency failures.
+- 🧠 **Centralized 11+ LLM AI Core (`system/ai-core.js`)**: Multi-LLM provider routing (`openai`, `gemini`, `claude`, `deepseek`, `ollama`, `groq`, `moonshot`, `glm`, `qwen`, `oneapi`, `sillytavern`) with automatic public API fallbacks.
+- 🛠️ **Unified Functions Suite (`func/`)**: High-performance system telemetry (`systemStats`), cache cleanup (`cacheManager`), AI prompt helpers (`aiHelper`), and message batching.
 - 📱 **Mobile Agent Persona**: Simulates native Android Messenger mobile traffic for maximum account safety on personal & Facebook Business accounts.
-- 📥 **Direct Message (DM) & Business Account Mode**: Full support for 1-on-1 Messenger DMs and Business Page DMs with context-aware command dispatching.
 
-### 👤 Developer & Maintainer
-- **Developer:** **Gtajisan (Farhan Muh Tasim)**
+### 👤 Developers & Maintainers
+- **Developers:** **frnAlt & Gtajisan (Farhan Muh Tasim)**
 - **Repository:** [https://github.com/frnAlt/Floppa-Chatbot](https://github.com/frnAlt/Floppa-Chatbot)
 
 ---
 
-## 📸 Screenshots & Visual Previews
+## 🤖 11+ Supported AI Model Services
 
-<div align="center">
+Floppa-Chatbot includes built-in support for **11+ AI providers**, complete with official API key handling and seamless public URL fallbacks:
 
-### 📊 Live Control Dashboard (No-Login Instant Telemetry & Chat Logs)
-![Dashboard Preview](assets/dashboard-preview.jpg)
-
-<br>
-
-### 💬 Messenger Bot Chat in Action (DM & Group Support)
-![Bot Chat Preview](assets/bot-chat-preview.jpg)
-
-</div>
+1. **OpenAI** (`gpt-4o`, `gpt-4o-mini`, `o1-preview`, `o1-mini`)
+2. **Google Gemini** (`gemini-1.5-flash`, `gemini-1.5-pro`, `gemini-2.0-flash`)
+3. **Anthropic Claude** (`claude-3-5-sonnet`, `claude-3-haiku`, `claude-3-opus`)
+4. **DeepSeek AI** (`deepseek-chat`, `deepseek-r1`, `deepseek-v3`)
+5. **Local Ollama** (`llama3`, `llama3.1`, `qwen2.5`, `deepseek-r1`, `mistral`)
+6. **Groq Cloud** (`llama-3.3-70b-versatile`, `mixtral-8x7b-32768`)
+7. **Moonshot AI / Kimi** (`moonshot-v1-8k`, `moonshot-v1-32k`)
+8. **Zhipu GLM** (`glm-4`, `glm-4-flash`)
+9. **Alibaba Qwen** (`qwen-max`, `qwen-plus`, `qwen-turbo`)
+10. **OneAPI / OpenAI Compatible Aggregators** (`custom-gpt-4o`, `custom-claude`)
+11. **SillyTavern / Local RP Endpoints** (`character-eval`)
 
 ---
 
-## 🔥 Key Features
+## 🔥 Featured Commands (200+ Loaded)
 
-- 📥 **Context-Aware DM & Group Help**: `~help` automatically formats distinct command lists for Direct Messages (DM) vs Group Chats.
-- 💡 **Did-You-Mean Command Suggestions**: Built-in Dice's Coefficient bigram matcher (`findSimilarCommand`) suggests closest command names when typos occur.
-- 🛠️ **Multi-Source Command Suite**: Integrated top utility and media commands (Catbox uploader, Terabox downloader, AI Logo generator, Pinterest search, Pair coupling, TinyURL shortener, Shazam music identifier, Uptime monitor).
-- 📊 **Real-Time Web Dashboard**: Integrated telemetry dashboard showing RAM usage, system uptime, active threads, registered users, and live Messenger message log streaming.
+- 🎨 **/image** (`/dalle`, `/imagine`): Generates high-definition AI digital art from text prompts.
+- 🖼️ **/edit** (`/filter`, `/transform`): Applies AI transformations to replied photos or prompt.
+- 🔍 **/upscale** (`/4k`, `/hd`): Enhances image quality to 4K resolution.
+- ✂️ **/removebg** (`/nobg`, `/rbg`): Removes backgrounds and exports transparent PNGs.
+- 🧠 **/ai** (`/ask`, `/agent`, `/gpt`): Chat with Agentic AI Core (Tool Use, RAG, Multi-LLM routing).
+- 📖 **/quran** (`/alquran`): Read Al-Quran verses, Bengali translations, and listen to Alafasy audio recitations.
+- 🐙 **/github** (`/gh`): Search GitHub users and repository statistics.
+- 👥 **/friendlist** (`/fl`): FCA Friend List manager with enhanced search, pagination, and unfriending.
+- ⌨️ **/typing**: FCA typing indicator controller (`on`/`off`/`duration`).
+- 🎨 **/metatheme**: Messenger thread color theme switcher.
+- 🟢 **/activestatus**: Toggle online active presence on Facebook Messenger.
+- 🎵 **/shazam**: Identify songs from replied audio or video attachments.
 
 ---
 
@@ -64,22 +76,25 @@
 ```
 Floppa-Chatbot/
 ├── assets/                # Visual media assets (Floppa Banner, Logo & Previews)
-│   ├── floppa.jpg
-│   ├── floppa-logo.jpg
-│   ├── dashboard-preview.jpg
-│   └── bot-chat-preview.jpg
-├── fca/                   # Native Built-in FCA API Engine
+├── fca/                   # Native Built-in FCA API Engine (@floppa/fca-native)
 ├── bot/                   # Core bot handlers, login & multi-account manager
 ├── dashboard/             # Live Control Dashboard & Real-Time Log Server
 ├── database/              # SQLite / MongoDB controllers
-├── func/                  # System utilities, memory manager & suggestion matcher
+├── func/                  # System utilities, telemetry, cache manager & AI helper
+│   ├── aiHelper.js
+│   ├── cacheManager.js
+│   ├── systemStats.js
+│   └── index.js
+├── system/                # Centralized AI Core Engine & AstrBot Integration
+│   └── ai-core.js
 ├── languages/             # i18n support (English & Vietnamese)
 ├── scripts/
-│   ├── cmds/              # Command modules (catbox, terabox, logo, pair, etc.)
+│   ├── cmds/              # 200+ Command modules
 │   └── events/            # Event handling scripts
 ├── account.txt            # Facebook Session Cookies / Credentials
 ├── config.json            # Main Bot Configuration
 ├── Floppa.js              # Rebuilt Core Engine Runner
+├── utils.js               # Global Utilities & Helpers
 ├── index.js               # Application Entry Point
 └── package.json           # Project Dependencies & Metadata
 ```
@@ -99,10 +114,8 @@ cd Floppa-Chatbot
 npm install
 ```
 
-### 3. Account Cookie Configuration (Safe Mobile Agent Mode)
-Export your Facebook account cookies using a browser extension (e.g., *Cookie Editor*) into JSON format, and save into `account.txt`.
-
-For detailed instructions on avoiding account locks, multi-account setup, and mobile agent stealth settings, see the **[Safe Cookie Guide](COOKIE_GUIDE.md)**:
+### 3. Account Cookie Configuration
+Export your Facebook account cookies using a browser extension into JSON format, and save into `account.txt`:
 
 ```json
 [
@@ -127,11 +140,7 @@ npm start
 ```
 
 ### 5. Access Live Web Dashboard
-Open your browser and navigate to:
-```
-http://localhost:5000
-```
-View live system metrics, active threads, and real-time Messenger chat logs instantly without login walls.
+Open your browser and navigate to `http://localhost:5000` to view live system metrics, active threads, and real-time Messenger chat logs.
 
 ---
 
@@ -139,4 +148,4 @@ View live system metrics, active threads, and real-time Messenger chat logs inst
 
 This project is licensed under the **MIT License**.
 
-Built upon **Goat Bot V2** base architecture. Developed & maintained by **Gtajisan (Farhan Muh Tasim)**.
+Built upon **Goat Bot V2** base architecture. Developed & maintained by **frnAlt & Gtajisan (Farhan Muh Tasim)**.

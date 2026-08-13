@@ -938,7 +938,8 @@ const utils = {
         uploadZippyshare,
         uploadImgbb,
 
-        GoatBotApis
+        GoatBotApis,
+        ...require("./func")
 };
 
 module.exports = utils;
