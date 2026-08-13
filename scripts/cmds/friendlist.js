@@ -3,7 +3,7 @@ module.exports = {
     name: "friendlist",
     aliases: ["fl"],
     version: "2.4.71",
-    author: "Sheikh Tamim",
+    author: "frnAlt & Gtajisan",
     countDown: 5,
     role: 2,
     description: {

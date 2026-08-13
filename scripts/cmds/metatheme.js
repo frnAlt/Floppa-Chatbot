@@ -3,7 +3,7 @@ module.exports = {
     name: "metatheme",
     aliases: ["settheme", "themecolor"],
     version: "2.4.79",
-    author: "Sheikh Tamim & Floppa",
+    author: "frnAlt & Gtajisan",
     countDown: 5,
     role: 1,
     description: {

@@ -5,7 +5,7 @@ module.exports = {
     name: "typing",
     aliases: ["typingindicator"],
     version: "2.4.78",
-    author: "Sheikh Tamim",
+    author: "frnAlt & Gtajisan",
     countDown: 5,
     role: 2,
     description: {
