@@ -1,5 +1,4 @@
 const fs = require("fs-extra");
-const { sequelize } = global.db;
 
 module.exports = {
 	config: {
