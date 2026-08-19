@@ -1,138 +1,243 @@
-const fs = require("fs-extra");
-const path = require("path");
+/**
+ * @author frnAlt
+ * ! Floppa-Chatbot Help & Command Navigation Engine
+ * ! Paginated, categorized, and interactive command menu
+ */
 
 module.exports = {
-	config: {
-		name: "help",
-		aliases: ["menu", "commands", "cmds", "mansu", "allcmds"],
-		version: "6.0",
-		author: "frnAlt",
-		shortDescription: "Show all available commands and full system info",
-		longDescription: "Displays a comprehensive categorized list of all commands along with system info, bot stats, and DM/Group distinction.",
-		category: "system",
-		guide: "{pn}help [command name | mansu | all]"
-	},
+  config: {
+    name: "help",
+    aliases: ["menu", "commands", "cmds", "allcmds", "guide"],
+    version: "7.0.0",
+    author: "frnAlt",
+    countDown: 2,
+    role: 0,
+    shortDescription: {
+      en: "Display interactive paginated list of commands and system info"
+    },
+    longDescription: {
+      en: "Interactive multi-page command navigation menu with category filters and single command search."
+    },
+    category: "system",
+    guide: {
+      en: "   {pn} [page number]: View specific page (e.g. {pn} 2)\n" +
+        "   {pn} [command name]: View specific command details\n" +
+        "   {pn} cat [category]: Filter commands by category\n" +
+        "   {pn} all: View category summary overview"
+    }
+  },
 
-	onStart: async function ({ message, args, prefix, event }) {
-		const allCommands = global.FloppaBot?.commands || global.GoatBot.commands;
-		const isDM = !event.isGroup || event.threadID === event.senderID;
+  onStart: async function ({ message, args, prefix, event }) {
+    const allCommands = global.FloppaBot?.commands || global.GoatBot?.commands || new Map();
+    const isDM = !event.isGroup || event.threadID === event.senderID;
 
-		const emojiMap = {
-			ai: "➥", "ai-image": "➥", group: "➥", system: "➥",
-			fun: "➥", owner: "➥", config: "➥", economy: "➥",
-			media: "➥", "18+": "➥", tools: "➥", utility: "➥",
-			info: "➥", image: "➥", game: "➥", admin: "➥",
-			rank: "➥", boxchat: "➥", others: "➥"
-		};
+    // Convert map to sorted command array
+    const cmdList = [];
+    const categories = {};
 
-		// Group commands by category
-		const categories = {};
-		const dmCommands = [];
-		const groupOnlyCommands = [];
+    for (const [name, cmd] of allCommands) {
+      const cfg = cmd.config || cmd.meta || {};
+      const cmdName = cfg.name || name;
+      const category = (cfg.category || "Utility").toLowerCase();
+      const desc = typeof cfg.description === "string" 
+        ? cfg.description 
+        : (cfg.description?.en || cfg.shortDescription?.en || cfg.shortDescription || "No description");
+      const role = cfg.role !== undefined ? cfg.role : (cfg.hasPermission || 0);
 
-		const cleanCategoryName = (text) => {
-			if (!text) return "others";
-			return text
-				.normalize("NFKD")
-				.replace(/[^\w\s-]/g, "")
-				.replace(/\s+/g, " ")
-				.trim()
-				.toLowerCase();
-		};
+      const cmdInfo = {
+        name: cmdName,
+        category,
+        description: desc,
+        role,
+        aliases: cfg.aliases || cfg.otherNames || [],
+        usage: cfg.guide?.en || cfg.usage || `${prefix}${cmdName}`,
+        author: cfg.author || "frnAlt",
+        version: cfg.version || "1.0.0"
+      };
 
-		for (const [name, cmd] of allCommands) {
-			const cfg = cmd.config || {};
-			const cat = cleanCategoryName(cfg.category);
-			if (!categories[cat]) categories[cat] = [];
-			categories[cat].push(cfg.name);
+      cmdList.push(cmdInfo);
+      if (!categories[category]) categories[category] = [];
+      categories[category].push(cmdInfo);
+    }
 
-			const isGroupOnly = cfg.groupOnly === true || cfg.scope === "group";
-			if (isGroupOnly) {
-				groupOnlyCommands.push(cfg.name);
-			} else {
-				dmCommands.push(cfg.name);
-			}
-		}
+    cmdList.sort((a, b) => a.name.localeCompare(b.name));
 
-		// Single Command Details View (if args[0] is a specific command and not "mansu" / "all")
-		if (args[0] && !["mansu", "all", "menu", "list"].includes(args[0].toLowerCase())) {
-			const query = args[0].toLowerCase();
-			const cmd =
-				allCommands.get(query) ||
-				[...allCommands.values()].find((c) => (c.config.aliases || []).includes(query));
-			if (!cmd) return message.reply(`❌ Command "${query}" not found.`);
+    // Case 1: Specific Command Lookup (if not number or keyword)
+    if (args[0] && isNaN(args[0]) && !["all", "cat", "category", "categories"].includes(args[0].toLowerCase())) {
+      const query = args[0].toLowerCase();
 
-			const {
-				name,
-				version,
-				author,
-				guide,
-				category,
-				shortDescription,
-				longDescription,
-				aliases,
-				role,
-				groupOnly,
-				scope
-			} = cmd.config;
+      // Check if user is searching for category
+      if (categories[query]) {
+        return renderCategory(categories[query], query, prefix, message);
+      }
 
-			const desc =
-				typeof longDescription === "string"
-					? longDescription
-					: longDescription?.en || shortDescription?.en || shortDescription || "No description provided.";
+      // Find command by name or alias
+      const found = cmdList.find(c => c.name.toLowerCase() === query || c.aliases.map(a => a.toLowerCase()).includes(query));
+      if (!found) {
+        return message.reply(`❌ Command or category "${query}" not found. Type ${prefix}help to see available pages.`);
+      }
 
-			const usage =
-				typeof guide === "string"
-					? guide.replace(/{pn}/g, prefix)
-					: guide?.en?.replace(/{pn}/g, prefix) || `${prefix}${name}`;
+      const roleStr = found.role === 2 ? "Admin Only (Role 2)" : found.role === 1 ? "Group Admin (Role 1)" : "All Users (Role 0)";
 
-			const requiredRole = role !== undefined ? role : 0;
-			const isGroupOnly = groupOnly === true || scope === "group";
-			const dmStatus = isGroupOnly ? "❌ Group Only" : "✅ Yes (Usable in DM & Business Chat)";
-			const icon = emojiMap[cleanCategoryName(category)] || "➥";
+      return message.reply(
+        `╭─── [ 🐱 𝗙𝗟𝗢𝗣𝗣𝗔 𝗖𝗢𝗠𝗠𝗔𝗡𝗗 𝗜𝗡𝗙𝗢 ] ───╮\n` +
+        `│ 📌 Name        : ${found.name}\n` +
+        `│ 📁 Category    : ${found.category.toUpperCase()}\n` +
+        `│ 📝 Description : ${found.description}\n` +
+        `│ 🔀 Aliases     : ${found.aliases.length > 0 ? found.aliases.join(", ") : "None"}\n` +
+        `│ 🔰 Permission  : ${roleStr}\n` +
+        `│ 👤 Author      : ${found.author}\n` +
+        `│ 🏷️ Version     : ${found.version}\n` +
+        `╰───────────────────────────────╯\n\n` +
+        `📖 Usage:\n${found.usage.replace(/{pn}|{prefix}/g, prefix)}`
+      );
+    }
 
-			return message.reply(
-				`🐱 𝗙𝗟𝗢𝗣𝗣𝗔-𝗖𝗛𝗔𝗧𝗕𝗢𝗧 𝗖𝗢𝗠𝗠𝗔𝗡𝗗 𝗜𝗡𝗙𝗢 🐱\n` +
-				`━━━━━━━━━━━━━━━━━━━\n` +
-				`${icon} Name        : ${name}\n` +
-				`${icon} Category    : ${(category || "Uncategorized").toUpperCase()}\n` +
-				`${icon} Description : ${desc}\n` +
-				`${icon} Aliases     : ${aliases?.length ? aliases.join(", ") : "None"}\n` +
-				`${icon} Usage       : ${usage}\n` +
-				`${icon} Permission  : Role ${requiredRole}\n` +
-				`${icon} DM Supported: ${dmStatus}\n` +
-				`${icon} Author      : ${author || "Gtajisan"}\n` +
-				`${icon} Version     : ${version || "1.0"}`
-			);
-		}
+    // Case 2: Category Summary Overview
+    if (args[0]?.toLowerCase() === "all" || args[0]?.toLowerCase() === "categories") {
+      const sortedCatNames = Object.keys(categories).sort();
+      let summary = `╭─── [ 🐱 𝗙𝗟𝗢𝗣𝗣𝗔 𝗖𝗔𝗧𝗘𝗚𝗢𝗥𝗜𝗘𝗦 ] ───╮\n`;
+      summary += `│ 👤 Author   : frnAlt\n`;
+      summary += `│ 📦 Total    : ${cmdList.length} Commands across ${sortedCatNames.length} Categories\n`;
+      summary += `╰───────────────────────────────╯\n\n`;
 
-		// Full Command Menu & System Info
-		const totalThreads = global.db?.allThreadData?.length || 0;
-		const totalUsers = global.db?.allUserData?.length || 0;
-		const uptime = global.utils?.convertTime(process.uptime() * 1000) || "Online";
+      for (const cat of sortedCatNames) {
+        summary += `• ${cat.toUpperCase()} (${categories[cat].length} cmds)\n`;
+      }
+      summary += `\n💡 Type ${prefix}help cat <category> to view commands in a specific category.\n`;
+      summary += `💡 Type ${prefix}help <page> to browse page by page.`;
+      return message.reply(summary);
+    }
 
-		let menuMsg = `🐱 𝗙𝗟𝗢𝗣𝗣𝗔-𝗖𝗛𝗔𝗧𝗕𝗢𝗧 (Full Command Menu) 🐱\n`;
-		menuMsg += `━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
-		menuMsg += `👤 Developer : Gtajisan (Farhan Muh Tasim)\n`;
-		menuMsg += `⚡ Prefix    : ${prefix}\n`;
-		menuMsg += `📊 Mode      : ${isDM ? "Direct Message (DM)" : "Group Chat"}\n`;
-		menuMsg += `⏱️ Uptime    : ${uptime}\n`;
-		menuMsg += `📥 Commands  : ${allCommands.size} Total (${dmCommands.length} DM Supported)\n`;
-		menuMsg += `━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+    // Case 3: Category filter via `cat <category>`
+    if (["cat", "category"].includes(args[0]?.toLowerCase()) && args[1]) {
+      const targetCat = args[1].toLowerCase();
+      if (!categories[targetCat]) {
+        return message.reply(`❌ Category "${targetCat}" not found. Type ${prefix}help all to see available categories.`);
+      }
+      return renderCategory(categories[targetCat], targetCat, prefix, message);
+    }
 
-		const formatCommands = (cmds) => cmds.sort().map((c) => `• ${c}`);
-		const sortedCategories = Object.keys(categories).sort();
+    // Case 4: Paginated List of Commands
+    const perPage = 15;
+    const totalPages = Math.ceil(cmdList.length / perPage) || 1;
+    let page = parseInt(args[0]) || 1;
+    if (page < 1) page = 1;
+    if (page > totalPages) page = totalPages;
 
-		for (const cat of sortedCategories) {
-			const icon = emojiMap[cat] || "➥";
-			menuMsg += `\n╭──『 ${icon} ${cat.toUpperCase()} 』\n`;
-			menuMsg += `${formatCommands(categories[cat]).join("  ")}\n`;
-			menuMsg += `╰───────────────◊\n`;
-		}
+    return sendHelpPage(page, totalPages, cmdList, perPage, prefix, message, event.senderID);
+  },
 
-		menuMsg += `\n💡 Type ${prefix}help [command] for specific command details.\n`;
-		menuMsg += `💬 Type ${prefix}callad to contact bot developers & admins.`;
+  onReply: async function ({ message, event, Reply, prefix }) {
+    if (event.senderID !== Reply.author) return;
 
-		return message.reply(menuMsg);
-	}
+    const input = (event.body || "").trim();
+    const allCommands = global.FloppaBot?.commands || global.GoatBot?.commands || new Map();
+
+    // Convert map to sorted command array
+    const cmdList = [];
+    for (const [name, cmd] of allCommands) {
+      const cfg = cmd.config || cmd.meta || {};
+      const cmdName = cfg.name || name;
+      const category = (cfg.category || "Utility").toLowerCase();
+      const desc = typeof cfg.description === "string" 
+        ? cfg.description 
+        : (cfg.description?.en || cfg.shortDescription?.en || cfg.shortDescription || "No description");
+      const role = cfg.role !== undefined ? cfg.role : (cfg.hasPermission || 0);
+
+      cmdList.push({
+        name: cmdName,
+        category,
+        description: desc,
+        role,
+        aliases: cfg.aliases || cfg.otherNames || [],
+        usage: cfg.guide?.en || cfg.usage || `${prefix}${cmdName}`,
+        author: cfg.author || "frnAlt",
+        version: cfg.version || "1.0.0"
+      });
+    }
+    cmdList.sort((a, b) => a.name.localeCompare(b.name));
+
+    const perPage = 15;
+    const totalPages = Math.ceil(cmdList.length / perPage) || 1;
+
+    // Check if reply is a page number
+    if (!isNaN(input)) {
+      let page = parseInt(input);
+      if (page < 1) page = 1;
+      if (page > totalPages) page = totalPages;
+      return sendHelpPage(page, totalPages, cmdList, perPage, prefix, message, event.senderID);
+    }
+
+    // Check if reply is a command name
+    const query = input.toLowerCase();
+    const found = cmdList.find(c => c.name.toLowerCase() === query || c.aliases.map(a => a.toLowerCase()).includes(query));
+    if (found) {
+      const roleStr = found.role === 2 ? "Admin Only (Role 2)" : found.role === 1 ? "Group Admin (Role 1)" : "All Users (Role 0)";
+      return message.reply(
+        `╭─── [ 🐱 𝗙𝗟𝗢𝗣𝗣𝗔 𝗖𝗢𝗠𝗠𝗔𝗡𝗗 𝗜𝗡𝗙𝗢 ] ───╮\n` +
+        `│ 📌 Name        : ${found.name}\n` +
+        `│ 📁 Category    : ${found.category.toUpperCase()}\n` +
+        `│ 📝 Description : ${found.description}\n` +
+        `│ 🔀 Aliases     : ${found.aliases.length > 0 ? found.aliases.join(", ") : "None"}\n` +
+        `│ 🔰 Permission  : ${roleStr}\n` +
+        `│ 👤 Author      : ${found.author}\n` +
+        `│ 🏷️ Version     : ${found.version}\n` +
+        `╰───────────────────────────────╯\n\n` +
+        `📖 Usage:\n${found.usage.replace(/{pn}|{prefix}/g, prefix)}`
+      );
+    }
+
+    return message.reply(`⚠️ Enter a page number between 1 and ${totalPages}, or type a valid command name.`);
+  }
 };
+
+function renderCategory(cmds, catName, prefix, message) {
+  let msg = `╭─── [ 📁 ${catName.toUpperCase()} COMMANDS (${cmds.length}) ] ───╮\n`;
+  msg += `│ 👤 Author : frnAlt\n`;
+  msg += `╰───────────────────────────────╯\n\n`;
+
+  cmds.forEach((c, i) => {
+    msg += `${i + 1}. ➥ ${c.name} : ${c.description.slice(0, 45)}\n`;
+  });
+
+  msg += `\n💡 Type ${prefix}help <command> for detailed usage.`;
+  return message.reply(msg);
+}
+
+function sendHelpPage(page, totalPages, cmdList, perPage, prefix, message, authorID) {
+  const startIndex = (page - 1) * perPage;
+  const pageCommands = cmdList.slice(startIndex, startIndex + perPage);
+
+  let msg = `╭─── [ 🐱 𝗙𝗟𝗢𝗣𝗣𝗔-𝗖𝗛𝗔𝗧𝗕𝗢𝗧 𝗠𝗘𝗡𝗨 ] ───╮\n`;
+  msg += `│ 👤 Author   : frnAlt\n`;
+  msg += `│ ⚡ Prefix   : ${prefix}\n`;
+  msg += `│ 📄 Page     : [ ${page} / ${totalPages} ]\n`;
+  msg += `│ 📦 Total    : ${cmdList.length} Commands\n`;
+  msg += `╰───────────────────────────────╯\n\n`;
+  msg += `╭──『 📋 COMMANDS LIST 』\n`;
+
+  pageCommands.forEach((cmd, idx) => {
+    const num = startIndex + idx + 1;
+    const descShort = cmd.description.length > 40 ? cmd.description.slice(0, 37) + "..." : cmd.description;
+    msg += `│ ${num}. ➥ ${cmd.name} - ${descShort}\n`;
+  });
+
+  msg += `╰───────────────────────────────◊\n\n`;
+  msg += `💡 Navigation:\n`;
+  msg += `• Reply with a page number (1-${totalPages}) to switch pages\n`;
+  msg += `• Reply with command name to inspect details\n`;
+  msg += `• Use ${prefix}help <page> or ${prefix}help <command>`;
+
+  return message.reply(msg, (err, info) => {
+    if (!err && info?.messageID) {
+      global.GoatBot?.onReply?.set(info.messageID, {
+        commandName: "help",
+        messageID: info.messageID,
+        author: authorID,
+        page,
+        totalPages
+      });
+    }
+  });
+}
