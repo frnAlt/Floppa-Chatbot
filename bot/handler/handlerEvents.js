@@ -2,6 +2,8 @@ const fs = require("fs-extra");
 const SpamTracker = require("../../func/spamTracker.js");
 const CooldownManager = require("../../func/cooldownManager.js");
 const analyticsBatcher = require("../../func/analyticsBatcher.js");
+const InputClass = require("../../func/inputClass.js");
+const OutputClass = require("../../func/outputClass.js");
 const nullAndUndefined = [undefined, null];
 
 // Initialize optimized spam tracker on module load
@@ -302,11 +304,23 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 
                 const prefix = getPrefix(threadID);
                 const role = getRole(threadData, senderID);
+                const input = new InputClass({ api, event, message, role, prefix, args: body ? body.trim().split(/\s+/).slice(1) : [] });
+                const output = new OutputClass({ api, event, message });
                 const parameters = {
                         api, usersData, threadsData, message, event,
                         userModel, threadModel, prefix, dashBoardModel,
                         globalModel, dashBoardData, globalData, envCommands,
                         envEvents, envGlobal, role,
+                        input, output,
+                        usersDB: usersData,
+                        threadsDB: threadsData,
+                        globalDB: globalData,
+                        money: usersData,
+                        userStat: usersData,
+                        FontSystem: utils.FontSystem,
+                        fonts: utils.FontSystem?.fonts,
+                        styler: utils,
+                        utils,
                         removeCommandNameFromBody: function removeCommandNameFromBody(body_, prefix_, commandName_) {
                                 if ([body_, prefix_, commandName_].every(x => nullAndUndefined.includes(x)))
                                         throw new Error("Please provide body, prefix and commandName to use this function, this function without parameters only support for onStart");
