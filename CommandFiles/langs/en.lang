@@ -1,0 +1,6 @@
+# nothing interesting is here bruhh
+# is a comment
+# syntax highlighting of .lang works better on vscode
+# each values were treated as json but you cannot put non string values.
+cmd.not-found="The command %1 does not exist, and I don't care."
+cmd.wtf="What is this? UH %1 %2 %3ahhhhh\nokay"

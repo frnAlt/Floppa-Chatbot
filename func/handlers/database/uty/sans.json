@@ -1,0 +1,64 @@
+{
+  "sans": {
+    "home": "Last Corridor",
+    "DF": 1,
+    "HP": 1,
+    "AT": 1,
+    "NAME": "Sans",
+    "EXP": 49999,
+    "no_winText": true,
+    "dodge": true,
+    "KR": [1, 80],
+    "GOLD": 49999,
+    "TYPE": "geno_boss",
+    "Acts": ["Check"],
+    "attacks": {
+      "BONE ATTACK": "Jump",
+      "GASTER BLASTER": "Trashcanlid",
+      "KARMA": "Stay",
+      "BONE ZONE": "Graze",
+      "BONE ATTACK ": "Stop",
+      "GASTER BLASTER ": "Defuse",
+      "KARMA ": "Eat",
+      "BONE ZONE ": "Evade"
+    },
+    "winningAct": ["none"],
+    "flavorText": {
+      "check": "The easiest enemy. Can only deal 1 damage.",
+      "afterAct": {
+        "Check": ["Just keep attacking."]
+      },
+      "encounter": ["You feel like you're going to have a bad time."],
+      "neutral": [
+        "You felt your sins crawling on your back.",
+        "You felt your sins weighing on your neck.",
+        "KARMA coursing through your veins."
+      ]
+    },
+    "quotes": {
+      "afterAct": {},
+      "neutral": ["...", "..", "...."],
+      "onFight": [
+        ":order",
+        "what? you think i'm just gonna stand there and take it?",
+        "our reports showed a massive anomaly in the timespace continuum.\ntimelines jumping left and right, stopping and starting...",
+        "until suddenly, everything ends.",
+        "heh heh heh...\nthat's your fault, isn't it?",
+        "you can't understand how this feels.",
+        "knowing that one day, without any warning...\nit's all going to be reset.",
+        "look. i gave up trying to go back a long time ago.",
+        "and getting to the surface doesn't really appeal anymore, either.",
+        "cause even if we do...\nwe'll just end up right back here, without any memory of it, right?",
+        "to be blunt...\nit makes it kind of hard to give it my all.",
+        "... or is that just a poor excuse for being lazy...?\nhell if i know.",
+        "all i know is... seeing what comes next...\ni can't afford not to care anymore.",
+        "and maybe all they needed was... i dunno.\nsome good food, some bad laughs, some nice friends.",
+        "but that's ridiculous, right?\nyeah, you're the type of person who won't EVER be happy.",
+        "you'll keep consuming timelines over and over,\nuntil...\nwell.\nhey.\ntake it from me, kid.\nsomeday...\nyou gotta learn when to QUIT.",
+        "cause... y'see..\nall this fighting is really tiring me out.",
+        "and if you keep pushing me...\nthen i'll be forced to use my special attack.",
+        "..."
+      ]
+    }
+  }
+}

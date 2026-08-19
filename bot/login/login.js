@@ -812,6 +812,9 @@ async function startBot(loginWithEmail) {
 
                         global.GoatBot.fcaApi = api;
                         global.GoatBot.botID = api.getCurrentUserID();
+                        if (global.utils && typeof global.utils.extendFCA === "function") {
+                                global.utils.extendFCA(api);
+                        }
                         log.info("LOGIN FACEBOOK", getText('login', 'loginSuccess'));
 
                         // Mark current account as working
@@ -933,6 +936,17 @@ async function startBot(loginWithEmail) {
                         await require("../custom.js")({ api, threadModel, userModel, dashBoardModel, globalModel, threadsData, usersData, dashBoardData, globalData, getText });
                         // —————————————————— LOAD SCRIPTS —————————————————— //
                         await require(process.env.NODE_ENV === 'development' ? "./loadScripts.dev.js" : "./loadScripts.js")(api, threadModel, userModel, dashBoardModel, globalModel, threadsData, usersData, dashBoardData, globalData, createLine);
+
+                        // —————————————— BACKGROUND TASKS —————————————— //
+                        try {
+                                const { BackgroundTaskFB } = require("../../func");
+                                if (BackgroundTaskFB) {
+                                        BackgroundTaskFB.loadTasksFromCommands();
+                                        await BackgroundTaskFB.startPoll(api);
+                                }
+                        } catch (err) {
+                                log.warn("BACKGROUND_TASK", "Could not start background tasks:", err.message);
+                        }
                         // ———————————— CHECK AUTO LOAD SCRIPTS ———————————— //
                         if (global.GoatBot.config.autoLoadScripts?.enable == true) {
                                 const ignoreCmds = global.GoatBot.config.autoLoadScripts.ignoreCmds?.replace(/[ ,]+/g, ' ').trim().split(' ') || [];

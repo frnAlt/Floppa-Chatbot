@@ -1,0 +1,127 @@
+{
+  "chara": {
+    "home": "Underground Ruins",
+    "DF": 4,
+    "HP": 99,
+    "AT": 91,
+    "NAME": "CHARA",
+    "EXP": 0,
+    "GOLD": 99,
+    "TYPE": "final boss",
+    "Acts": ["Fight", "Mercy", "Act", "Item", "Spare"],
+    "actEffect": {
+      "Fight": {
+        "player": -10
+      },
+      "Mercy": {
+        "def": -5
+      },
+      "Act": {
+        "atk": -3,
+        "playerAtk": 2
+      },
+      "Item": {
+        "playerAtk": 5
+      },
+      "Spare": {
+        "atk": -20,
+        "def": -20
+      }
+    },
+    "attacks": {
+      "Knife Slash": "Evade",
+      "Soul Drain": "Repel",
+      "Soul Drain ": "Refuse",
+      "Judgement": "Guard",
+      "Judgement ": "Justice",
+      "Dark Gaze": "Concentrate",
+      "Soul Piercer": "Fortify"
+    },
+    "winningAct": ["none"],
+    "flavorText": {
+      "check": "You face Chara, the embodiment of your sins and choices. Their gaze pierces your soul, unsettling you to the core.",
+      "act": {
+        "Fight": [
+          "Chara slashes at you with their knife, eyes filled with determination. Your ATK decreases by 10."
+        ],
+        "Mercy": [
+          "Chara hesitates for a moment, their expression softening before hardening again. Your DEF decreases by 5."
+        ],
+        "Act": [
+          "You try to reason with Chara, hoping to reach them through your actions. Chara's ATK decreases by 3, your ATK increases by 2. Their eerie smile sends shivers down your spine."
+        ],
+        "Item": [
+          "You use an item to boost your strength, preparing for the battle ahead. Your ATK increases by 5. Chara's eyes narrow with malice."
+        ],
+        "Spare": [
+          "You offer mercy to Chara, hoping they'll see the error in their ways. Chara's ATK and DEF decrease by 20. Their laughter echoes in the darkness, sending chills down your spine."
+        ]
+      },
+      "afterAct": {
+        "Fight": [
+          "Chara laughs maniacally, reveling in the chaos they've caused. Their eyes gleam with sadistic pleasure.",
+          "Your futile attempts to resist only fuel Chara's amusement. They taunt you with mocking laughter."
+        ],
+        "Mercy": [
+          "Chara's eyes flicker with uncertainty, but their resolve remains unchanged. Their smile turns into a menacing grin.",
+          "You sense a glimmer of doubt in Chara's eyes, but it quickly fades into cold determination."
+        ],
+        "Act": [
+          "Chara seems to pause for a moment, a flicker of doubt crossing their face. Their expression darkens as they realize your determination.",
+          "You detect a hint of hesitation in Chara's demeanor, but it's quickly replaced by a steely resolve."
+        ],
+        "Item": [
+          "Chara's expression darkens as they realize your determination to fight. Their laughter fills the air, mocking your efforts.",
+          "You feel Chara's disdain as they mock your feeble attempts to resist. Their laughter echoes in the chamber."
+        ],
+        "Spare": [
+          "Chara's expression softens slightly, a glimmer of hope in their eyes. Their laughter fades into an unsettling silence.",
+          "You catch a fleeting glimpse of vulnerability in Chara's eyes, but it's swiftly concealed behind a mask of indifference."
+        ]
+      },
+      "encounter": [
+        "Chara stands before you, their gaze piercing through your soul. The air grows heavy with anticipation as they size you up."
+      ],
+      "neutral": [
+        "Chara's presence fills the air with an eerie intensity, a stark reminder of your past. Their unsettling aura lingers, casting a shadow over your thoughts.",
+        "You confront Chara, the embodiment of your past deeds. Their presence fills you with a sense of dread, knowing what they represent.",
+        "Your pulse quickens as you face Chara, the weight of your actions heavy on your conscience. Their unsettling aura surrounds you, suffocating.",
+        "The atmosphere grows tense as Chara's gaze meets yours, their expression inscrutable. You can feel the weight of their judgment bearing down on you.",
+        "You stand before Chara, feeling as though you're being scrutinized by an all-seeing eye. Their presence is overwhelming, suffusing the room with an ominous energy.",
+        "The air grows heavy with anticipation as Chara stands before you, their presence sending shivers down your spine.",
+        "Your heart races as you confront Chara, the weight of your past decisions bearing down on you."
+      ]
+    },
+    "quotes": {
+      "afterAct": {
+        "Fight": [
+          "You think you can defeat me with violence? You're only proving my point.",
+          "Violence begets violence, and you've only scratched the surface."
+        ],
+        "Mercy": [
+          "You still believe in mercy? How naive. I'll show you the true meaning of despair.",
+          "Mercy is a fleeting illusion, a weakness I will exploit."
+        ],
+        "Act": [
+          "Trying to reason with me? It's too late for that. Your fate is sealed.",
+          "Reasoning with me won't change the inevitable outcome."
+        ],
+        "Item": [
+          "Boosting your strength won't save you. You're already doomed to suffer.",
+          "Your futile attempts to resist only prolong your suffering."
+        ],
+        "Spare": [
+          "Spare me? Ha! There's no escaping your sins. Embrace them.",
+          "Your attempts at forgiveness fall on deaf ears. Embrace your fate."
+        ]
+      },
+      "lowHP": [
+        "You may have weakened me, but victory will still elude you.",
+        "This is far from over. Prepare for my true power!"
+      ],
+      "neutral": [
+        "You face Chara, the embodiment of your sins and choices. Will you choose mercy or justice? Their unsettling presence looms over you, filling you with dread."
+      ]
+    }
+  }
+}

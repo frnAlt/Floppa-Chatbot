@@ -1,0 +1,17 @@
+{
+  "title": {
+    "content": "〘 %1 〙 %2",
+    "text_font": "bold",
+    "line_bottom": "default",
+    "content_template": ["❔", "UNKNOWN"]
+  },
+  "content": {
+    "text_font": "fancy",
+    "content": null,
+    "line_bottom": "default"
+  },
+  "footer": {
+    "content": "**Developed By**: Francis Loyd Raval",
+    "text_font": "fancy"
+  }
+}

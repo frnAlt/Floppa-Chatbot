@@ -1,0 +1,17 @@
+{
+  "title": {
+    "content": "%1 ✦\n",
+    "text_font": "double_struck",
+    "content_template": ["Title Here"],
+    "new_line": true
+  },
+  "content": {
+    "text_font": "none"
+  },
+  "love": {
+    "content": "\nMade with 🤍 by %1",
+    "text_font": "typewriter",
+    "content_template": ["Your Name"],
+    "new_line": true
+  }
+}

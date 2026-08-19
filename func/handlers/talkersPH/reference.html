@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>TALKERS PH - A Chatting Community</title>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.1/purify.min.js"></script>
+        <style>
+            body {
+                font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+                margin: 0;
+                padding: 0;
+                background-color: #1a1a1a;
+                color: #ffffff;
+            }
+
+            .header {
+                background-color: #222;
+                color: #6efffb;
+                padding: 5px 20px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+            }
+
+            .burger-menu {
+                cursor: pointer;
+                display: block;
+            }
+
+            .online-users {
+                display: none;
+                background-color: #333;
+                padding: 15px;
+                position: absolute;
+                top: 70px;
+                right: 20px;
+                border: 1px solid #444;
+                border-radius: 10px;
+                z-index: 1;
+            }
+
+            .online-users.active {
+                display: block;
+            }
+
+            .container {
+                width: 100%;
+                max-width: 900px;
+                margin: 0 auto;
+                padding-bottom: 60px;
+            }
+
+            .chat-box {
+                list-style-type: none;
+                margin: 0;
+                padding: 0;
+                overflow-y: auto;
+                max-height: 70vh;
+            }
+
+            .message {
+                background-color: #333;
+                border-radius: 20px;
+                margin: 10px 0;
+                padding: 15px 20px;
+                max-width: 80%;
+                word-wrap: break-word;
+                box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+            }
+
+            .message.sent {
+                background-color: #6efffb;
+                color: #1a1a1a;
+            }
+
+            .message.received {
+                background-color: #ff6eff;
+            }
+
+            .message p {
+                margin: 0;
+            }
+
+            .input-box {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                width: 98%;
+                background-color: #333;
+                padding: 5px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                box-shadow: 0px -2px 5px rgba(0, 0, 0, 0.2);
+                z-index: 2;
+            }
+
+            .input-box input[type="text"] {
+                flex: 1;
+                padding: 15px;
+                border: none;
+                border-radius: 30px;
+                font-size: 16px;
+                background-color: #333;
+                color: #ffffff;
+                box-shadow: inset 0px 2px 5px rgba(0, 0, 0, 0.2);
+            }
+
+            .input-box button {
+                padding: 15px 25px;
+                border: none;
+                border-radius: 30px;
+                background-color: #ff6eff;
+                color: white;
+                font-size: 16px;
+                cursor: pointer;
+                box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+            }
+
+            .input-box button:hover {
+                background-color: #ff40ff;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>TALKERS PH</h1>
+            <div
+                class="burger-menu"
+                aria-label="Toggle online users"
+                onclick="toggleOnlineUsers()"
+            >
+                ☰
+            </div>
+        </div>
+        <div class="online-users" id="online-users">
+            <h3>ONLINE USERS</h3>
+            <ul id="users-list"></ul>
+        </div>
+        <div class="container">
+            <ul class="chat-box" id="chat-box"></ul>
+        </div>
+        <div class="input-box">
+            <input
+                type="text"
+                id="message-input"
+                placeholder="Type your message..."
+            />
+            <button onclick="sendMessage()">SEND</button>
+        </div>
+        <script>
+            let username;
+            const chatBox = document.getElementById("chat-box");
+            const messageInput = document.getElementById("message-input");
+            const onlineUsers = document.getElementById("online-users");
+            const usersList = document.getElementById("users-list");
+            let ws;
+
+            async function init() {
+                let savedUsername = localStorage.getItem("username");
+                if (!savedUsername) {
+                    savedUsername = prompt(
+                        "Welcome! Please enter your username:",
+                    );
+                    if (savedUsername) {
+                        localStorage.setItem("username", savedUsername);
+                    } else {
+                        return;
+                    }
+                }
+                username = savedUsername;
+                const response = await fetch("/ws-url");
+                const data = await response.json();
+                connectWebSocket(data.url);
+                loadChatHistory();
+            }
+
+            function connectWebSocket(url) {
+                ws = new WebSocket(url);
+
+                ws.onopen = function () {
+                    ws.send(JSON.stringify({ type: "login", username }));
+                };
+
+                ws.onmessage = function (event) {
+                    const data = JSON.parse(event.data);
+                    switch (data.type) {
+                        case "login_success":
+                            handleLoginSuccess(data.token);
+                            break;
+                        case "login_failure":
+                            alert(data.message);
+                            localStorage.removeItem("username");
+                            break;
+                        case "message":
+                            appendMessage(data.username, data.text);
+                            saveMessageLocally(data.username, data.text);
+                            break;
+                        case "online_users":
+                            updateOnlineUsers(data.users);
+                            break;
+                    }
+                };
+
+                ws.onerror = function (error) {
+                    console.error("WebSocket error:", error);
+                    alert("WebSocket error. Please try again later.");
+                };
+
+                ws.onclose = function () {
+                    console.warn("WebSocket connection closed");
+                    alert(
+                        "WebSocket connection closed. Please try again later.",
+                    );
+                };
+            }
+
+            function handleLoginSuccess(token) {
+                messageInput.focus();
+                localStorage.setItem("token", token);
+            }
+
+            function sendMessage() {
+                const message = messageInput.value.trim();
+                if (message !== "") {
+                    const token = localStorage.getItem("token");
+                    appendMessage("You", message);
+                    saveMessageLocally("You", message);
+                    ws.send(
+                        JSON.stringify({
+                            type: "message",
+                            text: message,
+                            token,
+                        }),
+                    );
+                    messageInput.value = "";
+                }
+            }
+
+            function appendMessage(sender, message) {
+                const isScrolledToBottom =
+                    chatBox.scrollHeight - chatBox.clientHeight <=
+                    chatBox.scrollTop + 1;
+
+                const sanitizedSender = DOMPurify.sanitize(sender);
+                const sanitizedMessage = DOMPurify.sanitize(message);
+
+                const messageElement = document.createElement("li");
+                messageElement.classList.add("message");
+                if (sender === "You") {
+                    messageElement.classList.add("sent");
+                } else {
+                    messageElement.classList.add("received");
+                }
+                messageElement.innerHTML = `<strong>${sanitizedSender}:</strong> <p>${sanitizedMessage}</p>`;
+                chatBox.appendChild(messageElement);
+
+                if (isScrolledToBottom) {
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                }
+            }
+
+            function updateOnlineUsers(users) {
+                usersList.innerHTML = "";
+                users.forEach((user) => {
+                    const li = document.createElement("li");
+                    li.textContent = DOMPurify.sanitize(user);
+                    usersList.appendChild(li);
+                });
+            }
+
+            function toggleOnlineUsers() {
+                onlineUsers.classList.toggle("active");
+            }
+
+            function loadChatHistory() {
+                const chatHistory =
+                    JSON.parse(localStorage.getItem("chatHistory")) || [];
+                chatHistory.forEach(({ sender, message }) =>
+                    appendMessage(sender, message),
+                );
+            }
+
+            function saveMessageLocally(sender, message) {
+                const chatHistory =
+                    JSON.parse(localStorage.getItem("chatHistory")) || [];
+                chatHistory.push({ sender, message });
+                localStorage.setItem(
+                    "chatHistory",
+                    JSON.stringify(chatHistory),
+                );
+            }
+
+            init();
+        </script>
+    </body>
+</html>

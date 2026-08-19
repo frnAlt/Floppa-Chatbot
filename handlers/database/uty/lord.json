@@ -1,0 +1,122 @@
+{
+  "lord_voldemort": {
+    "NAME": "Lord Voldemort",
+    "geno:NAME": "Ultimate Lord Voldemort",
+    "DF": 20,
+    "geno:DF": 45,
+    "HP": 500,
+    "geno:HP": 1000,
+    "AT": 17,
+    "geno:AT": 57,
+    "EXP": 700,
+    "geno:EXP": 350,
+    "GOLD": 20,
+    "TYPE": "boss",
+    "Acts": ["Check", "Inspect", "Intimidate", "Glare", "Cast", "Inquire"],
+    "geno:Acts": ["Check", "Remind"],
+    "actEffect": {
+      "Glare": {
+        "def": -2
+      },
+      "Cast": {
+        "playerAtk": 2
+      },
+      "Inquire": {
+        "atk": -5
+      }
+    },
+    "attacks": {
+      "Cursed Sword": "Melee",
+      "Poison magic spell": "CloseRange",
+      "Electric snake spell": "Stun",
+      "Electric snake spell ": "Chime",
+      "Fire tornado spell": "LongRange",
+      "Cursed Sword ": "Ranged"
+    },
+    "winningAct": ["Intimidate", "Intimidate", "Intimidate", "Intimidate"],
+    "flavorText": {
+      "check": "You cautiously study the wizard, noting its formidable appearance and its movements.",
+      "geno:check": "An enemy who should die.",
+      "act": {
+        "Inspect": [
+          "You are trying to observe his moves and weaknesses on the wizard."
+        ],
+        "Remind": [
+          "You remind the wizard of his weaknesses and how he can be defeated."
+        ],
+        "Intimidate": [
+          "You confront the wizard with a fierce glare, asserting your dominance leading to the wizard to have a slight fear on you."
+        ],
+        "Glare": [
+          "You fixate a menacing stare upon the wizard, unsettling it."
+        ],
+        "Cast": [
+          "You are preparing to cast a forbidden spell on the wizard, feel the power coming to you veins."
+        ],
+        "Inquire": [
+          "You attempt to glean information from the wizard, hoping to gain an advantage in killing him."
+        ]
+      },
+      "afterAct": {
+        "Inspect": [
+          "The wizard laugh's in response to your scrutiny, its hostility evident."
+        ],
+        "Remind": [
+          "The wizard laughs in response to your reminding, its hostility evident.",
+          "Just kill the wizard already."
+        ],
+        "Intimidate": [
+          "The wizard recoils slightly from your display of strength, sensing your determination."
+        ]
+      },
+      "encounter": [
+        "The wizard emerges from the depths of shadows, it's presence is so ominous and it's forebending fear."
+      ],
+      "geno:encounter": ["A wizard who's trying to stop your plans."],
+      "neutral": [
+        "The monster exudes an aura of danger and power, instilling fear in those nearby."
+      ],
+      "geno:neutral": [
+        "The wizard is afraid of you, it's evident.",
+        "You want to kill the wizard, but you don't want to be killed",
+        "Finish him already.",
+        "The way he stand is not good enough.",
+        "He is the example of someone who is trying to save everyone but cannot even save himself.",
+        "Dusting him is the most satisfying you can do."
+      ]
+    },
+    "quotes": {
+      "afterAct": {
+        "Intimidate": [
+          ":order",
+          "How dare you intimidate me you weak foolish mortal, Do you really think that you can intimidate me? I'll show you the true fear, Prepare to be affraid, You will lose!",
+          "Hmph, I see, you're brave to stand against me, but you're still weak, prepare to meet your doom",
+          "......",
+          ".. ."
+        ],
+        "Inquire": [
+          "Ohh, mere mortal, are you dare to question me? Your curiosity will be your downfall.",
+          "Ahhh, I smell fear in your flesh.. seeking for questions and full of curiosity, It's time to you to DIE!!"
+        ],
+        "Glare": [
+          "Stop staring at me weak mortal! do you really think you can stand against me?"
+        ],
+        "Prepare": [
+          "Do you really think preparing your spell to cast me will help? It only delays the inevitable."
+        ]
+      },
+      "lowHP": [
+        "How?, a mere mortal being has weakened me?, but you can't ever defeat me. No mortal can defeat me, the victory will be mine!!",
+        "I have enough!!, It's time to show you my true power its time for you to DIE!!",
+        "Ahh, is this my final destiny, how a mere mortal can defeat me like this, I wont give up, You will DIE!!",
+        "Is this the end of my destiny?"
+      ],
+      "neutral": [
+        "You are nothing but a mere mortal in the face of my might.",
+        "Do you truly believe you can defeat me? How amusing.",
+        "Hah, I see... you are trying to defeat me don't ya?, no mere mortal could ever defeat me",
+        "You're still weak, you can't defeat me, look at your foolish weakling self, you cant ever defend yourself against me"
+      ]
+    }
+  }
+}

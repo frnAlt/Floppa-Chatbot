@@ -1,0 +1,22 @@
+{
+  "content": {
+    "text_font": "typewriter"
+  },
+  "lines": {
+    "content": ""
+  },
+  "resultText": {
+    "text_font": "bold_italic",
+    "content": "Nothing Happened",
+    "line_bottom": "default"
+  },
+  "cashField": {
+    "content": "$@{ cash }💵",
+    "text_font": "none",
+    "content_template": [
+      {
+        "cash": 0
+      }
+    ]
+  }
+}

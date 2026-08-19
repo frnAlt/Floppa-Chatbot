@@ -1,0 +1,77 @@
+{
+  "undyne": {
+    "NAME": "Undyne",
+    "geno:NAME": "Undyne the Undying",
+    "DF": 10,
+    "geno:DF": 5,
+    "HP": 1500,
+    "geno:HP": 23000,
+    "AT": 5,
+    "geno:AT": 12,
+    "EXP": 500,
+    "geno:EXP": 1500,
+    "GOLD": 0,
+    "TYPE": "flee",
+    "Acts": ["Check", "Plead", "Challenge"],
+    "geno:Acts": ["Check"],
+    "actEffect": {
+      "{{Act 1}}": {
+        "{{Effect 1}}": 0
+      },
+      "{{Act 2}}": {
+        "{{Effect 2}}": 0
+      }
+    },
+    "attacks": {
+      "{{Attack Name 1}}": "{{Attack Type 1}}",
+      "{{Attack Name 2}}": "{{Attack Type 2}}",
+      "{{Attack Name 3}}": "{{Attack Type 3}}",
+      "{{Attack Name 4}}": "{{Attack Type 4}}",
+      "{{Attack Name 5}}": "{{Attack Type 5}}",
+      "{{Attack Name 6}}": "{{Attack Type 6}}"
+    },
+    "winningAct": [
+      "Plead",
+      "Plead",
+      "Plead",
+      "Plead",
+      "Plead",
+      "Plead",
+      "Plead",
+      "Plead",
+      "Plead",
+      "Plead"
+    ],
+    "flavorText": {
+      "check": "{{Check Flavor Text}}",
+      "act": {
+        "{{Act 1}}": ["{{Act 1 Flavor Text}}"],
+        "{{Act 2}}": ["{{Act 2 Flavor Text}}"]
+      },
+      "afterAct": {
+        "{{Act 1}}": ["{{After {{Act 1}} Flavor Text}}"],
+        "{{Act 2}}": ["{{After {{Act 2}} Flavor Text}}"]
+      },
+      "encounter": [""],
+      "neutral": ["{{Neutral Flavor Text}}"]
+    },
+    "quotes": {
+      "afterAct": {
+        "{{Act 1}}": ["{{After {{Act 1}} Quote}}"],
+        "{{Act 2}}": ["{{After {{Act 2}} Quote}}"]
+      },
+      "lowHP": [
+        "{{Low HP Quote 1}}",
+        "{{Low HP Quote 2}}",
+        "{{Low HP Quote 3}}",
+        "{{Low HP Quote 4}}"
+      ],
+      "neutral": [
+        "{{Neutral Quote 1}}",
+        "{{Neutral Quote 2}}",
+        "{{Neutral Quote 3}}",
+        "{{Neutral Quote 4}}"
+      ]
+    }
+  }
+}

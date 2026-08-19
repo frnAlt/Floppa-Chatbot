@@ -58,6 +58,9 @@ if (config.whiteListMode?.whiteListIds && Array.isArray(config.whiteListMode.whi
 	config.whiteListMode.whiteListIds = config.whiteListMode.whiteListIds.map(id => id.toString());
 const configCommands = require(dirConfigCommands);
 
+// Universal module resolver for aliases and TypeScript transpilation
+require("./func/moduleResolver.js");
+
 global.FloppaBot = {
 	startTime: Date.now() - process.uptime() * 1000,
 	commands: new Map(),
@@ -82,11 +85,17 @@ global.FloppaBot = {
 	callbackListenTime: {},
 	storage5Message: [],
 	fcaApi: null,
-	botID: null
+	botID: null,
+	bgTasks: [],
+	plugins: {},
+	presets: new Map(),
+	invLimit: 120,
+	highRoll: Math.floor(Number.MAX_SAFE_INTEGER)
 };
 
-// Maintain GoatBot backward compatibility alias
+// Maintain backward compatibility aliases
 global.GoatBot = global.FloppaBot;
+global.Cassidy = global.FloppaBot;
 
 global.db = {
 	allThreadData: [],
@@ -124,6 +133,7 @@ global.client = {
 
 const utils = require("./utils.js");
 global.utils = utils;
+global.FloppaBot.multiCommands = new utils.MultiMap();
 const { colors } = utils;
 const shutdownManager = require("./func/gracefulShutdown.js");
 

@@ -1,0 +1,71 @@
+{
+  "UTShop_Analytics": {
+    "money": 0,
+    "exp": 0,
+    "battlePoints": 0,
+    "lastModified": 1761816633138,
+    "analytics": [
+      [
+        "gsCarrot",
+        16
+      ],
+      [
+        "gsStrawberry",
+        2
+      ],
+      [
+        "darkburger",
+        1
+      ],
+      [
+        "gsBlueberry",
+        2
+      ],
+      [
+        "kabayo",
+        2
+      ]
+    ]
+  },
+  "COMSHOP": {
+    "money": 0,
+    "exp": 0,
+    "battlePoints": 0,
+    "lastModified": 1761817415523,
+    "comshop": [
+      {
+        "name": "Water Breathing Potion",
+        "icon": "🧪🫧",
+        "key": "waterPotion",
+        "sellPrice": 1000000,
+        "shopPrice": 10000000,
+        "flavorText": "The potion allows your pet to live underwater forever and leave you.",
+        "type": "potion",
+        "uuid": "1761817226953_203fcfe2-2956-4031-8d80-aea8f581eafc",
+        "submissionDate": 1761817226953,
+        "index": 0,
+        "cannotToss": false,
+        "approved": true,
+        "authorID": "web:bmVha3l1dGk"
+      },
+      {
+        "name": "Foamblade",
+        "icon": "🧽",
+        "key": "foamBlade",
+        "sellPrice": 1000000,
+        "shopPrice": 10000000,
+        "flavorText": "A soft but decently sharp sword for your pet.",
+        "type": "weapon",
+        "atk": 15,
+        "def": 1,
+        "magic": 0,
+        "uuid": "1761817374932_50e580ad-8fc0-4cab-b8ed-28b9436092e0",
+        "submissionDate": 1761817374932,
+        "index": 2,
+        "cannotToss": false,
+        "approved": true,
+        "authorID": "web:bmVha3l1dGk"
+      }
+    ]
+  }
+}

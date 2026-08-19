@@ -1,0 +1,675 @@
+{
+  "flier": {
+    "home": "dark_ruins",
+    "NAME": "flier",
+    "HP": 25,
+    "AT": 3,
+    "DF": 4,
+    "EXP": 2,
+    "GOLD": 2,
+    "TYPE": "monster",
+    "Acts": ["Check", "Compliment", "Criticize", "Comfort"],
+    "attacks": {
+      "Fire": "right",
+      "Flies": "left",
+      "Swarn": "up"
+    },
+    "winningAct": ["Comfort"],
+    "flavorText": {
+      "check": "Flier feels nothing.",
+      "act": {
+        "Comfort": [
+          "You inform Flier that his life isn’t half over, he has a whole half left to go!"
+        ],
+        "Compliment": ["You tell Flier he looks proud."],
+        "Criticize": ["You insult Flier’s choice of outfits."]
+      },
+      "afterAct": {
+        "Compliment": ["Flier reconsiders his choice to approach you."],
+        "Comfort": ["Flier is ready to return to his regular life."]
+      },
+      "encounter": ["Flier is giving fighting a try!"],
+      "neutral": [
+        "Flier uses hip slang like the kids.",
+        "Flier doesn’t think the position ‘enemy’ fits him.",
+        "Flier is caught up in old memories.",
+        "Everything has that new car smell with a faint whiff of bodyspray."
+      ],
+      "geno:neutral": [
+        "Kill the fly, the way you killed the mosquitoes",
+        "Let's do a massacre.",
+        "Poor fly, poor lier, should have been ended it's life earlier.",
+        "Let's kill everyone : )",
+        "You are laughing at the fly's poor appearance.",
+        "let's rampage."
+      ]
+    },
+    "quotes": {
+      "afterAct": {
+        "Comfort": [
+          "I... This isn't really me...",
+          "You're right. Something needs to change"
+        ],
+        "Compliment": [
+          "That’s right! I knew you noticed!",
+          "Yeah, I totally agree."
+        ],
+        "Criticize": [
+          "You just have no sense of modern fashion trends!",
+          "That hurts me on a personal level."
+        ]
+      },
+      "lowHP": ["Just gotta keep it... cool.", "So this is how it ends?"],
+      "neutral": [
+        "I’m looking to buy a boat! Know anyone selling?",
+        "I’ve been working out! No big deal ;)",
+        "I found this great new band the other day!",
+        "But I’m cool! I’m still cool!"
+      ]
+    }
+  },
+  "hardest_boss": {
+    "home": "dreadful_castle",
+    "NAME": "Dreadful Titan",
+    "HP": 100,
+    "geno:HP": 2000,
+    "AT": 10,
+    "geno:AT": 50,
+    "DF": 8,
+    "geno:DF": 20,
+    "EXP": 50,
+    "GOLD": 50,
+    "TYPE": "boss",
+    "Acts": ["Check", "Threaten", "Glare", "Sharpen", "Question"],
+    "geno:Acts": ["Check", "Insult"],
+    "actEffect": {
+      "Glare": {
+        "def": -5
+      },
+      "Sharpen": {
+        "playerAtk": 5
+      },
+      "Insult": {
+        "playerAtk": 7,
+        "atk": -2
+      },
+      "Question": {
+        "atk": -3
+      }
+    },
+    "attacks": {
+      "Crushing Blow": "Shout",
+      "Thunderous Roar": "Earpod",
+      "Earthquake Slam": "Jump",
+      "Darkness Nova": "Lightbulb",
+      "Flame Burst": "Spray",
+      "Icy Blast": "Flame",
+      "Venomous Bite": "Antidote",
+      "Sonic Boom": "Hide",
+      "Shadow Strike": "Flashlight",
+      "Molten Eruption": "Water"
+    },
+    "winningAct": [
+      "Threaten",
+      "Threaten",
+      "Threaten",
+      "Threaten",
+      "Threaten",
+      "Threaten",
+      "Threaten",
+      "Threaten",
+      "Threaten",
+      "Threaten"
+    ],
+    "flavorText": {
+      "check": "Dreadful Titan looms over you with an intimidating presence, radiating power and malice.",
+      "geno:check": "Just a roadblock.",
+      "act": {
+        "Check": [
+          "You observe Dreadful Titan closely, recognizing its immense strength and formidable armor.",
+          "You carefully assess Dreadful Titan's weaknesses, but finding none."
+        ],
+        "Insult": [
+          "You insult Dreadful Titan's appearance, causing it to decrease his attack by 2, and your DETERMINATION increased your attack by 7."
+        ],
+        "Threaten": [
+          "You stand defiantly before Dreadful Titan and issue a challenge, 'Prepare to face your end, foul beast!'",
+          "You attempt to intimidate Dreadful Titan with a stern warning, 'Back down now, or suffer the consequences!'"
+        ],
+        "Glare": [
+          "You glared at Dreadful Titan, intimidating enough to decrease its defenses by 5."
+        ],
+        "Sharpen": ["You sharpened your weapon, increasing your attack by 5"],
+        "Question": [
+          "You tried to question his wrongdoings, Dreadful Titan's attack decreased by 3!"
+        ]
+      },
+      "afterAct": {
+        "Check": [
+          "Dreadful Titan scoffs at your attempts to understand its power, 'You fool, there's no escaping your fate.'",
+          "You sense Dreadful Titan's disdain for your feeble efforts, 'You think you can defeat me? Pathetic.'"
+        ],
+        "geno:Check": ["Kill him."],
+        "Insult": ["Just kill him already."],
+        "Threaten": [
+          "Dreadful Titan laughs menacingly, despite laughing, Deadful Titan feels threatened.",
+          "You feel Dreadful Titan's fury intensify, but you feel yours intensify more!",
+          "You felt something like a power, as you were able to threaten Dreadful Titan. You feel your power grow stronger."
+        ]
+      },
+      "encounter": [
+        "Dreadful Titan emerges from the shadows, ready to crush any who dare to oppose it."
+      ],
+      "geno:encounter": ["Yet another roadblock."],
+      "neutral": [
+        "Dreadful Titan radiates an aura of dread and power, filling the air with tension.",
+        "The ground trembles beneath Dreadful Titan's heavy footsteps, echoing its unstoppable advance.",
+        "You feel a chill run down your spine as Dreadful Titan's malevolent gaze falls upon you.",
+        "The air grows thick with anticipation as Dreadful Titan prepares to unleash its wrath."
+      ],
+      "geno:neutral": [
+        "Another roadblock.",
+        "You are annoyed with the way Dreadful Titan is acting.",
+        "The way this battle going to end is going to be a painful one.",
+        "Finish him.",
+        "You are fighting against a roadblock",
+        "Useless encounter",
+        "He's just here to waste your time.",
+        "He is just digging his own grave."
+      ]
+    },
+    "quotes": {
+      "afterAct": {
+        "Threaten": [
+          ":order",
+          "You dare to challenge me? I- I'll crush you like a bug. W- we'll see!",
+          "You've sealed your own fate.. m- mortal. So stop looking at me like that!",
+          "You don't understand, I'm just trying to protect my people.",
+          "I lied, I'm not even protecting anyone.",
+          "Stop threating me!",
+          "I'm trying t- to prove myself.",
+          "I- I'm actually... I am wea-",
+          "FORGET IT! YOU CANNOT THREATEN ME!",
+          "P- please stop!",
+          "Spare me. I don't deserve this."
+        ],
+        "Question": ["..."],
+        "Glare": [
+          "Stop glaring at me!",
+          "What do you think you're doing?",
+          "You're not even trying to hurt me physically! but mentally!"
+        ],
+        "Sharpen": [
+          "Can't believe you got time on sharpening your poor sword.",
+          "You're not even trying to hurt me, are you?"
+        ]
+      },
+      "lowHP": [
+        "You may have weakened me, but victory will still elude you.",
+        "This is far from over. Prepare for my true powe- Uh."
+      ],
+      "geno:lowHP": [],
+      "geno:neutral": [
+        ":order",
+        "I will protect my people. You will pay for your sins.",
+        "This is the battle you want, right? Well.. This is the battle you'll have to fight.",
+        "I tried everything.. This time.. I'm ready, I'm really saving people this time.",
+        "The monsters are made of love and hope, how dare you try to hurt them?",
+        "I- I'm going to...",
+        "Screw it! I'm pissed off! I'm going to kill you!",
+        "Again.. you will pay for your sins.",
+        "Huh.. Not giving up yet? I'm not dead yet!",
+        "Even if you win, Asgore has sealed your fate.",
+        "Every human who comes here in the underground will meet the same fate; your souls were used to destroy the barrier.",
+        "I am here, delivering justice.. for the monsterkind.",
+        "You, yes you are.. you are a human, and yet you killed most of us, and yet you are still alive.",
+        "You will die..",
+        "Your rampage, ends.. NOW!",
+        "Enough talking.. I will stop talking.. and I will focus on beating you.",
+        "....",
+        "..",
+        "...?",
+        "...."
+      ],
+      "neutral": [
+        "You are nothing but an insect before my might.",
+        "Do you truly believe you can best me? How amusing.",
+        "You cannot hope to comprehend the depths of my power.",
+        "I am the embodiment of destruction, and you are nothing but dust in the wind."
+      ]
+    }
+  },
+  "mad_macaroni": {
+    "home": "mad_house",
+    "NAME": "Mad Macaroni",
+    "HP": 30,
+    "AT": 7,
+    "DF": 90,
+    "EXP": 20,
+    "GOLD": 40,
+    "TYPE": "monster",
+    "Acts": ["Dance", "Cook", "Nap", "Sing", "Joke", "Paint", "Exercise"],
+    "attacks": {
+      "Spaghetti Slap": "right",
+      "Cheese Toss": "down",
+      "Noodle Whip": "up",
+      "Spaghetti Slap left-handed": "left",
+      "Cheese Dance": "circular"
+    },
+    "winningAct": ["Joke", "Paint", "Sing"],
+    "flavorText": {
+      "check": "Mad Macaroni loves jokes.. can't start a day without starting to hear any good joke! maybe he love arts and performing too! not sure.",
+      "act": {
+        "Joke": [
+          "You crack a cheesy joke, 'Why did the tomato turn red? Because it saw the salad dressing!' but it seems like mad Macaroni is more interested on turning the tomato into an art.",
+          "You pull out a rubber chicken and quip, 'What do you call fake spaghetti? An impasta!', but it looks like Mad Macaroni is more interested in turning the chicken into a painting."
+        ],
+        "Dance": [
+          "You start doing the macarena with noodles flying everywhere!",
+          "You bust a move, doing the twist and shouting, 'Let's pasta-rize!'"
+        ],
+        "Cook": [
+          "You whip up a batch of spicy meatballs, 'Spaghetti alla Diablo, anyone?'",
+          "You toss pasta in the air, singing 'That's amore!'"
+        ],
+        "Nap": [
+          "You pull out a giant fork and spoon, curl up in a pile of noodles, and take a quick snooze.",
+          "You wrap yourself in a blanket of lasagna noodles and doze off, muttering about dreamy marinara sauce."
+        ],
+        "Sing": [
+          "You serenade with a pasta-themed song, 'On top of spaghetti, all covered with cheese!'",
+          "You belt out a tune, 'Pasta la vista, baby!'"
+        ],
+        "Paint": [
+          "You create a masterpiece with marinara and noodles, 'It's pasta-bly my best work yet!'",
+          "You splash colors onto the canvas, 'Art is like pasta, you can't have too much!'"
+        ],
+        "Exercise": [
+          "You do jumping jacks with spaghetti noodles, 'Gotta keep those carbs in check!'",
+          "You lift a pot of boiling water like a weight, 'Pasta power!'"
+        ]
+      },
+      "afterAct": {
+        "Joke": [
+          "Mad Macaroni chuckles, 'You're on a roll!'",
+          "Mad Macaroni wipes tears of laughter, 'That's pasta-tively hilarious!'"
+        ],
+        "Dance": [
+          "Mad Macaroni catches his breath, 'Whew! You're pasta point of exhaustion!'",
+          "Mad Macaroni grins, 'Who knew you could dance so noodle-tastic?'"
+        ],
+        "Cook": [
+          "Mad Macaroni beams proudly, 'Another culinary masterpiece!'",
+          "Mad Macaroni serves up plates of spaghetti with a flourish, 'Bon appétit!'"
+        ],
+        "Nap": [
+          "Mad Macaroni stretches and yawns, 'Ah, nothing like a noodle nap to recharge!'",
+          "Mad Macaroni wakes up refreshed, 'Ready to tackle the world, one pasta dish at a time!'"
+        ],
+        "Sing": [
+          "Mad Macaroni takes a bow, 'Encore! Encore!', Mad Macaronic looks satisfied.",
+          "Mad Macaroni grins, 'Music to my marinara-covered ears!', Mad Macaroni looks satisfied."
+        ],
+        "Paint": [
+          "Mad Macaroni admires your masterpiece, 'I call it 'The Pasta Symphony'!, but I'm not onto arts!', Mad Macaroni want to see you sing instead.",
+          "Mad Macaroni signs your artwork with a swirl of spaghetti, 'Art is pasta-tively amazing! But I'm not a painter! I'm a singer!"
+        ],
+        "Exercise": [
+          "Mad Macaroni flexes his noodle muscles, 'Feeling strong as linguine!'",
+          "Mad Macaroni wipes sweat off his brow, 'Exercise is the pasta to a healthy life!'"
+        ]
+      },
+      "encounter": [
+        "Mad Macaroni is stirring up trouble with his noodle antics!",
+        "The air is filled with the aroma of garlic and marinara sauce."
+      ],
+      "neutral": [
+        "Mad Macaroni juggles meatballs with ease, 'Just another day in the pasta-verse!'",
+        "Mad Macaroni hums a tune while tossing noodles in the air, 'Life is a spaghetti western!'",
+        "The air is filled with the aroma of garlic and marinara sauce.",
+        "Mad Macaroni twirls his mustache made of spaghetti noodles.",
+        "Mad Macaroni pulls out a giant fork and spoon, 'Who's ready for a feast?'"
+      ]
+    },
+    "quotes": {
+      "afterAct": {
+        "Joke": ["Ha! You crack me up!", "That's a real knee-slapper!"],
+        "Dance": [
+          "Whew! You're pasta point of exhaustion!",
+          "Who knew you could dance so noodle-tastic?"
+        ],
+        "Cook": ["Another culinary masterpiece!", "Bon appétit!"],
+        "Nap": [
+          "Ah, nothing like a noodle nap to recharge!",
+          "Ready to tackle the world, one pasta dish at a time!"
+        ],
+        "Sing": ["Encore! Encore!", "Music to my marinara-covered ears!"],
+        "Paint": [
+          "Art is pasta-tively amazing!",
+          "I call it 'The Pasta Symphony'! But I'm not onto arts!"
+        ],
+        "Exercise": [
+          "Feeling strong as linguine!",
+          "Exercise is the pasta to a healthy life!"
+        ]
+      },
+      "lowHP": [
+        "Oh no, I'm getting saucy!",
+        "This is a real noodle bender!",
+        "Time to spice things up!"
+      ],
+      "neutral": [
+        "Anyone up for a pasta party?",
+        "Let's get this spaghetti started!",
+        "I'm feeling pasta-tively awesome today!",
+        "But hey, at least I'm still pasta-riffic!",
+        "Life's a noodle, so slurp it up!",
+        "I'm saucy and I know it!",
+        "I'm on a carb-only diet: pasta and more pasta!"
+      ]
+    }
+  },
+  "froggit": {
+    "NAME": "Froggit",
+    "HP": 20,
+    "AT": 5,
+    "DF": 3,
+    "EXP": 5,
+    "GOLD": 5,
+    "TYPE": "monster",
+    "Acts": ["Check", "Compliment", "Threaten", "Ignore"],
+    "attacks": {
+      "Hop": "up",
+      "Tongue Lash": "stay"
+    },
+    "winningAct": ["Compliment"],
+    "flavorText": {
+      "check": "Froggit hops towards you, looking curious and a bit nervous.",
+      "act": {
+        "Compliment": [
+          "You compliment Froggit's croak. It blushes and hops happily.",
+          "You tell Froggit it has nice eyes. It blushes and wiggles happily."
+        ],
+        "Threaten": [
+          "You threaten Froggit. It cowers in fear and lowers its head."
+        ],
+        "Ignore": ["You ignore Froggit. It looks hurt and hops away sadly."]
+      },
+      "afterAct": {
+        "Compliment": [
+          "Froggit looks much happier now.",
+          "Froggit seems more confident after your compliment."
+        ],
+        "Threaten": [
+          "Froggit trembles in fear.",
+          "Your threat seems to have deeply affected Froggit."
+        ],
+        "Ignore": [
+          "Froggit hops away, feeling dejected.",
+          "Ignoring Froggit seems to have made it sad."
+        ]
+      },
+      "encounter": ["A Froggit hopped into view. It's staring at you."],
+      "neutral": [
+        "Froggit stares at you with its big round eyes.",
+        "You hear Froggit croaking softly.",
+        "Froggit's long tongue flicks out as it watches you.",
+        "Froggit hops around nervously, not sure what to do."
+      ],
+      "geno:neutral": [
+        "Just kill the frog already..",
+        "Let's do a massacre.",
+        "The frog is digging it's own grave.",
+        "Let's kill everyone : )"
+      ]
+    },
+    "quotes": {
+      "afterAct": {
+        "Compliment": ["Thanks, complimenting Froggit is nice."],
+        "Threaten": ["Please don't hurt me..."],
+        "Ignore": ["I guess I'm not that interesting..."]
+      },
+      "lowHP": ["I'm feeling really weak...", "Please, spare me..."],
+      "neutral": ["I hope I'm not bothering you...", "Ribbit, ribbit."]
+    }
+  },
+  "sweet_corn": {
+    "NAME": "Sweet Corn",
+    "HP": 30,
+    "AT": 2,
+    "DF": 3,
+    "EXP": 3,
+    "GOLD": 2,
+    "TYPE": "monster",
+    "Acts": ["Check", "Hug", "Lick", "Gift"],
+    "attacks": {
+      "Candy Corn Shower": "leftright",
+      "Cornstalk Barrage": "updown",
+      "Corn Cob Chase": "grazing"
+    },
+    "winningAct": ["Hug"],
+    "flavorText": {
+      "check": "Sweet Corn tries to encourage you to smile.",
+      "act": {
+        "Hug": [
+          "You give Sweet Corn a big hug. She briefly gets stuck to your shirt."
+        ],
+        "Lick": [
+          "You lick Sweet Corn. All you can taste is sugar.",
+          "Your ears are ringing from the chatter."
+        ],
+        "Gift": [
+          "REALLY?!?",
+          "It's the thought that counts!",
+          "I don't want anything but a smile."
+        ]
+      },
+      "afterAct": {
+        "Hug": ["Sweet Corn is smiling contentedly.", "I'm feelin' the love~"],
+        "Lick": [
+          "Whatever makes you happy!",
+          "Now you're just invading my space."
+        ]
+      },
+      "encounter": ["Sweet Corn hops up excitedly."],
+      "neutral": [
+        "Sweet Corn seems to can't stop twitching.",
+        "It smells like burning candle wax."
+      ],
+      "geno:neutral": [
+        "Poor corn, kill him already..",
+        "Eat him.",
+        "You want to see this corn dead, but you want to see this corn devoured too!",
+        "Let's kill everyone :) "
+      ]
+    },
+    "quotes": {
+      "afterAct": {
+        "Hug": ["I love you so much <3", "A hug is the best medicine!"],
+        "Lick": [
+          "Whatever makes you happy! I suppose...",
+          "W-whatever makes you happy."
+        ],
+        "Gift": ["I don't want anything but a smile.", "What was that sound?"]
+      },
+      "lowHP": ["Why aren't you happy?", "I feel... hurt."],
+      "neutral": [
+        "You're doing great, Sweetie!",
+        "*squeak* *squeak*",
+        "You can do this!",
+        "Remember, I always love you! <3"
+      ]
+    }
+  },
+  "pizzamancer": {
+    "NAME": "The Pizzamancer",
+    "HP": 15,
+    "AT": 8,
+    "DF": 100,
+    "EXP": 100,
+    "GOLD": 100,
+    "TYPE": "boss",
+    "Acts": ["Check", "Order", "Toss", "Summon"],
+    "attacks": {
+      "Cheesy Blast": "trashcanlid",
+      "Dough Tornado": "furnace",
+      "Pepperoni Rain": "umbrella",
+      "Mozzarella Avalanche": "downgo"
+    },
+    "actEffect": {
+      "Toss": {
+        "def": -25
+      }
+    },
+    "winningAct": [""],
+    "flavorText": {
+      "check": "The Pizzamancer swirls his pepperoni staff and eyes you hungrily.",
+      "act": {
+        "Order": [
+          "You place an order for a large pepperoni pizza. The Pizzamancer nods approvingly.",
+          "You ask for extra cheese on your pizza. The Pizzamancer chuckles and obliges."
+        ],
+        "Toss": [
+          "You attempt to toss a slice of pizza at The Pizzamancer. He catches it effortlessly and takes a bite, decreasing his defense",
+          "You throw a slice of pizza towards The Pizzamancer. He catches it in his mouth with a grin which results to decrease of his defense."
+        ],
+        "Summon": [
+          "You attempt to summon the Pizza Delivery Guy. The Pizzamancer laughs and summons his own Pizza Golem instead.",
+          "You try to summon reinforcements from the Pizza Parlor. The Pizzamancer counters by summoning a swarm of Pizza Gremlins."
+        ]
+      },
+      "afterAct": {
+        "Order": [
+          "The Pizzamancer conjures up a delicious pizza and tosses it to you as a reward.",
+          "Your order arrives in record time, and The Pizzamancer rewards you with extra toppings."
+        ],
+        "Toss": [
+          "The Pizzamancer chuckles and tosses a slice of pizza back at you, healing your wounds.",
+          "You share a slice of pizza with The Pizzamancer, and he seems pleased with your gesture."
+        ],
+        "Summon": [
+          "The Pizza Golem emerges from the oven, ready to serve The Pizzamancer's bidding.",
+          "The swarm of Pizza Gremlins wreak havoc, distracting you from the battle at hand."
+        ]
+      },
+      "encounter": [
+        "The Pizzamancer appears in a puff of flour, wielding a pepperoni staff and a menacing grin."
+      ],
+      "neutral": [
+        "The smell of freshly baked pizza fills the air.",
+        "You hear the sizzle of cheese and the crackle of pepperoni.",
+        "The Pizzamancer twirls his pizza cutter with finesse.",
+        "You can't help but feel hungry in the presence of The Pizzamancer."
+      ]
+    },
+    "quotes": {
+      "afterAct": {
+        "Order": [
+          "Enjoy your meal!",
+          "A satisfied customer is a happy Pizzamancer!"
+        ],
+        "Toss": [
+          "Pizza is the ultimate weapon!",
+          "Who says you can't fight evil with pizza?"
+        ],
+        "Summon": [
+          "Pizza, my loyal minions!",
+          "Let's show them the power of cheesy goodness!"
+        ]
+      },
+      "lowHP": [
+        "My crust is crumbling...",
+        "You've defeated me... with pizza..."
+      ],
+      "neutral": [
+        "Care for a slice?",
+        "I hope you like extra cheese!",
+        "Pizza is life, my friend."
+      ]
+    }
+  },
+  "generic": {
+    "home": "monster_lair",
+    "DF": 10,
+    "EXP": 0,
+    "GOLD": 0,
+    "TYPE": "boss",
+    "Acts": ["Inspect", "Intimidate", "Glare", "Prepare", "Inquire"],
+    "actEffect": {
+      "Glare": {
+        "def": -5
+      },
+      "Prepare": {
+        "playerAtk": 5
+      },
+      "Inquire": {
+        "atk": -3
+      }
+    },
+    "attacks": {
+      "Slash": "Melee",
+      "Bite": "CloseRange",
+      "Roar": "Stun"
+    },
+    "winningAct": ["Intimidate", "Intimidate", "Intimidate"],
+    "flavorText": {
+      "check": "You cautiously study the monster, noting its formidable appearance.",
+      "act": {
+        "Inspect": [
+          "You observe the monster closely, trying to discern any weaknesses."
+        ],
+        "Intimidate": [
+          "You confront the monster with a fierce glare, asserting your dominance."
+        ],
+        "Glare": [
+          "You fixate a menacing stare upon the monster, unsettling it."
+        ],
+        "Prepare": [
+          "You ready yourself for battle, feeling a surge of adrenaline."
+        ],
+        "Inquire": [
+          "You attempt to glean information from the monster, hoping to gain an advantage."
+        ]
+      },
+      "afterAct": {
+        "Inspect": [
+          "The monster snarls in response to your scrutiny, its hostility evident."
+        ],
+        "Intimidate": [
+          "The monster recoils slightly from your display of strength, sensing your determination."
+        ]
+      },
+      "encounter": [
+        "The monster emerges from the shadows, its presence ominous and foreboding."
+      ],
+      "neutral": [
+        "The monster exudes an aura of danger and power, instilling fear in those nearby."
+      ]
+    },
+    "quotes": {
+      "afterAct": {
+        "Intimidate": [
+          "You think you can intimidate me? I'll show you true fear!",
+          "You're brave to stand against me, but foolish. Prepare for your demise!"
+        ],
+        "Inquire": [
+          "You dare to question me? Your curiosity will be your downfall."
+        ],
+        "Glare": [
+          "Stop staring at me like that! You think you can intimidate me?"
+        ],
+        "Prepare": [
+          "You think sharpening your weapon will help? It only delays the inevitable."
+        ]
+      },
+      "lowHP": [
+        "You may have weakened me, but victory will still elude you.",
+        "This is far from over. Prepare for my true power!"
+      ],
+      "neutral": [
+        "You are nothing but a mere mortal in the face of my might.",
+        "Do you truly believe you can defeat me? How amusing."
+      ]
+    }
+  }
+}

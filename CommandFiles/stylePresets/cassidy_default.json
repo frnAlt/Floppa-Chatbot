@@ -1,0 +1,12 @@
+{
+  "title": {
+    "content": "Default Title",
+    "line_bottom": "15chars",
+    "text_font": "bold"
+  },
+  "content": {
+    "text_font": "fancy",
+    "content": null,
+    "line_bottom_inside_x": "15chars"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "object": "page",
+  "entry": [
+    {
+      "time": 1746668383783,
+      "id": "4",
+      "messaging": [
+        {
+          "sender": { "id": "4" },
+          "recipient": { "id": "3" },
+          "timestamp": 1746668383783,
+          "postback": {
+            "title": "🐓 Manok",
+            "payload": "ENTER_MANOK",
+            "mid": "m_69"
+          }
+        }
+      ]
+    }
+  ]
+}

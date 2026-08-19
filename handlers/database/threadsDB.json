@@ -1,0 +1,10 @@
+{
+  "wss:main": {
+    "money": 0,
+    "exp": 0,
+    "battlePoints": 0,
+    "lastModified": 1761715538042,
+    "threadPrefix": "+",
+    "autodl": false
+  }
+}

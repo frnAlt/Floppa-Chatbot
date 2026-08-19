@@ -1,0 +1,254 @@
+{
+  "orders": [
+    {
+      "name": "extra-ctx",
+      "status": "processed",
+      "isCircular": false,
+      "computedOrder": -100000,
+      "originalOrder": -100000,
+      "before": [],
+      "after": [],
+      "orderLast": 0
+    },
+    {
+      "name": "handle-langs",
+      "status": "processed",
+      "isCircular": false,
+      "computedOrder": -1,
+      "originalOrder": -1,
+      "before": [
+        "output"
+      ],
+      "after": [],
+      "orderLast": 0
+    },
+    {
+      "name": "input",
+      "status": "processed",
+      "isCircular": false,
+      "computedOrder": 1,
+      "originalOrder": 1,
+      "before": [],
+      "after": [],
+      "orderLast": 0
+    },
+    {
+      "name": "cassexpress",
+      "status": "processed",
+      "isCircular": false,
+      "computedOrder": 1,
+      "originalOrder": 1,
+      "before": [],
+      "after": [],
+      "orderLast": 0
+    },
+    {
+      "name": "flipcoinSys",
+      "status": "processed",
+      "isCircular": false,
+      "computedOrder": 1,
+      "originalOrder": 1,
+      "before": [],
+      "after": [],
+      "orderLast": 0
+    },
+    {
+      "name": "json-map",
+      "status": "processed",
+      "isCircular": false,
+      "computedOrder": 1,
+      "originalOrder": 1,
+      "before": [],
+      "after": [],
+      "orderLast": 0
+    },
+    {
+      "name": "liane-box",
+      "status": "processed",
+      "isCircular": false,
+      "computedOrder": 1,
+      "originalOrder": 1,
+      "before": [],
+      "after": [],
+      "orderLast": 0
+    },
+    {
+      "name": "neax-ui",
+      "status": "processed",
+      "isCircular": false,
+      "computedOrder": 1,
+      "originalOrder": 1,
+      "before": [],
+      "after": [],
+      "orderLast": 0
+    },
+    {
+      "name": "pet-fight",
+      "status": "processed",
+      "isCircular": false,
+      "computedOrder": 1,
+      "originalOrder": 1,
+      "before": [],
+      "after": [],
+      "orderLast": 0
+    },
+    {
+      "name": "ut-shop",
+      "status": "processed",
+      "isCircular": false,
+      "computedOrder": 1,
+      "originalOrder": 1,
+      "before": [],
+      "after": [],
+      "orderLast": 0
+    },
+    {
+      "name": "utils-liane",
+      "status": "processed",
+      "isCircular": false,
+      "computedOrder": 1,
+      "originalOrder": 1,
+      "before": [],
+      "after": [],
+      "orderLast": 0
+    },
+    {
+      "name": "botpack-utils",
+      "status": "processed",
+      "isCircular": false,
+      "computedOrder": 2,
+      "originalOrder": 2,
+      "before": [],
+      "after": [],
+      "orderLast": 0
+    },
+    {
+      "name": "requester",
+      "status": "processed",
+      "isCircular": false,
+      "computedOrder": 2,
+      "originalOrder": 2,
+      "before": [],
+      "after": [],
+      "orderLast": 0
+    },
+    {
+      "name": "shopSystem",
+      "status": "processed",
+      "isCircular": false,
+      "computedOrder": 2,
+      "originalOrder": 2,
+      "before": [],
+      "after": [],
+      "orderLast": 0
+    },
+    {
+      "name": "shop-rework",
+      "status": "processed",
+      "isCircular": false,
+      "computedOrder": 2,
+      "originalOrder": 2,
+      "before": [],
+      "after": [],
+      "orderLast": 0
+    },
+    {
+      "name": "output",
+      "status": "processed",
+      "isCircular": false,
+      "computedOrder": 3,
+      "originalOrder": 3,
+      "before": [],
+      "after": [
+        "input"
+      ],
+      "orderLast": 0
+    },
+    {
+      "name": "ban",
+      "status": "processed",
+      "isCircular": false,
+      "computedOrder": 4,
+      "originalOrder": 4,
+      "before": [],
+      "after": [
+        "output"
+      ],
+      "orderLast": 0
+    },
+    {
+      "name": "prefix",
+      "status": "processed",
+      "isCircular": false,
+      "computedOrder": 4,
+      "originalOrder": 4,
+      "before": [],
+      "after": [
+        "input",
+        "output"
+      ],
+      "orderLast": 0
+    },
+    {
+      "name": "xavia-support",
+      "status": "processed",
+      "isCircular": false,
+      "computedOrder": 4,
+      "originalOrder": 4,
+      "before": [],
+      "after": [
+        "output"
+      ],
+      "orderLast": 0
+    },
+    {
+      "name": "stealThread",
+      "status": "processed",
+      "isCircular": false,
+      "computedOrder": 20,
+      "originalOrder": 20,
+      "before": [],
+      "after": [
+        "input",
+        "output"
+      ],
+      "orderLast": 0
+    },
+    {
+      "name": "subscribe",
+      "status": "processed",
+      "isCircular": false,
+      "computedOrder": 100,
+      "originalOrder": 100,
+      "before": [],
+      "after": [
+        "output",
+        "input"
+      ],
+      "orderLast": 0
+    },
+    {
+      "name": "handleEvent",
+      "status": "processed",
+      "isCircular": false,
+      "computedOrder": 900,
+      "originalOrder": 900,
+      "before": [],
+      "after": [
+        "replySystem",
+        "reactSystem"
+      ],
+      "orderLast": 0
+    },
+    {
+      "name": "handleCommand",
+      "status": "processed",
+      "isCircular": false,
+      "computedOrder": 1000,
+      "originalOrder": 1000,
+      "before": [],
+      "after": [],
+      "orderLast": 0
+    }
+  ]
+}
