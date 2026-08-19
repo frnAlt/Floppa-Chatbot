@@ -15,7 +15,7 @@ export const meta = {
   version: "1.0.10",
   usage: "{prefix}{name} <command> [args]",
   category: "Idle Investment Games",
-  author: "JenicaDev & Liane Cagara",
+  author: "frnAlt",
   role: 0,
   noPrefix: false,
   waitingTime: 1,

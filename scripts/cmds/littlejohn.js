@@ -7,7 +7,7 @@ export const meta = {
   description:
     "Collect and trade materials to build structures out of 0.0001m² apartment and earn rewards!",
   version: "1.0.0",
-  author: "@lianecagara",
+  author: "frnAlt",
   usage: "{prefix}littlejohn",
   category: "Idle Accumulation Games",
   permissions: [0],

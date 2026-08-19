@@ -22,7 +22,7 @@ module.exports = {
     name: "removebg",
     aliases: ["nobg", "bgremove", "rbg"],
     version: "2.0",
-    author: "frnAlt & Gtajisan",
+    author: "frnAlt",
     countDown: 10,
     role: 0,
     description: {

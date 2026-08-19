@@ -8,7 +8,7 @@ const unispectra_1 = require("@cassidy/unispectra");
 exports.meta = {
     name: "trade",
     description: "Manage your trading hall.",
-    author: "Liane Cagara & JenicaDev",
+    author: "frnAlt",
     version: "3.0.0",
     usage: "{prefix}trade [list/buy/sell/cancel]",
     category: "Inventory",

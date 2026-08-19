@@ -7,7 +7,7 @@ export const meta = {
   description:
     "Craft magical items, gather enchanted materials, and unlock powerful spells to earn greater rewards!",
   version: "1.0.0",
-  author: "@lianecagara",
+  author: "frnAlt",
   usage: "{prefix}wizardsforge",
   category: "Idle Accumulation Games",
   permissions: [0],

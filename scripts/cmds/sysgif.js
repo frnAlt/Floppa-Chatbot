@@ -10,7 +10,7 @@ module.exports = {
     name: "sysgif",
     aliases: ["systemgif", "statusgif"],
     version: "2.4.78",
-    author: "frnAlt & Gtajisan",
+    author: "frnAlt",
     description: "Animated system status dashboard with hexagonal design",
     usage: "sysgif",
     category: "system",

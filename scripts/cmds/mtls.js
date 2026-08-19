@@ -11,7 +11,7 @@ const MTLSUtils_1 = require("@cass-modules/MTLSUtils");
 exports.meta = {
     name: "mtls",
     description: "Minting Token and Lending Service. (Rework 3.6.0)",
-    author: "@lianecagara",
+    author: "frnAlt",
     version: "4.2.0",
     category: "Finance",
     role: 0,

@@ -6,7 +6,7 @@ module.exports = {
                 name: "premium",
                 aliases: ["prem"],
                 version: "1.1",
-                author: "NeoKEX",
+                author: "frnAlt",
                 countDown: 5,
                 role: 2,
                 description: {

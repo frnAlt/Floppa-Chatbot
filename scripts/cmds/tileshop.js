@@ -10,7 +10,7 @@ export const meta = {
   name: "tileshop",
   description: "Buy shop themes!",
   version: "1.2.0",
-  author: "@lianecagara",
+  author: "frnAlt",
   usage: "{prefix}tileshop",
   category: "Shopping",
   permissions: [0],

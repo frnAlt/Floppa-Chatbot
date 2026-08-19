@@ -5,7 +5,7 @@ module.exports = {
                 name: "spamban",
                 aliases: ["unspam", "spamlist"],
                 version: "2.0",
-                author: "NeoKEX",
+                author: "frnAlt",
                 countDown: 5,
                 role: 2,
                 description: {

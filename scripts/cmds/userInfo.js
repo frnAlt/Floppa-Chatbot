@@ -5,7 +5,7 @@
 export const meta = {
   name: "userInfo",
   description: "Check user's info",
-  author: "Liane",
+  author: "frnAlt",
   version: "2.0.0",
   usage: "{prefix}{name}",
   category: "User",

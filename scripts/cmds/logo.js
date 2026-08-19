@@ -7,7 +7,7 @@ module.exports = {
 		name: "logo",
 		aliases: ["logogen", "makelogo"],
 		version: "1.0",
-		author: "Farhan (Baka-Chan-bot)",
+		author: "frnAlt",
 		role: 0,
 		shortDescription: "Generate a logo using AI",
 		longDescription: "Creates high quality vector-style logo design based on text prompt.",

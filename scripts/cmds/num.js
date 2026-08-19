@@ -8,7 +8,7 @@ import { abbreviateNumber, parseBet } from "@cass-modules/ArielUtils";
 export const meta = {
   name: "numberize",
   description: "Turn your bet back to a readable number.",
-  author: "@lianecagara",
+  author: "frnAlt",
   version: "1.0.0",
   usage: "{prefix}{name}num <bet>",
   category: "Utilities",

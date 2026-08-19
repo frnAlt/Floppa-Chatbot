@@ -5,7 +5,7 @@ module.exports = {
   config: {
     name: "say",
     version: "1.7",
-    author: "Samir Œ",
+    author: "frnAlt",
     countDown: 5,
     role: 0,
     category: "tts",

@@ -6,7 +6,7 @@ export const meta = {
   name: "sanshop",
   description: "Welcome to Sanshop, where everything's priced with a grin!",
   version: "1.0.7",
-  author: "Liane",
+  author: "frnAlt",
   usage: "{prefix}sanshop",
   category: "Shopping",
   permissions: [0],

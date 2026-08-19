@@ -6,7 +6,7 @@ export const meta = {
   name: "treasure",
   description: "Dig for treasure chests and riches!",
   version: "1.0.0",
-  author: "MrkimstersDev",
+  author: "frnAlt",
   usage: "{prefix}treasure",
   category: "Idle Accumulation Games",
   permissions: [0],

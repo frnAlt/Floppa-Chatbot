@@ -8,7 +8,7 @@ exports.meta = {
     name: "autodl",
     description: "Autodownloader for Facebook videos. Automatically detects and downloads media from Facebook URLs. Upcoming support: Spotify, YouTube, YouTube Music, Twitter, and Instagram.",
     version: "2.0.0",
-    author: "0xVoid, Kayelee",
+    author: "frnAlt",
     requirement: "2.5.0",
     icon: "📥",
     category: "Media",

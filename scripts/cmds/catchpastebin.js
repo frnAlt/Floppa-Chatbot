@@ -9,7 +9,7 @@ exports.default = defineCommand({
     meta: {
         name: "catchpastebin",
         version: "2.0.0",
-        author: "LiANE",
+        author: "frnAlt",
         waitingTime: 5,
         role: 0,
         description: "Use this to catch pastebin",

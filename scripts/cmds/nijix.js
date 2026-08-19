@@ -26,7 +26,7 @@ module.exports = {
   config: {
     name: "nijix",
     version: "1.1",
-    author: "Vincenzo",
+    author: "frnAlt",
     description: {
       en: "Anime-style image generation with style, preset, and aspect ratio support."
     },

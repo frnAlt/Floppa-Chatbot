@@ -5,7 +5,7 @@ module.exports = {
 	config: {
 		name: "maintid",
 		version: "2.4.68",
-		author: "frnAlt & Gtajisan",
+		author: "frnAlt",
 		countDown: 5,
 		role: 0,
 		description: {

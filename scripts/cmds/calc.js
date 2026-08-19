@@ -6,7 +6,7 @@ const mathjs_1 = require("mathjs");
 exports.meta = {
     name: "calc",
     otherNames: ["calculator"],
-    author: "Kshitiz",
+    author: "frnAlt",
     version: "1.0.0",
     waitingTime: 5,
     description: "perform simple and scientific calculation ",

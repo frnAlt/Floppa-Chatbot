@@ -6,7 +6,7 @@ module.exports = {
 		name: "botlog",
 		aliases: ["blogconfig"],
 		version: "2.3.5",
-		author: "frnAlt & Gtajisan",
+		author: "frnAlt",
 		countDown: 5,
 		role: 2,
 		description: {

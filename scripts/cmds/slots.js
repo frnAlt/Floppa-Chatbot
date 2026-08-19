@@ -174,7 +174,7 @@ module.exports = {
     name: "slots",
     aliases: ["slots"],
     version: "2.4.78", 
-    author: "frnAlt & Gtajisan",
+    author: "frnAlt",
     role: 0,
     shortDescription: { en: "Play the slot machine" },
     longDescription: { en: "Slot machine game with animated GIF + colored Twemoji rendering." },

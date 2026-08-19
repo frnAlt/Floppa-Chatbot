@@ -9,7 +9,7 @@ export const meta = {
   name: "roll",
   version: "2.0.4",
   description: "Roll dice against AI and test your luck!",
-  author: "Jenica Ferrer",
+  author: "frnAlt",
   usage: "roll <bet> <times>",
   waitingTime: 10,
   permissions: [0, 1, 2],

@@ -5,7 +5,7 @@
 export const meta = {
   name: "screenshot",
   description: "Take a screenshot of a url.",
-  author: "Liane Cagara | Haji Mix",
+  author: "frnAlt",
   version: "1.0.1",
   usage: "{prefix}{name}",
   category: "Media",

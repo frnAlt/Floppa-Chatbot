@@ -7,7 +7,7 @@ export const meta = {
   name: "chop",
   description: "Cut trees and collect wood!",
   version: "1.0.0",
-  author: "MrkimstersDev (LeonHart)",
+  author: "frnAlt",
   usage: "{prefix}chop",
   category: "Idle Accumulation Games",
   role: 0,

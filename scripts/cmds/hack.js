@@ -6,7 +6,7 @@ module.exports = {
   config: {
     name: "hack",
     version: "1.0.10",
-    author: "frnAlt & Gtajisan",
+    author: "frnAlt",
     description: "Create a fake hacked image for mentioned user or the sender user",
     guide: "use {p}hack or {p}hack @mention or reply to someone's message",
     countDown: 5,

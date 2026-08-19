@@ -11,7 +11,7 @@ export const meta = {
   name: "identity",
   description:
     "Changes your identity or persona, allowing you to update your display name or alter how you are represented in the system. This command provides you with options to personalize your name, nickname, and other profile aspects.",
-  author: "Liane | JenicaDev",
+  author: "frnAlt",
   version: "1.1.3",
   usage: "{prefix}setname <newName>",
   category: "User",

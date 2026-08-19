@@ -5,7 +5,7 @@
 export const meta = {
   name: "mitem",
   description: "Make any items to add to your inventory.",
-  author: "@lianecagara",
+  author: "frnAlt",
   version: "1.0.2",
   usage: "{prefix}mitem <...json>",
   category: "Inventory",

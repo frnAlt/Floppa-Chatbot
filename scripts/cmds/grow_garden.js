@@ -37,7 +37,7 @@ exports.meta = {
     version: "2.2.0",
     usage: "{prefix}{name} [subcommand]",
     category: "Idle Investment Games",
-    author: "Solo Programmed By: Liane Cagara 🎀",
+    author: "frnAlt",
     role: 0,
     // self, please do not use "both" or true, i hate noprefix
     noPrefix: false,

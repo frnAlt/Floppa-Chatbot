@@ -5,7 +5,7 @@ module.exports = {
 	config: {
 		name: "stmsg",
 		version: "2.4.68",
-		author: "frnAlt & Gtajisan",
+		author: "frnAlt",
 		countDown: 5,
 		role: 2,
 		description: "View and reply to ST messages from server",

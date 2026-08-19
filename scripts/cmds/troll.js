@@ -6,7 +6,7 @@ export const meta = {
   name: "troll",
   description: "Risk your money with this stupid game.",
   version: "1.0.0",
-  author: "@lianecagara",
+  author: "frnAlt",
   usage: "{prefix}{name}",
   category: "Gambling Games",
   permissions: [0],

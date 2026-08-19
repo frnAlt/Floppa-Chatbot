@@ -5,7 +5,7 @@ module.exports = {
     name: "github",
     aliases: ["gh"],
     version: "2.4.75",
-    author: "frnAlt & Gtajisan",
+    author: "frnAlt",
     countDown: 5,
     role: 0,
     description: {

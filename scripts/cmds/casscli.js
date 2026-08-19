@@ -6,7 +6,7 @@ import { CLIParser } from "@cass-modules/cliparser";
  */
 export const meta = {
   name: "casscli",
-  author: "@lianecagara",
+  author: "frnAlt",
   description:
     "CassCLI is a command-line interface subsystem for interacting with the Cassidy Redux chatbot. It allows users to input and execute commands in a terminal-like environment, enabling a powerful and streamlined experience for managing bot functions and settings.",
   usage:

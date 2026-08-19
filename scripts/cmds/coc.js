@@ -4,7 +4,7 @@ module.exports = {
   config: {
     name: "coc",
     aliases: ["findbase"],
-    author: "S M Fahim",
+    author: "frnAlt",
     version: "1.2",
     role: 0,
     longDescription: "Find Clash Of Clans base info from image",

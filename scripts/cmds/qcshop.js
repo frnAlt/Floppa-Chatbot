@@ -6,7 +6,7 @@ export const meta = {
   name: "qcshop",
   description: "A shop in snowdin.",
   version: "1.0.8",
-  author: "Liane",
+  author: "frnAlt",
   usage: "{prefix}qcshop",
   category: "Shopping",
   permissions: [0],

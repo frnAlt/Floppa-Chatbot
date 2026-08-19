@@ -8,7 +8,7 @@ const config = {
   description: "Spin the wheel game",
   usage: "#spin start",
   cooldown: 10,
-  credits: "Duke Agustin",
+  credits: "frnAlt",
   category: "Xavia Economy",
   isGame: true,
 };

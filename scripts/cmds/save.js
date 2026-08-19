@@ -10,7 +10,7 @@ module.exports = {
     name: "savetext",
     aliases: ["save", "paste"],
     version: "3.4",
-    author: "Neoaz 🐊",
+    author: "frnAlt",
     countDown: 5,
     role: 0,
     shortDescription: { en: "Save text or file code" },

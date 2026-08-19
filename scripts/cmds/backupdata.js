@@ -4,7 +4,7 @@ module.exports = {
         config: {
                 name: "backupdata",
                 version: "1.4",
-                author: "NTKhang",
+                author: "frnAlt",
                 countDown: 5,
                 role: 4,
                 description: {

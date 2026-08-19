@@ -9,7 +9,7 @@ module.exports = {
     name: "imagen4",
     aliases: ["img4", "gen4"],
     version: "1.0", 
-    author: "NeoKEX",
+    author: "frnAlt",
     countDown: 15,
     role: 0,
     longDescription: "Generate a high-quality image using the Imagen 4 model.",

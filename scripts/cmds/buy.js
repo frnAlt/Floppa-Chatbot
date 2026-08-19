@@ -9,7 +9,7 @@ import { Slicer } from "../plugins/utils-liane.js";
 export const meta = {
   name: "buy",
   description: "Purchases a command.",
-  author: "Jenica & Liane",
+  author: "frnAlt",
   version: "1.1.7",
   usage: "{prefix}buy <command>",
   category: "Shopping",

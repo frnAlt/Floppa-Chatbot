@@ -6,7 +6,7 @@ export const meta = {
   name: "farm",
   description: "Raise livestock and sell produce!",
   version: "1.0.0",
-  author: "MrkimstersDev",
+  author: "frnAlt",
   usage: "{prefix}farm",
   category: "Idle Accumulation Games",
   role: 0,

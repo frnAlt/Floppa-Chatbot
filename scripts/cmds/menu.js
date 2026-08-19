@@ -11,7 +11,7 @@ const shopV2_1 = require("@cass-plugins/shopV2");
 const string_similarity_1 = __importDefault(require("string-similarity"));
 exports.meta = {
     name: "menu",
-    author: "@lianecagara",
+    author: "frnAlt",
     description: "Acts as a central hub, like a Start Menu, providing users with an overview of available commands, their functionalities, and access to specific command details. Helps users quickly navigate the bot's features.",
     version: "3.1.1",
     usage: "{prefix}{name} [commandName]",

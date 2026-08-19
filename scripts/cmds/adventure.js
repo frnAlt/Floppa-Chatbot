@@ -118,7 +118,7 @@ const outcomes = [
 exports.meta = {
     name: "adventure",
     description: "Manage your adventure, explore zones, and collect rewards.",
-    author: "Aljur Pogoy",
+    author: "frnAlt",
     version: "1.0.0",
     usage: "{prefix}adventure <action> [args]",
     category: "Idle Investment Games",

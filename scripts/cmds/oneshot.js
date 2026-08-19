@@ -13,7 +13,7 @@ exports.meta = {
     version: "1.0.4",
     usage: "{prefix}{name} [bet_amount] [pet]",
     category: "Pet Games",
-    author: "@lianecagara",
+    author: "frnAlt",
     permissions: [0],
     noPrefix: false,
     waitingTime: 1,
@@ -122,7 +122,7 @@ async function generateAIPet(money, player1Pet) {
     // selectedPet.atkModifier += Math.floor(player1Pet.ATK / 1.5);
     // selectedPet.defModifier += Math.floor(player1Pet.DF / 1.5);
     // selectedPet.magicModifier += Math.floor(player1Pet.MAGIC / 1.5);
-    return { pet: selectedPet, author: `AI_${Date.now()}` };
+    return { pet: selectedPet, author: "frnAlt" };
 }
 async function entry({ input, output, money, prefix, commandName, user, }) {
     const gameState = {

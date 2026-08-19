@@ -9,7 +9,7 @@ export const meta = {
   name: "nicadrive",
   description:
     "A personal storage system for extra items. Store, retrieve, and manage inventory beyond your main limit. Upgrade for more space!",
-  author: "JenicaDev || Fixed by Liane",
+  author: "frnAlt",
   version: "2.1.1",
   usage: "{prefix}ndrive <action> [arguments]",
   category: "Inventory",

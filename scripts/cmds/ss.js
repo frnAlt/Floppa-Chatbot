@@ -13,7 +13,7 @@ module.exports = {
     name: "screenshot",
     aliases: ["ss", "webss"],
     version: "1.0",
-    author: "NeoKEX",
+    author: "frnAlt",
     countDown: 10,
     role: 2,
     longDescription: "Captures a full-page screenshot of a given website URL.",

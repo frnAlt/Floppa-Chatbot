@@ -7,7 +7,7 @@ module.exports = {
 		name: "pair",
 		aliases: ["match", "love"],
 		version: "1.2",
-		author: "Farhan (Baka-Chan-bot)",
+		author: "frnAlt",
 		countDown: 5,
 		role: 0,
 		shortDescription: "Pair two people randomly or custom",

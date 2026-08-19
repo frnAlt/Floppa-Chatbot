@@ -6,7 +6,7 @@ module.exports = {
   config: {
     name: "ytb",
     version: "1.1",
-    author: "Neoaz 🐊",
+    author: "frnAlt",
     countDown: 5,
     role: 0,
     shortDescription: { en: "YouTube downloader" },

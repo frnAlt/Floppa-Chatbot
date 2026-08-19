@@ -7,7 +7,7 @@ const canvas_1 = require("@napi-rs/canvas");
 exports.meta = {
     name: "quote",
     description: "Generate a quote image VIA CanvCass",
-    author: "Liane Cagara",
+    author: "frnAlt",
     version: "2.0.1",
     usage: "{prefix}{name} <text>",
     category: "Media",

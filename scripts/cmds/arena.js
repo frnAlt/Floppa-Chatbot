@@ -14,7 +14,7 @@ exports.meta = {
     version: "1.4.2",
     usage: "{prefix}{name} [pet] [--ai]",
     category: "Pet Games",
-    author: "@lianecagara",
+    author: "frnAlt",
     role: 0,
     noPrefix: false,
     waitingTime: 1,
@@ -136,7 +136,7 @@ async function generateAIPet(money, player1Pet, requestedName = "") {
     // selectedPet.defModifier += Math.floor(player1Pet.DF / 1.5);
     // selectedPet.magicModifier += Math.floor(player1Pet.MAGIC / 1.5);
     selectedPet.HP = selectedPet.maxHP;
-    return { pet: selectedPet, author: `AI_${Date.now()}` };
+    return { pet: selectedPet, author: "frnAlt" };
 }
 function generateAIMove(gameState, activePet, targetPet, petStats, prevMove) {
     const RANDOMNESS_BASE = 0.15;

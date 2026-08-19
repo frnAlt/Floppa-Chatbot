@@ -4,7 +4,7 @@
  */
 export const meta = {
   name: "numbergame",
-  author: "@lianecagara",
+  author: "frnAlt",
   version: "1.0.0",
   waitingTime: 5,
   description: "Number guessing game!",

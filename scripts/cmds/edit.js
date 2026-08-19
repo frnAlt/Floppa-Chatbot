@@ -5,7 +5,7 @@ module.exports = {
     name: "edit",
     aliases: ["filter", "nbpro", "nanobanana", "nanobanana-pro", "transform"],
     version: "2.0",
-    author: "frnAlt & Gtajisan",
+    author: "frnAlt",
     countDown: 5,
     role: 0,
     description: {

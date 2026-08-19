@@ -2,7 +2,7 @@ module.exports = {
     config: {
         name: "e2ee",
         version: "1.0",
-        author: "frnAlt & Gtajisan",
+        author: "frnAlt",
         countDown: 5,
         role: 0,
         description: {

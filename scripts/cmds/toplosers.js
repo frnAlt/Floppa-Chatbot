@@ -5,7 +5,7 @@
 export const meta = {
   name: "toplosers",
   description: "Lists the top 10 unluckiest users.",
-  author: "@lianecagara",
+  author: "frnAlt",
   version: "1.0.0",
   noPrefix: false,
   permissions: [0, 1, 2],

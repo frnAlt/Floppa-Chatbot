@@ -19,7 +19,7 @@ const { invLimit } = global.Cassidy;
  */
 export const meta = {
   name: "tiles",
-  author: "Liane Cagara, idea from Duke",
+  author: "frnAlt",
   description: "Choose tiles and got chance to win large amounts of coins!",
   otherNames: ["tile", "t"],
   version: "1.2.2",

@@ -5,7 +5,7 @@ module.exports = {
     name: "image",
     aliases: ["dalle", "imagine", "genimage", "gen"],
     version: "2.0",
-    author: "frnAlt & Gtajisan",
+    author: "frnAlt",
     countDown: 10,
     role: 0,
     description: {

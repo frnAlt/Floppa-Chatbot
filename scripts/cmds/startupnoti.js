@@ -6,7 +6,7 @@ module.exports = {
 		name: "startupnoti",
 		aliases: [],
 		version: "1.0",
-		author: "frnAlt & Gtajisan",
+		author: "frnAlt",
 		countDown: 5,
 		role: 2,
 		description: {

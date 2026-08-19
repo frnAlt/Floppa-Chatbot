@@ -8,7 +8,7 @@ module.exports = {
   config: {
     name: "aniart",
     aliases: ["anigen", "animeart"],
-    author: "frnAlt & Gtajisan",
+    author: "frnAlt",
     version: "1.0.0",
     countDown: 10,
     description: "Generate anime art image from a prompt",

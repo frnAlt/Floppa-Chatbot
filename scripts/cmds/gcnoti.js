@@ -6,7 +6,7 @@ module.exports = {
   config: {
     name: "gcnoti",
     version: "2.4.74",
-    author: "frnAlt & Gtajisan",
+    author: "frnAlt",
     countDown: 5,
     role: 2,
     description: {

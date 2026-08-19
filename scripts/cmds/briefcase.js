@@ -8,7 +8,7 @@ import { BriefcaseAPI } from "@cass-modules/BriefcaseAPI";
 export const meta = {
   name: "briefcase",
   description: "Manage your items.",
-  author: "Liane Cagara | JenicaDev",
+  author: "frnAlt",
   version: "1.3.1",
   usage: "{prefix}{name} <action> [args]",
   category: "Inventory",

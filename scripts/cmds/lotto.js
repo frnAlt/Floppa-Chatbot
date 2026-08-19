@@ -9,7 +9,7 @@ export const meta = {
   name: "lotto",
   description: "Test your luck with the lotto game!",
   version: "1.0.0",
-  author: "@lianecagara",
+  author: "frnAlt",
   usage: "{prefix}lotto <...numbers>",
   category: "Gambling Games",
   permissions: [0],

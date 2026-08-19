@@ -6,7 +6,7 @@
 export const meta = {
   name: "hsrEdits",
   description: "Fetches and sends a random Honkai Star Rail edits.",
-  author: "MrKimstersDev | haji-mix-api",
+  author: "frnAlt",
   version: "1.0.0",
   usage: "{prefix}{name}",
   category: "Media",

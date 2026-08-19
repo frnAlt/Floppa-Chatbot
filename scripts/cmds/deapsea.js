@@ -8,7 +8,7 @@ export const meta = {
   description:
     "Dive deep into the ocean, collect rare aquatic treasures, and unlock new diving equipment for bigger finds!",
   version: "1.0.0",
-  author: "@lianecagara",
+  author: "frnAlt",
   usage: "{prefix}deepseadiver",
   category: "Idle Accumulation Games",
   role: 0,

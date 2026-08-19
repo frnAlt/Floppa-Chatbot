@@ -19,7 +19,7 @@ module.exports = {
     name: "tiktok",
     aliases: ["tt"],
     version: "1.0.0",
-    author: "Neoaz ゐ",
+    author: "frnAlt",
     countDown: 5,
     role: 0,
     description: { en: "Search and download TikTok video" },

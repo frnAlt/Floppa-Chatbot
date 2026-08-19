@@ -16,7 +16,7 @@ export const meta = {
   name: "doublerisk",
   description: "Risk your money to potentially double it, or lose it all!",
   version: "1.1.4",
-  author: "@lianecagara",
+  author: "frnAlt",
   usage: "{prefix}doublerisk [mtls_key] <amount>",
   category: "Gambling Games",
   role: 0,

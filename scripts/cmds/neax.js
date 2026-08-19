@@ -5,7 +5,7 @@ exports.entry = entry;
 const NeaxScript_1 = require("@cass-modules/NeaxScript");
 exports.meta = {
     name: "neax",
-    author: "@lianecagara",
+    author: "frnAlt",
     description: "Neax is a new scripting language for CassidySpectra, designed to provide a powerful and flexible interface for interacting with the Cassidy Redux chatbot. It deprecates the older CassCLI, offering enhanced command execution, permission management, and integration with virtual file systems.",
     usage: "Use Neax to execute scripts in a terminal-like environment. Example usage: `neax help`, `neax promote::%detectID%`, `neax ls / --json`.",
     version: "1.0.0",

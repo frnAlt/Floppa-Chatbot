@@ -6,7 +6,7 @@ export const meta = {
   name: "explorer",
   description: "Explore space and discover new planets!",
   version: "1.0.1",
-  author: "MrkimstersDev",
+  author: "frnAlt",
   usage: "{prefix}explorer",
   category: "Idle Accumulation Games",
   permissions: [0],

@@ -10,7 +10,7 @@ module.exports = {
     name: "sysgif2",
     aliases: ["sg2", "status2"],
     version: "2.4.78",
-    author: "frnAlt & Gtajisan",
+    author: "frnAlt",
     description: "Animated system dashboard - Circular wave design",
     usage: "sysgif2",
     category: "system",

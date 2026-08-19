@@ -5,7 +5,7 @@ module.exports = {
 		name: "tinyurl",
 		aliases: ["shorturl", "shorten"],
 		version: "1.0",
-		author: "Farhan (Baka-Chan-bot)",
+		author: "frnAlt",
 		shortDescription: "Shorten URLs using TinyURL",
 		longDescription: "Shorten any URL or replied attachment link using TinyURL service.",
 		category: "utility",

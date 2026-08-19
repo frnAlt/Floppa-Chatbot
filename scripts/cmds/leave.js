@@ -5,7 +5,7 @@ module.exports = {
     name: "leave",
     aliases: ["out", "leavegroup"],
     version: "2.4.78",
-    author: "frnAlt & Gtajisan",
+    author: "frnAlt",
     countDown: 5,
     role: 2,
     description: "Make bot leave thread or specified thread",

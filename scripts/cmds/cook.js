@@ -7,7 +7,7 @@ export const meta = {
   name: "cook",
   description: "Prepare delicious meals!",
   version: "2.0.0",
-  author: "MrkimstersDev",
+  author: "frnAlt",
   usage: "{prefix}cook",
   category: "Idle Accumulation Games",
   role: 0,

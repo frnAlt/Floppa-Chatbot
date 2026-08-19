@@ -6,7 +6,7 @@ module.exports = {
         name: "marry",
         aliases: ["biye", "hanga"],
         version: "1.0.11",
-        author: "frnAlt & Gtajisan",
+        author: "frnAlt",
         role: 0,
         countdown: 5,
         description: "marry a person with mention or replying her/his message",

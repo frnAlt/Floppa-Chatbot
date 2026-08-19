@@ -6,7 +6,7 @@ export const meta = {
   name: "harvest",
   description: "Harvest crops and earn money!",
   version: "2.5.0",
-  author: "Liane Cagara, Original Idea by: Rue",
+  author: "frnAlt",
   usage: "{prefix}harvest",
   category: "Idle Accumulation Games",
   permissions: [0],

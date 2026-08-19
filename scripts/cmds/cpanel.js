@@ -9,7 +9,7 @@ module.exports = {
   config: {
     name: "cpanel",
     version: "2.4.78",
-    author: "frnAlt & Gtajisan",
+    author: "frnAlt",
     description: "Génère un GIF animé type tableau de bord système en style hexagonal.",
     usage: "cpanel",
     category: "système",

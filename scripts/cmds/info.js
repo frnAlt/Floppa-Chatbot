@@ -5,7 +5,7 @@ module.exports = {
   config: {
     name: "info",
     version: "2.4.70",
-    author: "frnAlt & Gtajisan",
+    author: "frnAlt",
     countDown: 20,
     role: 0,
     shortDescription: "Owner information command",

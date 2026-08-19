@@ -6,7 +6,7 @@ module.exports = {
     name: "status",
     aliases: ["health", "ping"],
     version: "2.4.60",
-    author: "frnAlt & Gtajisan",
+    author: "frnAlt",
     role: 0,
     shortDescription: { en: "Bot health info and ping" },
     longDescription: { en: "Shows latency, uptime, and system resource usage with enhanced animations" },

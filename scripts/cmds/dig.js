@@ -7,7 +7,7 @@ export const meta = {
   name: "dig",
   description: "Unearth ancient artifacts!",
   version: "1.0.0",
-  author: "MrkimstersDev",
+  author: "frnAlt",
   usage: "{prefix}dig",
   category: "Idle Accumulation Games",
   role: 0,

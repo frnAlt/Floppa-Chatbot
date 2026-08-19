@@ -15,7 +15,7 @@ module.exports.config = {
   aliases: [],
   version: "3.2",
   role: 0,
-  author: "frnAlt & Gtajisan",
+  author: "frnAlt",
   description: "Generate Facebook fake chat",
   category: "Tools",
   guide: {

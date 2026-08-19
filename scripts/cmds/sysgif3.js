@@ -10,7 +10,7 @@ module.exports = {
     name: "sysgif3",
     aliases: ["sg3", "status3"],
     version: "2.4.78",
-    author: "frnAlt & Gtajisan",
+    author: "frnAlt",
     description: "Animated system dashboard - Neon grid design",
     usage: "sysgif3",
     category: "system",

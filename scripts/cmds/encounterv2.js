@@ -18,7 +18,7 @@ exports.meta = {
     version: "2.1.12",
     usage: "{prefix}{name} [id | 'new']",
     category: "Pet Games",
-    author: "@lianecagara",
+    author: "frnAlt",
     role: 0,
     noPrefix: false,
     waitingTime: 1,

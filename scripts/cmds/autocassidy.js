@@ -7,7 +7,7 @@ import axios from "axios";
 export const meta = {
   name: "autocass",
   description: "Basta auto na cass.",
-  author: "Liane",
+  author: "frnAlt",
   version: "1.0.0",
   usage: "{prefix}{name}",
   category: "Utilities",

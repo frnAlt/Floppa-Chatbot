@@ -4,7 +4,7 @@ module.exports = {
   config: {
     name: "mix",
     version: "1.7",
-    author: "frnAlt & Gtajisan",
+    author: "frnAlt",
     countDown: 5,
     role: 0,
     description: {

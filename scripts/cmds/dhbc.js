@@ -5,7 +5,7 @@ module.exports = {
 	config: {
 		name: "dhbc",
 		version: "1.3",
-		author: "NTKhang",
+		author: "frnAlt",
 		countDown: 5,
 		role: 0,
 		description: {

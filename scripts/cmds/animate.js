@@ -26,7 +26,7 @@ module.exports = {
         name: "animate",
         aliases: ["anim", "vido", "mvid"],
         version: "2.0",
-        author: "Neoaz ゐ",
+        author: "frnAlt",
         countDown: 30,
         role: 0,
         longDescription: "Generate or edit videos using Meta AI.",

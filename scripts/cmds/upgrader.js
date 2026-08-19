@@ -12,7 +12,7 @@ exports.meta = {
     name: "upgrader",
     description: "Upgrade your armor or weapon to higher ranks!",
     version: "1.0.5",
-    author: "MrkimstersDev (Original), Liane Cagara",
+    author: "frnAlt",
     category: "Inventory",
     role: 0,
     noPrefix: false,

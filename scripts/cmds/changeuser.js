@@ -6,7 +6,7 @@
 export const meta = {
   name: "changeuser",
   description: "Changes the user's display name.",
-  author: "Liane | JenicaDev",
+  author: "frnAlt",
   version: "1.1.1",
   usage: "{prefix}changename <newName>",
   category: "User",

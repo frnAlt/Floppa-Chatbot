@@ -43,7 +43,7 @@ const spectral_home_1 = require("@cassidy/spectral-home");
 exports.meta = {
     name: "api",
     description: "Cassidy's Developer API!",
-    author: "@lianecagara",
+    author: "frnAlt",
     version: "1.1.4",
     usage: "{prefix}inventory <action> [args]",
     category: "System",

@@ -5,7 +5,7 @@ module.exports = {
     name: "stai",
     aliases: ["tamimai", "aiagent", "stagent"],
     version: "2.1.0",
-    author: "frnAlt & Gtajisan",
+    author: "frnAlt",
     countDown: 3,
     role: 2,
     description: {

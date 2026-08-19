@@ -2,7 +2,7 @@ module.exports = {
  config: {
  name: "antiout",
  version: "1.0",
- author: "frnAlt & Gtajisan",
+ author: "frnAlt",
  countDown: 5,
  role: 1, // Only admin can use this command
  shortDescription: {

@@ -9,7 +9,7 @@ module.exports = {
     name: "slot",
     aliases: [],
     version: "2.4.78",
-    author: "frnAlt & Gtajisan",
+    author: "frnAlt",
     countDown: 10,
     role: 0,
     premium: false,

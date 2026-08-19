@@ -8,7 +8,7 @@ const cacheDirectory = path.join(__dirname, 'cache');
 module.exports = {
   config: {
     name: "calendar",
-    author: "frnAlt & Gtajisan",
+    author: "frnAlt",
     shortDescription: "🗓️ Stylish English Calendar — No API",
     longDescription: "Fully local calendar with proper weekdays for Asia/Dhaka.",
     category: "utility",

@@ -113,7 +113,7 @@ module.exports = {
     name: "pinterest",
     aliases: ["Pinterest", "pin"],
     version: "2.2",
-    author: "Mahi--",
+    author: "frnAlt",
     countDown: 10,
     role: 0,
     shortDescription: "Search Pinterest for images",

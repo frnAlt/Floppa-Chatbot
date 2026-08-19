@@ -5,7 +5,7 @@ module.exports = {
     name: "imgur",
     aliases: ["imglink", "uploadimg"],
     version: "1.1",
-    author: "frnAlt & Gtajisan",
+    author: "frnAlt",
     countDown: 5,
     role: 0,
     category: "Image Url",

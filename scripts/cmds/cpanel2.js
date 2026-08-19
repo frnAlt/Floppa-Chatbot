@@ -17,7 +17,7 @@ module.exports = {
     name: "cpanel2",
     aliases: [],
     version: "2.4.78",
-    author: "frnAlt & Gtajisan",
+    author: "frnAlt",
     shortDescription: "Animated rainbow dashboard with spark effect 🌈✨",
     longDescription: "Shows system stats with rainbow animation and moving spark particles.",
     category: "info",

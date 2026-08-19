@@ -4,7 +4,7 @@ exports.style = exports.meta = void 0;
 exports.entry = entry;
 exports.meta = {
     name: "movies",
-    author: "rifat, fixed by liane and symer",
+    author: "frnAlt",
     noPrefix: false,
     version: "1.0.1",
     description: "Search movie details using OMDB",

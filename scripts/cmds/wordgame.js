@@ -4,7 +4,7 @@
  */
 export const meta = {
   name: "wordgame",
-  author: "@lianecagara",
+  author: "frnAlt",
   version: "1.0.0",
   waitingTime: 5,
   description: "Word guessing game!",

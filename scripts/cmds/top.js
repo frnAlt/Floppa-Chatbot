@@ -3,7 +3,7 @@ module.exports = {
     name: "top",
     aliases: ["rich", "leaderboard", "coinstop"],
     version: "1.0",
-    author: "frnAlt & Gtajisan",
+    author: "frnAlt",
     countDown: 5,
     role: 0,
     shortDescription: "Top 10 richest users",

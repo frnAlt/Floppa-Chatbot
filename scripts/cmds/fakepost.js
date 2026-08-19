@@ -7,7 +7,7 @@ const node_crypto_1 = require("node:crypto");
 exports.meta = {
     name: "fpost",
     description: "Generate a fake FB post image via CanvCass",
-    author: "Liane Cagara",
+    author: "frnAlt",
     version: "2.0.0",
     usage: "{prefix}{name} <caption>",
     category: "Media",

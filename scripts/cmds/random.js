@@ -13,7 +13,7 @@ module.exports = {
     name: "random",
     aliases: [],
     version: "2.4.70",
-    author: "frnAlt & Gtajisan",
+    author: "frnAlt",
     role: 0,
     shortDescription: { en: "Upload, fetch, or list hot videos" },
     longDescription: { en: "Add videos by category, fetch random ones, or list all categories" },

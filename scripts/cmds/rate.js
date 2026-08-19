@@ -3,7 +3,7 @@ module.exports = {
     name: "rate",
     aliases: ["rating"],
     version: "1.0",
-    author: "frnAlt & Gtajisan",
+    author: "frnAlt",
     countDown: 5,
     role: 0,
     shortDescription: "র‌্যান্ডম রেটিং দাও",

@@ -11,7 +11,7 @@ const unispectra_1 = require("@cassidy/unispectra");
 exports.meta = {
     name: "anime",
     description: "Search for anime information",
-    author: "MrkimstersDev, Fixed",
+    author: "frnAlt",
     version: "1.0.1",
     usage: "{prefix}{name} <anime title>",
     category: "Media",

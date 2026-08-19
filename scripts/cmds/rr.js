@@ -15,8 +15,7 @@ export const meta = {
   description:
     "Roll your way to riches as you test your luck in a high-stakes game of fortune.",
   version: "1.1.5",
-  author:
-    "inspired from Duke Agustin's shoot command, but originally created by Liane Cagara",
+  author: "frnAlt",
   otherNames: ["rr"],
   usage: "{prefix}{name}",
   category: "Gambling Games",

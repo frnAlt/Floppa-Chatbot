@@ -5,7 +5,7 @@
  */
 export const meta = {
   name: "chuck",
-  author: "@lianecagara",
+  author: "frnAlt",
   description: "Get a random Chuck Norris joke",
   usage: "{prefix}chuck",
   version: "1.0.1",

@@ -7,7 +7,7 @@ export const meta = {
   name: "beekeep",
   description: "Harvest honey from your bee farm!",
   version: "1.0.0",
-  author: "MrkimstersDev",
+  author: "frnAlt",
   usage: "{prefix}beekeep",
   category: "Idle Accumulation Games",
   role: 0,

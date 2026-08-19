@@ -5,7 +5,7 @@ module.exports = {
   config: {
     name: "hug",
     version: "1.1.0",
-    author: "frnAlt & Gtajisan",
+    author: "frnAlt",
     countDown: 5,
     role: 0,
     longDescription: "{p}hug @mention someone you want to hug that person 🫂",

@@ -6,7 +6,7 @@ module.exports = {
     name: "approve",
     aliases: ["pending", "pend", "pe"],
     version: "2.0.1",
-    author: "Neoaz 🐊",
+    author: "frnAlt",
     countDown: 5,
     role: 2,
     shortDescription: "Handle pending requests",

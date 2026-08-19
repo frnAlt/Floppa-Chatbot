@@ -7,7 +7,7 @@ export const meta = {
   description:
     "A mystical shop run by Octokeeper, selling unique potions and magical items.",
   version: "1.0.0",
-  author: "Liane",
+  author: "frnAlt",
   usage: "{prefix}octoshop",
   category: "Shopping",
   permissions: [0],

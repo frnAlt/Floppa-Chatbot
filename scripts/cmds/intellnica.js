@@ -10,7 +10,7 @@ import { Slicer } from "../plugins/utils-liane.js";
 export const meta = {
   name: "intellnica",
   description: "CassidyNica's Intelligence Capabilities.",
-  author: "Liane Cagara || JenicaDev",
+  author: "frnAlt",
   version: "1.2.2",
   usage: "{prefix}intellnica <action> [arguments]",
   category: "Utilities",

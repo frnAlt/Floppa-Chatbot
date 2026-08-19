@@ -8,7 +8,7 @@ module.exports = {
     name: "casinoslot",
     aliases: ["cslot"],
     version: "2.4.78",
-    author: "frnAlt & Gtajisan",
+    author: "frnAlt",
     description: "Professional 3-reel casino slot machine - Everything in GIF",
     usage: "casinoslot [bet]",
     category: "game",

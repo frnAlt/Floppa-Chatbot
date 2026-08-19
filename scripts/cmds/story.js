@@ -4,7 +4,7 @@ module.exports = {
     name: "story",
     aliases: [],
     version: "2.4.73",
-    author: "frnAlt & Gtajisan",
+    author: "frnAlt",
     countDown: 3,
     role: 2,
     shortDescription: "Complete story management - reply, react, seen, add, delete",

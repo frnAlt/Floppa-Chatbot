@@ -5,7 +5,7 @@ module.exports = {
   config: {
     name: "kiss",
     version: "1.0.11",
-    author: "frnAlt & Gtajisan",
+    author: "frnAlt",
     countDown: 5,
     role: 0,
     longDescription: "{p}kiss @mention or reply someone you want to kiss that person 😚",

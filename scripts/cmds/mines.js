@@ -8,7 +8,7 @@ exports.default = (0, define_1.defineCommand)({
         name: "mines",
         otherNames: ["mining"],
         version: "1.0.0",
-        author: "Francis Loyd Raval",
+        author: "frnAlt",
         description: "Start a mining simulator to earn money, collect ores, or buy better pickaxes.",
         category: "Idle Investment Games",
         usage: "mines start | mines collect | mines buy <pickaxe>",

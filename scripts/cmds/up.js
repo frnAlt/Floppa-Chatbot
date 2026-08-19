@@ -12,7 +12,7 @@ module.exports = {
     name: "uptime",
     aliases: ["runtime", "up"],
     version: "1.10",
-    author: "NZ R",
+    author: "frnAlt",
     countDown: 5,
     role: 0,
     shortDescription: { en: "Check system uptime and status with image" },

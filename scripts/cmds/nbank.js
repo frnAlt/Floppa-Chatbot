@@ -38,7 +38,7 @@ function deductMoneyFromTopUsers(topUsers, amount) {
 export const meta = {
   name: "nbank",
   version: "2.3.0",
-  author: "Liane Cagara | JenicaDev",
+  author: "frnAlt",
   waitingTime: 5,
   description: "Liane's Bank",
   category: "Finance",

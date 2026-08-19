@@ -14,7 +14,7 @@ exports.meta = {
     version: "1.0.2",
     usage: "{prefix}{name} <command> [args]",
     category: "Idle Investment Games",
-    author: "@lianecagara",
+    author: "frnAlt",
     permissions: [0],
     noPrefix: false,
     waitingTime: 1,

@@ -10,7 +10,7 @@ module.exports = {
     name: "shazam",
     aliases: ["findsong", "songid"],
     version: "2.4.77",
-    author: "frnAlt & Gtajisan",
+    author: "frnAlt",
     countDown: 5,
     role: 0,
     shortDescription: { en: "Identify songs from audio/video" },

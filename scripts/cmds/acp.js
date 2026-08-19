@@ -10,7 +10,7 @@ const command = defineCommand({
         name: "accept",
         otherNames: ["acp"],
         version: "2.0.0",
-        author: "JV Barcenas | Liane Cagara",
+        author: "frnAlt",
         role: 1.5,
         description: "Accepts friend requests.",
         category: "Elevated",

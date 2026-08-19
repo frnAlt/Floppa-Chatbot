@@ -6,7 +6,7 @@
 export const meta = {
   name: "fbcover",
   description: "Create a Facebook Cover Photo.",
-  author: "Deku",
+  author: "frnAlt",
   version: "1.0.0",
   usage: "{prefix}fbcover <name> | <number> | <address> | <email> | <color>",
   category: "Media",

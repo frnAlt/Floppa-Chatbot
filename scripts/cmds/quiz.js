@@ -5,7 +5,7 @@ module.exports = {
     name: "quiz",
     aliases: [],
     version: "2.4.71",
-    author: "frnAlt & Gtajisan",
+    author: "frnAlt",
     countDown: 5,
     role: 0,
     description: "Interactive quiz game with multiple languages and categories",

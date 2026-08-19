@@ -20,7 +20,7 @@ exports.meta = {
     version: "1.0.1",
     usage: "{prefix}{name} [view|set|delete|reset|on|off] [args]",
     category: "Thread",
-    author: "MrkimstersDev",
+    author: "frnAlt",
     role: 1,
     noPrefix: false,
     waitingTime: 0,

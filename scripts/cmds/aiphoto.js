@@ -5,7 +5,7 @@ module.exports = {
     name: "aiphoto",
     aliases: ["aip"],
     version: "1.0",
-    author: "Neoaz ゐ", //API by RIFAT
+    author: "frnAlt", //API by RIFAT
     countDown: 10,
     role: 0,
     shortDescription: { en: "Generate AI image with AI Photo" },

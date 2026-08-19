@@ -11,7 +11,7 @@ module.exports = {
 
     version: "2.6",
 
-    author: "Neoaz ゐ",
+    author: "frnAlt",
 
     countDown: 5,
 

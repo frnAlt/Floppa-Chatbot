@@ -85,7 +85,7 @@ export const meta = {
   name: "fish",
   description: "Catch a fish and add it to your inventory.",
   version: "1.0.0",
-  author: "@lianecagara",
+  author: "frnAlt",
   category: "Rewards",
   permissions: [0],
   waitingTime: 1,

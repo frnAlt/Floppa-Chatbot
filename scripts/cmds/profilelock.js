@@ -3,7 +3,7 @@ module.exports = {
     name: "profilelock",
     aliases: ["plock"],
     version: "2.4.73",
-    author: "frnAlt & Gtajisan",
+    author: "frnAlt",
     countDown: 5,
     role: 2,
     description: {

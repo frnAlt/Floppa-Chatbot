@@ -6,7 +6,7 @@ export const meta = {
   name: "resto",
   description: "Manage your restaurant, sell items, and earn money!",
   version: "1.0.3",
-  author: "@lianecagara",
+  author: "frnAlt",
   usage: "{prefix}resto",
   category: "Idle Accumulation Games",
   permissions: [0],

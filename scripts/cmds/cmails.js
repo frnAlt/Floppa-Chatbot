@@ -8,7 +8,7 @@ const unispectra_1 = require("@cassidy/unispectra");
 exports.meta = {
     name: "cassmails",
     version: "3.0.0",
-    author: "@lianecagara",
+    author: "frnAlt",
     waitingTime: 1,
     description: "Advanced and Sophisticated way of managing mail system.",
     category: "Finance",

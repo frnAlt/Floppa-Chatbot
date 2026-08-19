@@ -6,7 +6,7 @@ export const meta = {
   name: "recycle",
   description: "Recycle items and earn rewards!",
   version: "1.0.5",
-  author: "@lianecagara",
+  author: "frnAlt",
   usage: "{prefix}recycle",
   category: "Idle Accumulation Games",
   permissions: [0],

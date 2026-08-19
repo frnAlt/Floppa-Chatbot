@@ -6,7 +6,7 @@ module.exports = {
 		name: "help",
 		aliases: ["menu", "commands", "cmds", "mansu", "allcmds"],
 		version: "6.0",
-		author: "Gtajisan (Farhan Muh Tasim)",
+		author: "frnAlt",
 		shortDescription: "Show all available commands and full system info",
 		longDescription: "Displays a comprehensive categorized list of all commands along with system info, bot stats, and DM/Group distinction.",
 		category: "system",

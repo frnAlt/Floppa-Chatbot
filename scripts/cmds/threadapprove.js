@@ -6,7 +6,7 @@ module.exports = {
 		name: "mthread",
 		aliases: ["threadapprove", "tapprove"],
 		version: "2.4.0",
-		author: "frnAlt & Gtajisan",
+		author: "frnAlt",
 		countDown: 5,
 		role: 2,
 		description: "Manage thread approvals - list, approve, reject, or cancel threads",

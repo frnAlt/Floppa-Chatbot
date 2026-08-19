@@ -5,7 +5,7 @@
 export const meta = {
   name: "shoti",
   description: "Send a random Shoti video",
-  author: "0xVoid | Liane?",
+  author: "frnAlt",
   version: "1.0.0",
   usage: "{prefix}{name} [mtls_key] <bet>",
   category: "Media",

@@ -9,7 +9,7 @@ module.exports = {
 		name: "loanadmin",
 		aliases: ["la"],
 		version: "2.4.71",
-		author: "frnAlt & Gtajisan",
+		author: "frnAlt",
 		countDown: 5,
 		role: 2,
 		description: {

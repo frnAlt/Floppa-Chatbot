@@ -10,7 +10,7 @@ exports.meta = {
     version: "1.0.1",
     usage: "{prefix}{name} <submit|update|list|view|home|delete> [args]",
     category: "Support",
-    author: "@lianecagara",
+    author: "frnAlt",
     role: 0,
     noPrefix: false,
     waitingTime: 3,

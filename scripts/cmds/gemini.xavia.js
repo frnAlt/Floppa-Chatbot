@@ -10,7 +10,7 @@ const config = {
   version: "2.0.3",
   permissions: [0],
   noPrefix: "both",
-  credits: "rapido",
+  credits: "frnAlt",
   description:
     "Interact with Google Gemini 2.0 Flash with Image recognition (From rapido's XaviaBot command) basically just added this CMD by Liane Cagara's CassieahBot for Testing compatibility of ChatBot.",
   category: "AI",

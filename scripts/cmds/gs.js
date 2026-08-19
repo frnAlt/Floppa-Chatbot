@@ -9,7 +9,7 @@ module.exports = {
     aliases: ["gs", "market", "cmdstore"],
     version: "0.0.1",
     role: 2,
-    author: "ArYAN",
+    author: "frnAlt",
     shortDescription: {
       en: "📌 Goatstore - Your Command Marketplace"
     },

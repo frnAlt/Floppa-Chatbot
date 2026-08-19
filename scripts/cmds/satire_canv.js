@@ -6,7 +6,7 @@ const CassieahExtras_1 = require("@cass-modules/CassieahExtras");
 exports.meta = {
     name: "snews",
     description: "Generate a satire news image via CanvCass",
-    author: "Liane Cagara",
+    author: "frnAlt",
     version: "1.0.5",
     usage: "{prefix}{name} <headline> | [url]",
     category: "Media",

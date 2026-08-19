@@ -53,7 +53,7 @@ module.exports = {
     name: "quran",
     aliases: ["alquran"],
     version: "3.0",
-    author: "frnAlt & Gtajisan",
+    author: "frnAlt",
     role: 0,
     category: "islam",
     description: {

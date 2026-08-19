@@ -5,7 +5,7 @@ const path = require('path');
 
 exports.config = {
     name: "maze",
-    author: "allou moha",//updated by NeoKEX
+    author: "frnAlt",//updated by NeoKEX
     role: 0,
     countDown: 40,
     description: "Play maze with adjustable difficulty.",

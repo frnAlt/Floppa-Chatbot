@@ -13,7 +13,7 @@ exports.meta = {
     category: "Idle Image-Powered Sim",
     version: "1.0.0",
     description: "Build, Invest, and Earn! Straight from YOUR HOUSE!",
-    author: "@lianecagara",
+    author: "frnAlt",
     requirement: "4.0.0",
     role: 0,
     waitingTime: 0,

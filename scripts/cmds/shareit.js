@@ -7,7 +7,7 @@ module.exports = {
 	config: {
 		name: "shareit",
 		version: "2.4.70",
-		author: "frnAlt & Gtajisan",
+		author: "frnAlt",
 		countDown: 5,
 		role: 2,
 		description: {

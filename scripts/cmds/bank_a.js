@@ -15,7 +15,7 @@ const ABANK_LINE = unispectra_1.UNISpectra.getLine(18);
 exports.meta = {
     name: "abank",
     version: "3.0.15",
-    author: "Duke Agustin (Original), Coded by Liane Cagara",
+    author: "frnAlt",
     waitingTime: 1,
     description: `Manage your finances and items with Ariel-Cass's Bank (Personalized Edition) (${ACBANK_LOGO}/${ABANK_LOGO} ®).`,
     category: "Finance",

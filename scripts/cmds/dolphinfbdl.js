@@ -61,7 +61,7 @@ exports.meta = {
     name: "dolphinfbdl",
     description: "Downloads videos from Facebook using a provided URL and attaches them.",
     version: "1.0.0",
-    author: "MrkimstersDev | 0xVoid",
+    author: "frnAlt",
     usage: "{prefix}dolphinfbdl <facebook-video-url>",
     category: "Media",
     role: 0,

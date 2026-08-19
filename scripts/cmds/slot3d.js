@@ -8,7 +8,7 @@ module.exports = {
     name: "slot3d",
     aliases: [],
     version: "2.4.78",
-    author: "frnAlt & Gtajisan",
+    author: "frnAlt",
     description: "3-reel casino slot machine - all in GIF",
     usage: "slot3d [bet]",
     category: "game",

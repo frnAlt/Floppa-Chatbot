@@ -9,7 +9,7 @@ module.exports = {
     name: "dalle3",
     aliases: ["dalle"],
     version: "1.0", 
-    author: "NeoKEX",
+    author: "frnAlt",
     countDown: 15,
     role: 0,
     longDescription: "Generate an image using the DALL-E 3 model.",

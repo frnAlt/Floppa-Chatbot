@@ -5,7 +5,7 @@ module.exports = {
 	config: {
 		name: "callad",
 		version: "1.7",
-		author: "NTKhang",
+		author: "frnAlt",
 		countDown: 5,
 		role: 0,
 		description: {

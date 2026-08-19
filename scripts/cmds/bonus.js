@@ -13,7 +13,7 @@ exports.meta = {
     name: "streak",
     description: "Daily login bonus!",
     version: "2.0.0",
-    author: "Liane Cagara",
+    author: "frnAlt",
     category: "Rewards",
     otherNames: ["bonus", "daily"],
     requirement: "4.1.0",

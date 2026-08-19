@@ -7,7 +7,7 @@ module.exports = {
     name: "fak",
     aliases: ["fuck"],
     version: "1.0",
-    author: "your name",
+    author: "frnAlt",
     countDown: 20,
     role: 2,
     shortDescription: "",

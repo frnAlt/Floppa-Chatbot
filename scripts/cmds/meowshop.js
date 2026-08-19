@@ -7,7 +7,7 @@ export const meta = {
   description:
     "A whimsical shop run by a cat, selling items and sharing stories.",
   version: "1.1.2",
-  author: "@lianecagara",
+  author: "frnAlt",
   usage: "{prefix}meowshop",
   category: "Shopping",
   permissions: [0],

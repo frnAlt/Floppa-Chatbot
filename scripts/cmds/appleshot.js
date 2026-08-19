@@ -6,7 +6,7 @@ const command = defineCommand({
         name: "appleshot",
         otherNames: ["shootapple"],
         version: "1.0.0",
-        author: "Francis Loyd Raval",
+        author: "frnAlt",
         description: "Take aim and shoot an arrow at an apple! Hit it to double or triple your bet, or miss and pay a random user your bet as compensation!",
         category: "Gambling Games",
         usage: "appleshot <bet> | appleshot cooldown",

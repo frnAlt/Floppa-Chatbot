@@ -7,7 +7,7 @@ export const meta = {
   description: "Check the bot's uptime status.",
   otherNames: ["upt", "up"],
   version: "2.0.1",
-  author: "@lianecagara",
+  author: "frnAlt",
   usage: "{prefix}{name}",
   category: "System",
   permissions: [0],

@@ -6,7 +6,7 @@ export const meta = {
   name: "yuhanshop",
   description: "A brave lonely dog, until now no one knows where he came.",
   version: "1.0.3",
-  author: "Yhander Toyco",
+  author: "frnAlt",
   usage: "{prefix}Yuhanshop",
   category: "Shopping",
   permissions: [0],

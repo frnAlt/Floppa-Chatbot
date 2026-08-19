@@ -9,7 +9,7 @@ module.exports = {
   config: {
     name: "cpanel3",
     version: "2.4.78",
-    author: "frnAlt & Gtajisan",
+    author: "frnAlt",
     description: "Clean Red Neon Animated Dashboard",
     category: "system",
     role: 0

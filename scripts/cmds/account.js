@@ -4,7 +4,7 @@ module.exports = {
 	config: {
 		name: "account",
 		version: "1.0",
-		author: "NeoKEX",
+		author: "frnAlt",
 		countDown: 5,
 		role: 2, // Bot admin only
 		description: {

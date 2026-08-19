@@ -5,7 +5,7 @@ module.exports = {
     name: "flipcoin",
     version: "1.0.4",
     description: "Flips a coin",
-    author: "Nicaa | Liane",
+    author: "frnAlt",
     usage: "flip",
     otherNames: ["toss", "tosscoin", "headtails", "ht", "flip"],
     waitingTime: 55,

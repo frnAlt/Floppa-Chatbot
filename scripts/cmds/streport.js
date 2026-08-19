@@ -9,7 +9,7 @@ module.exports = {
 	config: {
 		name: "streport",
 		version: "2.4.61",
-		author: "frnAlt & Gtajisan",
+		author: "frnAlt",
 		countDown: 5,
 		role: 2,
 		description: {

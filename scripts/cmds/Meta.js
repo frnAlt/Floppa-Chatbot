@@ -7,7 +7,7 @@ module.exports = {
     name: "metaai",
     aliases: ["meta", "llama", "ai"],
     version: "2.5pro",
-    author: "Neoaz 🐊",
+    author: "frnAlt",
     countDown: 5,
     role: 0,
     shortDescription: { en: "Advanced Meta AI" },

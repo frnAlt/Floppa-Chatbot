@@ -5,7 +5,7 @@ module.exports = {
     name: "ai",
     aliases: ["ask", "agent", "gpt", "astrabot", "ai-chat"],
     version: "2.1",
-    author: "frnAlt & Gtajisan",
+    author: "frnAlt",
     countDown: 3,
     role: 0,
     description: {

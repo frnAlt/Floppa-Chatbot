@@ -6,7 +6,7 @@ export const meta = {
   name: "fashionista",
   description: "Build your dream boutique and collect stylish outfits! 👗✨",
   version: "1.0.2",
-  author: "JenicaDev",
+  author: "frnAlt",
   usage: "{prefix}fashionista",
   category: "Idle Accumulation Games",
   permissions: [0],

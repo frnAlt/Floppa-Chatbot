@@ -7,7 +7,7 @@ module.exports = {
     name: "alldl",
     aliases: ["fbdl", "igdl", "ttdl", "ytdl", "dl"],
     version: "2.6",
-    author: "Neoaz 🐦",
+    author: "frnAlt",
     countDown: 5,
     role: 0,
     shortDescription: { en: "Multi-platform video/audio downloader" },

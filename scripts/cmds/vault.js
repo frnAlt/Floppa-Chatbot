@@ -9,7 +9,7 @@ const unispectra_1 = require("@cassidy/unispectra");
 exports.meta = {
     name: "vault",
     description: "Organize and manage your external inventory with an additional 100 slots.",
-    author: "Liane Cagara | JenicaDev",
+    author: "frnAlt",
     version: "1.1.5",
     usage: "{prefix}vault <action> [arguments]",
     category: "Inventory",

@@ -3,7 +3,7 @@ module.exports = {
     name: "ping",
     aliases: ["pong"],
     version: "2.0",
-    author: "frnAlt & Gtajisan",
+    author: "frnAlt",
     countDown: 2,
     role: 0,
     description: {

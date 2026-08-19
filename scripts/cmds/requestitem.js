@@ -37,7 +37,7 @@ const perPage = 5;
 exports.meta = {
     name: "communityshop",
     description: "Request, approve, buy, sell your and the community's custom items!",
-    author: "Liane Cagara",
+    author: "frnAlt",
     version: "2.2.3",
     category: "Shopping",
     role: 0,

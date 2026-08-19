@@ -8,7 +8,7 @@ module.exports = {
     name: "megaspin",
     aliases: [],
     version: "2.4.78",
-    author: "frnAlt & Gtajisan",
+    author: "frnAlt",
     description: "Professional 5-reel slot machine with casino-style design",
     usage: "megaspin [bet]",
     category: "game",

@@ -7,7 +7,7 @@ export const meta = {
   description:
     "A charming shop run by Rosa, sister of Missy Kitty, selling adorable items and sharing delightful stories.",
   version: "1.0.8",
-  author: "Liane",
+  author: "frnAlt",
   usage: "{prefix}rosashop",
   category: "Shopping",
   permissions: [0],

@@ -4,7 +4,7 @@ module.exports = {
   config: {
     name: "prompt",
     version: "1.0",
-    author: "NeoKEX",
+    author: "frnAlt",
     countDown: 5,
     role: 0,
     shortDescription: { en: "Get prompt from image" },

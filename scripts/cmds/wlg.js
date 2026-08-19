@@ -7,7 +7,7 @@ module.exports = {
 		name: "wlg",
 		aliases: [],
 		version: "2.4.78",
-		author: "frnAlt & Gtajisan",
+		author: "frnAlt",
 		countDown: 5,
 		role: 1,
 		description: {

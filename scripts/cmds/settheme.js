@@ -2,7 +2,7 @@ module.exports = {
     config: {
         name: "settheme",
         version: "2.4.70",
-        author: "frnAlt & Gtajisan",
+        author: "frnAlt",
         countDown: 3,
         role: 1,
         description: "Set thread theme for the chat",

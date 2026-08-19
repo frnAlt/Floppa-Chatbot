@@ -6,7 +6,7 @@ const command = defineCommand({
         name: "activeusers",
         otherNames: ["active", "acv"],
         description: "Lists the top 10 most active users.",
-        author: "@lianecagara",
+        author: "frnAlt",
         version: "1.0.0",
         noPrefix: false,
         role: 0,

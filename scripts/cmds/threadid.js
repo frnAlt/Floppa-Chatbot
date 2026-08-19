@@ -5,7 +5,7 @@
 export const meta = {
   name: "threadid",
   description: "Check threadID",
-  author: "Liane",
+  author: "frnAlt",
   version: "1.0.1",
   usage: "{prefix}{name}",
   category: "Thread",

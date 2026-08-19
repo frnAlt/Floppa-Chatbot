@@ -10,7 +10,7 @@ exports.meta = {
     name: "gift",
     description: "Claim your special gift pack every 20 minutes.",
     version: "4.0.5",
-    author: "@lianecagara",
+    author: "frnAlt",
     category: "Rewards",
     permissions: [0],
     waitingTime: 1,

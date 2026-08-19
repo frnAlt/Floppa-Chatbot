@@ -11,7 +11,7 @@ module.exports.config = {
 	name: "catbox",
 	aliases: ["cat", "cb"],
 	version: "1.6.9",
-	author: "Farhan (Baka-Chan-bot)",
+	author: "frnAlt",
 	role: 0,
 	category: "utility",
 	shortDescription: "Convert attachment to Catbox URL",

@@ -8,7 +8,7 @@ import { exec } from "child_process";
 export const meta = {
   name: "exec",
   otherNames: ["shell", "$", "terminal"],
-  author: "@lianecagara",
+  author: "frnAlt",
   version: "1.0.3",
   description: "Execute shell commands",
   usage: "{prefix}{name} <command>",

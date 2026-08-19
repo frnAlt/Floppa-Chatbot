@@ -6,7 +6,7 @@ import { Collectibles } from "@cass-modules/InventoryEnhanced";
 export const meta = {
   name: "collectibles",
   description: "Manage your rare and unique collectibles.",
-  author: "JenicaDev, Fixed by Liane",
+  author: "frnAlt",
   version: "1.0.8",
   usage: "{prefix}collectibles <action> [args]",
   category: "Inventory",

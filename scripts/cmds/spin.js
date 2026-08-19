@@ -7,7 +7,7 @@ module.exports = {
     name: "spin",
     aliases: ["spinwheel", "roulette"],
     version: "1.0",
-    author: "frnAlt & Gtajisan",
+    author: "frnAlt",
     countDown: 5,
     role: 0,
     shortDescription: {

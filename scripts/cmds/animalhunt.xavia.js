@@ -4,7 +4,7 @@ const config = {
   description:
     "Embark on an animal hunting adventure and collect rare animals and treasures.",
   usage: "",
-  credits: "Rue",
+  credits: "frnAlt",
   category: "Xavia Economy",
   cooldown: 20,
   extra: {

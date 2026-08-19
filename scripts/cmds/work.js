@@ -19,7 +19,7 @@ export const meta = {
   aliases: ["wk"],
   version: "1.0.0",
   description: "Work to earn money",
-  author: "XaviaTeam | Liane (Adapted to Cassidy)",
+  author: "frnAlt",
   waitingTime: 10,
   category: "Chance Games",
   cmdType: "arl_g",

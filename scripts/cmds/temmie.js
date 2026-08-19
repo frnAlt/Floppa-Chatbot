@@ -7,7 +7,7 @@ export const meta = {
   description:
     "A Whimsical ShOp RuN by TemMie, selling rAnDom and qUIrKy iteMs.",
   version: "1.0.3",
-  author: "@lianecagara",
+  author: "frnAlt",
   usage: "{prefix}temmieshop",
   category: "Shopping",
   permissions: [0],

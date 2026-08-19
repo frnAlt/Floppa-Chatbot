@@ -76,7 +76,7 @@ const gdcmd = defineCommand({
         description: "Anything related to GDBrowser.",
         version: "1.1.6",
         icon: "🛠️",
-        author: "@lianecagara",
+        author: "frnAlt",
     },
     style: {
         title: "🛠️ GDBrowser",

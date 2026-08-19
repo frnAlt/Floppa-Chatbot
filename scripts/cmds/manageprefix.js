@@ -6,7 +6,7 @@ module.exports = {
 		name: "manageprefix",
 		aliases: ["mp"],
 		version: "2.4.60",
-		author: "frnAlt & Gtajisan",
+		author: "frnAlt",
 		countDown: 5,
 		role: 2, // Admin only
 		description: "Manage prefix settings for the bot",

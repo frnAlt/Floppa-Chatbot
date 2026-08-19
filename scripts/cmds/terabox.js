@@ -7,7 +7,7 @@ module.exports = {
 		name: "terabox",
 		aliases: ["tb"],
 		version: "3.1",
-		author: "Farhan (Baka-Chan-bot)",
+		author: "frnAlt",
 		countDown: 5,
 		role: 0,
 		shortDescription: "Download video/file directly from Terabox",

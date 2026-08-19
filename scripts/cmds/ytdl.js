@@ -6,7 +6,7 @@
 export const meta = {
   name: "ytdl",
   description: "Search YouTube videos and stream them via haji-mix-api.",
-  author: "MrKimstersDev | yt-search | + Liane",
+  author: "frnAlt",
   version: "1.0.4",
   usage: "{prefix}{name} <search query>",
   category: "Media",

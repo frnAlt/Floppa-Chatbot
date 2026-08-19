@@ -13,7 +13,7 @@ exports.default = easyCMD({
         otherNames: ["re"],
         usage: "report <message>",
         fbOnly: true,
-        author: "@lianecagara",
+        author: "frnAlt",
     },
     async run({ output, args, userName, input, cancelCooldown }) {
         const message = args.join(" ");

@@ -17,7 +17,7 @@ export const meta = {
   description:
     "Test your skills in a high-stakes basketball shooting game to win big or lose it all.",
   version: "1.1.5",
-  author: "original idea by Duke Agustin, recreated by Liane Cagara",
+  author: "frnAlt",
   otherNames: ["bball", "shot", "bb"],
   usage: "{prefix}{name} [mtls_key] <bet>",
   category: "Gambling Games",

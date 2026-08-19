@@ -13,7 +13,7 @@ const REMOTEBAG = fonts.serif("REMOTE-BAG");
 exports.meta = {
     name: "remotebag",
     version: "1.0.2",
-    author: "Adapted from Duke's Ariel's Bank by Liane Cagara",
+    author: "frnAlt",
     waitingTime: 1,
     description: `Manage your items with Remote Bag (${REMOTEBAG} ®). Store, retrieve, and transfer items with upgradable slots.`,
     category: "Inventory",

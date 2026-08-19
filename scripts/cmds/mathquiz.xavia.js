@@ -8,7 +8,7 @@ const config = {
   usage: "",
   category: "Xavia Economy",
   cooldown: 10,
-  credits: "Rue, Security Patched by Liane (eval to mathjs evaluate)",
+  credits: "frnAlt",
   isGame: true,
 };
 

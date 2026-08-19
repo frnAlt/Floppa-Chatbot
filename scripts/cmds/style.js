@@ -9,7 +9,7 @@ export const meta = {
   version: "1.0.8",
   usage: "{prefix}{name} <title> | <content>",
   category: "Utilities",
-  author: "@lianecagara",
+  author: "frnAlt",
   permissions: [0],
   noPrefix: false,
   requirement: "3.0.0",

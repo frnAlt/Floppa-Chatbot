@@ -22,7 +22,7 @@ module.exports = {
     name: "upscale",
     aliases: ["4k", "hd", "enhance", "4kimage"],
     version: "2.0",
-    author: "frnAlt & Gtajisan",
+    author: "frnAlt",
     countDown: 15,
     role: 0,
     description: {

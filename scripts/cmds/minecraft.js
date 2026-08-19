@@ -6,7 +6,7 @@ export const meta = {
   name: "minecraft",
   description: "Mine blocks and gather resources!",
   version: "1.0.1",
-  author: "MrkimstersDev",
+  author: "frnAlt",
   usage: "{prefix}minecraft",
   category: "Idle Accumulation Games",
   permissions: [0],

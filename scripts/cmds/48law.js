@@ -7,7 +7,7 @@ const command = defineCommand({
         version: "1.0.0",
         usage: "{prefix}48law <number>",
         category: "Media",
-        author: "Aljur pogoy",
+        author: "frnAlt",
         role: 0,
         noPrefix: false,
         waitingTime: 0,

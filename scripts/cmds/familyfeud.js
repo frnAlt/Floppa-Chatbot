@@ -9,7 +9,7 @@ import { clamp, UNISpectra } from "@cassidy/unispectra";
  */
 export const meta = {
   name: "familyfeud",
-  author: "@lianecagara",
+  author: "frnAlt",
   version: "2.0.0",
   waitingTime: 5,
   description: "Family Feud style game!",

@@ -8,7 +8,7 @@ import moment from "moment-timezone";
 export const meta = {
   name: "manga",
   description: "Search and read manga chapters",
-  author: "MrkimstersDev",
+  author: "frnAlt",
   version: "1.0.0",
   usage: "{prefix}{name} <manga title>",
   category: "Media",

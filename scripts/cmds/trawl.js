@@ -6,7 +6,7 @@ export const meta = {
   name: "trawl",
   description: "Use a fishing trawler to catch massive hauls!",
   version: "1.0.0",
-  author: "MrkimstersDev",
+  author: "frnAlt",
   usage: "{prefix}trawl",
   category: "Idle Accumulation Games",
   permissions: [0],

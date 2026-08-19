@@ -4,7 +4,7 @@ const fs = require("fs-extra");
 module.exports = {
   config: {
     name: "geminigen",
-    author: "frnAlt & Gtajisan",
+    author: "frnAlt",
     usage: "[prompt] or reply to image",
     cooldown: 5,
     category: "image generator" 

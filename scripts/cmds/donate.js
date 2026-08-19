@@ -11,7 +11,7 @@ export const meta = {
   version: "1.1.0",
   usage: "{prefix}{name} <amount>",
   category: "Finance",
-  author: "@lianecagara",
+  author: "frnAlt",
   role: 0,
   noPrefix: false,
   waitingTime: 0,

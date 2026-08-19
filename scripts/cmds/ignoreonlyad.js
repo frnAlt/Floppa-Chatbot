@@ -5,7 +5,7 @@ module.exports = {
 		name: "ignoreonlyad",
 		aliases: ["ignoreadonly", "ignoreonlyadmin", "ignoreadminonly"],
 		version: "1.2",
-		author: "NTKhang",
+		author: "frnAlt",
 		countDown: 5,
 		role: 2,
 		description: {

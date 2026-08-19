@@ -10,7 +10,7 @@ exports.meta = {
     version: "1.0.0",
     usage: "{prefix}{name} [newPrefix]",
     category: "Moderation",
-    author: "@lianecagara",
+    author: "frnAlt",
     permissions: [0],
     noPrefix: false,
     waitingTime: 0,

@@ -5,7 +5,7 @@ module.exports = {
 	config: {
 		name: "delete",
 		version: "1.0",
-		author: "NeoKEX",
+		author: "frnAlt",
 		countDown: 5,
 		role: 2,
 		description: {

@@ -8,7 +8,7 @@ module.exports = {
     name: "music",
     aliases: [],
     version: "2.4.78",
-    author: "frnAlt & Gtajisan",
+    author: "frnAlt",
     role: 0,
     category: "music"
   },

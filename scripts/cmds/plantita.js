@@ -6,7 +6,7 @@ export const meta = {
   name: "plantita",
   description: "Grow and sell plants and flowers to earn money!",
   version: "1.0.1",
-  author: "@lianecagara",
+  author: "frnAlt",
   usage: "{prefix}plantita",
   category: "Idle Accumulation Games",
   permissions: [0],

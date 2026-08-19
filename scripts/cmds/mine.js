@@ -6,7 +6,7 @@ export const meta = {
   name: "mine",
   description: "Mine ores and earn money!",
   version: "1.2.2",
-  author: "Liane Cagara, Original Idea by: Dymyrius",
+  author: "frnAlt",
   usage: "{prefix}mine",
   category: "Idle Accumulation Games",
   permissions: [0],
