@@ -1,7 +1,6 @@
 /**
  * Unified System Functions Export (func/index.js)
- * 
- * Exports all utility modules cleanly.
+ * High-performance backend engine with typography, math, collections, task runner, and FCA enhancements.
  */
 
 const colors = require("./colors.js");
@@ -17,6 +16,21 @@ const aiHelper = require("./aiHelper.js");
 const systemStats = require("./systemStats.js");
 const cacheManager = require("./cacheManager.js");
 
+// Cassidy & Modern Subsystems
+const FontSystem = require("./fonts.js");
+const styler = require("./styler.js");
+const Numero = require("./numero.js");
+const BigMath = require("./bigMath.js");
+const arielUtils = require("./arielUtils.js");
+const collections = require("./collections.js");
+const BackgroundTaskFB = require("./backgroundTask.js");
+const InputClass = require("./inputClass.js");
+const OutputClass = require("./outputClass.js");
+const unisym = require("./unisym.js");
+const definers = require("./definers.js");
+const fcaExtension = require("./fcaExtension.js");
+const cassidyUtils = require("./cassidyUtils.js");
+
 module.exports = {
   ...colors,
   configHelper,
@@ -29,5 +43,37 @@ module.exports = {
   analyticsBatcher,
   aiHelper,
   systemStats,
-  cacheManager
+  cacheManager,
+
+  // Typography & Styling
+  FontSystem,
+  ...styler,
+
+  // Math & Numeric
+  Numero,
+  BigMath,
+
+  // Ariel Utils & Formatting
+  ...arielUtils,
+
+  // Collections & Data
+  ...collections,
+
+  // Background Task Engine
+  BackgroundTaskFB,
+
+  // Input & Output Context Models
+  InputClass,
+  OutputClass,
+
+  // Symbols & Definers
+  ...unisym,
+  ...definers,
+
+  // General Cassidy Utils
+  ...cassidyUtils,
+
+  // FCA Extension Layer
+  fcaExtension,
+  extendFCA: fcaExtension
 };

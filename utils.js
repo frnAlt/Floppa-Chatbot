@@ -13,8 +13,7 @@ const ora = require("ora");
 const log = require("./logger/log.js");
 const { isHexColor, colors } = require("./func/colors.js");
 const Prism = require("./func/prism.js");
-
-const { config } = global.GoatBot;
+const config = global.GoatBot?.config || global.FloppaBot?.config || {};
 
 const word = [
         'A', 'Á', 'À', 'Ả', 'Ã', 'Ạ', 'a', 'á', 'à', 'ả', 'ã', 'ạ',
