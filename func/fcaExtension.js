@@ -3,7 +3,7 @@
  * Provides full modern capabilities: MQTT messaging, animated edits, contact cards,
  * story/post reactions, avatar/bio management, thread administration, attachment handling,
  * conduit fluent builders, sliding cache, message collectors, queues, domain namespaces,
- * and Axera rich status/notes, themes, and emoji suites.
+ * SentMessage helpers, and Axera rich status/notes, themes, photo resolver, and emoji suites.
  *
  * Powered by Floppa Engine.
  */
@@ -19,6 +19,7 @@ const {
   ConduitMessageCollector,
   ConduitSlidingCache,
   ConduitQueue,
+  attachSentMessageHelpers,
   createDomainNamespaces
 } = require("./conduitBridge.js");
 
@@ -26,6 +27,7 @@ const {
   AxeraNotesAPI,
   AxeraThemeAPI,
   AxeraEmojiAPI,
+  resolvePhotoUrl,
   shareContactMqtt
 } = require("./axeraBridge.js");
 
@@ -59,7 +61,7 @@ function extendFCA(api) {
   };
   api.createCollector = api.createMessageCollector;
 
-  // ─── 4. Axera Suites: Notes, Themes, Emojis ─────────────────────────────────
+  // ─── 4. Axera Suites: Notes, Themes, Emojis, Photo Resolver ────────────────
   const notesApi = new AxeraNotesAPI(api, ctx);
   const themeApi = new AxeraThemeAPI(api, ctx);
   const emojiApi = new AxeraEmojiAPI(api, ctx);
@@ -78,6 +80,10 @@ function extendFCA(api) {
   api.emoji = emojiApi;
   api.setEmoji = emojiApi.setEmoji.bind(emojiApi);
 
+  api.resolvePhotoUrl = function (fbid, callback) {
+    return resolvePhotoUrl(api, fbid, callback);
+  };
+
   // ─── 5. High-Level Domain Namespaces ───────────────────────────────────────
   const domainApis = createDomainNamespaces(api, queue, cache);
   api.messages = domainApis.messages;
@@ -85,7 +91,38 @@ function extendFCA(api) {
   api.users = domainApis.users;
   api.account = domainApis.account;
 
-  // ─── 6. MQTT Message Sender ─────────────────────────────────────────────────
+  // ─── 6. Enrich sendMessage with SentMessage Helpers ────────────────────────
+  const originalSendMessage = api.sendMessage;
+  if (typeof originalSendMessage === "function") {
+    api.sendMessage = function (msg, threadID, callback, replyToMessage) {
+      let cb = callback;
+      let replyTo = replyToMessage;
+
+      if (typeof cb !== "function" && typeof cb === "string") {
+        replyTo = cb;
+        cb = defaultCallback;
+      }
+      cb = cb || defaultCallback;
+
+      const wrappedCb = (err, info) => {
+        if (!err && info) {
+          attachSentMessageHelpers(info, threadID, api);
+        }
+        cb(err, info);
+      };
+
+      const result = originalSendMessage.call(api, msg, threadID, wrappedCb, replyTo);
+      if (result && typeof result.then === "function") {
+        return result.then(info => {
+          if (info) attachSentMessageHelpers(info, threadID, api);
+          return info;
+        });
+      }
+      return result;
+    };
+  }
+
+  // ─── 7. MQTT Message Sender ─────────────────────────────────────────────────
   if (!api.sendMessageMqtt) {
     api.sendMessageMqtt = function (msg, threadID, callback, replyToMessage) {
       if (typeof callback !== "function" && typeof callback === "string") {
@@ -99,7 +136,7 @@ function extendFCA(api) {
     };
   }
 
-  // ─── 7. Advanced Multi-step Animated editMessageAdv ─────────────────────────
+  // ─── 8. Advanced Multi-step Animated editMessageAdv ─────────────────────────
   if (!api.editMessageAdv) {
     api.editMessageAdv = async function (messageID, ...args) {
       const texts = args.filter((arg, index) => typeof arg === "string" && index % 2 !== 0);
@@ -126,14 +163,14 @@ function extendFCA(api) {
     };
   }
 
-  // ─── 8. Share Contact Card (MQTT with Fallback) ────────────────────────────
+  // ─── 9. Share Contact Card (MQTT with Fallback) ────────────────────────────
   api.shareContact = function (text, senderID, threadID, callback) {
     callback = callback || defaultCallback;
     return shareContactMqtt(api, ctx, text, senderID, threadID, callback);
   };
   api.shareContactMqtt = api.shareContact;
 
-  // ─── 9. Share Link Card ────────────────────────────────────────────────────
+  // ─── 10. Share Link Card ───────────────────────────────────────────────────
   if (!api.shareLink) {
     api.shareLink = function (text, url, threadID, callback) {
       callback = callback || defaultCallback;
@@ -143,7 +180,7 @@ function extendFCA(api) {
     };
   }
 
-  // ─── 10. Create Poll ───────────────────────────────────────────────────────
+  // ─── 11. Create Poll ───────────────────────────────────────────────────────
   if (!api.createPoll) {
     api.createPoll = function (title, threadID, options = {}, callback) {
       callback = callback || defaultCallback;
@@ -154,7 +191,7 @@ function extendFCA(api) {
     };
   }
 
-  // ─── 11. Forward Attachment ────────────────────────────────────────────────
+  // ─── 12. Forward Attachment ────────────────────────────────────────────────
   if (!api.forwardAttachment) {
     api.forwardAttachment = function (attachmentID, threadID, callback) {
       callback = callback || defaultCallback;
@@ -164,7 +201,7 @@ function extendFCA(api) {
     };
   }
 
-  // ─── 12. Post Reaction ─────────────────────────────────────────────────────
+  // ─── 13. Post Reaction ─────────────────────────────────────────────────────
   if (!api.setPostReaction) {
     api.setPostReaction = function (postID, type = "LIKE", callback) {
       callback = callback || defaultCallback;
@@ -175,7 +212,7 @@ function extendFCA(api) {
     };
   }
 
-  // ─── 13. Story Reaction ────────────────────────────────────────────────────
+  // ─── 14. Story Reaction ────────────────────────────────────────────────────
   if (!api.setStoryReaction) {
     api.setStoryReaction = function (storyID, react = "👍", callback) {
       callback = callback || defaultCallback;
@@ -183,7 +220,7 @@ function extendFCA(api) {
     };
   }
 
-  // ─── 14. Profile Guard / Avatar Shield ─────────────────────────────────────
+  // ─── 15. Profile Guard / Avatar Shield ─────────────────────────────────────
   if (!api.setProfileGuard) {
     api.setProfileGuard = function (enable = true, callback) {
       callback = callback || defaultCallback;
@@ -191,7 +228,7 @@ function extendFCA(api) {
     };
   }
 
-  // ─── 15. Change Bio ────────────────────────────────────────────────────────
+  // ─── 16. Change Bio ────────────────────────────────────────────────────────
   if (!api.changeBio) {
     api.changeBio = function (bio = "", publish = false, callback) {
       callback = callback || defaultCallback;
@@ -199,7 +236,7 @@ function extendFCA(api) {
     };
   }
 
-  // ─── 16. Pin / Unpin Message ───────────────────────────────────────────────
+  // ─── 17. Pin / Unpin Message ───────────────────────────────────────────────
   if (!api.pinMessage) {
     api.pinMessage = function (messageID, threadID, callback) {
       callback = callback || defaultCallback;
@@ -213,7 +250,7 @@ function extendFCA(api) {
     };
   }
 
-  // ─── 17. Message Retrieval Helpers ─────────────────────────────────────────
+  // ─── 18. Message Retrieval Helpers ─────────────────────────────────────────
   if (!api.getMessage) {
     api.getMessage = async function (threadID, messageID, callback) {
       callback = callback || defaultCallback;
@@ -228,7 +265,7 @@ function extendFCA(api) {
     };
   }
 
-  // ─── 18. Friends List Helper ───────────────────────────────────────────────
+  // ─── 19. Friends List Helper ───────────────────────────────────────────────
   if (!api.getFriendsList) {
     api.getFriendsList = function (callback) {
       callback = callback || defaultCallback;
@@ -236,7 +273,7 @@ function extendFCA(api) {
     };
   }
 
-  // ─── 19. Authenticated HTTP request helpers ────────────────────────────────
+  // ─── 20. Authenticated HTTP request helpers ────────────────────────────────
   if (!api.httpGet) {
     api.httpGet = async function (url, params = {}, customHeaders = {}) {
       return axios.get(url, { params, headers: customHeaders });
@@ -269,6 +306,8 @@ module.exports.ConduitAttachmentBuilder = ConduitAttachmentBuilder;
 module.exports.ConduitMessageCollector = ConduitMessageCollector;
 module.exports.ConduitSlidingCache = ConduitSlidingCache;
 module.exports.ConduitQueue = ConduitQueue;
+module.exports.attachSentMessageHelpers = attachSentMessageHelpers;
 module.exports.AxeraNotesAPI = AxeraNotesAPI;
 module.exports.AxeraThemeAPI = AxeraThemeAPI;
 module.exports.AxeraEmojiAPI = AxeraEmojiAPI;
+module.exports.resolvePhotoUrl = resolvePhotoUrl;

@@ -1,7 +1,7 @@
 /**
  * Axera Bridge for Floppa-Chatbot FCA
  * Integrates Notes API, Messenger Themes & Gradients, Thread Emojis,
- * MQTT Contact Sharing, and Enhanced Delta Parsers from @axera-team/axera-fca.
+ * Photo URL Resolution, MQTT Contact Sharing, and Enhanced Delta Parsers from @axera-team/axera-fca.
  *
  * Fully integrated and adapted for Floppa Engine.
  */
@@ -204,7 +204,6 @@ class AxeraThemeAPI {
   async setTheme(threadID, themeID, callback) {
     const cb = typeof callback === "function" ? callback : () => {};
     try {
-      // 1. If MQTT client connected, publish task
       if (this.ctx?.mqttClient) {
         this.ctx.wsReqNumber = (this.ctx.wsReqNumber || 0) + 1;
         this.ctx.wsTaskNumber = (this.ctx.wsTaskNumber || 0) + 1;
@@ -238,7 +237,6 @@ class AxeraThemeAPI {
         return { status: "success", themeID, threadID };
       }
 
-      // 2. GraphQL / HTTP fallback
       if (typeof this.api.changeThreadColor === "function") {
         return new Promise((resolve, reject) => {
           this.api.changeThreadColor(themeID, threadID, (err, res) => {
@@ -334,7 +332,27 @@ class AxeraEmojiAPI {
   }
 }
 
-// ─── 4. MQTT Contact Sharing ─────────────────────────────────────────────────
+// ─── 4. Photo URL Resolver ───────────────────────────────────────────────────
+async function resolvePhotoUrl(api, fbid, callback) {
+  const cb = typeof callback === "function" ? callback : () => {};
+  try {
+    if (typeof api.httpGet === "function") {
+      const res = await api.httpGet(`https://graph.facebook.com/${fbid}/picture?type=large&redirect=false`);
+      const url = res.data?.data?.url || `https://graph.facebook.com/${fbid}/picture?type=large`;
+      cb(null, url);
+      return url;
+    }
+    const defaultUrl = `https://graph.facebook.com/${fbid}/picture?type=large`;
+    cb(null, defaultUrl);
+    return defaultUrl;
+  } catch (err) {
+    const fallbackUrl = `https://graph.facebook.com/${fbid}/picture?type=large`;
+    cb(null, fallbackUrl);
+    return fallbackUrl;
+  }
+}
+
+// ─── 5. MQTT Contact Sharing ─────────────────────────────────────────────────
 function shareContactMqtt(api, ctx, text, senderID, threadID, callback) {
   const cb = typeof callback === "function" ? callback : () => {};
 
@@ -392,6 +410,7 @@ module.exports = {
   AxeraNotesAPI,
   AxeraThemeAPI,
   AxeraEmojiAPI,
+  resolvePhotoUrl,
   shareContactMqtt,
   generateOfflineThreadingID,
   getGUID

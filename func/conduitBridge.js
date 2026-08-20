@@ -2,7 +2,7 @@
  * Conduit Bridge for Floppa-Chatbot FCA
  * Incorporates fluent builders, multi-source attachment streaming,
  * message collectors, sliding TTL caches, thread concurrency queues,
- * and high-level domain APIs from @TheophilusWorks/conduit.
+ * high-level domain APIs, and SentMessage helpers from @TheophilusWorks/conduit.
  *
  * Fully integrated and adapted for Floppa Engine.
  */
@@ -353,7 +353,82 @@ class ConduitMessageCollector extends EventEmitter {
   }
 }
 
-// ─── 5. Conduit Sliding Cache ────────────────────────────────────────────────
+// ─── 5. SentMessage Helpers ──────────────────────────────────────────────────
+function attachSentMessageHelpers(info, threadID, api) {
+  if (!info || typeof info !== "object" || info.__helpersAttached) return info;
+  info.__helpersAttached = true;
+  info.threadID = info.threadID || String(threadID || "");
+
+  info.waitResponse = function (options = {}) {
+    const timeout = typeof options === "number" ? options : (options.timeout || 30000);
+    const filter = typeof options === "function" ? options : (options.filter || (() => true));
+
+    return new Promise((resolve, reject) => {
+      const collector = new ConduitMessageCollector(api, info.threadID, {
+        max: 1,
+        timeout,
+        filter: (msg) => {
+          if (msg.messageReply?.messageID === info.messageID) {
+            return filter(msg);
+          }
+          return filter(msg);
+        }
+      });
+
+      collector.on("collect", (msg) => resolve(msg));
+      collector.on("end", (collected, reason) => {
+        if (collected.size === 0) {
+          if (options.rejectOnTimeout) {
+            reject(new Error(`waitResponse timed out after ${timeout}ms`));
+          } else {
+            resolve(null);
+          }
+        }
+      });
+    });
+  };
+
+  info.collect = function (options = {}) {
+    return new ConduitMessageCollector(api, info.threadID, options);
+  };
+
+  info.edit = function (text) {
+    if (typeof api?.editMessage === "function") {
+      return new Promise((resolve, reject) => {
+        api.editMessage(text, info.messageID, (err, res) => {
+          if (err) reject(err);
+          else resolve(res);
+        });
+      });
+    }
+  };
+
+  info.unsend = function () {
+    if (typeof api?.unsendMessage === "function") {
+      return new Promise((resolve, reject) => {
+        api.unsendMessage(info.messageID, (err, res) => {
+          if (err) reject(err);
+          else resolve(res);
+        });
+      });
+    }
+  };
+
+  info.react = function (reaction) {
+    if (typeof api?.setMessageReaction === "function") {
+      return new Promise((resolve, reject) => {
+        api.setMessageReaction(reaction, info.messageID, (err, res) => {
+          if (err) reject(err);
+          else resolve(res);
+        }, true);
+      });
+    }
+  };
+
+  return info;
+}
+
+// ─── 6. Conduit Sliding Cache ────────────────────────────────────────────────
 class ConduitSlidingCache {
   constructor(options = {}) {
     this.ttlInMS = options.ttlInMS || options.ttl || 300000; // 5 mins
@@ -436,7 +511,7 @@ class ConduitSlidingCache {
   }
 }
 
-// ─── 6. Conduit Queue ────────────────────────────────────────────────────────
+// ─── 7. Conduit Queue ────────────────────────────────────────────────────────
 class ConduitQueue {
   constructor(options = {}) {
     this.minDelayMs = options.minDelayMs || 50;
@@ -505,7 +580,7 @@ class ConduitQueue {
   }
 }
 
-// ─── 7. High-Level Domain Namespaces ─────────────────────────────────────────
+// ─── 8. High-Level Domain Namespaces ─────────────────────────────────────────
 function createDomainNamespaces(api, queue, cache) {
   const promisfy = (fn) => (...args) =>
     new Promise((resolve, reject) => {
@@ -524,7 +599,7 @@ function createDomainNamespaces(api, queue, cache) {
           new Promise((resolve, reject) => {
             api.sendMessage(payload, threadID, (err, info) => {
               if (err) reject(err);
-              else resolve(info);
+              else resolve(attachSentMessageHelpers(info, threadID, api));
             }, replyTo);
           });
         return queue ? queue.enqueue(threadID, op) : op();
@@ -535,7 +610,7 @@ function createDomainNamespaces(api, queue, cache) {
           new Promise((resolve, reject) => {
             api.sendMessage(payload, threadID, (err, info) => {
               if (err) reject(err);
-              else resolve(info);
+              else resolve(attachSentMessageHelpers(info, threadID, api));
             }, messageID);
           });
         return queue ? queue.enqueue(threadID, op) : op();
@@ -628,5 +703,6 @@ module.exports = {
   ConduitMessageCollector,
   ConduitSlidingCache,
   ConduitQueue,
+  attachSentMessageHelpers,
   createDomainNamespaces
 };
