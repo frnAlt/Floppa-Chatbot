@@ -65,6 +65,32 @@ class AxeraNotesAPI {
     }
   }
 
+  async checkAdvanced(callback) {
+    const cb = typeof callback === "function" ? callback : () => {};
+    try {
+      const uid = this.api.getCurrentUserID ? this.api.getCurrentUserID() : (this.ctx.userID || "unknown");
+      const raw = await this.checkNote();
+      const hasActiveNote = !!(raw && raw.id);
+      const res = {
+        hasActiveNote,
+        userId: uid,
+        timestamp: Date.now(),
+        note: raw ? {
+          id: raw.id || "note_active",
+          description: raw.description?.text || raw.text || raw.description || "Active Note",
+          privacy: raw.privacy_scope || "FRIENDS",
+          created_time: raw.creation_time || Math.floor(Date.now() / 1000)
+        } : null,
+        expiresAt: raw?.expiration_time ? raw.expiration_time * 1000 : (Date.now() + 86400000)
+      };
+      cb(null, res);
+      return res;
+    } catch (err) {
+      cb(err, null);
+      throw err;
+    }
+  }
+
   async createNote(text, privacy = "EVERYONE", callback) {
     if (typeof privacy === "function") {
       callback = privacy;
@@ -110,6 +136,30 @@ class AxeraNotesAPI {
     }
   }
 
+  async createAdvanced(text, options = {}, callback) {
+    if (typeof options === "function") {
+      callback = options;
+      options = {};
+    }
+    const cb = typeof callback === "function" ? callback : () => {};
+
+    try {
+      const privacy = options.privacy || "FRIENDS";
+      const duration = options.duration || 86400;
+      await this.createNote(text, privacy);
+      const res = {
+        id: `note_${Date.now()}`,
+        characterCount: String(text || "").length,
+        expiresAt: Date.now() + (duration * 1000)
+      };
+      cb(null, res);
+      return res;
+    } catch (err) {
+      cb(err, null);
+      throw err;
+    }
+  }
+
   async deleteNote(noteID, callback) {
     const cb = typeof callback === "function" ? callback : () => {};
     try {
@@ -139,6 +189,39 @@ class AxeraNotesAPI {
       }
       cb(null, { status: "deleted", noteID });
       return { status: "deleted", noteID };
+    } catch (err) {
+      cb(err, null);
+      throw err;
+    }
+  }
+
+  async deleteAdvanced(noteID, callback) {
+    const cb = typeof callback === "function" ? callback : () => {};
+    try {
+      await this.deleteNote(noteID);
+      const res = {
+        deletedAt: Date.now(),
+        noteID
+      };
+      cb(null, res);
+      return res;
+    } catch (err) {
+      cb(err, null);
+      throw err;
+    }
+  }
+
+  async update(noteID, newText, callback) {
+    const cb = typeof callback === "function" ? callback : () => {};
+    try {
+      await this.deleteNote(noteID);
+      const created = await this.createAdvanced(newText);
+      const res = {
+        created,
+        updatedAt: Date.now()
+      };
+      cb(null, res);
+      return res;
     } catch (err) {
       cb(err, null);
       throw err;

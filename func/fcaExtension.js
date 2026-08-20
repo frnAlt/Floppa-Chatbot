@@ -31,6 +31,8 @@ const {
   shareContactMqtt
 } = require("./axeraBridge.js");
 
+const { botAutomation } = require("./automationManager.js");
+
 function extendFCA(api) {
   if (!api || api.__isFloppaExtended) return api;
 
@@ -42,12 +44,14 @@ function extendFCA(api) {
 
   const ctx = api.__ctx || api.ctx || {};
 
-  // ─── 1. Shared Infrastructure ───────────────────────────────────────────────
+  // ─── 1. Shared Infrastructure & Automation ──────────────────────────────────
   const cache = api.cache || new ConduitSlidingCache({ ttlInMS: 300000, cleanupIntervalInMS: 60000 });
   const queue = api.queue || new ConduitQueue({ minDelayMs: 50, maxDelayMs: 150 });
 
   api.cache = cache;
   api.queue = queue;
+  api.automation = botAutomation;
+  botAutomation.start(api);
 
   // ─── 2. Conduit Fluent Builders ────────────────────────────────────────────
   api.builders = {
@@ -67,6 +71,7 @@ function extendFCA(api) {
   const emojiApi = new AxeraEmojiAPI(api, ctx);
 
   api.notes = notesApi;
+  api.note = notesApi;
   api.checkNote = notesApi.checkNote.bind(notesApi);
   api.createNote = notesApi.createNote.bind(notesApi);
   api.deleteNote = notesApi.deleteNote.bind(notesApi);

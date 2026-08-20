@@ -31,6 +31,7 @@ const definers = require("./definers.js");
 const fcaExtension = require("./fcaExtension.js");
 const conduitBridge = require("./conduitBridge.js");
 const axeraBridge = require("./axeraBridge.js");
+const automationManager = require("./automationManager.js");
 const cassidyUtils = require("./cassidyUtils.js");
 
 module.exports = {
@@ -46,6 +47,8 @@ module.exports = {
   aiHelper,
   systemStats,
   cacheManager,
+  automationManager,
+  botAutomation: automationManager.botAutomation,
 
   // Typography & Styling
   FontSystem,

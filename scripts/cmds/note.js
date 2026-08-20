@@ -1,11 +1,11 @@
 
-const { getPrefix } = global.utils;
+const getPrefix = (threadID) => (global.utils?.getPrefix ? global.utils.getPrefix(threadID) : "/");
 
 module.exports = {
     config: {
         name: "note",
-        aliases: [],
-        version: "2.4.73",
+        aliases: ["notes", "richstatus"],
+        version: "2.5.0",
         author: "frnAlt",
         countDown: 3,
         role: 2,
@@ -18,15 +18,15 @@ module.exports = {
 
     ST: async function ({ message, args, api, event }) {
         const action = args[0];
+        const notesEngine = api.note || api.notes;
 
         if (!action) {
             return message.reply(`🚀 Advanced Note Commands:\n\n• ${getPrefix(event.threadID)}note create <text> [--privacy=FRIENDS] - Create note\n• ${getPrefix(event.threadID)}note check - Check note with details\n• ${getPrefix(event.threadID)}note update <id> <text> - Update note\n• ${getPrefix(event.threadID)}note delete <id> - Delete note\n• ${getPrefix(event.threadID)}note schedule <text> <hours> - Custom duration\n\n🔧 Advanced features: Enhanced validation, character counting, expiry tracking`);
         }
 
         try {
-            // Check if note is available
-            if (!api.note) {
-                return message.reply("❌ Enhanced note features not available. Please ensure note.js is properly loaded.");
+            if (!notesEngine) {
+                return message.reply("❌ Enhanced note features not available. Please ensure note API is properly loaded.");
             }
 
             switch (action.toLowerCase()) {
@@ -63,7 +63,7 @@ module.exports = {
 
 
                     const result = await new Promise((resolve, reject) => {
-                        api.note.createAdvanced(noteText, { privacy, duration }, (err, data) => {
+                        notesEngine.createAdvanced(noteText, { privacy, duration }, (err, data) => {
                             if (err) reject(err);
                             else resolve(data);
                         });
@@ -82,7 +82,7 @@ module.exports = {
 
 
                     const result = await new Promise((resolve, reject) => {
-                        api.note.checkAdvanced((err, data) => {
+                        notesEngine.checkAdvanced((err, data) => {
                             if (err) reject(err);
                             else resolve(data);
                         });
@@ -120,7 +120,7 @@ module.exports = {
 
 
                     const result = await new Promise((resolve, reject) => {
-                        api.note.update(noteID, newText, (err, data) => {
+                        notesEngine.update(noteID, newText, (err, data) => {
                             if (err) reject(err);
                             else resolve(data);
                         });
@@ -138,7 +138,7 @@ module.exports = {
 
 
                     const result = await new Promise((resolve, reject) => {
-                        api.note.deleteAdvanced(noteID, (err, data) => {
+                        notesEngine.deleteAdvanced(noteID, (err, data) => {
                             if (err) reject(err);
                             else resolve(data);
                         });
@@ -159,7 +159,7 @@ module.exports = {
 
                     const duration = hours * 3600; // Convert to seconds
                     const result = await new Promise((resolve, reject) => {
-                        api.note.createAdvanced(noteText, { duration }, (err, data) => {
+                        notesEngine.createAdvanced(noteText, { duration }, (err, data) => {
                             if (err) reject(err);
                             else resolve(data);
                         });
