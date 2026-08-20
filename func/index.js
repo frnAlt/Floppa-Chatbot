@@ -29,6 +29,8 @@ const OutputClass = require("./outputClass.js");
 const unisym = require("./unisym.js");
 const definers = require("./definers.js");
 const fcaExtension = require("./fcaExtension.js");
+const conduitBridge = require("./conduitBridge.js");
+const axeraBridge = require("./axeraBridge.js");
 const cassidyUtils = require("./cassidyUtils.js");
 
 module.exports = {
@@ -73,7 +75,10 @@ module.exports = {
   // General Cassidy Utils
   ...cassidyUtils,
 
-  // FCA Extension Layer
+  // FCA Extension Layer & Bridges
   fcaExtension,
-  extendFCA: fcaExtension
+  extendFCA: fcaExtension,
+  conduitBridge,
+  axeraBridge
 };
+
