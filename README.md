@@ -1,10 +1,10 @@
 <div align="center">
 
-![Floppa-Chatbot Banner](assets/floppa.jpg)
+<img src="assets/banner.svg" width="100%" alt="Floppa-Chatbot Animated Banner">
 
 <br>
 
-<img src="assets/floppa-logo.jpg" width="140" height="140" style="border-radius: 50%; box-shadow: 0 0 20px rgba(0, 242, 254, 0.5);" alt="Floppa Logo">
+<img src="assets/floppa-logo.jpg" width="130" height="130" style="border-radius: 50%; box-shadow: 0 0 25px rgba(0, 242, 254, 0.6);" alt="Floppa Logo">
 
 # 🐱 FLOPPA-CHATBOT
 
@@ -13,8 +13,8 @@
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D20.x-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
 [![Developers](https://img.shields.io/badge/Developers-frnAlt%20%26%20Gtajisan-ff69b4?style=for-the-badge)](https://github.com/frnAlt)
-[![Engine](https://img.shields.io/badge/Base%20Architecture-Goat%20Bot%20V2-orange?style=for-the-badge)](#-base-architecture--heritage)
-[![Commands](https://img.shields.io/badge/Commands-200%2B%20Loaded-brightgreen?style=for-the-badge)](#-featured-commands)
+[![FCA](https://img.shields.io/badge/FCA%20Engine-Metachat%20Native%20V5-00f2fe?style=for-the-badge)](https://github.com/frnAlt/Floppa-Chatbot)
+[![Commands](https://img.shields.io/badge/Commands-350%2B%20Loaded-brightgreen?style=for-the-badge)](#-featured-commands)
 
 </div>
 

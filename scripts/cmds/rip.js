@@ -7,7 +7,7 @@ module.exports = {
     name: "rip",
     aliases: ["restinpeace"],
     version: "1.0.0",
-    author: "Toshiro Editz",
+    author: "frnAlt",
     countDown: 5,
     role: 0,
     shortDescription: {

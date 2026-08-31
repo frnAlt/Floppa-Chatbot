@@ -208,17 +208,18 @@ module.exports = {
 			await message.reply(getLang("testingSecondary"));
 
 			try {
-				const { getBotAccountCookies } = require("../../bot/login/botacc.js");
-				const loginResult = await getBotAccountCookies({
-					email: twoIdMode.secondaryAccount.email,
-					password: twoIdMode.secondaryAccount.password,
-					userAgent: twoIdMode.secondaryAccount.userAgent || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-				}, twoIdMode.secondaryAccount.twoFactorCode || null);
+				const getFbstate1 = require("../../bot/login/getFbstate1.js");
+				const cookies = await getFbstate1(
+					twoIdMode.secondaryAccount.email,
+					twoIdMode.secondaryAccount.password,
+					twoIdMode.secondaryAccount.userAgent || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+					twoIdMode.secondaryAccount.proxy || null
+				);
 
-				if (loginResult.cookies && loginResult.cookies.length > 0) {
+				if (cookies && Array.isArray(cookies) && cookies.length > 0) {
 					// Save to account.txt2
 					const secondaryAccountPath = path.normalize(`${process.cwd()}/account.txt2`);
-					fs.writeFileSync(secondaryAccountPath, JSON.stringify(loginResult.cookies, null, 2));
+					fs.writeFileSync(secondaryAccountPath, JSON.stringify(cookies, null, 2));
 					return message.reply(getLang("testSuccess", twoIdMode.secondaryAccount.email));
 				} else {
 					return message.reply(getLang("testFailed", "Invalid credentials or network error"));

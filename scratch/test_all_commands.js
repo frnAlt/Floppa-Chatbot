@@ -1,4 +1,9 @@
-const fs = require("fs-extra");
+let fs;
+try {
+	fs = require("fs-extra");
+} catch (_) {
+	fs = require("fs");
+}
 const path = require("path");
 const { execSync } = require("child_process");
 
@@ -46,7 +51,7 @@ try {
 // 2. Database Controllers Test
 addLog("DB_TEST", "Testing database controllers...");
 try {
-	const connectSqlite = require("./database/connectDB/connectSqlite.js");
+	const connectSqlite = require("../database/connectDB/connectSqlite.js");
 	addLog("DB_TEST", "SQLite connector module syntax OK.");
 } catch (e) {
 	addLog("DB_WARN", `SQLite connector note: ${e.message}`);

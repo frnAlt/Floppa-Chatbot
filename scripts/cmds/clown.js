@@ -6,7 +6,7 @@ module.exports = {
   config: {
     name: "clown",
     version: "1.2.0",
-    author: "Toshiro Editz",
+    author: "frnAlt",
     countDown: 5,
     role: 0,
     shortDescription: {
