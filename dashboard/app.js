@@ -184,10 +184,17 @@ module.exports = async (api) => {
         app.get("/stats", async (req, res) => {
                 let fcaVersion;
                 try {
-                        fcaVersion = require("@lazyneoaz/metachat/package.json").version;
-                }
-                catch (e) {
-                        fcaVersion = "unknown";
+                    fcaVersion = require(path.join(process.cwd(), "fca/package.json")).version;
+                } catch (_) {
+                    try {
+                        fcaVersion = require("@floppa/fca-native/package.json").version;
+                    } catch (_) {
+                        try {
+                            fcaVersion = require("@lazyneoaz/metachat/package.json").version;
+                        } catch (_) {
+                            fcaVersion = "unknown";
+                        }
+                    }
                 }
 
                 const totalThread = (await threadsData.getAll()).filter(t => t.threadID.toString().length > 15).length;

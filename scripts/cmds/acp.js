@@ -7,8 +7,8 @@ const unispectra_1 = require("@cassidy/unispectra");
 const moment_timezone_1 = __importDefault(require("moment-timezone"));
 const command = defineCommand({
     meta: {
-        name: "accept",
-        otherNames: ["acp"],
+        name: "acp",
+        otherNames: ["acceptfriends"],
         version: "2.0.0",
         author: "frnAlt",
         role: 1.5,

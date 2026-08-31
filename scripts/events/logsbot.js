@@ -1,4 +1,4 @@
-const { getTime } = global.utils;
+const { getTime } = global.utils || {};
 
 module.exports = {
 	config: {

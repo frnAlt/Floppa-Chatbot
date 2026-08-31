@@ -830,15 +830,24 @@ async function startBot(loginWithEmail) {
                         log.info("LANGUAGE", global.GoatBot.config.language);
                         log.info("BOT NICK NAME", global.GoatBot.config.nickNameBot || "GOAT BOT");
 
-                        // ———————————————— NKX-FCA: ANTI-SUSPENSION & HEALTH ———————————————— //
-                        try {
-                                const fcaConfig = require(`${process.cwd()}/fca-config.json`);
-                                const { globalAntiSuspension } = require("@lazyneoaz/metachat/src/utils/antiSuspension");
+			// ———————————————— NKX-FCA: ANTI-SUSPENSION & HEALTH ———————————————— //
+			try {
+				const fcaConfig = require(`${process.cwd()}/fca-config.json`);
+				let globalAntiSuspension;
+				try {
+					globalAntiSuspension = require(path.join(process.cwd(), "fca/src/utils/antiSuspension")).globalAntiSuspension;
+				} catch (_) {
+					try {
+						globalAntiSuspension = require("@lazyneoaz/metachat/src/utils/antiSuspension").globalAntiSuspension;
+					} catch (_) {
+						globalAntiSuspension = null;
+					}
+				}
 
-                                if (fcaConfig.antiSuspension?.enabled !== false && fcaConfig.antiSuspension?.warmupOnStart !== false) {
-                                        globalAntiSuspension.enableWarmup();
-                                        log.info("NKX-FCA", "Anti-suspension warmup mode enabled (limits rate for 20 min on fresh start)");
-                                }
+				if (globalAntiSuspension && fcaConfig.antiSuspension?.enabled !== false && fcaConfig.antiSuspension?.warmupOnStart !== false) {
+					globalAntiSuspension.enableWarmup();
+					log.info("NKX-FCA", "Anti-suspension warmup mode enabled (limits rate for 20 min on fresh start)");
+				}
 
                                 if (typeof api.getHealthStatus === "function") {
                                         const health = api.getHealthStatus();

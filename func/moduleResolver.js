@@ -5,7 +5,12 @@
  */
 
 const path = require("path");
-const fs = require("fs-extra");
+let fs;
+try {
+  fs = require("fs-extra");
+} catch (_) {
+  fs = require("fs");
+}
 const Module = require("module");
 
 let sucrase = null;

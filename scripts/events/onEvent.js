@@ -1,4 +1,4 @@
-const allOnEvent = global.GoatBot.onEvent;
+const allOnEvent = global.GoatBot?.onEvent || [];
 
 module.exports = {
 	config: {
