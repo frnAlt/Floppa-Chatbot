@@ -6,8 +6,8 @@
 export const meta = {
   name: "hsrEdits",
   description: "Fetches and sends a random Honkai Star Rail edits.",
-  author: "MrKimstersDev | haji-mix-api",
-  version: "1.0.0",
+  author: "frnAlt",
+  version: "1.1.0",
   usage: "{prefix}{name}",
   category: "Media",
   permissions: [0],
@@ -30,21 +30,30 @@ export const style = {
 };
 
 import { defineEntry } from "@cass/define";
+import axios from "axios";
 
 export const entry = defineEntry(async ({ output }) => {
   const API_URL =
-    "https://haji-mix.up.railway.app/api/tiktok?search=Hsr+edits&stream=true";
+    "https://toshiro-api-editz6t9.vercel.app/api/search/tiksearch?keyword=Hsr+edits";
   try {
     await output.reply(
       "🔎 | Fetching Honkai Star Rail Edits...\n⏳ | Please **wait**...💖"
     );
 
+    const res = await axios.get(API_URL, { timeout: 30000 });
+    if (!res.data || !res.data.success || !res.data.result || !res.data.result.video) {
+      return output.reply("❌ | Could not find any Honkai Star Rail edits.");
+    }
+
+    const { video } = res.data.result;
+    const stream = await global.utils.getStreamFromURL(video, "hsr_edit.mp4");
+
     await output.reply({
       body: "Here's your Star Rail Edit おさま! 💖🥀\nMay This Journey Lead Us Starward! 🌌",
-      attachment: await global.utils.getStreamFromURL(API_URL),
+      attachment: stream,
     });
   } catch (error) {
     console.error("Entry error:", error.message);
-    output.reply(`Error fetching image: ${error.message}`);
+    output.reply(`❌ | Error fetching video: ${error.message}`);
   }
 });

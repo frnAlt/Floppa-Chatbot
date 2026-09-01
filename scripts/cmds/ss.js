@@ -10,8 +10,8 @@ const CACHE_DIR = path.join(__dirname, 'cache');
 
 module.exports = {
   config: {
-    name: "screenshot",
-    aliases: ["ss", "webss"],
+    name: "ss",
+    aliases: ["webss", "screen"],
     version: "1.0",
     author: "frnAlt",
     countDown: 10,

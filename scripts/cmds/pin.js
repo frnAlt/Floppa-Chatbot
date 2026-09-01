@@ -144,8 +144,8 @@ module.exports = {
 
       processingMessage = await message.reply("🔍 Searching on Pinterest...");
 
-      const res = await axios.get(`https://egret-driving-cattle.ngrok-free.app/api/pin?query=${encodeURIComponent(query)}&num=90`);
-      const allImageUrls = res.data.results || [];
+      const res = await axios.get(`https://toshiro-api-editz6t9.vercel.app/api/search/pin?keyword=${encodeURIComponent(query)}&limit=20`, { timeout: 30000 });
+      const allImageUrls = res.data?.result?.preview || (res.data?.result?.image ? [res.data.result.image] : []) || res.data?.results || [];
 
       if (allImageUrls.length === 0) {
         if (processingMessage) await message.unsend(processingMessage.messageID).catch(() => { });

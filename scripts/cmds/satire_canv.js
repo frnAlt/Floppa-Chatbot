@@ -4,7 +4,7 @@ exports.style = exports.meta = void 0;
 exports.entry = entry;
 const CassieahExtras_1 = require("@cass-modules/CassieahExtras");
 exports.meta = {
-    name: "snews",
+    name: "satire",
     description: "Generate a satire news image via CanvCass",
     author: "frnAlt",
     version: "1.0.5",

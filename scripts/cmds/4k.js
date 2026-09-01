@@ -1,10 +1,10 @@
-const upscaleCmd = require('./upscale.js');
+const upscaleCmd = require("./upscale.js");
 
 module.exports = {
   config: {
     ...upscaleCmd.config,
     name: "4k",
-    aliases: ["4kimage", "hd", "upscale", "enhance"]
+    aliases: ["4kres", "4khd"]
   },
   onStart: upscaleCmd.onStart
 };

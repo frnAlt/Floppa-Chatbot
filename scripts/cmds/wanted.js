@@ -1,119 +1,74 @@
 const axios = require("axios");
-const fs = require("fs-extra");
-const path = require("path");
 
 module.exports = {
   config: {
     name: "wanted",
-    aliases: ["want"],
-    version: "1.0.0",
+    aliases: ["bounty", "want"],
+    version: "1.1.0",
     author: "frnAlt",
     countDown: 5,
     role: 0,
     shortDescription: {
-      en: "Create wanted poster"
+      en: "Create a Wanted bounty poster"
     },
     longDescription: {
-      en: "Create a wanted poster using a mentioned or replied user's PFP"
+      en: "Create a One Piece / Wild West style Wanted poster for yourself, a mentioned user, or a replied photo/user avatar"
     },
-    category: "fun",
+    category: "canvas",
     guide: {
-      en: "{pn} @mention\n{pn} (reply to a user)"
+      en: "{pn} (self avatar)\n{pn} @mention\n{pn} (reply to user or image)"
     }
   },
 
-  onStart: async function ({ api, event }) {
-    const cacheDir = path.join(__dirname, "cache");
-    await fs.ensureDir(cacheDir);
+  onStart: async function ({ api, event, message, args }) {
+    let imageUrl = "";
+    const token = "6628568379%7Cc1e620fa708a1d5696fb991c1bde5662";
 
-    let filePath;
+    // 1. Check for image attachment in replied message
+    if (event.messageReply?.attachments?.length > 0 && event.messageReply.attachments[0].type === "photo") {
+      imageUrl = event.messageReply.attachments[0].url;
+    }
+    // 2. Check for mentioned user
+    else if (event.mentions && Object.keys(event.mentions).length > 0) {
+      const targetUID = Object.keys(event.mentions)[0];
+      imageUrl = `https://graph.facebook.com/${targetUID}/picture?width=720&height=720&access_token=${token}`;
+    }
+    // 3. Check for replied message sender
+    else if (event.messageReply?.senderID) {
+      imageUrl = `https://graph.facebook.com/${event.messageReply.senderID}/picture?width=720&height=720&access_token=${token}`;
+    }
+    // 4. Check for direct URL argument
+    else if (args[0] && args[0].startsWith("http")) {
+      imageUrl = args[0];
+    }
+    // 5. Default to sender's own avatar
+    else {
+      imageUrl = `https://graph.facebook.com/${event.senderID}/picture?width=720&height=720&access_token=${token}`;
+    }
+
+    if (api.setMessageReaction) {
+      api.setMessageReaction("🎯", event.messageID, () => {}, true);
+    }
 
     try {
-      let uid;
+      const bounty = Math.floor(100000 + Math.random() * 900000);
+      const apiUrl = `https://toshiro-api-editz6t9.vercel.app/api/canvas/wanted?image=${encodeURIComponent(imageUrl)}&currency=${bounty}`;
+      const stream = await global.utils.getStreamFromURL(apiUrl, "wanted.png");
 
-      if (
-        event.mentions &&
-        Object.keys(event.mentions).length > 0
-      ) {
-        uid = Object.keys(event.mentions)[0];
-      } else if (event.messageReply?.senderID) {
-        uid = event.messageReply.senderID;
-      } else {
-        return api.sendMessage(
-          "🎯 Please mention or reply to a user.",
-          event.threadID,
-          event.messageID
-        );
-      }
-
-      const token =
-        "6628568379%7Cc1e620fa708a1d5696fb991c1bde5662";
-
-      const image =
-        `https://graph.facebook.com/${uid}/picture` +
-        `?width=720&height=720` +
-        `&access_token=${token}`;
-
-      // Random 6-digit number
-      const currency =
-        Math.floor(100000 + Math.random() * 900000);
-
-      const apiUrl =
-        `https://toshiro-api-editz6t9.vercel.app/api/canvas/wanted` +
-        `?image=${encodeURIComponent(image)}` +
-        `&currency=${currency}`;
-
-      filePath = path.join(
-        cacheDir,
-        `wanted_${uid}_${Date.now()}.png`
-      );
-
-      const response = await axios.get(apiUrl, {
-        responseType: "arraybuffer",
-        timeout: 60000,
-        maxRedirects: 5,
-        headers: {
-          "User-Agent": "Mozilla/5.0",
-          "Accept": "image/png,image/jpeg,image/*,*/*"
-        }
+      await message.reply({
+        body: `☠️ WANTED DEAD OR ALIVE! 🎯\n💰 Bounty Reward: $${bounty.toLocaleString()}`,
+        attachment: stream
       });
 
-      if (!response.data) {
-        throw new Error("Empty response from Wanted API.");
+      if (api.setMessageReaction) {
+        api.setMessageReaction("✅", event.messageID, () => {}, true);
       }
-
-      await fs.writeFile(
-        filePath,
-        Buffer.from(response.data)
-      );
-
-      await api.sendMessage(
-        {
-          attachment: fs.createReadStream(filePath)
-        },
-        event.threadID,
-        event.messageID
-      );
-
     } catch (error) {
-      console.error(
-        "Wanted:",
-        error.response?.status || error.message
-      );
-
-      await api.sendMessage(
-        `❌ Failed to generate wanted image.\n\n${error.response?.status || error.message}`,
-        event.threadID,
-        event.messageID
-      );
-
-    } finally {
-      if (
-        filePath &&
-        await fs.pathExists(filePath)
-      ) {
-        await fs.remove(filePath).catch(() => {});
+      console.error("Wanted command error:", error);
+      if (api.setMessageReaction) {
+        api.setMessageReaction("❌", event.messageID, () => {}, true);
       }
+      return message.reply(`❌ Failed to generate wanted poster: ${error.message || error}`);
     }
   }
 };

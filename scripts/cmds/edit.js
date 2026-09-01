@@ -1,90 +1,105 @@
-const axios = require('axios');
+const axios = require("axios");
 
 module.exports = {
   config: {
     name: "edit",
-    aliases: ["filter", "nbpro", "nanobanana", "nanobanana-pro", "transform"],
-    version: "2.0",
+    aliases: ["filter", "imagedit", "ai-edit", "transform"],
+    version: "3.0.0",
     author: "frnAlt",
-    countDown: 5,
+    countDown: 8,
     role: 0,
-    description: {
-      vi: "Chỉnh sửa hoặc biến đổi hình ảnh AI (Nano-Banana Pro / Image-to-Image)",
-      en: "Applies AI transformations to replied photos or generates images from text"
+    shortDescription: {
+      en: "AI Image Editor and Transformation"
+    },
+    longDescription: {
+      en: "Applies AI image edits and transformations to photos based on your text prompt using Toshiro AI Image Editor"
     },
     category: "ai-image",
     guide: {
-      vi: "{pn} <mô tả/phong cách> | Reply một bức ảnh",
-      en: "{pn} <style/prompt> | reply to an image"
+      en: "{pn} <prompt> | Reply to an image\n\nExample:\n• Reply to an image with: {pn} make it anime\n• Reply to an image with: {pn} add sunglasses and cyberpunk neon lighting"
     }
   },
 
-  onStart: async function ({ message, event, args }) {
-    let prompt = args.join(" ");
-    
-    // Extract image URL from message reply or direct attachments or URL arg
+  onStart: async function ({ message, event, args, api, commandName }) {
+    let prompt = args.join(" ").trim();
     let imgUrl = null;
-    if (event.messageReply && event.messageReply.attachments && event.messageReply.attachments.length > 0) {
+
+    // Extract image URL from reply, direct attachments, or url argument
+    if (event.messageReply?.attachments?.length > 0) {
       const att = event.messageReply.attachments.find(a => a.type === "photo" || a.type === "image");
       if (att && att.url) imgUrl = att.url;
-    } else if (event.attachments && event.attachments.length > 0) {
+    } else if (event.attachments?.length > 0) {
       const att = event.attachments.find(a => a.type === "photo" || a.type === "image");
       if (att && att.url) imgUrl = att.url;
     } else if (args.length > 0 && args[0].startsWith("http")) {
       imgUrl = args[0];
-      prompt = args.slice(1).join(" ");
+      prompt = args.slice(1).join(" ").trim();
     }
 
     if (!imgUrl && !prompt) {
-      return message.reply("🖼️ Please provide a prompt or reply to an image with a style/prompt.\nExample: Reply to a photo with /edit cybernetic aesthetic");
+      const prefix = global.GoatBot?.config?.prefix || "";
+      return message.reply(
+        `🖼️ Please reply to an image with an edit instruction/prompt.\n\n💡 Example: Reply to a photo with: ${prefix}${commandName} make it cyberpunk anime style`
+      );
     }
 
-    message.reaction("⏳", event.messageID);
+    if (api.setMessageReaction) {
+      api.setMessageReaction("✨", event.messageID, () => {}, true);
+    }
 
     try {
       let finalStream = null;
+      const editPrompt = prompt || "enhance and make it aesthetic";
 
       if (imgUrl) {
-        // Image-to-Image Transformation
-        const stylePrompt = prompt || "masterpiece high resolution aesthetic transformation";
+        // 1. Primary: Toshiro AI Image Edit API
         try {
-          // Attempt Nano-Banana Pro Edit endpoint first
-          const eres = await axios.get(`https://tawsif.is-a.dev/gemini/nano-banana-pro-edit?prompt=${encodeURIComponent(stylePrompt)}&urls=${encodeURIComponent(JSON.stringify([imgUrl]))}`, { timeout: 35000 });
-          if (eres.data && eres.data.imageUrl) {
-            finalStream = await global.utils.getStreamFromURL(eres.data.imageUrl, 'edit.png');
-          }
+          const apiUrl = `https://toshiro-api-editz6t9.vercel.app/api/image/edit?url=${encodeURIComponent(imgUrl)}&prompt=${encodeURIComponent(editPrompt)}`;
+          finalStream = await global.utils.getStreamFromURL(apiUrl, "edit.jpg");
         } catch (e) {
-          // Fallback to Pollinations img2img
-          const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(stylePrompt)}?image=${encodeURIComponent(imgUrl)}&width=1024&height=1024&nologo=true&seed=${Math.floor(Math.random() * 1000000)}`;
-          finalStream = await global.utils.getStreamFromURL(pollinationsUrl, 'edit.png');
+          console.warn("Toshiro Image Edit failed, using fallback:", e.message);
+        }
+
+        // 2. Fallback: Pollinations img2img
+        if (!finalStream) {
+          const fallbackUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(editPrompt)}?image=${encodeURIComponent(imgUrl)}&width=1024&height=1024&nologo=true&seed=${Math.floor(Math.random() * 1000000)}`;
+          finalStream = await global.utils.getStreamFromURL(fallbackUrl, "edit.png");
         }
       } else {
-        // Text-to-Image Generation
-        let ratio = prompt.split("--ar=")[1] || prompt.split("--ar ")[1] || '1:1';
+        // Text-to-Image mode if no image provided
         try {
-          const gres = await axios.get(`https://tawsif.is-a.dev/gemini/nano-banana-pro-gen?prompt=${encodeURIComponent(prompt)}&ratio=${ratio}`, { timeout: 35000 });
-          if (gres.data && gres.data.imageUrl) {
-            finalStream = await global.utils.getStreamFromURL(gres.data.imageUrl, 'gen.png');
+          const genUrl = `https://toshiro-api-editz6t9.vercel.app/api/ai/gptimg?prompt=${encodeURIComponent(prompt)}`;
+          const res = await axios.get(genUrl, { timeout: 60000 });
+          if (res.data && res.data.success && res.data.result?.image) {
+            finalStream = await global.utils.getStreamFromURL(res.data.result.image, "gen.jpg");
           }
         } catch (e) {
+          console.warn("GPTImg gen failed, using Pollinations:", e.message);
           const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true`;
-          finalStream = await global.utils.getStreamFromURL(pollinationsUrl, 'gen.png');
+          finalStream = await global.utils.getStreamFromURL(pollinationsUrl, "gen.png");
         }
       }
 
       if (!finalStream) {
-        throw new Error("Could not process image stream.");
+        throw new Error("Could not process edited image stream.");
       }
 
-      message.reaction("✅", event.messageID);
+      if (api.setMessageReaction) {
+        api.setMessageReaction("✅", event.messageID, () => {}, true);
+      }
+
       await message.reply({
-        body: imgUrl ? `✨ AI Transformation Applied!` : `✅ Generated Image`,
+        body: imgUrl
+          ? `✨ AI Image Edit Applied!\n📝 Prompt: "${editPrompt}"`
+          : `✅ Generated Image for: "${prompt}"`,
         attachment: finalStream
       });
-
     } catch (err) {
-      message.reaction("❌", event.messageID);
-      return message.reply(`❌ Failed to edit/transform image: ${err.message}`);
+      console.error("Edit command error:", err);
+      if (api.setMessageReaction) {
+        api.setMessageReaction("❌", event.messageID, () => {}, true);
+      }
+      return message.reply(`❌ Failed to edit/transform image: ${err.message || err}`);
     }
   }
 };

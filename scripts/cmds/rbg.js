@@ -4,7 +4,7 @@ module.exports = {
   config: {
     ...removeBgCmd.config,
     name: "rbg",
-    aliases: ["nobg", "bgremove", "removebg"]
+    aliases: ["nobg"]
   },
   onStart: removeBgCmd.onStart
 };

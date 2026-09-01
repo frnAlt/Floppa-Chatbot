@@ -5,7 +5,7 @@ import path from "path";
 
 const config = {
   name: "spotify",
-  aliases: ["sp", "music"],
+  aliases: ["sp", "spotifydl"],
   version: "1.0.0",
   description:
     "From xaviateam's video cmd but i turned into spotify/music cmd.",

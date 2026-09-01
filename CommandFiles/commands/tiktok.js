@@ -7,15 +7,15 @@ export const meta = {
   name: "tiktok",
   description:
     "Searches for TikTok videos based on your query and sends a video.",
-  author: "MrKimstersDev | haji-mix-api",
-  version: "1.0.0",
+  author: "Gtajisan (Farhan Muh Tasim)",
+  version: "1.2.0",
   usage: "{prefix}{name} <search query>",
   category: "Media",
   permissions: [0],
   noPrefix: false,
   waitingTime: 10,
   requirement: "3.0.0",
-  otherNames: ["tt", "tiktoksearch"],
+  otherNames: ["tt", "tiktoksearch", "tiksearch", "tik"],
   icon: "🎵",
   noLevelUI: true,
   noWeb: true,
@@ -31,10 +31,10 @@ export const style = {
 };
 
 import { defineEntry } from "@cass/define";
+import axios from "axios";
 
 export const entry = defineEntry(
   async ({ input, output, prefix, commandName }) => {
-    const BASE_API_URL = "https://haji-mix-api.gleeze.com/api/tiktok";
     const query = input.arguments.join(" ") || "";
 
     if (!query) {
@@ -49,16 +49,23 @@ export const entry = defineEntry(
         `🔎 | Searching TikTok for "${query}"...\n⏳ | Please **wait**...🎵`
       );
 
-      const apiUrl = `${BASE_API_URL}?search=${encodeURIComponent(
-        query
-      )}&stream=true`;
+      const API_URL = `https://toshiro-api-editz6t9.vercel.app/api/search/tiksearch?keyword=${encodeURIComponent(query)}`;
+      const res = await axios.get(API_URL, { timeout: 30000 });
+
+      if (!res.data || !res.data.success || !res.data.result || !res.data.result.video) {
+        await output.reply(`❌ | No TikTok videos found for "${query}".`);
+        return;
+      }
+
+      const { title, author, duration, video } = res.data.result;
 
       await output.attach(
-        `Here's your TikTok video for "${query}"! 🎬✨`,
-        apiUrl
+        `🎬 **Title**: ${title || "N/A"}\n👤 **Creator**: @${author || "Unknown"}\n⏱️ **Duration**: ${duration || 0}s`,
+        video,
+        style
       );
     } catch (error) {
-      console.error("Entry error:", error.message);
+      console.error("TikTok error:", error.message);
       await output.reply(`❌ | Error fetching TikTok video: ${error.message}`);
     }
   }
