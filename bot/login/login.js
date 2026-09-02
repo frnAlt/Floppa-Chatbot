@@ -27,6 +27,12 @@ try {
 		login = defaultRequire("./fca");
 	}
 }
+let parseUniversalCookies;
+try {
+	parseUniversalCookies = require(path.join(process.cwd(), "fca/src/utils/formatters/value/formatCookie")).parseUniversalCookies;
+} catch (_) {
+	parseUniversalCookies = null;
+}
 const qr = new (defaultRequire("qrcode-reader"));
 let Canvas;
 try {
@@ -482,78 +488,55 @@ async function getAppStateToLogin(loginWithEmail) {
                                 throw err;
                         }
                 }
-                // is cookie string
+                else if (
+                        (splitAccountText.length == 2 || splitAccountText.length == 3) &&
+                        !splitAccountText.slice(0, 2).map(i => i.trim()).some(i => i.includes(' ') || i.includes('=')) &&
+                        splitAccountText[0].trim().length > 3 && splitAccountText[1].trim().length > 4 &&
+                        (splitAccountText[0].includes('@') || !isNaN(splitAccountText[0]))
+                ) {
+                        global.GoatBot.config.facebookAccount.email = splitAccountText[0];
+                        global.GoatBot.config.facebookAccount.password = splitAccountText[1];
+                        if (splitAccountText[2]) {
+                                const code2FATemp = splitAccountText[2].replace(/ /g, "");
+                                global.GoatBot.config.facebookAccount['2FASecret'] = code2FATemp;
+                        }
+                        writeFileSync(global.client.dirConfig, JSON.stringify(global.GoatBot.config, null, 2));
+                        return await getAppStateFromEmail(undefined, global.GoatBot.config.facebookAccount);
+                }
+                // Universal Cookie Parser: handles stock cookie strings, EditThisCookie, Netscape, dictionary JSON, cURL headers, Base64
                 else {
-                        if (accountText.match(/^(?:\s*\w+\s*=\s*[^;]*;?)+/)) {
-                                spin = createOraDots(getText('login', 'loginCookieString'));
-                                spin._start();
-                                appState = accountText.split(';')
-                                        .map(i => {
-                                                const [key, value] = i.split('=');
-                                                return {
-                                                        key: (key || "").trim(),
-                                                        value: (value || "").trim(),
-                                                        domain: "facebook.com",
-                                                        path: "/",
-                                                        hostOnly: true,
-                                                        creation: new Date().toISOString(),
-                                                        lastAccessed: new Date().toISOString()
-                                                };
-                                        })
-                                        .filter(i => i.key && i.value && i.key != "x-referer");
+                        spin = createOraDots(getText('login', 'loginCookieArray') || "Loading cookies...");
+                        spin._start();
+
+                        if (parseUniversalCookies) {
+                                appState = parseUniversalCookies(accountText);
                         }
-                        // is netscape cookie
-                        else if (isNetScapeCookie(accountText)) {
-                                spin = createOraDots(getText('login', 'loginCookieNetscape'));
-                                spin._start();
-                                appState = netScapeToCookies(accountText);
+
+                        if (!appState || appState.length === 0) {
+                                if (isNetScapeCookie(accountText)) {
+                                        appState = netScapeToCookies(accountText);
+                                } else if (accountText.includes('=')) {
+                                        appState = accountText.split(';')
+                                                .map(i => {
+                                                        const [key, ...vParts] = i.split('=');
+                                                        return {
+                                                                key: (key || "").trim(),
+                                                                value: vParts.join("=").trim().replace(/^"(.*)"$/, "$1"),
+                                                                domain: "facebook.com",
+                                                                path: "/",
+                                                                hostOnly: true,
+                                                                creation: new Date().toISOString(),
+                                                                lastAccessed: new Date().toISOString()
+                                                        };
+                                                })
+                                                .filter(i => i.key && i.value && i.key != "x-referer");
+                                }
                         }
-                        else if (
-                                (splitAccountText.length == 2 || splitAccountText.length == 3) &&
-                                !splitAccountText.slice(0, 2).map(i => i.trim()).some(i => i.includes(' ')) &&
-                                splitAccountText[0].trim().length > 3 && splitAccountText[1].trim().length > 4
-                        ) {
-                                global.GoatBot.config.facebookAccount.email = splitAccountText[0];
-                                global.GoatBot.config.facebookAccount.password = splitAccountText[1];
-                                if (splitAccountText[2]) {
-                                        const code2FATemp = splitAccountText[2].replace(/ /g, "");
-                                        global.GoatBot.config.facebookAccount['2FASecret'] = code2FATemp;
-                                }
-                                writeFileSync(global.client.dirConfig, JSON.stringify(global.GoatBot.config, null, 2));
-                        }
-                        // is json (cookies or appstate)
-                        else {
-                                try {
-                                        spin = createOraDots(getText('login', 'loginCookieArray'));
-                                        spin._start();
-                                        appState = JSON.parse(accountText);
-                                }
-                                catch (err) {
-                                        const error = new Error(`${path.basename(dirAccount)} is invalid`);
-                                        error.name = "ACCOUNT_ERROR";
-                                        throw error;
-                                }
-                                if (appState.some(i => i.name))
-                                        appState = appState.map(i => {
-                                                i.key = i.name;
-                                                delete i.name;
-                                                return i;
-                                        });
-                                else if (!appState.some(i => i.key)) {
-                                        const error = new Error(`${path.basename(dirAccount)} is invalid`);
-                                        error.name = "ACCOUNT_ERROR";
-                                        throw error;
-                                }
-                                appState = appState
-                                        .map(item => ({
-                                                ...item,
-                                                domain: "facebook.com",
-                                                path: "/",
-                                                hostOnly: false,
-                                                creation: new Date().toISOString(),
-                                                lastAccessed: new Date().toISOString()
-                                        }))
-                                        .filter(i => i.key && i.value && i.key != "x-referer");
+
+                        if (!appState || appState.length === 0) {
+                                const error = new Error(`${path.basename(dirAccount)} is invalid or contains no usable cookies`);
+                                error.name = "ACCOUNT_ERROR";
+                                throw error;
                         }
                 }
         }

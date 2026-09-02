@@ -943,6 +943,14 @@ const utils = {
         uploadImgbb,
 
         GoatBotApis,
+        parseCookies: (() => {
+            try { return require("./fca/src/utils/formatters/value/formatCookie").parseUniversalCookies; }
+            catch (_) { return (c) => Array.isArray(c) ? c : []; }
+        })(),
+        parseUniversalCookies: (() => {
+            try { return require("./fca/src/utils/formatters/value/formatCookie").parseUniversalCookies; }
+            catch (_) { return (c) => Array.isArray(c) ? c : []; }
+        })(),
         ...require("./func")
 };
 
