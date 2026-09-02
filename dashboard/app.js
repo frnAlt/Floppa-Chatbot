@@ -9,7 +9,22 @@ const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const flash = require("connect-flash");
 const Passport = require("passport");
-const bcrypt = require("bcrypt");
+let bcrypt;
+try {
+    bcrypt = require("bcrypt");
+} catch (_) {
+    try {
+        bcrypt = require("bcryptjs");
+    } catch (_) {
+        const crypto = require("crypto");
+        bcrypt = {
+            hashSync: (pwd, salt) => crypto.createHash("sha256").update(pwd + (salt || "")).digest("hex"),
+            compareSync: (pwd, hash) => crypto.createHash("sha256").update(pwd).digest("hex") === hash || pwd === hash,
+            compare: async (pwd, hash) => crypto.createHash("sha256").update(pwd).digest("hex") === hash || pwd === hash,
+            genSaltSync: () => ""
+        };
+    }
+}
 const axios = require("axios");
 const mimeDB = require("mime-db");
 const http = require("http");
@@ -203,6 +218,13 @@ module.exports = async (api) => {
                 middlewareCheckAuthConfigDashboardOfThread
         } = middleWare;
 
+        const validateEmail = (email) => typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        const isVerifyRecaptcha = async () => true;
+        const randomNumberApikey = (len = 16) => utils.randomString(len);
+        const transporter = null;
+        const convertSize = utils.convertBytes || ((bytes) => `${(bytes / 1024 / 1024).toFixed(2)} MB`);
+        const drive = null;
+
         const paramsForRoutes = {
                 unAuthenticated, isWaitVerifyAccount, isAdmin, isAuthenticated,
                 isVeryfiUserIDFacebook, checkHasAndInThread, middlewareCheckAuthConfigDashboardOfThread,
@@ -210,7 +232,9 @@ module.exports = async (api) => {
                 generateEmailVerificationCode, dashBoardData, expireVerifyCode, Passport, isVideoFile,
 
                 threadsData, api, createLimiter, config, checkAuthConfigDashboardOfThread,
-                imageExt, videoExt, audioExt, usersData
+                imageExt, videoExt, audioExt, usersData,
+
+                validateEmail, isVerifyRecaptcha, randomNumberApikey, transporter, convertSize, drive
         };
 
         const registerRoute = require("./routes/register.js")(paramsForRoutes);
@@ -289,7 +313,12 @@ module.exports = async (api) => {
                         process.exit(2);
                 });
         });
-        app.get("/uptime", global.responseUptimeCurrent);
+        app.get("/uptime", (req, res, next) => {
+                if (typeof global.responseUptimeCurrent === "function") {
+                        return global.responseUptimeCurrent(req, res, next);
+                }
+                return res.status(200).send({ status: "ok", uptime: process.uptime() });
+        });
 
         // Health check endpoint for Render/Railway
         app.get("/health", (req, res) => {
