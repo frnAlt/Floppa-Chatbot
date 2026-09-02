@@ -95,7 +95,8 @@
 	"scripts": {
 		"start": "node index.js",
 		"dev": "NODE_ENV=development node index.js",
-		"prod": "NODE_ENV=production node index.js"
+		"prod": "NODE_ENV=production node index.js",
+		"test": "npm test --prefix fca && node scratch/test_all_commands.js"
 	},
 	"author": "Gtajisan (Farhan Muh Tasim)",
 	"license": "MIT",

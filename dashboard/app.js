@@ -230,15 +230,7 @@ module.exports = async (api) => {
                 try {
                     fcaVersion = require(path.join(process.cwd(), "fca/package.json")).version;
                 } catch (_) {
-                    try {
-                        fcaVersion = require("@floppa/fca-native/package.json").version;
-                    } catch (_) {
-                        try {
-                            fcaVersion = require("@lazyneoaz/metachat/package.json").version;
-                        } catch (_) {
-                            fcaVersion = "unknown";
-                        }
-                    }
+                    fcaVersion = "5.0.0";
                 }
 
                 const totalThread = (await threadsData.getAll()).filter(t => t.threadID.toString().length > 15).length;

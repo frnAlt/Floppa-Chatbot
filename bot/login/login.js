@@ -812,43 +812,48 @@ async function startBot(loginWithEmail) {
 
                         let hasBanned = false;
                         global.botID = api.getCurrentUserID();
-                        logColor("#f5ab00", createLine("BOT INFO"));
-                        log.info("NODE VERSION", process.version);
-                        log.info("PROJECT VERSION", currentVersion);
-                        log.info("BOT ID", `${global.botID} - ${await getName(global.botID)}`);
+                        const botName = await getName(global.botID);
+                        logColor("#f5ab00", createLine("FLOPPA BOT INFO"));
+                        log.info("PROJECT", `Floppa-Chatbot v${currentVersion}`);
+                        log.info("NODE RUNTIME", process.version);
+                        log.info("FCA ENGINE", `@floppa/fca-native v5.0.0 (Native Local Engine)`);
+                        log.info("DEVELOPER", "frnAlt (https://github.com/frnAlt)");
+                        log.info("BOT ID", `${global.botID}${botName ? ` (${botName})` : ""}`);
+                        log.info("BOT NICKNAME", global.GoatBot.config.nickNameBot || "Floppa Bot 🐱");
                         log.info("PREFIX", global.GoatBot.config.prefix);
                         log.info("LANGUAGE", global.GoatBot.config.language);
-                        log.info("BOT NICK NAME", global.GoatBot.config.nickNameBot || "GOAT BOT");
+                        if (global.GoatBot.config.adminBot?.length) {
+                                log.info("ADMIN BOT", global.GoatBot.config.adminBot.join(", "));
+                        }
+                        if (global.GoatBot.config.devUsers?.length) {
+                                log.info("DEV USERS", global.GoatBot.config.devUsers.join(", "));
+                        }
 
-			// ———————————————— NKX-FCA: ANTI-SUSPENSION & HEALTH ———————————————— //
+			// ———————————————— FLOPPA-FCA: ANTI-SUSPENSION & HEALTH ———————————————— //
 			try {
 				const fcaConfig = require(`${process.cwd()}/fca-config.json`);
 				let globalAntiSuspension;
 				try {
 					globalAntiSuspension = require(path.join(process.cwd(), "fca/src/utils/antiSuspension")).globalAntiSuspension;
 				} catch (_) {
-					try {
-						globalAntiSuspension = require("@lazyneoaz/metachat/src/utils/antiSuspension").globalAntiSuspension;
-					} catch (_) {
-						globalAntiSuspension = null;
-					}
+					globalAntiSuspension = null;
 				}
 
 				if (globalAntiSuspension && fcaConfig.antiSuspension?.enabled !== false && fcaConfig.antiSuspension?.warmupOnStart !== false) {
 					globalAntiSuspension.enableWarmup();
-					log.info("NKX-FCA", "Anti-suspension warmup mode enabled (limits rate for 20 min on fresh start)");
+					log.info("FLOPPA-FCA", "Anti-suspension warmup mode active (calibrated rate-limiting)");
 				}
 
                                 if (typeof api.getHealthStatus === "function") {
                                         const health = api.getHealthStatus();
-                                        log.info("NKX-FCA", `Health status — MQTT: ${health.mqtt?.connected ? "connected" : "disconnected"}, Circuit breaker: ${health.antiSuspension?.circuitBreakerOpen ? "OPEN" : "closed"}`);
+                                        log.info("FLOPPA-FCA", `Health status — MQTT: ${health.mqtt?.connected ? "connected" : "disconnected"}, Circuit breaker: ${health.antiSuspension?.circuitBreakerOpen ? "OPEN" : "closed"}`);
 
                                         if (fcaConfig.healthMonitor?.enabled !== false) {
                                                 const healthInterval = fcaConfig.healthMonitor?.logIntervalMs || 3600000;
                                                 const healthTimer = setInterval(() => {
                                                         try {
                                                                 const h = api.getHealthStatus();
-                                                                log.info("NKX-FCA HEALTH", JSON.stringify(h, null, 2));
+                                                                log.info("FLOPPA-FCA HEALTH", JSON.stringify(h, null, 2));
                                                         } catch (e) {
                                                                 clearInterval(healthTimer);
                                                         }
@@ -856,7 +861,7 @@ async function startBot(loginWithEmail) {
                                         }
                                 }
                         } catch (e) {
-                                log.warn("NKX-FCA", `Anti-suspension/health init skipped: ${e.message}`);
+                                log.warn("FLOPPA-FCA", `Anti-suspension/health init skipped: ${e.message}`);
                         }
                         // ———————————————————— GBAN ————————————————————— //
                         let dataGban;
