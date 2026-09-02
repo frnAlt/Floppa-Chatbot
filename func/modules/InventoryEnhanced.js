@@ -29,7 +29,7 @@ class Inventory {
      * @param inventory - Initial array of items (defaults to empty array).
      * @param limit - Maximum number of items allowed (defaults to global.Cassidy.invLimit).
      */
-    constructor(inventory = [], limit = global.Cassidy.invLimit) {
+    constructor(inventory = [], limit = (global.Cassidy?.invLimit ?? global.FloppaBot?.invLimit ?? 120)) {
         inventory ??= [];
         this.limit = limit;
         this.inv = this.sanitize(JSON.parse(JSON.stringify(inventory)));

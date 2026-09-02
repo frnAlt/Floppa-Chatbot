@@ -14,7 +14,7 @@ const Multimap_1 = require("./Multimap");
 const util_1 = require("util");
 const utils_liane_1 = require("@cass-plugins/utils-liane");
 const Datum_1 = require("./Datum");
-const { parseCurrency: pCy } = global.utils;
+const pCy = (num) => (global.utils?.parseCurrency ? global.utils.parseCurrency(num) : (num !== undefined && num !== null ? String(num) : "0"));
 exports.adminFeatures = [
     {
         key: "add_item",

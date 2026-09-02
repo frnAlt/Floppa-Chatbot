@@ -13,7 +13,7 @@ function startProject() {
 	const child = spawn("node", ["--expose-gc", "--max-old-space-size=400", "Floppa.js"], {
 		cwd: __dirname,
 		stdio: "inherit",
-		shell: true
+		shell: false
 	});
 
 	child.on("close", (code) => {

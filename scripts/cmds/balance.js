@@ -16,20 +16,17 @@ try {
     if (registerFont && fs.existsSync(path.join(fontDir, 'NotoSans-Bold.ttf'))) {
         registerFont(path.join(fontDir, 'NotoSans-Bold.ttf'), { family: 'NotoSans', weight: 'bold' });
     }
-    if (registerFont && fs.existsSync(path.join(fontDir, 'NotoSans-SemiBold.ttf'))) {
-        registerFont(path.join(fontDir, 'NotoSans-SemiBold.ttf'), { family: 'NotoSans', weight: '600' });
-    }
-    if (fs.existsSync(path.join(fontDir, 'NotoSans-Regular.ttf'))) {
+    if (registerFont && fs.existsSync(path.join(fontDir, 'NotoSans-Regular.ttf'))) {
         registerFont(path.join(fontDir, 'NotoSans-Regular.ttf'), { family: 'NotoSans', weight: 'normal' });
     }
-    if (fs.existsSync(path.join(fontDir, 'BeVietnamPro-Bold.ttf'))) {
+    if (registerFont && fs.existsSync(path.join(fontDir, 'BeVietnamPro-Bold.ttf'))) {
         registerFont(path.join(fontDir, 'BeVietnamPro-Bold.ttf'), { family: 'BeVietnamPro', weight: 'bold' });
     }
-    if (fs.existsSync(path.join(fontDir, 'BeVietnamPro-SemiBold.ttf'))) {
+    if (registerFont && fs.existsSync(path.join(fontDir, 'BeVietnamPro-SemiBold.ttf'))) {
         registerFont(path.join(fontDir, 'BeVietnamPro-SemiBold.ttf'), { family: 'BeVietnamPro', weight: '600' });
     }
 } catch (e) {
-    console.log("BalanceCard: Using fallback fonts");
+    // Optional font loading fallback
 }
 
 const CURRENCY_SYMBOL = "$";

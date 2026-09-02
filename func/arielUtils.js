@@ -152,6 +152,13 @@ function makeBox(text, title = "") {
   return `${top}\n${middle}\n${bottom}`;
 }
 
+function parseCurrency(num) {
+  if (num === undefined || num === null) return "0";
+  const n = Number(num);
+  if (isNaN(n)) return String(num);
+  return n.toLocaleString();
+}
+
 module.exports = {
   numMultipliers,
   parseBet,
@@ -160,5 +167,6 @@ module.exports = {
   formatValue,
   formatTimeSentence,
   makeProgressBar,
-  makeBox
+  makeBox,
+  parseCurrency
 };

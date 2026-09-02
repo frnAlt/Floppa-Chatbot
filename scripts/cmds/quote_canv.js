@@ -3,7 +3,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.style = exports.meta = void 0;
 exports.entry = entry;
 const CassieahExtras_1 = require("@cass-modules/CassieahExtras");
-const canvas_1 = require("@napi-rs/canvas");
+let loadImage;
+try {
+    loadImage = require("@napi-rs/canvas").loadImage;
+} catch (_) {
+    loadImage = require("canvas").loadImage;
+}
+const canvas_1 = { loadImage };
 exports.meta = {
     name: "quote",
     description: "Generate a quote image VIA CanvCass",

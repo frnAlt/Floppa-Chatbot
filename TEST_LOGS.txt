@@ -1,151 +1,378 @@
-[2026-07-27 02:32:37] [DIAGNOSTICS] Starting comprehensive diagnostic test of Floppa-Chatbot codebase...
-[2026-07-27 02:32:37] [FCA_TEST] Testing native FCA API package requirement...
-[2026-07-27 02:32:37] [FCA_TEST] Found native FCA module directory at: /app/fca
-[2026-07-27 02:32:37] [FCA_TEST] Native FCA Version: 5.0.0 (@floppa/fca-native)
-[2026-07-27 02:32:37] [DB_TEST] Testing database controllers...
-[2026-07-27 02:32:37] [DB_WARN] SQLite connector note: Cannot find module './database/connectDB/connectSqlite.js'
-Require stack:
-- /app/scratch/test_all_commands.js
-[2026-07-27 02:32:37] [CORE_TEST] Testing core handlers & utilities...
-[2026-07-27 02:32:37] [CORE_OK] Core file OK: index.js
-[2026-07-27 02:32:37] [CORE_OK] Core file OK: Floppa.js
-[2026-07-27 02:32:37] [CORE_OK] Core file OK: Goat.js
-[2026-07-27 02:32:37] [CORE_OK] Core file OK: utils.js
-[2026-07-27 02:32:37] [CORE_OK] Core file OK: bot/login/login.js
-[2026-07-27 02:32:37] [CORE_OK] Core file OK: bot/login/checkLiveCookie.js
-[2026-07-27 02:32:37] [CORE_OK] Core file OK: bot/handler/handlerAction.js
-[2026-07-27 02:32:37] [CORE_OK] Core file OK: bot/handler/handlerEvents.js
-[2026-07-27 02:32:37] [CORE_OK] Core file OK: dashboard/app.js
-[2026-07-27 02:32:38] [CORE_OK] Core file OK: dashboard/routes/api.js
-[2026-07-27 02:32:38] [CORE_OK] Core file OK: func/commandSuggest.js
-[2026-07-27 02:32:38] [CORE_OK] Core file OK: func/mdToText.js
-[2026-07-27 02:32:38] [CMD_TEST] Testing all command scripts in scripts/cmds/...
-[2026-07-27 02:32:38] [CMD_OK] Command [4o] | Category: IMAGE | Role: 0 | DM Supported
-[2026-07-27 02:32:38] [CMD_OK] Command [alldl] | Category: MEDIA | Role: 0 | DM Supported
-[2026-07-27 02:32:38] [CMD_OK] Command [anime] | Category: ENTERTAINMENT | Role: 0 | DM Supported
-[2026-07-27 02:32:38] [CMD_OK] Command [metaai] | Category: AI | Role: 0 | DM Supported
-[2026-07-27 02:32:38] [CMD_OK] Command [ramadan] | Category: RELIGION | Role: 0 | DM Supported
-[2026-07-27 02:32:38] [CMD_OK] Command [tiktok] | Category: MEDIA | Role: 0 | DM Supported
-[2026-07-27 02:32:38] [CMD_OK] Command [accept] | Category: UTILITY | Role: 2 | DM Supported
-[2026-07-27 02:32:38] [CMD_OK] Command [account] | Category: SYSTEM | Role: 2 | DM Supported
-[2026-07-27 02:32:38] [CMD_OK] Command [onlyadminbox] | Category: BOX CHAT | Role: 1 | DM Supported
-[2026-07-27 02:32:38] [CMD_OK] Command [adduser] | Category: BOX CHAT | Role: 1 | DM Supported
-[2026-07-27 02:32:38] [CMD_OK] Command [admin] | Category: BOX CHAT | Role: 2 | DM Supported
-[2026-07-27 02:32:38] [CMD_OK] Command [adminonly] | Category: OWNER | Role: 2 | DM Supported
-[2026-07-27 02:32:38] [CMD_OK] Command [aiphoto] | Category: IMAGE | Role: 0 | DM Supported
-[2026-07-27 02:32:38] [CMD_OK] Command [all] | Category: BOX CHAT | Role: 1 | DM Supported
-[2026-07-27 02:32:38] [CMD_OK] Command [animate] | Category: AI-VIDEO | Role: 0 | DM Supported
-[2026-07-27 02:32:38] [CMD_OK] Command [anisearch] | Category: FUN | Role: 0 | DM Supported
-[2026-07-27 02:32:38] [CMD_OK] Command [antichangeinfobox] | Category: BOX CHAT | Role: 0 | DM Supported
-[2026-07-27 02:32:38] [CMD_OK] Command [appstore] | Category: SOFTWARE | Role: 0 | DM Supported
-[2026-07-27 02:32:38] [CMD_OK] Command [art] | Category: AI-IMAGE | Role: 0 | DM Supported
-[2026-07-27 02:32:38] [CMD_OK] Command [autosetname] | Category: BOX CHAT | Role: 1 | DM Supported
-[2026-07-27 02:32:38] [CMD_OK] Command [avatar] | Category: IMAGE | Role: 0 | DM Supported
-[2026-07-27 02:32:38] [CMD_OK] Command [backupdata] | Category: OWNER | Role: 4 | DM Supported
-[2026-07-27 02:32:39] [CMD_OK] Command [badwords] | Category: BOX CHAT | Role: 1 | DM Supported
-[2026-07-27 02:32:39] [CMD_OK] Command [balancec] | Category: ECONOMY | Role: 0 | DM Supported
-[2026-07-27 02:32:39] [CMD_OK] Command [bank] | Category: ECONOMY | Role: 0 | DM Supported
-[2026-07-27 02:32:39] [CMD_OK] Command [bby] | Category: CHAT | Role: 0 | DM Supported
-[2026-07-27 02:32:39] [CMD_OK] Command [busy] | Category: BOX CHAT | Role: 0 | DM Supported
-[2026-07-27 02:32:39] [CMD_OK] Command [callad] | Category: CONTACTS ADMIN | Role: 0 | DM Supported
-[2026-07-27 02:32:39] [CMD_OK] Command [catbox] | Category: UTILITY | Role: 0 | DM Supported
-[2026-07-27 02:32:39] [CMD_OK] Command [cmd] | Category: OWNER | Role: 2 | DM Supported
-[2026-07-27 02:32:39] [CMD_OK] Command [coc] | Category: GAME | Role: 0 | DM Supported
-[2026-07-27 02:32:39] [CMD_OK] Command [count] | Category: BOX CHAT | Role: 0 | DM Supported
-[2026-07-27 02:32:39] [CMD_OK] Command [cpanel] | Category: UTILITY | Role: 0 | DM Supported
-[2026-07-27 02:32:39] [CMD_OK] Command [customrankcard] | Category: RANK | Role: 0 | DM Supported
-[2026-07-27 02:32:39] [CMD_OK] Command [daily] | Category: GAME | Role: 0 | DM Supported
-[2026-07-27 02:32:39] [CMD_OK] Command [dalle3] | Category: AI-IMAGE | Role: 0 | DM Supported
-[2026-07-27 02:32:39] [CMD_OK] Command [delete] | Category: ADMIN | Role: 2 | DM Supported
-[2026-07-27 02:32:39] [CMD_OK] Command [developer] | Category: OWNER | Role: 4 | DM Supported
-[2026-07-27 02:32:39] [CMD_OK] Command [dhbc] | Category: GAME | Role: 0 | DM Supported
-[2026-07-27 02:32:39] [CMD_OK] Command [nbpro] | Category: AI | Role: 0 | DM Supported
-[2026-07-27 02:32:39] [CMD_OK] Command [emojimean] | Category: WIKI | Role: 0 | DM Supported
-[2026-07-27 02:32:39] [CMD_OK] Command [emojimix] | Category: FUN | Role: 0 | DM Supported
-[2026-07-27 02:32:39] [CMD_OK] Command [eval] | Category: OWNER | Role: 4 | DM Supported
-[2026-07-27 02:32:39] [CMD_OK] Command [event] | Category: OWNER | Role: 2 | DM Supported
-[2026-07-27 02:32:39] [CMD_OK] Command [file] | Category: SYSTEM | Role: 4 | DM Supported
-[2026-07-27 02:32:39] [CMD_OK] Command [filteruser] | Category: BOX CHAT | Role: 1 | DM Supported
-[2026-07-27 02:32:40] [CMD_OK] Command [fork] | Category: SYSTEM | Role: 0 | DM Supported
-[2026-07-27 02:32:40] [CMD_OK] Command [fak] | Category: NSFW | Role: 2 | DM Supported
-[2026-07-27 02:32:40] [CMD_OK] Command [genx] | Category: AI | Role: 0 | DM Supported
-[2026-07-27 02:32:40] [CMD_OK] Command [getfbstate] | Category: OWNER | Role: 2 | DM Supported
-[2026-07-27 02:32:40] [CMD_OK] Command [gpt2] | Category: AI | Role: 0 | DM Supported
-[2026-07-27 02:32:40] [CMD_OK] Command [grouptag] | Category: INFO | Role: 0 | DM Supported
-[2026-07-27 02:32:40] [CMD_OK] Command [goatstore] | Category: 𝗠𝗮𝗿𝗸𝗲𝘁 | Role: 2 | DM Supported
-[2026-07-27 02:32:40] [CMD_OK] Command [guessnumber] | Category: GAME | Role: 0 | DM Supported
-[2026-07-27 02:32:40] [CMD_OK] Command [help] | Category: SYSTEM | Role: 0 | DM Supported
-[2026-07-27 02:32:40] [CMD_OK] Command [hubble] | Category: OWNER | Role: 0 | DM Supported
-[2026-07-27 02:32:40] [CMD_OK] Command [ignoreonlyad] | Category: OWNER | Role: 2 | DM Supported
-[2026-07-27 02:32:40] [CMD_OK] Command [ignoreonlyadbox] | Category: OWNER | Role: 2 | DM Supported
-[2026-07-27 02:32:40] [CMD_OK] Command [imagen4] | Category: AI-IMAGE | Role: 0 | DM Supported
-[2026-07-27 02:32:40] [CMD_OK] Command [imgbb] | Category: UPLOADER | Role: 0 | DM Supported
-[2026-07-27 02:32:40] [CMD_OK] Command [jsontomongodb] | Category: OWNER | Role: 2 | DM Supported
-[2026-07-27 02:32:40] [CMD_OK] Command [jsontosqlite] | Category: OWNER | Role: 2 | DM Supported
-[2026-07-27 02:32:40] [CMD_OK] Command [kick] | Category: BOX CHAT | Role: 1 | DM Supported
-[2026-07-27 02:32:40] [CMD_OK] Command [loadconfig] | Category: OWNER | Role: 4 | DM Supported
-[2026-07-27 02:32:40] [CMD_OK] Command [logo] | Category: MEDIA | Role: 0 | DM Supported
-[2026-07-27 02:32:40] [CMD_OK] Command [maze] | Category: GAME | Role: 0 | DM Supported
-[2026-07-27 02:32:40] [CMD_OK] Command [moon] | Category: IMAGE | Role: 0 | DM Supported
-[2026-07-27 02:32:41] [CMD_OK] Command [commandName] | Category: CATEGORYNAME | Role: 0 | DM Supported
-[2026-07-27 02:32:41] [CMD_OK] Command [nijix] | Category: AI-GENERATED | Role: 0 | DM Supported
-[2026-07-27 02:32:41] [CMD_OK] Command [notification] | Category: OWNER | Role: 2 | DM Supported
-[2026-07-27 02:32:41] [CMD_OK] Command [numlookup] | Category: UTILITY | Role: 0 | DM Supported
-[2026-07-27 02:32:41] [CMD_OK] Command [pair] | Category: FUN | Role: 0 | DM Supported
-[2026-07-27 02:32:41] [CMD_OK] Command [approve] | Category: UTILITY | Role: 2 | DM Supported
-[2026-07-27 02:32:41] [CMD_OK] Command [perf] | Category: SYSTEM | Role: 2 | DM Supported
-[2026-07-27 02:32:41] [CMD_OK] Command [pfp] | Category: UTILITY | Role: 0 | DM Supported
-[2026-07-27 02:32:41] [CMD_OK] Command [pi] | Category: AI | Role: 0 | DM Supported
-[2026-07-27 02:32:41] [CMD_OK] Command [pinterest] | Category: IMAGE | Role: 0 | DM Supported
-[2026-07-27 02:32:41] [CMD_OK] Command [prefix] | Category: CONFIG | Role: 0 | DM Supported
-[2026-07-27 02:32:41] [CMD_OK] Command [premium] | Category: OWNER | Role: 2 | DM Supported
-[2026-07-27 02:32:41] [CMD_OK] Command [prompt] | Category: AI | Role: 0 | DM Supported
-[2026-07-27 02:32:41] [CMD_OK] Command [fakechat] | Category: FUN | Role: 0 | DM Supported
-[2026-07-27 02:32:41] [CMD_OK] Command [rank] | Category: RANK | Role: 0 | DM Supported
-[2026-07-27 02:32:41] [CMD_OK] Command [rankup] | Category: RANK | Role: 0 | DM Supported
-[2026-07-27 02:32:41] [CMD_OK] Command [rbg] | Category: IMAGE | Role: 0 | DM Supported
-[2026-07-27 02:32:41] [CMD_OK] Command [refresh] | Category: BOX CHAT | Role: 0 | DM Supported
-[2026-07-27 02:32:41] [CMD_OK] Command [restart] | Category: OWNER | Role: 4 | DM Supported
-[2026-07-27 02:32:41] [CMD_OK] Command [rules] | Category: BOX CHAT | Role: 0 | DM Supported
-[2026-07-27 02:32:41] [CMD_OK] Command [savetext] | Category: OWNER | Role: 0 | DM Supported
-[2026-07-27 02:32:41] [CMD_OK] Command [say] | Category: TTS | Role: 0 | DM Supported
-[2026-07-27 02:32:41] [CMD_OK] Command [sendnoti] | Category: BOX CHAT | Role: 0 | DM Supported
-[2026-07-27 02:32:41] [CMD_OK] Command [setalias] | Category: CONFIG | Role: 0 | DM Supported
-[2026-07-27 02:32:41] [CMD_OK] Command [setavt] | Category: OWNER | Role: 2 | DM Supported
-[2026-07-27 02:32:42] [CMD_OK] Command [setlang] | Category: OWNER | Role: 0 | DM Supported
-[2026-07-27 02:32:42] [CMD_OK] Command [setleave] | Category: CUSTOM | Role: 0 | DM Supported
-[2026-07-27 02:32:42] [CMD_OK] Command [setname] | Category: BOX CHAT | Role: 0 | DM Supported
-[2026-07-27 02:32:42] [CMD_OK] Command [setrankup] | Category: OWNER | Role: 0 | DM Supported
-[2026-07-27 02:32:42] [CMD_OK] Command [setrole] | Category: INFO | Role: 1 | DM Supported
-[2026-07-27 02:32:42] [CMD_OK] Command [setwelcome] | Category: CUSTOM | Role: 1 | DM Supported
-[2026-07-27 02:32:42] [CMD_OK] Command [shell] | Category: OWNER | Role: 4 | DM Supported
-[2026-07-27 02:32:42] [CMD_OK] Command [shortcut] | Category: CUSTOM | Role: 0 | DM Supported
-[2026-07-27 02:32:42] [CMD_OK] Command [sing] | Category: MEDIA | Role: 0 | DM Supported
-[2026-07-27 02:32:42] [CMD_OK] Command [sorthelp] | Category: IMAGE | Role: 0 | DM Supported
-[2026-07-27 02:32:42] [CMD_OK] Command [spamban] | Category: OWNER | Role: 2 | DM Supported
-[2026-07-27 02:32:42] [CMD_OK] Command [screenshot] | Category: TOOLS | Role: 2 | DM Supported
-[2026-07-27 02:32:42] [CMD_OK] Command [stats] | Category: SYSTEM | Role: 0 | DM Supported
-[2026-07-27 02:32:42] [CMD_OK] Command [supanime] | Category: AI-IMAGE | Role: 0 | DM Supported
-[2026-07-27 02:32:42] [CMD_OK] Command [terabox] | Category: MEDIA | Role: 0 | DM Supported
-[2026-07-27 02:32:42] [CMD_OK] Command [texttoimage] | Category: INFO | Role: 0 | DM Supported
-[2026-07-27 02:32:42] [CMD_OK] Command [theme] | Category: BOX CHAT | Role: 1 | DM Supported
-[2026-07-27 02:32:42] [CMD_OK] Command [thread] | Category: OWNER | Role: 0 | DM Supported
-[2026-07-27 02:32:42] [CMD_OK] Command [tid] | Category: INFO | Role: 0 | DM Supported
-[2026-07-27 02:32:42] [CMD_OK] Command [tinyurl] | Category: UTILITY | Role: 0 | DM Supported
-[2026-07-27 02:32:42] [CMD_OK] Command [translate] | Category: UTILITY | Role: 0 | DM Supported
-[2026-07-27 02:32:42] [CMD_OK] Command [uid] | Category: INFO | Role: 0 | DM Supported
-[2026-07-27 02:32:42] [CMD_OK] Command [unsend] | Category: BOX CHAT | Role: 0 | DM Supported
-[2026-07-27 02:32:43] [CMD_OK] Command [uptime] | Category: SYSTEM | Role: 0 | DM Supported
-[2026-07-27 02:32:43] [CMD_OK] Command [update] | Category: OWNER | Role: 4 | DM Supported
-[2026-07-27 02:32:43] [CMD_OK] Command [user] | Category: OWNER | Role: 2 | DM Supported
-[2026-07-27 02:32:43] [CMD_OK] Command [warn] | Category: BOX CHAT | Role: 0 | DM Supported
-[2026-07-27 02:32:43] [CMD_OK] Command [weather] | Category: OTHER | Role: 0 | DM Supported
-[2026-07-27 02:32:43] [CMD_OK] Command [whitelist] | Category: OWNER | Role: 2 | DM Supported
-[2026-07-27 02:32:43] [CMD_OK] Command [ytb] | Category: MEDIA | Role: 0 | DM Supported
-[2026-07-27 02:32:43] [SUMMARY] ====================================================
-[2026-07-27 02:32:43] [SUMMARY] Diagnostic Testing Complete.
-[2026-07-27 02:32:43] [SUMMARY] Total Commands Tested: 122
-[2026-07-27 02:32:43] [SUMMARY] Passed Commands: 122
-[2026-07-27 02:32:43] [SUMMARY] Failed Commands: 0
-[2026-07-27 02:32:43] [SUMMARY] Core Engine Syntax: 100% CLEAN
-[2026-07-27 02:32:43] [SUMMARY] ====================================================
+[2026-09-02 10:37:05] [DIAGNOSTICS] Starting comprehensive diagnostic test of Floppa-Chatbot codebase...
+[2026-09-02 10:37:05] [FCA_TEST] Testing native FCA API package requirement...
+[2026-09-02 10:37:05] [FCA_TEST] Found native FCA module directory at: /home/ffjisan804/Floppa-Chatbot/fca
+[2026-09-02 10:37:05] [FCA_TEST] Native FCA Version: 5.0.0 (@floppa/fca-native)
+[2026-09-02 10:37:05] [DB_TEST] Testing database controllers...
+[2026-09-02 10:37:05] [DB_TEST] SQLite connector module syntax OK.
+[2026-09-02 10:37:05] [CORE_TEST] Testing core handlers & utilities...
+[2026-09-02 10:37:05] [CORE_OK] Core file OK: index.js
+[2026-09-02 10:37:05] [CORE_OK] Core file OK: Floppa.js
+[2026-09-02 10:37:06] [CORE_OK] Core file OK: Goat.js
+[2026-09-02 10:37:06] [CORE_OK] Core file OK: utils.js
+[2026-09-02 10:37:06] [CORE_OK] Core file OK: bot/login/login.js
+[2026-09-02 10:37:06] [CORE_OK] Core file OK: bot/login/checkLiveCookie.js
+[2026-09-02 10:37:06] [CORE_OK] Core file OK: bot/handler/handlerAction.js
+[2026-09-02 10:37:06] [CORE_OK] Core file OK: bot/handler/handlerEvents.js
+[2026-09-02 10:37:06] [CORE_OK] Core file OK: dashboard/app.js
+[2026-09-02 10:37:06] [CORE_OK] Core file OK: dashboard/routes/api.js
+[2026-09-02 10:37:06] [CORE_OK] Core file OK: func/commandSuggest.js
+[2026-09-02 10:37:06] [CORE_OK] Core file OK: func/mdToText.js
+[2026-09-02 10:37:06] [CMD_TEST] Testing all command scripts in scripts/cmds/...
+[2026-09-02 10:37:06] [CMD_OK] Command [48law] | Category: UNCATEGORIZED | Role: 0 | DM Supported
+[2026-09-02 10:37:07] [CMD_OK] Command [4k] | Category: AI-IMAGE | Role: 0 | DM Supported
+[2026-09-02 10:37:07] [CMD_OK] Command [4o] | Category: IMAGE | Role: 0 | DM Supported
+[2026-09-02 10:37:07] [CMD_OK] Command [alldl] | Category: MEDIA | Role: 0 | DM Supported
+[2026-09-02 10:37:07] [CMD_OK] Command [anipub] | Category: ENTERTAINMENT | Role: 0 | DM Supported
+[2026-09-02 10:37:07] [CMD_OK] Command [metaai] | Category: AI | Role: 0 | DM Supported
+[2026-09-02 10:37:07] [CMD_OK] Command [ramadan] | Category: RELIGION | Role: 0 | DM Supported
+[2026-09-02 10:37:07] [CMD_OK] Command [tiktok] | Category: MEDIA | Role: 0 | DM Supported
+[2026-09-02 10:37:07] [CMD_OK] Command [accept] | Category: UTILITY | Role: 2 | DM Supported
+[2026-09-02 10:37:07] [CMD_OK] Command [account] | Category: SYSTEM | Role: 2 | DM Supported
+[2026-09-02 10:37:07] [CMD_OK] Command [accountswitch] | Category: OWNER | Role: 2 | DM Supported
+[2026-09-02 10:37:08] [CMD_OK] Command [acp] | Category: UNCATEGORIZED | Role: 0 | DM Supported
+[2026-09-02 10:37:08] [CMD_OK] Command [active-users] | Category: UNCATEGORIZED | Role: 0 | DM Supported
+[2026-09-02 10:37:08] [CMD_OK] Command [activestatus] | Category: OWNER | Role: 2 | DM Supported
+[2026-09-02 10:37:08] [CMD_OK] Command [onlyadminbox] | Category: BOX CHAT | Role: 1 | DM Supported
+[2026-09-02 10:37:08] [CMD_OK] Command [addfriend] | Category: OWNER | Role: 2 | DM Supported
+[2026-09-02 10:37:08] [CMD_OK] Command [addmoney] | Category: ECONOMY | Role: 2 | DM Supported
+[2026-09-02 10:37:08] [CMD_OK] Command [adduser] | Category: BOX CHAT | Role: 1 | DM Supported
+[2026-09-02 10:37:08] [CMD_OK] Command [admin] | Category: BOX CHAT | Role: 2 | DM Supported
+[2026-09-02 10:37:08] [CMD_OK] Command [adminonly] | Category: OWNER | Role: 2 | DM Supported
+[2026-09-02 10:37:09] [CMD_OK] Command [adventure] | Category: IDLE INVESTMENT GAMES | Role: 0 | DM Supported
+[2026-09-02 10:37:09] [CMD_OK] Command [ai] | Category: AI-AGENT | Role: 0 | DM Supported
+[2026-09-02 10:37:09] [CMD_OK] Command [aiphoto] | Category: IMAGE | Role: 0 | DM Supported
+[2026-09-02 10:37:09] [CMD_OK] Command [album] | Category: MEDIA | Role: 0 | DM Supported
+[2026-09-02 10:37:09] [CMD_OK] Command [all] | Category: BOX CHAT | Role: 1 | DM Supported
+[2026-09-02 10:37:09] [CMD_OK] Command [aniart] | Category: AI | Role: 0 | DM Supported
+[2026-09-02 10:37:09] [CMD_OK] Command [animalhunt.xavia] | Category: UNCATEGORIZED | Role: 0 | DM Supported
+[2026-09-02 10:37:09] [CMD_OK] Command [animate] | Category: AI-VIDEO | Role: 0 | DM Supported
+[2026-09-02 10:37:09] [CMD_OK] Command [anime] | Category: MEDIA | Role: 0 | DM Supported
+[2026-09-02 10:37:09] [CMD_OK] Command [anisearch] | Category: MEDIA | Role: 0 | DM Supported
+[2026-09-02 10:37:09] [CMD_OK] Command [antichangeinfobox] | Category: BOX CHAT | Role: 0 | DM Supported
+[2026-09-02 10:37:10] [CMD_OK] Command [antiout] | Category: ADMIN | Role: 1 | DM Supported
+[2026-09-02 10:37:10] [CMD_OK] Command [api] | Category: SYSTEM | Role: 0 | DM Supported
+[2026-09-02 10:37:10] [CMD_OK] Command [appleshot] | Category: UNCATEGORIZED | Role: 0 | DM Supported
+[2026-09-02 10:37:10] [CMD_OK] Command [appstore] | Category: SOFTWARE | Role: 0 | DM Supported
+[2026-09-02 10:37:10] [CMD_OK] Command [arena] | Category: PET GAMES | Role: 0 | DM Supported
+[2026-09-02 10:37:11] [CMD_OK] Command [art] | Category: AI-IMAGE | Role: 0 | DM Supported
+[2026-09-02 10:37:11] [CMD_OK] Command [autoaddfriend] | Category: OWNER | Role: 2 | DM Supported
+[2026-09-02 10:37:11] [CMD_OK] Command [autocass] | Category: UTILITIES | Role: 1 | DM Supported
+[2026-09-02 10:37:11] [CMD_OK] Command [autosetname] | Category: BOX CHAT | Role: 1 | DM Supported
+[2026-09-02 10:37:11] [CMD_OK] Command [autosetnickname] | Category: THREAD | Role: 1 | DM Supported
+[2026-09-02 10:37:11] [CMD_OK] Command [avatar] | Category: IMAGE | Role: 0 | DM Supported
+[2026-09-02 10:37:11] [CMD_OK] Command [backupdata] | Category: OWNER | Role: 4 | DM Supported
+[2026-09-02 10:37:11] [CMD_OK] Command [badwords] | Category: BOX CHAT | Role: 1 | DM Supported
+[2026-09-02 10:37:11] [CMD_OK] Command [bakery] | Category: SHOPPING | Role: 0 | DM Supported
+[2026-09-02 10:37:11] [CMD_OK] Command [balancec] | Category: ECONOMY | Role: 0 | DM Supported
+[2026-09-02 10:37:12] [CMD_OK] Command [ban] | Category: BOX CHAT | Role: 1 | DM Supported
+[2026-09-02 10:37:12] [CMD_OK] Command [bank] | Category: ECONOMY | Role: 0 | DM Supported
+[2026-09-02 10:37:12] [CMD_OK] Command [abank] | Category: FINANCE | Role: 0 | DM Supported
+[2026-09-02 10:37:12] [CMD_OK] Command [baybayin] | Category: UTILITIES | Role: 0 | DM Supported
+[2026-09-02 10:37:12] [CMD_OK] Command [bby] | Category: CHAT | Role: 0 | DM Supported
+[2026-09-02 10:37:12] [CMD_OK] Command [beekeep] | Category: IDLE ACCUMULATION GAMES | Role: 0 | DM Supported
+[2026-09-02 10:37:12] [CMD_OK] Command [bonk] | Category: FUN | Role: 0 | DM Supported
+[2026-09-02 10:37:12] [CMD_OK] Command [streak] | Category: REWARDS | Role: 0 | DM Supported
+[2026-09-02 10:37:12] [CMD_OK] Command [botlog] | Category: OWNER | Role: 2 | DM Supported
+[2026-09-02 10:37:12] [CMD_OK] Command [brew] | Category: IDLE ACCUMULATION GAMES | Role: 0 | DM Supported
+[2026-09-02 10:37:13] [CMD_OK] Command [briefcase] | Category: INVENTORY | Role: 0 | DM Supported
+[2026-09-02 10:37:13] [CMD_OK] Command [burn] | Category: FUN | Role: 0 | DM Supported
+[2026-09-02 10:37:13] [CMD_OK] Command [busy] | Category: BOX CHAT | Role: 0 | DM Supported
+[2026-09-02 10:37:13] [CMD_OK] Command [buy] | Category: SHOPPING | Role: 0 | DM Supported
+[2026-09-02 10:37:14] [CMD_OK] Command [calc] | Category: UTILITIES | Role: 0 | DM Supported
+[2026-09-02 10:37:14] [CMD_OK] Command [calendar] | Category: UTILITY | Role: 0 | DM Supported
+[2026-09-02 10:37:14] [CMD_OK] Command [callad] | Category: CONTACTS ADMIN | Role: 0 | DM Supported
+[2026-09-02 10:37:14] [CMD_OK] Command [canvas] | Category: IMAGE | Role: 0 | DM Supported
+[2026-09-02 10:37:14] [CMD_OK] Command [carnostalgia] | Category: IDLE INVESTMENT GAMES | Role: 0 | DM Supported
+[2026-09-02 10:37:14] [CMD_OK] Command [casaieah] | Category: IDLE IMAGE-POWERED SIM | Role: 0 | DM Supported
+[2026-09-02 10:37:14] [CMD_OK] Command [casino] | Category: GAMES | Role: 0 | DM Supported
+[2026-09-02 10:37:15] [CMD_OK] Command [casino2] | Category: GAME | Role: 0 | DM Supported
+[2026-09-02 10:37:15] [CMD_OK] Command [casinoslot] | Category: GAME | Role: 0 | DM Supported
+[2026-09-02 10:37:15] [CMD_OK] Command [casscli] | Category: SYSTEM | Role: 0 | DM Supported
+[2026-09-02 10:37:15] [CMD_OK] Command [catbox] | Category: UTILITY | Role: 0 | DM Supported
+[2026-09-02 10:37:15] [CMD_OK] Command [catchpastebin] | Category: UNCATEGORIZED | Role: 0 | DM Supported
+[2026-09-02 10:37:15] [CMD_OK] Command [changeuser] | Category: USER | Role: 0 | DM Supported
+[2026-09-02 10:37:15] [CMD_OK] Command [cheque] | Category: FINANCE | Role: 0 | DM Supported
+[2026-09-02 10:37:15] [CMD_OK] Command [chop] | Category: IDLE ACCUMULATION GAMES | Role: 0 | DM Supported
+[2026-09-02 10:37:15] [CMD_OK] Command [chuck] | Category: FUN | Role: 0 | DM Supported
+[2026-09-02 10:37:15] [CMD_OK] Command [citem] | Category: INVENTORY | Role: 0 | DM Supported
+[2026-09-02 10:37:15] [CMD_OK] Command [collectibles] | Category: INVENTORY | Role: 0 | DM Supported
+[2026-09-02 10:37:16] [CMD_OK] Command [clown] | Category: FUN | Role: 0 | DM Supported
+[2026-09-02 10:37:16] [CMD_OK] Command [cassmails] | Category: FINANCE | Role: 0 | DM Supported
+[2026-09-02 10:37:16] [CMD_OK] Command [cmd] | Category: OWNER | Role: 2 | DM Supported
+[2026-09-02 10:37:16] [CMD_OK] Command [cmdconfig] | Category: OWNER | Role: 2 | DM Supported
+[2026-09-02 10:37:16] [CMD_OK] Command [coc] | Category: GAME | Role: 0 | DM Supported
+[2026-09-02 10:37:16] [CMD_OK] Command [cook] | Category: IDLE ACCUMULATION GAMES | Role: 0 | DM Supported
+[2026-09-02 10:37:16] [CMD_OK] Command [count] | Category: BOX CHAT | Role: 0 | DM Supported
+[2026-09-02 10:37:16] [CMD_OK] Command [cpanel] | Category: SYSTÈME | Role: 0 | DM Supported
+[2026-09-02 10:37:16] [CMD_OK] Command [cpanel2] | Category: INFO | Role: 0 | DM Supported
+[2026-09-02 10:37:16] [CMD_OK] Command [cpanel3] | Category: SYSTEM | Role: 0 | DM Supported
+[2026-09-02 10:37:17] [CMD_OK] Command [cricketgame] | Category: GAME | Role: 0 | DM Supported
+[2026-09-02 10:37:17] [CMD_OK] Command [customrankcard] | Category: RANK | Role: 0 | DM Supported
+[2026-09-02 10:37:17] [CMD_OK] Command [autodl] | Category: MEDIA | Role: 1 | DM Supported
+[2026-09-02 10:37:17] [CMD_OK] Command [daily] | Category: GAME | Role: 0 | DM Supported
+[2026-09-02 10:37:17] [CMD_OK] Command [dalle3] | Category: AI-IMAGE | Role: 0 | DM Supported
+[2026-09-02 10:37:17] [CMD_OK] Command [deepseadiver] | Category: IDLE ACCUMULATION GAMES | Role: 0 | DM Supported
+[2026-09-02 10:37:17] [CMD_OK] Command [defaults] | Category: UNCATEGORIZED | Role: 0 | DM Supported
+[2026-09-02 10:37:17] [CMD_OK] Command [delete] | Category: ADMIN | Role: 2 | DM Supported
+[2026-09-02 10:37:17] [CMD_OK] Command [developer] | Category: OWNER | Role: 4 | DM Supported
+[2026-09-02 10:37:17] [CMD_OK] Command [dhbc] | Category: GAME | Role: 0 | DM Supported
+[2026-09-02 10:37:17] [CMD_OK] Command [dig] | Category: IDLE ACCUMULATION GAMES | Role: 0 | DM Supported
+[2026-09-02 10:37:18] [CMD_OK] Command [dolphinfbdl] | Category: MEDIA | Role: 0 | DM Supported
+[2026-09-02 10:37:18] [CMD_OK] Command [donate] | Category: FINANCE | Role: 0 | DM Supported
+[2026-09-02 10:37:18] [CMD_OK] Command [doublerisk] | Category: GAMBLING GAMES | Role: 0 | DM Supported
+[2026-09-02 10:37:18] [CMD_OK] Command [duel] | Category: PET GAMES | Role: 0 | DM Supported
+[2026-09-02 10:37:18] [CMD_OK] Command [e2ee] | Category: SYSTEM | Role: 0 | DM Supported
+[2026-09-02 10:37:18] [CMD_OK] Command [edit] | Category: AI-IMAGE | Role: 0 | DM Supported
+[2026-09-02 10:37:18] [CMD_OK] Command [emoji_voice] | Category: NOPREFIX | Role: 0 | DM Supported
+[2026-09-02 10:37:18] [CMD_OK] Command [emojimean] | Category: WIKI | Role: 0 | DM Supported
+[2026-09-02 10:37:18] [CMD_OK] Command [emojimix] | Category: FUN | Role: 0 | DM Supported
+[2026-09-02 10:37:19] [CMD_OK] Command [encounter] | Category: PET GAMES | Role: 0 | DM Supported
+[2026-09-02 10:37:19] [CMD_OK] Command [eval] | Category: OWNER | Role: 4 | DM Supported
+[2026-09-02 10:37:19] [CMD_OK] Command [event] | Category: OWNER | Role: 2 | DM Supported
+[2026-09-02 10:37:19] [CMD_OK] Command [exec] | Category: ELEVATED | Role: 2 | DM Supported
+[2026-09-02 10:37:19] [CMD_OK] Command [facepalm] | Category: FUN | Role: 0 | DM Supported
+[2026-09-02 10:37:19] [CMD_OK] Command [fakechat] | Category: FUN | Role: 0 | DM Supported
+[2026-09-02 10:37:19] [CMD_OK] Command [fakechat2] | Category: TOOLS | Role: 0 | DM Supported
+[2026-09-02 10:37:19] [CMD_OK] Command [fpost] | Category: MEDIA | Role: 0 | DM Supported
+[2026-09-02 10:37:19] [CMD_OK] Command [familyfeud] | Category: PUZZLE GAMES | Role: 0 | DM Supported
+[2026-09-02 10:37:20] [CMD_OK] Command [farm] | Category: IDLE ACCUMULATION GAMES | Role: 0 | DM Supported
+[2026-09-02 10:37:20] [CMD_OK] Command [fashionista] | Category: IDLE ACCUMULATION GAMES | Role: 0 | DM Supported
+[2026-09-02 10:37:20] [CMD_OK] Command [fbcover] | Category: MEDIA | Role: 0 | DM Supported
+[2026-09-02 10:37:20] [CMD_OK] Command [file] | Category: SYSTEM | Role: 4 | DM Supported
+[2026-09-02 10:37:20] [CMD_OK] Command [filteruser] | Category: BOX CHAT | Role: 1 | DM Supported
+[2026-09-02 10:37:20] [CMD_OK] Command [fish] | Category: REWARDS | Role: 0 | DM Supported
+[2026-09-02 10:37:20] [CMD_OK] Command [flaggame] | Category: GAME | Role: 0 | DM Supported
+[2026-09-02 10:37:20] [CMD_OK] Command [flipcoin] | Category: GAMBLING GAMES | Role: 0 | DM Supported
+[2026-09-02 10:37:21] [CMD_OK] Command [footballgame] | Category: GAME | Role: 0 | DM Supported
+[2026-09-02 10:37:21] [CMD_OK] Command [fork] | Category: SYSTEM | Role: 0 | DM Supported
+[2026-09-02 10:37:21] [CMD_OK] Command [friendlist] | Category: OWNER | Role: 2 | DM Supported
+[2026-09-02 10:37:21] [CMD_OK] Command [fak] | Category: NSFW | Role: 2 | DM Supported
+[2026-09-02 10:37:21] [CMD_OK] Command [gay] | Category: FUN | Role: 0 | DM Supported
+[2026-09-02 10:37:21] [CMD_OK] Command [gcnoti] | Category: ADMIN | Role: 2 | DM Supported
+[2026-09-02 10:37:21] [CMD_OK] Command [gemini.xavia] | Category: UNCATEGORIZED | Role: 0 | DM Supported
+[2026-09-02 10:37:21] [CMD_OK] Command [geminigen] | Category: IMAGE GENERATOR | Role: 0 | DM Supported
+[2026-09-02 10:37:22] [CMD_OK] Command [genx] | Category: AI | Role: 0 | DM Supported
+[2026-09-02 10:37:22] [CMD_OK] Command [geometrydash] | Category: UNCATEGORIZED | Role: 0 | DM Supported
+[2026-09-02 10:37:22] [CMD_OK] Command [getfbstate] | Category: OWNER | Role: 2 | DM Supported
+[2026-09-02 10:37:22] [CMD_OK] Command [getlink] | Category: UNCATEGORIZED | Role: 0 | DM Supported
+[2026-09-02 10:37:22] [CMD_OK] Command [gift] | Category: REWARDS | Role: 0 | DM Supported
+[2026-09-02 10:37:22] [CMD_OK] Command [github] | Category: UTILITY | Role: 0 | DM Supported
+[2026-09-02 10:37:22] [CMD_OK] Command [gpt2] | Category: AI | Role: 0 | DM Supported
+[2026-09-02 10:37:22] [CMD_OK] Command [gptimg] | Category: AI | Role: 0 | DM Supported
+[2026-09-02 10:37:22] [CMD_OK] Command [grouptag] | Category: INFO | Role: 0 | DM Supported
+[2026-09-02 10:37:22] [CMD_OK] Command [garden] | Category: IDLE INVESTMENT GAMES | Role: 0 | DM Supported
+[2026-09-02 10:37:23] [CMD_OK] Command [goatstore] | Category: 𝗠𝗮𝗿𝗸𝗲𝘁 | Role: 2 | DM Supported
+[2026-09-02 10:37:23] [CMD_OK] Command [guessnumber] | Category: GAME | Role: 0 | DM Supported
+[2026-09-02 10:37:23] [CMD_OK] Command [hack] | Category: FUN | Role: 0 | DM Supported
+[2026-09-02 10:37:23] [CMD_OK] Command [harvest] | Category: IDLE ACCUMULATION GAMES | Role: 0 | DM Supported
+[2026-09-02 10:37:23] [CMD_OK] Command [help] | Category: SYSTEM | Role: 0 | DM Supported
+[2026-09-02 10:37:23] [CMD_OK] Command [horny] | Category: FUN | Role: 0 | DM Supported
+[2026-09-02 10:37:23] [CMD_OK] Command [hsrEdits] | Category: MEDIA | Role: 0 | DM Supported
+[2026-09-02 10:37:23] [CMD_OK] Command [hubble] | Category: OWNER | Role: 0 | DM Supported
+[2026-09-02 10:37:23] [CMD_OK] Command [hug] | Category: FUNNY | Role: 0 | DM Supported
+[2026-09-02 10:37:24] [CMD_OK] Command [identity] | Category: USER | Role: 0 | DM Supported
+[2026-09-02 10:37:24] [CMD_OK] Command [ignoreonlyad] | Category: OWNER | Role: 2 | DM Supported
+[2026-09-02 10:37:24] [CMD_OK] Command [ignoreonlyadbox] | Category: OWNER | Role: 2 | DM Supported
+[2026-09-02 10:37:24] [CMD_OK] Command [image] | Category: AI-IMAGE | Role: 0 | DM Supported
+[2026-09-02 10:37:24] [CMD_OK] Command [imagen4] | Category: AI-IMAGE | Role: 0 | DM Supported
+[2026-09-02 10:37:24] [CMD_OK] Command [imgbb] | Category: UPLOADER | Role: 0 | DM Supported
+[2026-09-02 10:37:24] [CMD_OK] Command [imgur] | Category: IMAGE URL | Role: 0 | DM Supported
+[2026-09-02 10:37:24] [CMD_OK] Command [info] | Category: OWNER | Role: 0 | DM Supported
+[2026-09-02 10:37:24] [CMD_OK] Command [intellnica] | Category: UTILITIES | Role: 0 | DM Supported
+[2026-09-02 10:37:25] [CMD_OK] Command [jail] | Category: CANVAS | Role: 0 | DM Supported
+[2026-09-02 10:37:25] [CMD_OK] Command [jsontomongodb] | Category: OWNER | Role: 2 | DM Supported
+[2026-09-02 10:37:25] [CMD_OK] Command [jsontosqlite] | Category: OWNER | Role: 2 | DM Supported
+[2026-09-02 10:37:25] [CMD_OK] Command [kateshop] | Category: SHOPPING | Role: 0 | DM Supported
+[2026-09-02 10:37:25] [CMD_OK] Command [kick] | Category: BOX CHAT | Role: 1 | DM Supported
+[2026-09-02 10:37:25] [CMD_OK] Command [kiss] | Category: FUNNY | Role: 0 | DM Supported
+[2026-09-02 10:37:25] [CMD_OK] Command [leave] | Category: UNCATEGORIZED | Role: 2 | DM Supported
+[2026-09-02 10:37:25] [CMD_OK] Command [littlejohn] | Category: IDLE ACCUMULATION GAMES | Role: 0 | DM Supported
+[2026-09-02 10:37:25] [CMD_OK] Command [loadconfig] | Category: OWNER | Role: 4 | DM Supported
+[2026-09-02 10:37:25] [CMD_OK] Command [loanadmin] | Category: ECONOMY | Role: 2 | DM Supported
+[2026-09-02 10:37:26] [CMD_OK] Command [logo] | Category: MEDIA | Role: 0 | DM Supported
+[2026-09-02 10:37:26] [CMD_OK] Command [lotto] | Category: GAMBLING GAMES | Role: 0 | DM Supported
+[2026-09-02 10:37:26] [CMD_OK] Command [maintid] | Category: CONFIG | Role: 0 | DM Supported
+[2026-09-02 10:37:26] [CMD_OK] Command [manageprefix] | Category: ADMIN | Role: 2 | DM Supported
+[2026-09-02 10:37:26] [CMD_OK] Command [manga] | Category: MEDIA | Role: 0 | DM Supported
+[2026-09-02 10:37:26] [CMD_OK] Command [marry] | Category: FUNNY | Role: 0 | DM Supported
+[2026-09-02 10:37:26] [CMD_OK] Command [mathquiz.xavia] | Category: UNCATEGORIZED | Role: 0 | DM Supported
+[2026-09-02 10:37:26] [CMD_OK] Command [maze] | Category: GAME | Role: 0 | DM Supported
+[2026-09-02 10:37:26] [CMD_OK] Command [megaspin] | Category: GAME | Role: 0 | DM Supported
+[2026-09-02 10:37:26] [CMD_OK] Command [meme] | Category: FUN | Role: 0 | DM Supported
+[2026-09-02 10:37:26] [CMD_OK] Command [menu] | Category: SYSTEM | Role: 0 | DM Supported
+[2026-09-02 10:37:27] [CMD_OK] Command [meowshop] | Category: SHOPPING | Role: 0 | DM Supported
+[2026-09-02 10:37:27] [CMD_OK] Command [metatheme] | Category: BOX CHAT | Role: 1 | DM Supported
+[2026-09-02 10:37:27] [CMD_OK] Command [midjourney] | Category: AI | Role: 0 | DM Supported
+[2026-09-02 10:37:27] [CMD_OK] Command [mine] | Category: IDLE ACCUMULATION GAMES | Role: 0 | DM Supported
+[2026-09-02 10:37:27] [CMD_OK] Command [minecraft] | Category: IDLE ACCUMULATION GAMES | Role: 0 | DM Supported
+[2026-09-02 10:37:27] [CMD_OK] Command [mines] | Category: UNCATEGORIZED | Role: 0 | DM Supported
+[2026-09-02 10:37:27] [CMD_OK] Command [mitem] | Category: INVENTORY | Role: 0 | DM Supported
+[2026-09-02 10:37:27] [CMD_OK] Command [mix] | Category: FUN | Role: 0 | DM Supported
+[2026-09-02 10:37:27] [CMD_OK] Command [moon] | Category: IMAGE | Role: 0 | DM Supported
+[2026-09-02 10:37:28] [CMD_OK] Command [movies] | Category: MEDIA | Role: 0 | DM Supported
+[2026-09-02 10:37:28] [CMD_OK] Command [msai] | Category: AI | Role: 0 | DM Supported
+[2026-09-02 10:37:28] [CMD_OK] Command [mtls] | Category: FINANCE | Role: 0 | DM Supported
+[2026-09-02 10:37:28] [CMD_OK] Command [music] | Category: MUSIC | Role: 0 | DM Supported
+[2026-09-02 10:37:28] [CMD_OK] Command [nbank] | Category: FINANCE | Role: 0 | DM Supported
+[2026-09-02 10:37:29] [CMD_OK] Command [neax] | Category: SYSTEM | Role: 0 | DM Supported
+[2026-09-02 10:37:29] [CMD_OK] Command [commandName] | Category: CATEGORYNAME | Role: 0 | DM Supported
+[2026-09-02 10:37:29] [CMD_OK] Command [nicadrive] | Category: INVENTORY | Role: 0 | DM Supported
+[2026-09-02 10:37:29] [CMD_OK] Command [nijix] | Category: AI-GENERATED | Role: 0 | DM Supported
+[2026-09-02 10:37:29] [CMD_OK] Command [note] | Category: OWNER | Role: 2 | DM Supported
+[2026-09-02 10:37:29] [CMD_OK] Command [notification] | Category: OWNER | Role: 2 | DM Supported
+[2026-09-02 10:37:29] [CMD_OK] Command [numberize] | Category: UTILITIES | Role: 0 | DM Supported
+[2026-09-02 10:37:29] [CMD_OK] Command [numbergame] | Category: PUZZLE GAMES | Role: 0 | DM Supported
+[2026-09-02 10:37:29] [CMD_OK] Command [numlookup] | Category: UTILITY | Role: 0 | DM Supported
+[2026-09-02 10:37:29] [CMD_OK] Command [octoshop] | Category: SHOPPING | Role: 0 | DM Supported
+[2026-09-02 10:37:30] [CMD_OK] Command [oneshot] | Category: PET GAMES | Role: 0 | DM Supported
+[2026-09-02 10:37:30] [CMD_OK] Command [pair] | Category: FUN | Role: 0 | DM Supported
+[2026-09-02 10:37:30] [CMD_OK] Command [patrick] | Category: FUN | Role: 0 | DM Supported
+[2026-09-02 10:37:30] [CMD_OK] Command [approve] | Category: UTILITY | Role: 2 | DM Supported
+[2026-09-02 10:37:30] [CMD_OK] Command [perf] | Category: SYSTEM | Role: 2 | DM Supported
+[2026-09-02 10:37:30] [CMD_OK] Command [pet] | Category: PET GAMES | Role: 0 | DM Supported
+[2026-09-02 10:37:30] [CMD_OK] Command [petclash] | Category: PET GAMES | Role: 0 | DM Supported
+[2026-09-02 10:37:30] [CMD_OK] Command [pfp] | Category: UTILITY | Role: 0 | DM Supported
+[2026-09-02 10:37:30] [CMD_OK] Command [pi] | Category: AI | Role: 0 | DM Supported
+[2026-09-02 10:37:31] [CMD_OK] Command [pinterest] | Category: IMAGE | Role: 0 | DM Supported
+[2026-09-02 10:37:31] [CMD_OK] Command [ping] | Category: UTILITY | Role: 0 | DM Supported
+[2026-09-02 10:37:31] [CMD_OK] Command [plantita] | Category: IDLE ACCUMULATION GAMES | Role: 0 | DM Supported
+[2026-09-02 10:37:31] [CMD_OK] Command [prefix] | Category: CONFIG | Role: 0 | DM Supported
+[2026-09-02 10:37:31] [CMD_OK] Command [premium] | Category: OWNER | Role: 2 | DM Supported
+[2026-09-02 10:37:31] [CMD_OK] Command [profilelock] | Category: OWNER | Role: 2 | DM Supported
+[2026-09-02 10:37:31] [CMD_OK] Command [prompt] | Category: AI | Role: 0 | DM Supported
+[2026-09-02 10:37:31] [CMD_OK] Command [q] | Category: FUN | Role: 0 | DM Supported
+[2026-09-02 10:37:31] [CMD_OK] Command [qcshop] | Category: SHOPPING | Role: 0 | DM Supported
+[2026-09-02 10:37:31] [CMD_OK] Command [quiz] | Category: GAME | Role: 0 | DM Supported
+[2026-09-02 10:37:31] [CMD_OK] Command [quote] | Category: MEDIA | Role: 0 | DM Supported
+[2026-09-02 10:37:32] [CMD_OK] Command [quran] | Category: ISLAM | Role: 0 | DM Supported
+[2026-09-02 10:37:32] [CMD_OK] Command [random] | Category: FUN | Role: 0 | DM Supported
+[2026-09-02 10:37:32] [CMD_OK] Command [rank] | Category: RANK | Role: 0 | DM Supported
+[2026-09-02 10:37:32] [CMD_OK] Command [rankup] | Category: RANK | Role: 0 | DM Supported
+[2026-09-02 10:37:32] [CMD_OK] Command [rate] | Category: FUN | Role: 0 | DM Supported
+[2026-09-02 10:37:32] [CMD_OK] Command [ratings] | Category: SUPPORT | Role: 0 | DM Supported
+[2026-09-02 10:37:32] [CMD_OK] Command [rbg] | Category: AI-IMAGE | Role: 0 | DM Supported
+[2026-09-02 10:37:32] [CMD_OK] Command [recycle] | Category: IDLE ACCUMULATION GAMES | Role: 0 | DM Supported
+[2026-09-02 10:37:32] [CMD_OK] Command [refresh] | Category: BOX CHAT | Role: 0 | DM Supported
+[2026-09-02 10:37:32] [CMD_OK] Command [remotebag] | Category: INVENTORY | Role: 0 | DM Supported
+[2026-09-02 10:37:32] [CMD_OK] Command [removebg] | Category: AI-IMAGE | Role: 0 | DM Supported
+[2026-09-02 10:37:32] [CMD_OK] Command [report] | Category: UNCATEGORIZED | Role: 0 | DM Supported
+[2026-09-02 10:37:33] [CMD_OK] Command [communityshop] | Category: SHOPPING | Role: 0 | DM Supported
+[2026-09-02 10:37:33] [CMD_OK] Command [restart] | Category: OWNER | Role: 4 | DM Supported
+[2026-09-02 10:37:33] [CMD_OK] Command [resto] | Category: IDLE ACCUMULATION GAMES | Role: 0 | DM Supported
+[2026-09-02 10:37:33] [CMD_OK] Command [richest] | Category: UNCATEGORIZED | Role: 0 | DM Supported
+[2026-09-02 10:37:33] [CMD_OK] Command [rip] | Category: FUN | Role: 0 | DM Supported
+[2026-09-02 10:37:33] [CMD_OK] Command [roles] | Category: MODERATION | Role: 1 | DM Supported
+[2026-09-02 10:37:33] [CMD_OK] Command [roll] | Category: GAMBLING GAMES | Role: 0 | DM Supported
+[2026-09-02 10:37:33] [CMD_OK] Command [rosashop] | Category: SHOPPING | Role: 0 | DM Supported
+[2026-09-02 10:37:34] [CMD_OK] Command [richroll] | Category: GAMBLING GAMES | Role: 0 | DM Supported
+[2026-09-02 10:37:34] [CMD_OK] Command [russianroulette] | Category: GAMBLING GAMES | Role: 0 | DM Supported
+[2026-09-02 10:37:34] [CMD_OK] Command [rules] | Category: BOX CHAT | Role: 0 | DM Supported
+[2026-09-02 10:37:34] [CMD_OK] Command [sad] | Category: FUN | Role: 0 | DM Supported
+[2026-09-02 10:37:34] [CMD_OK] Command [safeguard] | Category: SYSTEM | Role: 2 | DM Supported
+[2026-09-02 10:37:34] [CMD_OK] Command [sanshop] | Category: SHOPPING | Role: 0 | DM Supported
+[2026-09-02 10:37:34] [CMD_OK] Command [satire] | Category: MEDIA | Role: 0 | DM Supported
+[2026-09-02 10:37:34] [CMD_OK] Command [savetext] | Category: OWNER | Role: 0 | DM Supported
+[2026-09-02 10:37:34] [CMD_OK] Command [say] | Category: TTS | Role: 0 | DM Supported
+[2026-09-02 10:37:34] [CMD_OK] Command [sayv2] | Category: TTS | Role: 0 | DM Supported
+[2026-09-02 10:37:34] [CMD_OK] Command [screenshot] | Category: MEDIA | Role: 0 | DM Supported
+[2026-09-02 10:37:35] [CMD_OK] Command [sendnoti] | Category: BOX CHAT | Role: 0 | DM Supported
+[2026-09-02 10:37:35] [CMD_OK] Command [setalias] | Category: CONFIG | Role: 0 | DM Supported
+[2026-09-02 10:37:35] [CMD_OK] Command [setavt] | Category: OWNER | Role: 2 | DM Supported
+[2026-09-02 10:37:35] [CMD_OK] Command [setlang] | Category: OWNER | Role: 0 | DM Supported
+[2026-09-02 10:37:35] [CMD_OK] Command [setleave] | Category: CUSTOM | Role: 0 | DM Supported
+[2026-09-02 10:37:35] [CMD_OK] Command [setname] | Category: BOX CHAT | Role: 0 | DM Supported
+[2026-09-02 10:37:35] [CMD_OK] Command [setprefix] | Category: MODERATION | Role: 0 | DM Supported
+[2026-09-02 10:37:35] [CMD_OK] Command [setrankup] | Category: OWNER | Role: 0 | DM Supported
+[2026-09-02 10:37:35] [CMD_OK] Command [setrole] | Category: INFO | Role: 1 | DM Supported
+[2026-09-02 10:37:35] [CMD_OK] Command [settheme] | Category: BOX CHAT | Role: 1 | DM Supported
+[2026-09-02 10:37:35] [CMD_OK] Command [setwelcome] | Category: CUSTOM | Role: 1 | DM Supported
+[2026-09-02 10:37:36] [CMD_OK] Command [sharecontact] | Category: INFO | Role: 0 | DM Supported
+[2026-09-02 10:37:36] [CMD_OK] Command [shareit] | Category: OWNER | Role: 2 | DM Supported
+[2026-09-02 10:37:36] [CMD_OK] Command [seam] | Category: SHOPPING | Role: 0 | DM Supported
+[2026-09-02 10:37:36] [CMD_OK] Command [shazam] | Category: MUSIC | Role: 0 | DM Supported
+[2026-09-02 10:37:36] [CMD_OK] Command [shell] | Category: OWNER | Role: 4 | DM Supported
+[2026-09-02 10:37:36] [CMD_OK] Command [shoot] | Category: GAMBLING GAMES | Role: 0 | DM Supported
+[2026-09-02 10:37:36] [CMD_OK] Command [shop] | Category: SHOPPING | Role: 0 | DM Supported
+[2026-09-02 10:37:36] [CMD_OK] Command [shortcut] | Category: CUSTOM | Role: 0 | DM Supported
+[2026-09-02 10:37:37] [CMD_OK] Command [shoti] | Category: MEDIA | Role: 0 | DM Supported
+[2026-09-02 10:37:37] [CMD_OK] Command [sing] | Category: MEDIA | Role: 0 | DM Supported
+[2026-09-02 10:37:37] [CMD_OK] Command [skyrise] | Category: IDLE INVESTMENT GAMES | Role: 0 | DM Supported
+[2026-09-02 10:37:37] [CMD_OK] Command [slap] | Category: FUN | Role: 0 | DM Supported
+[2026-09-02 10:37:37] [CMD_OK] Command [slot] | Category: GAME | Role: 0 | DM Supported
+[2026-09-02 10:37:37] [CMD_OK] Command [slot3d] | Category: GAME | Role: 0 | DM Supported
+[2026-09-02 10:37:37] [CMD_OK] Command [slots] | Category: ECONOMY | Role: 0 | DM Supported
+[2026-09-02 10:37:37] [CMD_OK] Command [snews] | Category: FUN | Role: 0 | DM Supported
+[2026-09-02 10:37:37] [CMD_OK] Command [sorthelp] | Category: IMAGE | Role: 0 | DM Supported
+[2026-09-02 10:37:37] [CMD_OK] Command [explorer] | Category: IDLE ACCUMULATION GAMES | Role: 0 | DM Supported
+[2026-09-02 10:37:38] [CMD_OK] Command [spamban] | Category: OWNER | Role: 2 | DM Supported
+[2026-09-02 10:37:38] [CMD_OK] Command [spin] | Category: GAME | Role: 0 | DM Supported
+[2026-09-02 10:37:38] [CMD_OK] Command [spin.xavia] | Category: UNCATEGORIZED | Role: 0 | DM Supported
+[2026-09-02 10:37:38] [CMD_OK] Command [spotify.xavia] | Category: UNCATEGORIZED | Role: 0 | DM Supported
+[2026-09-02 10:37:38] [CMD_OK] Command [spycard] | Category: PROFILE | Role: 0 | DM Supported
+[2026-09-02 10:37:38] [CMD_OK] Command [ss] | Category: TOOLS | Role: 2 | DM Supported
+[2026-09-02 10:37:38] [CMD_OK] Command [stai] | Category: AI | Role: 2 | DM Supported
+[2026-09-02 10:37:38] [CMD_OK] Command [staidb] | Category: AI | Role: 0 | DM Supported
+[2026-09-02 10:37:38] [CMD_OK] Command [startupnoti] | Category: OWNER | Role: 2 | DM Supported
+[2026-09-02 10:37:38] [CMD_OK] Command [stats] | Category: SYSTEM | Role: 0 | DM Supported
+[2026-09-02 10:37:39] [CMD_OK] Command [status] | Category: UTILITY | Role: 0 | DM Supported
+[2026-09-02 10:37:39] [CMD_OK] Command [stmsg] | Category: ADMIN | Role: 2 | DM Supported
+[2026-09-02 10:37:39] [CMD_OK] Command [story] | Category: OWNER | Role: 2 | DM Supported
+[2026-09-02 10:37:39] [CMD_OK] Command [streport] | Category: CONTACTS ADMIN | Role: 2 | DM Supported
+[2026-09-02 10:37:39] [CMD_OK] Command [design] | Category: UTILITIES | Role: 0 | DM Supported
+[2026-09-02 10:37:39] [CMD_OK] Command [supanime] | Category: AI-IMAGE | Role: 0 | DM Supported
+[2026-09-02 10:37:39] [CMD_OK] Command [supportgc] | Category: SUPPORT | Role: 0 | DM Supported
+[2026-09-02 10:37:39] [CMD_OK] Command [sysgif] | Category: SYSTEM | Role: 0 | DM Supported
+[2026-09-02 10:37:39] [CMD_OK] Command [sysgif2] | Category: SYSTEM | Role: 0 | DM Supported
+[2026-09-02 10:37:39] [CMD_OK] Command [sysgif3] | Category: SYSTEM | Role: 0 | DM Supported
+[2026-09-02 10:37:40] [CMD_OK] Command [system] | Category: SYSTEM | Role: 0 | DM Supported
+[2026-09-02 10:37:40] [CMD_OK] Command [temmieshop] | Category: SHOPPING | Role: 0 | DM Supported
+[2026-09-02 10:37:40] [CMD_OK] Command [terabox] | Category: MEDIA | Role: 0 | DM Supported
+[2026-09-02 10:37:40] [CMD_OK] Command [texttoimage] | Category: INFO | Role: 0 | DM Supported
+[2026-09-02 10:37:40] [CMD_OK] Command [theme] | Category: BOX CHAT | Role: 1 | DM Supported
+[2026-09-02 10:37:40] [CMD_OK] Command [themeinfo] | Category: OWNER | Role: 2 | DM Supported
+[2026-09-02 10:37:40] [CMD_OK] Command [thread] | Category: OWNER | Role: 0 | DM Supported
+[2026-09-02 10:37:40] [CMD_OK] Command [mthread] | Category: ADMIN | Role: 2 | DM Supported
+[2026-09-02 10:37:40] [CMD_OK] Command [threadid] | Category: THREAD | Role: 0 | DM Supported
+[2026-09-02 10:37:40] [CMD_OK] Command [tid] | Category: INFO | Role: 0 | DM Supported
+[2026-09-02 10:37:41] [CMD_OK] Command [tiles] | Category: CHANCE GAMES | Role: 0 | DM Supported
+[2026-09-02 10:37:41] [CMD_OK] Command [tileshop] | Category: SHOPPING | Role: 0 | DM Supported
+[2026-09-02 10:37:41] [CMD_OK] Command [tinyurl] | Category: UTILITY | Role: 0 | DM Supported
+[2026-09-02 10:37:41] [CMD_OK] Command [top] | Category: ECONOMY | Role: 0 | DM Supported
+[2026-09-02 10:37:41] [CMD_OK] Command [toplosers] | Category: UTILITIES | Role: 0 | DM Supported
+[2026-09-02 10:37:41] [CMD_OK] Command [trade] | Category: INVENTORY | Role: 0 | DM Supported
+[2026-09-02 10:37:41] [CMD_OK] Command [translate] | Category: UTILITY | Role: 0 | DM Supported
+[2026-09-02 10:37:41] [CMD_OK] Command [trawl] | Category: IDLE ACCUMULATION GAMES | Role: 0 | DM Supported
+[2026-09-02 10:37:41] [CMD_OK] Command [treasure] | Category: IDLE ACCUMULATION GAMES | Role: 0 | DM Supported
+[2026-09-02 10:37:41] [CMD_OK] Command [troll] | Category: GAMBLING GAMES | Role: 0 | DM Supported
+[2026-09-02 10:37:42] [CMD_OK] Command [ttt] | Category: CHANCE GAMES | Role: 0 | DM Supported
+[2026-09-02 10:37:42] [CMD_OK] Command [typing] | Category: CONFIG | Role: 2 | DM Supported
+[2026-09-02 10:37:42] [CMD_OK] Command [uid] | Category: INFO | Role: 0 | DM Supported
+[2026-09-02 10:37:42] [CMD_OK] Command [unsend] | Category: BOX CHAT | Role: 0 | DM Supported
+[2026-09-02 10:37:42] [CMD_OK] Command [up] | Category: SYSTEM | Role: 0 | DM Supported
+[2026-09-02 10:37:42] [CMD_OK] Command [update] | Category: OWNER | Role: 4 | DM Supported
+[2026-09-02 10:37:42] [CMD_OK] Command [upgrader] | Category: INVENTORY | Role: 0 | DM Supported
+[2026-09-02 10:37:42] [CMD_OK] Command [upscale] | Category: AI-IMAGE | Role: 0 | DM Supported
+[2026-09-02 10:37:42] [CMD_OK] Command [uptime] | Category: SYSTEM | Role: 0 | DM Supported
+[2026-09-02 10:37:43] [CMD_OK] Command [user] | Category: OWNER | Role: 2 | DM Supported
+[2026-09-02 10:37:43] [CMD_OK] Command [userInfo] | Category: USER | Role: 0 | DM Supported
+[2026-09-02 10:37:43] [CMD_OK] Command [vault] | Category: INVENTORY | Role: 0 | DM Supported
+[2026-09-02 10:37:43] [CMD_OK] Command [wanted] | Category: CANVAS | Role: 0 | DM Supported
+[2026-09-02 10:37:43] [CMD_OK] Command [warn] | Category: BOX CHAT | Role: 0 | DM Supported
+[2026-09-02 10:37:43] [CMD_OK] Command [weather] | Category: OTHER | Role: 0 | DM Supported
+[2026-09-02 10:37:43] [CMD_OK] Command [whitelist] | Category: OWNER | Role: 2 | DM Supported
+[2026-09-02 10:37:43] [CMD_OK] Command [wizardsforge] | Category: IDLE ACCUMULATION GAMES | Role: 0 | DM Supported
+[2026-09-02 10:37:43] [CMD_OK] Command [wl] | Category: OWNER | Role: 2 | DM Supported
+[2026-09-02 10:37:43] [CMD_OK] Command [wlg] | Category: EVENTS CONFIGURE | Role: 1 | DM Supported
+[2026-09-02 10:37:43] [CMD_OK] Command [wordgame] | Category: PUZZLE GAMES | Role: 0 | DM Supported
+[2026-09-02 10:37:44] [CMD_OK] Command [work] | Category: CHANCE GAMES | Role: 0 | DM Supported
+[2026-09-02 10:37:44] [CMD_OK] Command [yta] | Category: MEDIA | Role: 0 | DM Supported
+[2026-09-02 10:37:44] [CMD_OK] Command [ytb] | Category: MEDIA | Role: 0 | DM Supported
+[2026-09-02 10:37:44] [CMD_OK] Command [ytdl] | Category: MEDIA | Role: 0 | DM Supported
+[2026-09-02 10:37:44] [CMD_OK] Command [yuhanshop] | Category: SHOPPING | Role: 0 | DM Supported
+[2026-09-02 10:37:44] [SUMMARY] ====================================================
+[2026-09-02 10:37:44] [SUMMARY] Diagnostic Testing Complete.
+[2026-09-02 10:37:44] [SUMMARY] Total Commands Tested: 351
+[2026-09-02 10:37:44] [SUMMARY] Passed Commands: 351
+[2026-09-02 10:37:44] [SUMMARY] Failed Commands: 0
+[2026-09-02 10:37:44] [SUMMARY] Core Engine Syntax: 100% CLEAN
+[2026-09-02 10:37:44] [SUMMARY] ====================================================

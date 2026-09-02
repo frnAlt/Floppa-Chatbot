@@ -59,13 +59,16 @@ module.exports = async function (api, threadModel, userModel, dashBoardModel, gl
 				const contentFile = readFileSync(pathCommand, "utf8");
 				let allPackage = contentFile.match(regExpCheckPackage);
 				if (allPackage) {
+					const builtInModules = new Set(["fs", "path", "crypto", "util", "child_process", "stream", "http", "https", "events", "os", "url", "buffer", "querystring", "zlib", "net", "tls", "dgram", "dns", "readline", "assert", "v8", "vm", "perf_hooks", "worker_threads", "module", "process"]);
 					allPackage = allPackage.map(p => p.match(/[`'"]([^`'"]+)[`'"]/)[1])
-						.filter(p => p.indexOf("/") !== 0 && p.indexOf("./") !== 0 && p.indexOf("../") !== 0 && p.indexOf(__dirname) !== 0 && !p.startsWith("@cass") && !p.startsWith("@defs") && !p.startsWith("@root") && p !== "cassidy-styler" && p !== "output-cassidy" && p !== "input-cassidy");
+						.filter(p => p.indexOf("/") !== 0 && p.indexOf("./") !== 0 && p.indexOf("../") !== 0 && p.indexOf(__dirname) !== 0 && !p.startsWith("node:") && !p.startsWith("@cass") && !p.startsWith("@defs") && !p.startsWith("@root") && p !== "cassidy-styler" && p !== "output-cassidy" && p !== "input-cassidy" && p !== "uuid/v4" && p !== "uuid/v1");
 					for (let packageName of allPackage) {
 						if (packageName.startsWith('@'))
 							packageName = packageName.split('/').slice(0, 2).join('/');
 						else
 							packageName = packageName.split('/')[0];
+
+						if (builtInModules.has(packageName) || packageName.startsWith('node:')) continue;
 
 						if (!packageAlready.includes(packageName)) {
 							packageAlready.push(packageName);
@@ -206,7 +209,11 @@ module.exports = async function (api, threadModel, userModel, dashBoardModel, gl
 				}
 
 				if (onChat || noPrefix) GoatBot.onChat.push(commandName);
-				if (onFirstChat) GoatBot.onFirstChat.push({ commandName, threadIDsChattedFirstTime: [] });
+				if (onFirstChat) {
+					if (!GoatBot.onFirstChat._commandNames) GoatBot.onFirstChat._commandNames = [];
+					if (!GoatBot.onFirstChat._commandNames.includes(commandName)) GoatBot.onFirstChat._commandNames.push(commandName);
+					if (Array.isArray(GoatBot.onFirstChat)) GoatBot.onFirstChat.push({ commandName, threadIDsChattedFirstTime: [] });
+				}
 				if (onEvent) GoatBot.onEvent.push(commandName);
 				if (onAnyEvent) GoatBot.onAnyEvent.push(commandName);
 

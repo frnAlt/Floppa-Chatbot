@@ -1,7 +1,66 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CanvCass = void 0;
-const canvas_1 = require("@napi-rs/canvas");
+let canvas_1;
+try {
+    const nodeMajor = parseInt(process.versions.node.split('.')[0], 10);
+    if (nodeMajor < 23) {
+        canvas_1 = require("@napi-rs/canvas");
+    }
+} catch (_) {}
+
+if (!canvas_1) {
+    let nodeCanvas;
+    try {
+        nodeCanvas = require("canvas");
+    } catch (_) {}
+
+    canvas_1 = {
+        GlobalFonts: {
+            registerFromPath(fontPath, name) {
+                if (nodeCanvas?.registerFont) {
+                    try {
+                        nodeCanvas.registerFont(fontPath, { family: name });
+                    } catch (_) {}
+                }
+            }
+        },
+        createCanvas(w, h) {
+            if (nodeCanvas?.createCanvas) return nodeCanvas.createCanvas(w, h);
+            return {
+                width: w,
+                height: h,
+                getContext: () => ({
+                    fillRect() {},
+                    clearRect() {},
+                    drawImage() {},
+                    fillText() {},
+                    measureText: () => ({ width: 0 }),
+                    beginPath() {},
+                    closePath() {},
+                    moveTo() {},
+                    lineTo() {},
+                    arc() {},
+                    stroke() {},
+                    fill() {},
+                    save() {},
+                    restore() {}
+                }),
+                toBuffer: () => Buffer.from([])
+            };
+        },
+        loadImage(src, opts) {
+            if (nodeCanvas?.loadImage) return nodeCanvas.loadImage(src, opts);
+            return Promise.resolve({ width: 100, height: 100 });
+        },
+        Path2D: class Path2D {
+            moveTo() {}
+            lineTo() {}
+            arc() {}
+            closePath() {}
+        }
+    };
+}
 const crypto_1 = require("crypto");
 const fs_1 = require("fs");
 const path_1 = require("path");

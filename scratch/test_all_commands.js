@@ -17,6 +17,8 @@ function addLog(tag, msg) {
 
 addLog("DIAGNOSTICS", "Starting comprehensive diagnostic test of Floppa-Chatbot codebase...");
 
+require("../func/moduleResolver.js");
+
 // Initialize global environments for testing context
 global.FloppaBot = {
 	config: require("../config.json"),
@@ -25,6 +27,7 @@ global.FloppaBot = {
 	aliases: new Map()
 };
 global.GoatBot = global.FloppaBot;
+global.Cassidy = global.FloppaBot;
 global.utils = require("../utils.js");
 global.db = {
 	allThreadData: [],
@@ -98,7 +101,7 @@ for (const file of cmdFiles) {
 		
 		// Attempt requiring command to inspect config exports
 		const cmdMod = require(filePath);
-		const cfg = cmdMod?.config || {};
+		const cfg = cmdMod?.config || cmdMod?.meta || {};
 		const name = cfg.name || file.replace('.js', '');
 		const cat = cfg.category || 'uncategorized';
 		const role = cfg.role !== undefined ? cfg.role : 0;
