@@ -1234,22 +1234,13 @@ async function startBot(loginWithEmail) {
                                                 return;
                                 }
 
-                                // OPTIMIZED: Memory-efficient message deduplication with callback cleanup
-                                const MAX_CALLBACKS = 3;
-                                if (event.messageID && event.type == "message") {
-                                        if (global.GoatBot.storage5Message?.includes(event.messageID)) {
-                                                // Duplicate detected - clean up old callbacks
-                                                const keys = Object.keys(callbackListenTime);
-                                                if (keys.length > MAX_CALLBACKS) {
-                                                        const keysToRemove = keys.slice(0, keys.length - MAX_CALLBACKS);
-                                                        keysToRemove.forEach(key => delete callbackListenTime[key]);
-                                                }
-                                        } else {
-                                                if (!global.GoatBot.storage5Message) global.GoatBot.storage5Message = [];
-                                                global.GoatBot.storage5Message.push(event.messageID);
-                                                if (global.GoatBot.storage5Message.length > 5)
-                                                        global.GoatBot.storage5Message.shift();
-                                        }
+                                if (event.messageID && (event.type == "message" || event.type == "message_reply")) {
+                                        if (global.GoatBot.storage5Message?.includes(event.messageID))
+                                                return;
+                                        if (!global.GoatBot.storage5Message) global.GoatBot.storage5Message = [];
+                                        global.GoatBot.storage5Message.push(event.messageID);
+                                        if (global.GoatBot.storage5Message.length > 30)
+                                                global.GoatBot.storage5Message.shift();
                                 }
 
                                 if (configLog.disableAll === false && configLog[event.type] !== false) {

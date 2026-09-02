@@ -363,18 +363,15 @@ function message(api, event) {
                         try {
                                 global.statusAccountBot = 'good';
 
-                                // Check if typing indicator is enabled in config
+                                // Check if typing indicator is enabled in config (non-blocking)
                                 const typingConfig = global.GoatBot?.config?.typingIndicator;
                                 const typingEnabled = typingConfig === true || (typeof typingConfig === 'object' && typingConfig?.enable === true);
-                                const typingDuration = typeof typingConfig === 'object' ? typingConfig?.duration || 2000 : 2000;
-
-                                // Send typing indicator if enabled and it's a text message
-                                if (typingEnabled && (typeof form === 'string' || form.body)) {
-                                        await sendTypingIndicator(event.threadID, typingDuration);
+                                if (typingEnabled && (typeof form === 'string' || form?.body) && typeof api?.sendTypingIndicator === 'function') {
+                                        api.sendTypingIndicator(true, event.threadID).catch(() => {});
                                 }
 
                                 const cb = typeof callback === 'function' ? callback : undefined;
-                                return await api.sendMessage(form, event.threadID, cb);
+                                return await api.sendMessage(form, event.threadID, cb, undefined, event.isGroup);
                         }
                         catch (err) {
                                 if (JSON.stringify(err).includes('spam')) {
@@ -388,19 +385,16 @@ function message(api, event) {
                         try {
                                 global.statusAccountBot = 'good';
 
-                                // Check if typing indicator is enabled in config
+                                // Check if typing indicator is enabled in config (non-blocking)
                                 const typingConfig = global.GoatBot?.config?.typingIndicator;
                                 const typingEnabled = typingConfig === true || (typeof typingConfig === 'object' && typingConfig?.enable === true);
-                                const typingDuration = typeof typingConfig === 'object' ? typingConfig?.duration || 2000 : 2000;
-
-                                // Send typing indicator if enabled and it's a text message
-                                if (typingEnabled && (typeof form === 'string' || form.body)) {
-                                        await sendTypingIndicator(event.threadID, typingDuration);
+                                if (typingEnabled && (typeof form === 'string' || form?.body) && typeof api?.sendTypingIndicator === 'function') {
+                                        api.sendTypingIndicator(true, event.threadID).catch(() => {});
                                 }
 
                                 const cb = typeof callback === 'function' ? callback : undefined;
                                 const replyId = event.messageID || undefined;
-                                return await api.sendMessage(form, event.threadID, cb, replyId);
+                                return await api.sendMessage(form, event.threadID, cb, replyId, event.isGroup);
                         }
                         catch (err) {
                                 if (JSON.stringify(err).includes('spam')) {

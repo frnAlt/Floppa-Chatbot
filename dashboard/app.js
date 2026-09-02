@@ -75,19 +75,63 @@ module.exports = async (api) => {
                         fs.writeFileSync(sessionSecretFile, secret);
                         return secret;
                 })();
-        const sessionStore = new session.MemoryStore();
-        // Periodic cleanup of expired sessions to prevent MemoryStore memory leak
-        setInterval(() => {
-                sessionStore.all((err, sessions) => {
-                        if (err || !sessions) return;
-                        const now = Date.now();
-                        Object.keys(sessions).forEach(sid => {
-                                const expires = sessions[sid]?.cookie?.expires;
-                                if (expires && new Date(expires).getTime() < now)
-                                        sessionStore.destroy(sid, () => {});
-                        });
-                });
-        }, 60 * 60 * 1000); // every hour
+        class FloppaSessionStore extends session.Store {
+                constructor() {
+                        super();
+                        this.sessions = new Map();
+                        // Periodic cleanup of expired sessions to prevent memory leaks
+                        setInterval(() => {
+                                const now = Date.now();
+                                for (const [sid, sess] of this.sessions.entries()) {
+                                        const expires = sess?.cookie?.expires;
+                                        if (expires && new Date(expires).getTime() < now) {
+                                                this.sessions.delete(sid);
+                                        }
+                                }
+                        }, 60 * 60 * 1000);
+                }
+                get(sid, cb) {
+                        const sess = this.sessions.get(sid);
+                        if (!sess) return cb(null, null);
+                        const expires = sess?.cookie?.expires;
+                        if (expires && new Date(expires).getTime() < Date.now()) {
+                                this.sessions.delete(sid);
+                                return cb(null, null);
+                        }
+                        cb(null, sess);
+                }
+                set(sid, sess, cb) {
+                        this.sessions.set(sid, sess);
+                        if (cb) cb(null);
+                }
+                destroy(sid, cb) {
+                        this.sessions.delete(sid);
+                        if (cb) cb(null);
+                }
+                touch(sid, sess, cb) {
+                        const current = this.sessions.get(sid);
+                        if (current) {
+                                current.cookie = sess.cookie;
+                                this.sessions.set(sid, current);
+                        }
+                        if (cb) cb(null);
+                }
+                all(cb) {
+                        const arr = {};
+                        for (const [sid, sess] of this.sessions.entries()) {
+                                arr[sid] = sess;
+                        }
+                        cb(null, arr);
+                }
+                length(cb) {
+                        cb(null, this.sessions.size);
+                }
+                clear(cb) {
+                        this.sessions.clear();
+                        if (cb) cb(null);
+                }
+        }
+        const sessionStore = new FloppaSessionStore();
 
         app.use(session({
                 secret: sessionSecret,

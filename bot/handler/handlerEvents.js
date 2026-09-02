@@ -299,7 +299,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         }
                 }
 
-                if (typeof threadData.settings.hideNotiMessage == "object")
+                if (typeof threadData?.settings?.hideNotiMessage == "object")
                         hideNotiMessage = threadData.settings.hideNotiMessage;
 
                 const prefix = getPrefix(threadID);
@@ -331,7 +331,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                 return body_.replace(new RegExp(`^${prefix_}(\\s+|)${commandName_}`, "i"), "").trim();
                         }
                 };
-                const langCode = threadData.data.lang || config.language || "en";
+                const langCode = threadData?.data?.lang || config.language || "en";
 
                 function createMessageSyntaxError(commandName) {
                         message.SyntaxError = async function () {
@@ -375,9 +375,9 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         let commandName = args.shift().toLowerCase();
                         let command = GoatBot.commands.get(commandName) || GoatBot.commands.get(GoatBot.aliases.get(commandName));
                         // ———————— CHECK ALIASES SET BY GROUP ———————— //
-                        const aliasesData = threadData.data.aliases || {};
+                        const aliasesData = threadData?.data?.aliases || {};
                         for (const cmdName in aliasesData) {
-                                if (aliasesData[cmdName].includes(commandName)) {
+                                if (aliasesData[cmdName]?.includes(commandName)) {
                                         command = GoatBot.commands.get(cmdName);
                                         break;
                                 }
