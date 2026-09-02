@@ -1078,13 +1078,20 @@ async function startBot(loginWithEmail) {
                                 if (error) {
                                         global.responseUptimeCurrent = responseUptimeError;
                                         if (
+                                                error.type === "account_inactive" ||
                                                 error.error == "Not logged in" ||
                                                 error.error == "Not logged in." ||
                                                 error.error == "Connection refused: Server unavailable" ||
-                                                error.error?.includes("logout") ||
-                                                error.error?.includes("suspended") ||
-                                                error.error?.includes("checkpoint") ||
-                                                error.error?.includes("locked")
+                                                error.reason === "checkpoint" ||
+                                                error.reason === "login_blocked" ||
+                                                error.error == "checkpoint_required" ||
+                                                (typeof error.error === "string" && (
+                                                        error.error.includes("logout") ||
+                                                        error.error.includes("suspended") ||
+                                                        error.error.includes("checkpoint") ||
+                                                        error.error.includes("locked") ||
+                                                        error.error.includes("security")
+                                                ))
                                         ) {
                                                 log.err("ACCOUNT ISSUE", getText('login', 'notLoggedIn'), error);
                                                 global.responseUptimeCurrent = responseUptimeError;
