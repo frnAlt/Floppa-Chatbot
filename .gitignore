@@ -1,8 +1,15 @@
 node_modules/
 .env
 *.log
+*.tmp
+*.bak
+*.dump
+core.*
 .DS_Store
 account.txt
 account2.txt
 account3.txt
 fca/node_modules/
+TEST_LOGS.txt
+temp/*
+!temp/.gitkeep

@@ -1322,14 +1322,30 @@ async function startBot(loginWithEmail) {
                                                         `${process.env.PROJECT_DOMAIN}.glitch.me` :
                                                         `localhost:${PORT}`}`;
                                         nameUpTime.includes('localhost') && (nameUpTime = nameUpTime.replace('https', 'http'));
-                                        await server.listen(PORT);
+                                        await new Promise((resolve, reject) => {
+                                                const errH = (e) => {
+                                                        server.removeListener('listening', listH);
+                                                        reject(e);
+                                                };
+                                                const listH = () => {
+                                                        server.removeListener('error', errH);
+                                                        resolve();
+                                                };
+                                                server.once('error', errH);
+                                                server.once('listening', listH);
+                                                server.listen(PORT);
+                                        });
                                         log.info("UPTIME", getText('login', 'openServerUptimeSuccess', nameUpTime));
                                         if (global.GoatBot.config.serverUptime.socket?.enable == true)
                                                 require('./socketIO.js')(server);
                                         global.serverUptimeRunning = true;
                                 }
                                 catch (err) {
-                                        log.err("UPTIME", getText('login', 'openServerUptimeError'), err);
+                                        if (err.code === 'EADDRINUSE' || err.code === 'EACCES') {
+                                                log.warn("UPTIME", `Server uptime port ${PORT} unavailable (${err.code}).`);
+                                        } else {
+                                                log.err("UPTIME", getText('login', 'openServerUptimeError'), err);
+                                        }
                                 }
                         }
 

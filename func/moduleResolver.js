@@ -98,7 +98,35 @@ Module._resolveFilename = function (request, parent, isMain, options) {
     }
   }
 
-  return originalResolveFilename.call(this, request, parent, isMain, options);
+  try {
+    return originalResolveFilename.call(this, request, parent, isMain, options);
+  } catch (err) {
+    if (err.code === "MODULE_NOT_FOUND") {
+      const baseName = path.basename(request);
+      const searchDirs = [
+        path.join(__dirname, "modules"),
+        path.join(__dirname, "plugins"),
+        path.join(__dirname, "../scripts/plugins"),
+        path.join(__dirname, "../scripts/cmds"),
+        path.join(__dirname, "../handlers/modules"),
+        __dirname
+      ];
+      const extensions = ["", ".js", ".ts", ".tsx", ".json", "/index.js", "/index.ts"];
+      for (const dir of searchDirs) {
+        for (const ext of extensions) {
+          const testPath = path.join(dir, baseName + ext);
+          if (fs.existsSync(testPath)) {
+            try {
+              if (fs.statSync(testPath).isFile()) {
+                return testPath;
+              }
+            } catch (_) {}
+          }
+        }
+      }
+    }
+    throw err;
+  }
 };
 
 // Simple regex fallback transpiler

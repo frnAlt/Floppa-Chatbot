@@ -358,63 +358,68 @@ function message(api, event) {
                 }
         }
 
-            return {
-                    send: async (form, callback, options = {}) => {
-                            try {
-                                    global.statusAccountBot = 'good';
-
-                                    // Check if typing indicator is enabled in config
-                                    const typingConfig = global.GoatBot?.config?.typingIndicator;
-                                    const typingEnabled = typingConfig === true || (typeof typingConfig === 'object' && typingConfig?.enable === true);
-                                    const typingDuration = typeof typingConfig === 'object' ? typingConfig?.duration || 2000 : 2000;
-
-                                    // Send typing indicator if enabled and it's a text message
-                                    if (typingEnabled && (typeof form === 'string' || form.body)) {
-                                            await sendTypingIndicator(event.threadID, typingDuration);
-                                    }
-
-                                    return await api.sendMessage(form, event.threadID, callback);
-                            }
-                            catch (err) {
-                                    if (JSON.stringify(err).includes('spam')) {
-                                            setErrorUptime();
-                                            throw err;
-                                    }
-                            }
-                    },
-                    reply: async (form, callback, options = {}) => {
-                            try {
-                                    global.statusAccountBot = 'good';
-
-                                    // Check if typing indicator is enabled in config
-                                    const typingConfig = global.GoatBot?.config?.typingIndicator;
-                                    const typingEnabled = typingConfig === true || (typeof typingConfig === 'object' && typingConfig?.enable === true);
-                                    const typingDuration = typeof typingConfig === 'object' ? typingConfig?.duration || 2000 : 2000;
-
-                                    // Send typing indicator if enabled and it's a text message
-                                    if (typingEnabled && (typeof form === 'string' || form.body)) {
-                                            await sendTypingIndicator(event.threadID, typingDuration);
-                                    }
-
-                                    return await api.sendMessage(form, event.threadID, callback, event.messageID);
-                            }
-                            catch (err) {
-                                    if (JSON.stringify(err).includes('spam')) {
-                                            setErrorUptime();
-                                            throw err;
-                                    }
-                            }
-                    },
-                unsend: async (messageID, callback) => await api.unsendMessage(messageID, callback),
-                reaction: async (emoji, messageID, callback) => {
+        return {
+                send: async (form, callback, options = {}) => {
                         try {
                                 global.statusAccountBot = 'good';
-                                return await api.setMessageReaction(emoji, messageID, callback, true);
+
+                                // Check if typing indicator is enabled in config
+                                const typingConfig = global.GoatBot?.config?.typingIndicator;
+                                const typingEnabled = typingConfig === true || (typeof typingConfig === 'object' && typingConfig?.enable === true);
+                                const typingDuration = typeof typingConfig === 'object' ? typingConfig?.duration || 2000 : 2000;
+
+                                // Send typing indicator if enabled and it's a text message
+                                if (typingEnabled && (typeof form === 'string' || form.body)) {
+                                        await sendTypingIndicator(event.threadID, typingDuration);
+                                }
+
+                                const cb = typeof callback === 'function' ? callback : undefined;
+                                return await api.sendMessage(form, event.threadID, cb);
                         }
                         catch (err) {
                                 if (JSON.stringify(err).includes('spam')) {
                                         setErrorUptime();
-                                        throw err;
+                                }
+                                log.err("MESSAGE_SEND", `Failed to send message to thread ${event.threadID}:`, err.message || err);
+                                throw err;
+                        }
+                },
+                reply: async (form, callback, options = {}) => {
+                        try {
+                                global.statusAccountBot = 'good';
+
+                                // Check if typing indicator is enabled in config
+                                const typingConfig = global.GoatBot?.config?.typingIndicator;
+                                const typingEnabled = typingConfig === true || (typeof typingConfig === 'object' && typingConfig?.enable === true);
+                                const typingDuration = typeof typingConfig === 'object' ? typingConfig?.duration || 2000 : 2000;
+
+                                // Send typing indicator if enabled and it's a text message
+                                if (typingEnabled && (typeof form === 'string' || form.body)) {
+                                        await sendTypingIndicator(event.threadID, typingDuration);
+                                }
+
+                                const cb = typeof callback === 'function' ? callback : undefined;
+                                const replyId = event.messageID || undefined;
+                                return await api.sendMessage(form, event.threadID, cb, replyId);
+                        }
+                        catch (err) {
+                                if (JSON.stringify(err).includes('spam')) {
+                                        setErrorUptime();
+                                }
+                                log.err("MESSAGE_REPLY", `Failed to reply in thread ${event.threadID}:`, err.message || err);
+                                throw err;
+                        }
+                },
+                unsend: async (messageID, callback) => await api.unsendMessage(messageID, callback),
+                reaction: async (emoji, messageID, callback) => {
+                        try {
+                                global.statusAccountBot = 'good';
+                                const targetMessageID = messageID || event.messageID;
+                                return await api.setMessageReaction(emoji, targetMessageID, callback, true);
+                        }
+                        catch (err) {
+                                if (JSON.stringify(err).includes('spam')) {
+                                        setErrorUptime();
                                 }
                                 console.error("❌ [REACTION] Error setting reaction:", err.message || err);
                         }

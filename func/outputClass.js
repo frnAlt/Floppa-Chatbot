@@ -85,10 +85,10 @@ class OutputClass {
   }
 
   async typing(enable = true, threadID = this.threadID) {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       if (typeof this.api.sendTypingIndicator === "function") {
-        this.api.sendTypingIndicator(threadID, (err) => {
-          if (err) return reject(err);
+        this.api.sendTypingIndicator(enable, threadID, (err) => {
+          if (err) return resolve(false);
           resolve(true);
         });
       } else {

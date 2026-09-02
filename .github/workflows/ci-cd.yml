@@ -12,9 +12,9 @@ on:
         required: false
         type: choice
         options:
-          - '20'
           - '22'
-        default: '20'
+          - '20'
+        default: '22'
       run_syntax_checks:
         description: 'Run syntax check on core engine, commands and events'
         required: false
@@ -38,7 +38,7 @@ jobs:
       - name: Setup Node.js Environment
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ inputs.node_version || '20' }}
+          node-version: ${{ inputs.node_version || '22' }}
 
       - name: Install System Dependencies for Native Addons
         run: |

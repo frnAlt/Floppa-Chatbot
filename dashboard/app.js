@@ -292,28 +292,45 @@ module.exports = async (api) => {
                         ? `https://${process.env.PROJECT_DOMAIN}.glitch.me`
                         : `http://localhost:${PORT}`;
 
-        try {
-
-        try {
-
-        try {
-            await server.listen(PORT);
-        } catch(e) {
-            if(e.code === 'EADDRINUSE') {
-                utils.log.warn("DASHBOARD", `Dashboard is already running: http://localhost:${PORT}`);
-            } else {
-                throw e;
-            }
+        function startServer(targetPort) {
+                return new Promise((resolve, reject) => {
+                        const errorHandler = (err) => {
+                                server.removeListener('listening', listenHandler);
+                                reject(err);
+                        };
+                        const listenHandler = () => {
+                                server.removeListener('error', errorHandler);
+                                resolve(targetPort);
+                        };
+                        server.once('error', errorHandler);
+                        server.once('listening', listenHandler);
+                        server.listen(targetPort);
+                });
         }
-        } catch(e) {}
-        } catch(e) {
-            if(e.code === 'EADDRINUSE') {
-                utils.log.warn("DASHBOARD", `Dashboard is already running: http://localhost:${PORT}`);
-            } else {
-                throw e;
-            }
+
+        let actualPort = PORT;
+        try {
+                actualPort = await startServer(PORT);
+        } catch (err) {
+                if (err.code === 'EACCES' || err.code === 'EADDRINUSE') {
+                        utils.log.warn("DASHBOARD", `Cannot bind to port ${PORT} (${err.code}). Trying fallback port 5000...`);
+                        try {
+                                actualPort = await startServer(5000);
+                        } catch (fallbackErr) {
+                                utils.log.warn("DASHBOARD", `Fallback port 5000 unavailable (${fallbackErr.code}). Trying random port...`);
+                                try {
+                                        actualPort = await startServer(0);
+                                        actualPort = server.address().port;
+                                } catch (finalErr) {
+                                        utils.log.warn("DASHBOARD", `Could not start dashboard server: ${finalErr.message}`);
+                                }
+                        }
+                } else {
+                        utils.log.warn("DASHBOARD", `Dashboard server error: ${err.message}`);
+                }
         }
-        utils.log.info("DASHBOARD", `Dashboard is running: ${dashBoardUrl}`);
+        const activeDashboardUrl = dashBoardUrl.replace(new RegExp(`:${PORT}$`), `:${actualPort}`);
+        utils.log.info("DASHBOARD", `Dashboard is running: ${activeDashboardUrl}`);
         if (config.serverUptime.socket.enable == true)
                 require("../bot/login/socketIO.js")(server);
 };
