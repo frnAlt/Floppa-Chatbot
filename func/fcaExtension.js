@@ -99,24 +99,31 @@ function extendFCA(api) {
   // ─── 6. Enrich sendMessage with SentMessage Helpers ────────────────────────
   const originalSendMessage = api.sendMessage;
   if (typeof originalSendMessage === "function") {
-    api.sendMessage = function (msg, threadID, callback, replyToMessage) {
+    api.sendMessage = function (msg, threadID, callback, replyToMessage, isGroup) {
       let cb = callback;
       let replyTo = replyToMessage;
+      let group = isGroup;
 
       if (typeof cb !== "function" && typeof cb === "string") {
         replyTo = cb;
-        cb = defaultCallback;
+        cb = undefined;
+      } else if (typeof cb === "boolean") {
+        group = cb;
+        cb = undefined;
       }
-      cb = cb || defaultCallback;
+      if (typeof replyTo === "boolean") {
+        group = replyTo;
+        replyTo = undefined;
+      }
 
-      const wrappedCb = (err, info) => {
+      const wrappedCb = typeof cb === "function" ? (err, info) => {
         if (!err && info) {
           attachSentMessageHelpers(info, threadID, api);
         }
         cb(err, info);
-      };
+      } : undefined;
 
-      const result = originalSendMessage.call(api, msg, threadID, wrappedCb, replyTo);
+      const result = originalSendMessage.call(api, msg, threadID, wrappedCb, replyTo, group);
       if (result && typeof result.then === "function") {
         return result.then(info => {
           if (info) attachSentMessageHelpers(info, threadID, api);

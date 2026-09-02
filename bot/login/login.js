@@ -18,12 +18,13 @@ const toptp = defaultRequire("totp-generator");
 let login;
 try {
 	const localFca = defaultRequire(path.join(process.cwd(), "fca"));
-	login = localFca.login || (localFca.default && localFca.default.login) || localFca;
+	login = typeof localFca === "function" ? localFca : (localFca.login || localFca.default || localFca);
 } catch (e) {
 	try {
-		login = defaultRequire("@dongdev/fca-unofficial").login;
+		const nativeFca = defaultRequire("@floppa/fca-native");
+		login = typeof nativeFca === "function" ? nativeFca : (nativeFca.login || nativeFca.default || nativeFca);
 	} catch (err) {
-		login = defaultRequire("@floppa/fca-native").login;
+		login = defaultRequire("./fca");
 	}
 }
 const qr = new (defaultRequire("qrcode-reader"));
@@ -292,7 +293,10 @@ async function switchToNextAccount(reason = "Account issue detected") {
 
 async function getAppStateFromEmail(spin = { _start: () => { }, _stop: () => { } }, facebookAccount) {
         const { email, password, userAgent, proxy } = facebookAccount;
-        const getFbstate = require(process.env.NODE_ENV === 'development' ? "./getFbstate1.dev.js" : "./getFbstate1.js");
+        const getFbstatePath = fs.existsSync(path.join(__dirname, "./getFbstate1.dev.js")) && process.env.NODE_ENV === 'development'
+                ? "./getFbstate1.dev.js"
+                : "./getFbstate1.js";
+        const getFbstate = require(getFbstatePath);
         let code2FATemp;
         let appState;
         try {
@@ -374,7 +378,10 @@ async function getAppStateFromEmail(spin = { _start: () => { }, _stop: () => { }
                 }
         }
         catch (err) {
-                const loginMbasic = require(process.env.NODE_ENV === 'development' ? "./loginMbasic.dev.js" : "./loginMbasic.js");
+                const loginMbasicPath = fs.existsSync(path.join(__dirname, "./loginMbasic.dev.js")) && process.env.NODE_ENV === 'development'
+                        ? "./loginMbasic.dev.js"
+                        : "./loginMbasic.js";
+                const loginMbasic = require(loginMbasicPath);
                 if (facebookAccount["2FASecret"]) {
                         switch (['.png', '.jpg', '.jpeg'].some(i => facebookAccount["2FASecret"].endsWith(i))) {
                                 case true:
@@ -940,11 +947,17 @@ async function startBot(loginWithEmail) {
                                 process.exit();
                         }
                         // ——————————————————— LOAD DATA ——————————————————— //
-                        const { threadModel, userModel, dashBoardModel, globalModel, threadsData, usersData, dashBoardData, globalData, sequelize } = await require(process.env.NODE_ENV === 'development' ? "./loadData.dev.js" : "./loadData.js")(api, createLine);
+                        const loadDataPath = fs.existsSync(path.join(__dirname, "./loadData.dev.js")) && process.env.NODE_ENV === 'development'
+                                ? "./loadData.dev.js"
+                                : "./loadData.js";
+                        const { threadModel, userModel, dashBoardModel, globalModel, threadsData, usersData, dashBoardData, globalData, sequelize } = await require(loadDataPath)(api, createLine);
                         // ————————————————— CUSTOM SCRIPTS ————————————————— //
                         await require("../custom.js")({ api, threadModel, userModel, dashBoardModel, globalModel, threadsData, usersData, dashBoardData, globalData, getText });
                         // —————————————————— LOAD SCRIPTS —————————————————— //
-                        await require(process.env.NODE_ENV === 'development' ? "./loadScripts.dev.js" : "./loadScripts.js")(api, threadModel, userModel, dashBoardModel, globalModel, threadsData, usersData, dashBoardData, globalData, createLine);
+                        const loadScriptsPath = fs.existsSync(path.join(__dirname, "./loadScripts.dev.js")) && process.env.NODE_ENV === 'development'
+                                ? "./loadScripts.dev.js"
+                                : "./loadScripts.js";
+                        await require(loadScriptsPath)(api, threadModel, userModel, dashBoardModel, globalModel, threadsData, usersData, dashBoardData, globalData, createLine);
 
                         // —————————————— BACKGROUND TASKS —————————————— //
                         try {
@@ -1191,23 +1204,21 @@ async function startBot(loginWithEmail) {
                                                 return log.err("LISTEN_MQTT", getText('login', 'callBackError'), error);
                                         }
                                 }
+
+                                if (!event || typeof event !== "object") return;
+                                if (event.type === "ready") {
+                                        return log.info("LISTEN_MQTT", "MQTT listener is ready and active");
+                                }
+
                                 global.responseUptimeCurrent = responseUptimeSuccess;
                                 global.statusAccountBot = 'good';
-                                const configLog = global.GoatBot.config.logEvents;
+                                const configLog = global.GoatBot.config.logEvents || {};
                                 if (isSendNotiErrorMessage == true)
                                         isSendNotiErrorMessage = false;
 
-                                // "whiteListMode": {
-                                //      "enable": false,
-                                //      "whiteListIds": [],
-                                //      "notes": "if you enable this feature, only the ids in the whiteListIds list can use the bot"
-                                // },
-                                // "whiteListModeThread": {
-                                //      "enable": false,
-                                //      "whiteListThreadIds": [],
                                 // Whitelist mode check - allows admins and devs to bypass
-                                const senderID = String(event.senderID);
-                                const threadID = String(event.threadID);
+                                const senderID = event.senderID ? String(event.senderID) : (event.userID ? String(event.userID) : (event.author ? String(event.author) : ""));
+                                const threadID = event.threadID ? String(event.threadID) : "";
                                 const adminBot = (global.GoatBot.config.adminBot || []).map(id => String(id));
                                 const devUsers = (global.GoatBot.config.devUsers || []).map(id => String(id));
                                 const whiteListIds = (global.GoatBot.config.whiteListMode?.whiteListIds || []).map(id => String(id));

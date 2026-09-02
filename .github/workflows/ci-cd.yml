@@ -72,6 +72,9 @@ jobs:
         if: ${{ inputs.run_syntax_checks != false }}
         run: for file in scripts/events/*.js; do node --check "$file"; done
 
+      - name: FCA Engine Unit Tests
+        run: cd fca && npm test
+
       - name: Run Full Diagnostic Test Suite
         if: ${{ inputs.run_full_diagnostics != false }}
         run: node scratch/test_all_commands.js

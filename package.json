@@ -48,6 +48,7 @@
 		"https": "^1.0.0",
 		"https-proxy-agent": "^4.0.0",
 		"jimp": "^1.6.1",
+		"js-sdsl": "^4.4.2",
 		"jsonlint-mod": "^1.7.6",
 		"jsonpath-plus": "^10.4.0",
 		"lodash": "^4.17.21",

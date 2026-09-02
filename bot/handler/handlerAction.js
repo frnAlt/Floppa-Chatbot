@@ -12,8 +12,14 @@ function safeCall(fn, label) {
         }
 }
 
+const fs = require("fs-extra");
+const path = require("path");
+
 module.exports = (api, threadModel, userModel, dashBoardModel, globalModel, usersData, threadsData, dashBoardData, globalData) => {
-        const handlerEvents = require(process.env.NODE_ENV == 'development' ? "./handlerEvents.dev.js" : "./handlerEvents.js")(api, threadModel, userModel, dashBoardModel, globalModel, usersData, threadsData, dashBoardData, globalData);
+        const handlerEventsPath = fs.existsSync(path.join(__dirname, "./handlerEvents.dev.js")) && process.env.NODE_ENV === 'development'
+                ? "./handlerEvents.dev.js"
+                : "./handlerEvents.js";
+        const handlerEvents = require(handlerEventsPath)(api, threadModel, userModel, dashBoardModel, globalModel, usersData, threadsData, dashBoardData, globalData);
 
         return async function (event) {
                 try {
