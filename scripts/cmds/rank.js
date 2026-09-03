@@ -311,7 +311,44 @@ module.exports = {
 			});
 		} catch (err) {
 			console.error("[RANK CARD ERROR]:", err);
-			return message.reply(`❌ Could not generate rank card: ${err.message || err}`);
+			for (const userID of targetUsers) {
+				try {
+					const userRecord = await usersData.get(userID).catch(() => ({}));
+					const exp = typeof userRecord?.exp === "number" && !isNaN(userRecord.exp) ? userRecord.exp : 0;
+					const name = userRecord?.name || `User ${userID}`;
+					const levelUser = expToLevel(exp, deltaNext);
+					const currentLevelExp = levelToExp(levelUser, deltaNext);
+					const nextLevelExp = levelToExp(levelUser + 1, deltaNext);
+					const expNeed = nextLevelExp - currentLevelExp;
+					const currentProgress = exp - currentLevelExp;
+					const percent = Math.min(100, Math.max(0, Math.floor((currentProgress / (expNeed || 1)) * 100)));
+
+					const allUsers = (await usersData.getAll().catch(() => [])) || [];
+					allUsers.sort((a, b) => (b.exp || 0) - (a.exp || 0));
+					let rank = allUsers.findIndex(u => String(u.userID) === String(userID)) + 1;
+					if (rank <= 0) rank = allUsers.length + 1;
+
+					const filledBlocks = Math.round(percent / 10);
+					const emptyBlocks = 10 - filledBlocks;
+					const progressBar = "█".repeat(filledBlocks) + "░".repeat(emptyBlocks);
+
+					const cardBody = 
+						`╔════════════ 🏆 RANK PROFILE ════════════╗\n` +
+						`👤 Member: ${name}\n` +
+						`🎖️ Global Rank: #${rank} | ⚡ Level: ${levelUser}\n` +
+						`📊 Progress: [${progressBar}] ${percent}%\n` +
+						`✨ EXP: ${exp.toLocaleString()} / ${nextLevelExp.toLocaleString()}\n` +
+						`╚════════════════════════════════════════╝`;
+
+					const avatarUrl = await usersData.getAvatarUrl(userID).catch(() => `https://graph.facebook.com/${userID}/picture?width=720&height=720&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`);
+					const avatarStream = await global.utils.getStreamFromURL(avatarUrl, `avatar_${userID}.jpg`).catch(() => null);
+
+					await message.reply({
+						body: cardBody,
+						...(avatarStream ? { attachment: avatarStream } : {})
+					});
+				} catch (_) {}
+			}
 		}
 	},
 

@@ -28,48 +28,36 @@ module.exports = {
     }
 
     message.reaction("🎨", event.messageID);
-    let tempFilePath; 
 
     try {
-      const fullApiUrl = `${API_ENDPOINT}?prompt=${encodeURIComponent(prompt.trim())}&model=dalle3`;
-      
-      const response = await axios.get(fullApiUrl, {
-          responseType: 'stream',
-          timeout: 60000 
-      });
+      let stream = null;
 
-      if (response.status !== 200) {
-           throw new Error(`API error: ${response.status}`);
+      // 1. Primary: Neokex DALL-E 3 API
+      try {
+        const fullApiUrl = `${API_ENDPOINT}?prompt=${encodeURIComponent(prompt.trim())}&model=dalle3`;
+        stream = await global.utils.getStreamFromURL(fullApiUrl, "dalle3.png", { timeout: 30000 });
+      } catch (e) {
+        // Fallback to high-speed Pollinations DALL-E simulation
       }
-      
-      const cacheDir = path.join(__dirname, 'cache');
-      if (!fs.existsSync(cacheDir)) {
-          await fs.ensureDir(cacheDir); 
-      }
-      
-      tempFilePath = path.join(cacheDir, `dalle3_${Date.now()}.png`);
-      
-      const writer = fs.createWriteStream(tempFilePath);
-      response.data.pipe(writer);
 
-      await new Promise((resolve, reject) => {
-        writer.on("finish", resolve);
-        writer.on("error", reject);
-      });
+      // 2. High-speed Fallback: Pollinations AI
+      if (!stream) {
+        const fallbackUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt.trim() + " high quality cinematic 8k photorealistic")}?width=1024&height=1024&nologo=true&seed=${Date.now()}`;
+        stream = await global.utils.getStreamFromURL(fallbackUrl, "dalle3.png", { timeout: 45000 });
+      }
+
+      if (!stream) {
+        throw new Error("Could not retrieve generated image stream.");
+      }
 
       message.reaction("✅", event.messageID);
       await message.reply({
-        body: `DALL-E 3 image generated 🐦`,
-        attachment: fs.createReadStream(tempFilePath)
+        body: `🎨 DALL-E 3 generated:\n\n✨ "${prompt}"`,
+        attachment: stream
       });
-
     } catch (error) {
       message.reaction("❌", event.messageID);
-      message.reply(`❌ Error: ${error.message}`);
-    } finally {
-      if (tempFilePath && fs.existsSync(tempFilePath)) {
-          await fs.unlink(tempFilePath);
-      }
+      message.reply(`❌ Failed to generate DALL-E 3 image: ${error.message || error}`);
     }
   }
 };

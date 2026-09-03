@@ -50,9 +50,20 @@ module.exports = {
       // Fallback: name search if mentions omitted
       if (!two && args && args.length > 0) {
         const raw = args.join(" ").replace(/^@/, "").trim().toLowerCase();
-        const allM = global.db?.allThreadData?.find(t => t.threadID == event.threadID)?.members || [];
-        const found = allM.find(m => m.name && m.name.toLowerCase().includes(raw)) ||
-                      global.db?.allUserData?.find(u => u.name && u.name.toLowerCase().includes(raw));
+        let found = global.db?.allUserData?.find(u => u.name && (u.name.toLowerCase().includes(raw) || raw.includes(u.name.toLowerCase())));
+        if (!found) {
+          const allM = global.db?.allThreadData?.find(t => t.threadID == event.threadID)?.members || [];
+          found = allM.find(m => m.name && (m.name.toLowerCase().includes(raw) || raw.includes(m.name.toLowerCase())));
+        }
+        if (!found && api?.getThreadInfo && event.threadID) {
+          try {
+            const tInfo = await api.getThreadInfo(event.threadID);
+            const p = tInfo?.userInfo || [];
+            if (Array.isArray(p)) {
+              found = p.find(m => m.name && (m.name.toLowerCase().includes(raw) || raw.includes(m.name.toLowerCase())));
+            }
+          } catch (_) {}
+        }
         if (found) two = String(found.userID || found.id);
       }
 
@@ -64,13 +75,38 @@ module.exports = {
       const image1 = `https://graph.facebook.com/${one}/picture?width=720&height=720&access_token=${token}`;
       const image2 = `https://graph.facebook.com/${two}/picture?width=720&height=720&access_token=${token}`;
 
-      const apiUrl = `https://toshiro-api-editz6t9.vercel.app/api/canvas/batslap?image1=${encodeURIComponent(image1)}&image2=${encodeURIComponent(image2)}`;
+      let stream = null;
+      try {
+        const apiUrl = `https://toshiro-api-editz6t9.vercel.app/api/canvas/batslap?image1=${encodeURIComponent(image1)}&image2=${encodeURIComponent(image2)}`;
+        stream = await global.utils.getStreamFromURL(apiUrl, "slap.png", { timeout: 20000 });
+      } catch (_) {
+        // Fallback using Jimp
+      }
 
-      const stream = await global.utils.getStreamFromURL(apiUrl, "slap.png");
+      if (!stream) {
+        try {
+          const { Jimp } = require("jimp");
+          const { Readable } = require("stream");
+          const bg = new Jimp({ width: 700, height: 350, color: 0x331122ff });
+          const avSlapper = await Jimp.read(image1).catch(() => null);
+          const avSlapped = await Jimp.read(image2).catch(() => null);
+          if (avSlapper) {
+            avSlapper.resize({ w: 120, h: 120 }).circle();
+            bg.composite(avSlapper, 80, 115);
+          }
+          if (avSlapped) {
+            avSlapped.resize({ w: 120, h: 120 }).circle();
+            bg.composite(avSlapped, 480, 115);
+          }
+          const buf = await bg.getBuffer("image/png");
+          stream = Readable.from(buf);
+          stream.path = "slap.png";
+        } catch (_) {}
+      }
 
       return message.reply({
         body: "👋 *SLAP!*",
-        attachment: stream
+        ...(stream ? { attachment: stream } : {})
       });
 
     } catch (error) {

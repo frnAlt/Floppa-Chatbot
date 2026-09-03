@@ -21,23 +21,49 @@ module.exports = {
     }
   },
 
-  onStart: async function ({ api, commandName, event, args }) {
+  onStart: async function ({ api, message, commandName, event, args }) {
+    const prompt = args.join(' ').trim();
+    if (!prompt) {
+      return message ? message.reply("❌ Please provide a prompt.") : api.sendMessage("❌ Please provide a prompt.", event.threadID, event.messageID);
+    }
+
     try {
-      api.setMessageReaction("✅", event.messageID, (a) => {}, true);
-      const prompt = args.join(' ');
+      if (api.setMessageReaction) api.setMessageReaction("🎨", event.messageID, () => {}, true);
 
-      const response = await axios.get(`https://dall-e-tau-steel.vercel.app/kshitiz?prompt=${encodeURIComponent(prompt)}`);
-      const imageUrl = response.data.response;
+      let stream = null;
+      try {
+        const response = await axios.get(`https://dall-e-tau-steel.vercel.app/kshitiz?prompt=${encodeURIComponent(prompt)}`, { timeout: 25000 });
+        const imageUrl = response.data?.response;
+        if (imageUrl) {
+          stream = await global.utils.getStreamFromURL(imageUrl, `genx_${Date.now()}.jpg`);
+        }
+      } catch (e) {
+        // Fallback
+      }
 
-      const imgResponse = await axios.get(imageUrl, { responseType: 'arraybuffer' });
-      const imgPath = path.join(__dirname, 'cache', 'dalle_image.jpg');
-      await fs.outputFile(imgPath, imgResponse.data);
-      const imgData = fs.createReadStream(imgPath);
+      if (!stream) {
+        const fallbackUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&seed=${Date.now()}`;
+        stream = await global.utils.getStreamFromURL(fallbackUrl, `genx_${Date.now()}.png`, { timeout: 45000 });
+      }
 
-      await api.sendMessage({ body: '', attachment: imgData }, event.threadID, event.messageID);
+      if (!stream) throw new Error("Failed to generate image.");
+
+      if (api.setMessageReaction) api.setMessageReaction("✅", event.messageID, () => {}, true);
+      const msgData = { body: `🎨 GenX generated:\n\n✨ "${prompt}"`, attachment: stream };
+      if (message?.reply) {
+        await message.reply(msgData);
+      } else {
+        await api.sendMessage(msgData, event.threadID, event.messageID);
+      }
     } catch (error) {
-      console.error("Error:", error);
-      api.sendMessage("Error generating image. Please try again later.", event.threadID, event.messageID);
+      console.error("GenX Error:", error);
+      if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+      const errMsg = "❌ Error generating image. Please try again later.";
+      if (message?.reply) {
+        await message.reply(errMsg);
+      } else {
+        await api.sendMessage(errMsg, event.threadID, event.messageID);
+      }
     }
   }
 };

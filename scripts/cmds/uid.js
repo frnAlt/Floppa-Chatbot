@@ -58,6 +58,17 @@ module.exports = {
 		const { mentions } = event;
 		for (const id in mentions)
 			msg += `${mentions[id].replace("@", "")}: ${id}\n`;
+
+		if (!msg && args.length > 0) {
+			const raw = args.join(" ").replace(/^@/, "").trim().toLowerCase();
+			const allM = global.db?.allThreadData?.find(t => t.threadID == event.threadID)?.members || [];
+			const found = allM.find(m => m.name && m.name.toLowerCase().includes(raw)) ||
+			              global.db?.allUserData?.find(u => u.name && u.name.toLowerCase().includes(raw));
+			if (found) {
+				msg = `${found.name}: ${found.userID || found.id}\n`;
+			}
+		}
+
 		message.reply(msg || getLang("syntaxError"));
 	}
 };

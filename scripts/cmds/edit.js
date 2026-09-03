@@ -24,26 +24,34 @@ module.exports = {
     let prompt = args.join(" ").trim();
     let imgUrl = null;
 
-    // Extract image URL from reply, direct attachments, or url argument
+    // Extract image URL from reply, direct attachments, URL argument, mentions, or sender
     if (event.messageReply?.attachments?.length > 0) {
-      const att = event.messageReply.attachments.find(a => a.type === "photo" || a.type === "image");
-      if (att && att.url) imgUrl = att.url;
-    } else if (event.attachments?.length > 0) {
-      const att = event.attachments.find(a => a.type === "photo" || a.type === "image");
-      if (att && att.url) imgUrl = att.url;
-    } else if (args.length > 0 && args[0].startsWith("http")) {
+      for (const a of event.messageReply.attachments) {
+        const u = a.url || a.previewUrl || a.largePreviewUrl || a.thumbnailUrl;
+        if (u) { imgUrl = u; break; }
+      }
+    }
+    if (!imgUrl && event.attachments?.length > 0) {
+      for (const a of event.attachments) {
+        const u = a.url || a.previewUrl || a.largePreviewUrl || a.thumbnailUrl;
+        if (u) { imgUrl = u; break; }
+      }
+    }
+    if (!imgUrl && args.length > 0 && args[0].startsWith("http")) {
       imgUrl = args[0];
       prompt = args.slice(1).join(" ").trim();
-    } else if (event.mentions && Object.keys(event.mentions).length > 0) {
+    }
+    const token = "6628568379%7Cc1e620fa708a1d5696fb991c1bde5662";
+    if (!imgUrl && event.mentions && Object.keys(event.mentions).length > 0) {
       const targetUID = Object.keys(event.mentions)[0];
-      const token = "6628568379%7Cc1e620fa708a1d5696fb991c1bde5662";
       imgUrl = `https://graph.facebook.com/${targetUID}/picture?width=720&height=720&access_token=${token}`;
-    } else if (event.messageReply) {
+    } else if (!imgUrl && event.messageReply) {
       const targetUID = event.messageReply.senderID || event.messageReply.actorFbId;
       if (targetUID) {
-        const token = "6628568379%7Cc1e620fa708a1d5696fb991c1bde5662";
         imgUrl = `https://graph.facebook.com/${targetUID}/picture?width=720&height=720&access_token=${token}`;
       }
+    } else if (!imgUrl && event.senderID) {
+      imgUrl = `https://graph.facebook.com/${event.senderID}/picture?width=720&height=720&access_token=${token}`;
     }
 
     if (!imgUrl && !prompt) {

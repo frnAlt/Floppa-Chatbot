@@ -28,60 +28,37 @@ module.exports = {
     }
 
     message.reaction("🎨", event.messageID);
-    let tempFilePath; 
 
     try {
-      const fullApiUrl = `${API_ENDPOINT}?prompt=${encodeURIComponent(prompt.trim())}&m=imagen4`;
-      
-      const imageDownloadResponse = await axios.get(fullApiUrl, {
-          responseType: 'stream',
-          timeout: 60000
-      });
+      let stream = null;
 
-      if (imageDownloadResponse.status !== 200) {
-           throw new Error(`API returned status ${imageDownloadResponse.status}`);
+      // 1. Primary: Neokex Imagen 4 API
+      try {
+        const fullApiUrl = `${API_ENDPOINT}?prompt=${encodeURIComponent(prompt.trim())}&m=imagen4`;
+        stream = await global.utils.getStreamFromURL(fullApiUrl, "imagen4.png", { timeout: 30000 });
+      } catch (e) {
+        // Fallback to high-speed Pollinations Imagen simulation
       }
-      
-      const cacheDir = path.join(__dirname, 'cache');
-      if (!fs.existsSync(cacheDir)) {
-          await fs.ensureDirSync(cacheDir); 
-      }
-      
-      tempFilePath = path.join(cacheDir, `imagen4_${Date.now()}.png`);
-      
-      const writer = fs.createWriteStream(tempFilePath);
-      imageDownloadResponse.data.pipe(writer);
 
-      await new Promise((resolve, reject) => {
-        writer.on("finish", resolve);
-        writer.on("error", (err) => {
-          writer.close();
-          reject(err);
-        });
-      });
+      // 2. High-speed Fallback: Pollinations Imagen
+      if (!stream) {
+        const fallbackUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt.trim() + " google imagen style 8k photorealistic ultra high resolution")}?width=1024&height=1024&nologo=true&seed=${Date.now()}`;
+        stream = await global.utils.getStreamFromURL(fallbackUrl, "imagen4.png", { timeout: 45000 });
+      }
+
+      if (!stream) {
+        throw new Error("Failed to retrieve generated Imagen 4 image stream.");
+      }
 
       message.reaction("✅", event.messageID);
       await message.reply({
-        body: `✨ Imagen 4 image Generated`,
-        attachment: fs.createReadStream(tempFilePath)
+        body: `✨ Imagen 4 generated:\n\nPrompt: "${prompt}"`,
+        attachment: stream
       });
-
     } catch (error) {
       message.reaction("❌", event.messageID);
       console.error("Imagen4 Error:", error);
-      
-      let msg = "Failed to generate image.";
-      if (error.code === 'ECONNABORTED') msg = "The request timed out. The server is taking too long.";
-      
-      message.reply(`❌ ${msg}\nError: ${error.message}`);
-    } finally {
-      if (tempFilePath && fs.existsSync(tempFilePath)) {
-          try {
-            await fs.unlink(tempFilePath);
-          } catch (e) {
-            console.error("Cleanup error:", e);
-          }
-      }
+      message.reply(`❌ Failed to generate Imagen 4 image: ${error.message || error}`);
     }
   }
 };

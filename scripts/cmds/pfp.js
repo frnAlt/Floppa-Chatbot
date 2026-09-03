@@ -111,10 +111,22 @@ module.exports = {
 
 					// Fallback: Search in global user database
 					if (!uid && global.db?.allUserData) {
-						const globalFound = global.db.allUserData.find(u => u.name && u.name.toLowerCase().includes(targetName));
+						const globalFound = global.db.allUserData.find(u => u.name && (u.name.toLowerCase() === targetName || u.name.toLowerCase().includes(targetName)));
 						if (globalFound) {
 							uid = globalFound.userID;
 						}
+					}
+
+					// Fallback: Query live thread info from Facebook API
+					if (!uid && api && typeof api.getThreadInfo === "function" && event.threadID) {
+						try {
+							const tInfo = await api.getThreadInfo(event.threadID);
+							const p = tInfo?.userInfo || [];
+							if (Array.isArray(p)) {
+								const found = p.find(m => m.name && (m.name.toLowerCase() === targetName || m.name.toLowerCase().includes(targetName)));
+								if (found) uid = found.id;
+							}
+						} catch (_) {}
 					}
 
 					// If user typed a target name that cannot be found, inform them instead of returning sender's PFP
