@@ -1321,7 +1321,9 @@ async function startBot(loginWithEmail) {
                                                         };
                                                 }
                         // ———————————————————— START BOT ———————————————————— //
-                        await stopListening();
+                        if (global.GoatBot.Listening) {
+                                await stopListening();
+                        }
                         global.GoatBot.Listening = api.listenMqtt(createCallBackListen());
                         global.GoatBot.callBackListen = callBackListen;
                         // ——————————————————— UPTIME ——————————————————— //
