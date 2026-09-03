@@ -4,20 +4,21 @@
  * ! Repository: https://github.com/frnAlt/Floppa-Chatbot
  */
 
+const log = require('./logger/log.js');
+
 process.on('unhandledRejection', (error, promise) => {
-	log.error('UNHANDLED_REJECTION', error.message || error);
+	log.error('UNHANDLED_REJECTION', (error && error.stack) ? error.stack : (error?.message || error));
 });
 
 process.on('uncaughtException', (error) => {
-	log.error('UNCAUGHT_EXCEPTION', error.message || error);
-	log.error('UNCAUGHT_EXCEPTION', error.stack || 'No stack trace');
+	log.error('UNCAUGHT_EXCEPTION', error?.message || error);
+	log.error('UNCAUGHT_EXCEPTION', error?.stack || 'No stack trace');
 	setTimeout(() => process.exit(1), 1000);
 });
 
 const axios = require("axios");
 const fs = require("fs-extra");
 const { execSync } = require('child_process');
-const log = require('./logger/log.js');
 const path = require("path");
 
 const TTLMap = require("./func/TTLMap.js");

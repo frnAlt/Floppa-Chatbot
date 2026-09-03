@@ -706,6 +706,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                                                                 }
                                                                         }
                                                                 );
+                                                        }
                                                 }
                                         })
                                         .catch(err => {
