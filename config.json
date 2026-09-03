@@ -124,8 +124,8 @@
     "presence": false
   },
   "typingIndicator": {
-    "enable": true,
-    "duration": 1500
+    "enable": false,
+    "duration": 0
   },
   "optionsFca": {
     "online": true,
