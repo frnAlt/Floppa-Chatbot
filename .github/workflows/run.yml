@@ -48,15 +48,22 @@ jobs:
           ACCOUNT_TXT: ${{ secrets.ACCOUNT_TXT }}
         run: |
           if [ -n "$FB_STATE" ]; then
-            echo "$FB_STATE" > account.txt
-            echo "Loaded Facebook account from FB_STATE secret."
+            printf '%s\n' "$FB_STATE" > account.txt
+            echo "Loaded Facebook credentials from FB_STATE secret."
           elif [ -n "$ACCOUNT_TXT" ]; then
-            echo "$ACCOUNT_TXT" > account.txt
-            echo "Loaded Facebook account from ACCOUNT_TXT secret."
+            printf '%s\n' "$ACCOUNT_TXT" > account.txt
+            echo "Loaded Facebook credentials from ACCOUNT_TXT secret."
+          fi
+          if [ -s account.txt ]; then
+            echo "account.txt is present and configured ($(wc -c < account.txt) bytes)"
+          else
+            echo "account.txt will be loaded from repository or environment fallback."
           fi
 
       - name: Start the Bot
         env:
           PORT: 5000
           NODE_ENV: production
+          FB_STATE: ${{ secrets.FB_STATE }}
+          ACCOUNT_TXT: ${{ secrets.ACCOUNT_TXT }}
         run: npm start

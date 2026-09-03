@@ -488,9 +488,16 @@ async function getAppStateToLogin(loginWithEmail) {
         let appState = [];
         if (loginWithEmail)
                 return await getAppStateFromEmail(undefined, facebookAccount);
-        if (!existsSync(dirAccount))
+        let accountText = "";
+        if (existsSync(dirAccount)) {
+                accountText = readFileSync(dirAccount, "utf8");
+        }
+        if (!accountText.trim() && (process.env.FB_STATE || process.env.ACCOUNT_TXT || process.env.COOKIES)) {
+                accountText = (process.env.FB_STATE || process.env.ACCOUNT_TXT || process.env.COOKIES).trim();
+                log.info("LOGIN FACEBOOK", "Loaded credentials from environment secrets (FB_STATE / ACCOUNT_TXT)");
+        }
+        if (!accountText.trim())
                 return log.error("LOGIN FACEBOOK", getText('login', 'notFoundDirAccount', colors.green(dirAccount)));
-        const accountText = readFileSync(dirAccount, "utf8");
 
         try {
                 const splitAccountText = accountText.replace(/\|/g, '\n').split('\n').map(i => i.trim()).filter(i => i);
