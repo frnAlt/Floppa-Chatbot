@@ -42,55 +42,75 @@ module.exports = {
       return message.reply(`Please provide some text. Example:\n${p}say hi there`);
     }
 
-    const path = `${__dirname}/tmp/tts.mp3`;
+    const lang = number || 'en';
+    if (api.setMessageReaction) {
+      api.setMessageReaction("🗣️", event.messageID, () => {}, true);
+    }
 
     try {
-      if (text.length <= 150) {
-        const response = await axios({
-          method: "get",
-          url: `https://translate.google.com/translate_tts?ie=UTF-8&tl=${number}&client=tw-ob&q=${encodeURIComponent(text)}`,
-          responseType: "stream"
-        });
+      let audioStream = null;
 
-        const writer = fs.createWriteStream(path);
-        response.data.pipe(writer);
-        writer.on("finish", () => {
-          message.reply({
-            body: text,
-            attachment: fs.createReadStream(path)
-          }, () => {
-            fs.remove(path);
-          });
-        });
-      } else {
-        const chunkSize = 150;
-        const chunks = text.match(new RegExp(`.{1,${chunkSize}}`, 'g'));
-
-        for (let i = 0; i < chunks.length; i++) {
-          const response = await axios({
-            method: "get",
-            url: `https://translate.google.com/translate_tts?ie=UTF-8&tl=${number}&client=tw-ob&q=${encodeURIComponent(chunks[i])}`,
-            responseType: "stream"
-          });
-
-          const writer = fs.createWriteStream(path, { flags: i === 0 ? 'w' : 'a' });
-          response.data.pipe(writer);
-
-          if (i === chunks.length - 1) {
-            writer.on("finish", () => {
-              message.reply({
-                body: text,
-                attachment: fs.createReadStream(path)
-              }, () => {
-                fs.remove(path);
-              });
-            });
-          }
+      // 1. For normal sentences (<= 200 chars), stream directly from Google TTS (instantaneous)
+      if (text.length <= 200) {
+        try {
+          const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${encodeURIComponent(lang)}&client=tw-ob&q=${encodeURIComponent(text)}`;
+          audioStream = await global.utils.getStreamFromURL(ttsUrl, "tts.mp3");
+        } catch (e) {
+          console.warn("Google TTS stream failed, trying Say V2:", e.message);
         }
       }
+
+      // 2. Fallback or longer text: Try Toshiro Say V2
+      if (!audioStream) {
+        try {
+          const v2Url = `https://toshiro-api-editz6t9.vercel.app/api/tools/sayv2?text=${encodeURIComponent(text)}`;
+          audioStream = await global.utils.getStreamFromURL(v2Url, "tts.mp3");
+        } catch (_) {}
+      }
+
+      // 3. Fallback: If both stream methods failed or chunked needed
+      if (!audioStream) {
+        const cacheDir = `${__dirname}/cache`;
+        await fs.ensureDir(cacheDir);
+        const tempPath = `${cacheDir}/tts_${Date.now()}_${Math.floor(Math.random() * 10000)}.mp3`;
+
+        const chunkSize = 150;
+        const chunks = text.match(new RegExp(`.{1,${chunkSize}}`, 'g')) || [text];
+        const writer = fs.createWriteStream(tempPath);
+
+        for (const chunk of chunks) {
+          const resp = await axios({
+            method: "get",
+            url: `https://translate.google.com/translate_tts?ie=UTF-8&tl=${encodeURIComponent(lang)}&client=tw-ob&q=${encodeURIComponent(chunk)}`,
+            responseType: "stream",
+            timeout: 15000
+          });
+          resp.data.pipe(writer, { end: false });
+          await new Promise((res, rej) => {
+            resp.data.on("end", res);
+            resp.data.on("error", rej);
+          });
+        }
+        writer.end();
+        await new Promise(r => writer.on("finish", r));
+        audioStream = fs.createReadStream(tempPath);
+        setTimeout(() => fs.remove(tempPath).catch(() => {}), 15000);
+      }
+
+      await message.reply({
+        body: text,
+        attachment: audioStream
+      });
+
+      if (api.setMessageReaction) {
+        api.setMessageReaction("✅", event.messageID, () => {}, true);
+      }
     } catch (err) {
-      console.error(err);
-      message.reply("An error occurred while trying to convert your text to speech or send it as an attachment. Please try again later.");
+      console.error("Say command error:", err);
+      if (api.setMessageReaction) {
+        api.setMessageReaction("❌", event.messageID, () => {}, true);
+      }
+      message.reply("An error occurred while generating speech audio. Please try again.");
     }
   }
 };

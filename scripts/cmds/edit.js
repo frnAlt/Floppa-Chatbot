@@ -34,12 +34,22 @@ module.exports = {
     } else if (args.length > 0 && args[0].startsWith("http")) {
       imgUrl = args[0];
       prompt = args.slice(1).join(" ").trim();
+    } else if (event.mentions && Object.keys(event.mentions).length > 0) {
+      const targetUID = Object.keys(event.mentions)[0];
+      const token = "6628568379%7Cc1e620fa708a1d5696fb991c1bde5662";
+      imgUrl = `https://graph.facebook.com/${targetUID}/picture?width=720&height=720&access_token=${token}`;
+    } else if (event.messageReply) {
+      const targetUID = event.messageReply.senderID || event.messageReply.actorFbId;
+      if (targetUID) {
+        const token = "6628568379%7Cc1e620fa708a1d5696fb991c1bde5662";
+        imgUrl = `https://graph.facebook.com/${targetUID}/picture?width=720&height=720&access_token=${token}`;
+      }
     }
 
     if (!imgUrl && !prompt) {
       const prefix = global.GoatBot?.config?.prefix || "";
       return message.reply(
-        `🖼️ Please reply to an image with an edit instruction/prompt.\n\n💡 Example: Reply to a photo with: ${prefix}${commandName} make it cyberpunk anime style`
+        `🖼️ Please reply to an image/user or provide an edit prompt/canvas action.\n\n💡 Canvas actions: circle, rounded, blur, sharpen, grayscale, sepia, invert, rotate, flip, resize\n💡 Example: Reply to photo with: ${prefix}${commandName} blur 10\n💡 Or: ${prefix}${commandName} make it cyberpunk anime style`
       );
     }
 
@@ -47,23 +57,61 @@ module.exports = {
       api.setMessageReaction("✨", event.messageID, () => {}, true);
     }
 
+    const CANVAS_ACTIONS = [
+      "circle", "rounded", "resize", "crop", "rotate", "flip",
+      "blur", "sharpen", "grayscale", "sepia", "invert",
+      "brightness", "contrast", "saturation", "hue"
+    ];
+
     try {
       let finalStream = null;
+      let appliedType = "AI Edit";
       const editPrompt = prompt || "enhance and make it aesthetic";
+      const firstArg = (args[0] || "").toLowerCase();
 
-      if (imgUrl) {
-        // 1. Primary: Toshiro AI Image Edit API
-        try {
-          const apiUrl = `https://toshiro-api-editz6t9.vercel.app/api/image/edit?url=${encodeURIComponent(imgUrl)}&prompt=${encodeURIComponent(editPrompt)}`;
-          finalStream = await global.utils.getStreamFromURL(apiUrl, "edit.jpg");
-        } catch (e) {
-          console.warn("Toshiro Image Edit failed, using fallback:", e.message);
+      if (imgUrl && CANVAS_ACTIONS.includes(firstArg)) {
+        appliedType = `Canvas: ${firstArg.toUpperCase()}`;
+        const action = firstArg;
+        const val = args[1];
+        const params = new URLSearchParams();
+        params.append("action", action);
+        params.append("imgUrl", imgUrl);
+        if (action === "rotate" || action === "angle") {
+          if (val) params.append("angle", val);
+        } else if (action === "flip") {
+          params.append("mode", val && val.startsWith("v") ? "vertical" : "horizontal");
+        } else if (action === "rounded" || action === "circle") {
+          if (val) params.append("radius", val);
+        } else if (action === "resize" && args[2]) {
+          params.append("width", args[1]);
+          params.append("height", args[2]);
+        } else if (val && !isNaN(Number(val))) {
+          params.append("value", val);
         }
 
-        // 2. Fallback: Pollinations img2img
+        try {
+          const canvasApiUrl = `https://toshiro-api-editz6t9.vercel.app/api/image/canvas?${params.toString()}`;
+          finalStream = await global.utils.getStreamFromURL(canvasApiUrl, `edit_${action}.jpg`);
+        } catch (e) {
+          console.warn("Toshiro canvas action failed:", e.message);
+        }
+      }
+
+      if (imgUrl) {
         if (!finalStream) {
-          const fallbackUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(editPrompt)}?image=${encodeURIComponent(imgUrl)}&width=1024&height=1024&nologo=true&seed=${Math.floor(Math.random() * 1000000)}`;
-          finalStream = await global.utils.getStreamFromURL(fallbackUrl, "edit.png");
+          // 1. Primary: Toshiro AI Image Edit API
+          try {
+            const apiUrl = `https://toshiro-api-editz6t9.vercel.app/api/image/edit?url=${encodeURIComponent(imgUrl)}&prompt=${encodeURIComponent(editPrompt)}`;
+            finalStream = await global.utils.getStreamFromURL(apiUrl, "edit.jpg");
+          } catch (e) {
+            console.warn("Toshiro Image Edit failed, using fallback:", e.message);
+          }
+
+          // 2. Fallback: Pollinations img2img
+          if (!finalStream) {
+            const fallbackUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(editPrompt)}?image=${encodeURIComponent(imgUrl)}&width=1024&height=1024&nologo=true&seed=${Math.floor(Math.random() * 1000000)}`;
+            finalStream = await global.utils.getStreamFromURL(fallbackUrl, "edit.png");
+          }
         }
       } else {
         // Text-to-Image mode if no image provided
@@ -90,7 +138,7 @@ module.exports = {
 
       await message.reply({
         body: imgUrl
-          ? `✨ AI Image Edit Applied!\n📝 Prompt: "${editPrompt}"`
+          ? `✨ ${appliedType} Applied!\n📝 Details: "${firstArg && CANVAS_ACTIONS.includes(firstArg) ? firstArg : editPrompt}"`
           : `✅ Generated Image for: "${prompt}"`,
         attachment: finalStream
       });

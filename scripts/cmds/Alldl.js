@@ -52,56 +52,69 @@ module.exports = {
   },
 
   handleDownload: async function ({ message, event, api, url, isAudio }) {
-    api.setMessageReaction("⏳", event.messageID);
-    const cacheDir = path.join(__dirname, "cache");
-    await fs.ensureDir(cacheDir);
-    const fileName = `dl_${Date.now()}.${isAudio ? "mp3" : "mp4"}`;
-    const filePath = path.join(cacheDir, fileName);
+    if (api.setMessageReaction) api.setMessageReaction("⏳", event.messageID, () => {}, true);
 
     try {
-      const res = await axios.get(`https://neoaz.is-a.dev/api/download?url=${encodeURIComponent(url)}`);
-      const data = res.data.data;
-      if (!data || !data.formats || data.formats.length === 0) throw new Error();
-
       let downloadUrl = "";
-      if (isAudio) {
-        const audioFormat = data.formats.find(f => f.quality === "audio_only" || f.ext === "mp3" || f.ext === "m4a" || f.ext === "weba");
-        downloadUrl = audioFormat?.url || data.formats[data.formats.length - 1].url;
-      } else {
-        const videoFormat = data.formats.find(f => f.quality === "hd_no_watermark" || f.quality === "no_watermark" || f.quality === "HD" || f.quality === "Full HD" || f.quality === "720p");
-        downloadUrl = videoFormat?.url || data.formats[0].url;
+      let title = "Downloaded Media";
+
+      // 1. Primary: Toshiro All Downloader V2
+      try {
+        const res = await axios.get(
+          `https://toshiro-api-editz6t9.vercel.app/api/downloader/alldlv2?url=${encodeURIComponent(url)}`,
+          { timeout: 35000 }
+        );
+
+        if (res.data && res.data.success && res.data.result) {
+          const r = res.data.result;
+          title = r.title || title;
+
+          if (isAudio && r.audios && r.audios.length > 0) {
+            const m4a = r.audios.find(a => a.format === "M4A" || a.format === "MP3");
+            downloadUrl = (m4a || r.audios[0]).url;
+          } else if (r.medias && r.medias.length > 0) {
+            // Find a good video format (prefer 720P or 480P or 360P to stay under FB upload limits)
+            const preferred = r.medias.find(m => m.quality === "720P" || m.quality === "480P" || m.quality === "360P");
+            downloadUrl = (preferred || r.medias[0]).url;
+          } else if (r.audios && r.audios.length > 0) {
+            downloadUrl = r.audios[0].url;
+          }
+        }
+      } catch (e) {
+        console.warn("alldlv2 failed, trying fallback:", e.message);
       }
 
-      if (!downloadUrl) throw new Error();
+      // 2. Fallback: YouTube Audio if YouTube and audio requested
+      if (!downloadUrl && isAudio && /(?:youtube\.com|youtu\.be)/i.test(url)) {
+        try {
+          const ytRes = await axios.get(
+            `https://toshiro-api-editz6t9.vercel.app/api/downloader/yt-audio?url=${encodeURIComponent(url)}&quality=128`,
+            { timeout: 35000 }
+          );
+          if (ytRes.data && ytRes.data.success && ytRes.data.result) {
+            downloadUrl = ytRes.data.result.download_url || ytRes.data.result.preview;
+            title = ytRes.data.result.title || title;
+          }
+        } catch (_) {}
+      }
 
-      const response = await axios({
-        method: 'get',
-        url: downloadUrl,
-        responseType: 'stream',
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-          'Referer': 'https://tikwm.com/'
-        }
-      });
+      if (!downloadUrl) {
+        throw new Error("Could not find a valid download link for this URL.");
+      }
 
-      const writer = fs.createWriteStream(filePath);
-      response.data.pipe(writer);
-
-      await new Promise((resolve, reject) => {
-        writer.on('finish', resolve);
-        writer.on('error', reject);
-      });
+      const ext = isAudio ? "mp3" : "mp4";
+      const mediaStream = await global.utils.getStreamFromURL(downloadUrl, `download.${ext}`);
 
       await message.reply({
-        body: `${data.title}`,
-        attachment: fs.createReadStream(filePath)
+        body: `📥 ${title}`,
+        attachment: mediaStream
       });
 
-      api.setMessageReaction("✅", event.messageID);
+      if (api.setMessageReaction) api.setMessageReaction("✅", event.messageID, () => {}, true);
     } catch (error) {
-      api.setMessageReaction("❌", event.messageID);
-    } finally {
-      if (fs.existsSync(filePath)) setTimeout(() => fs.unlinkSync(filePath), 10000);
+      console.error("[ALLDL ERROR]:", error.message);
+      if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+      return message.reply(`❌ Could not download media: ${error.message || "Request timed out or unsupported link."}`);
     }
   }
 };

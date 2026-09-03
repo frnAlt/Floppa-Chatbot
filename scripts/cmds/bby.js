@@ -1,7 +1,6 @@
 const axios = require('axios');
-const baseApiUrl = async () => {
-    return "https://baby-apisx.vercel.app";
-};
+const client = axios.create({ timeout: 7000 });
+const baseApiUrl = () => "https://baby-apisx.vercel.app";
 
 module.exports.config = {
     name: "bby",
@@ -26,7 +25,7 @@ async function sendAttachmentReply(api, event, attachments) {
     else if (attType === "photo" || attType === "animated_image") endpoint = "picture";
     if (!endpoint) return false;
 
-    const a = (await axios.get(`${await baseApiUrl()}/baby/${endpoint}?senderID=${event.senderID}`)).data.reply;
+    const a = (await client.get(`${baseApiUrl()}/baby/${endpoint}?senderID=${event.senderID}`)).data?.reply || "😊";
     await api.sendMessage(a, event.threadID, (error, info) => {
         if (!info) return;
         global.GoatBot.onReply.set(info.messageID, {
@@ -45,7 +44,7 @@ module.exports.onStart = async ({
     args,
     usersData
 }) => {
-    const link = `${await baseApiUrl()}/baby`;
+    const link = `${baseApiUrl()}/baby`;
     const input = args.join(" ").toLowerCase();
     const uid = event.senderID;
     let command, comd, final;
@@ -62,19 +61,19 @@ module.exports.onStart = async ({
 
         if (args[0] === 'remove') {
             const fina = input.replace("remove ", "");
-            const dat = (await axios.get(`${link}?remove=${encodeURIComponent(fina)}&senderID=${uid}`)).data.message;
+            const dat = (await client.get(`${link}?remove=${encodeURIComponent(fina)}&senderID=${uid}`)).data.message;
             return api.sendMessage(dat, event.threadID, event.messageID);
         }
 
         if (args[0] === 'rm' && input.includes('-')) {
             const [fi, f] = input.replace("rm ", "").split(/\s*-\s*/);
-            const da = (await axios.get(`${link}?remove=${encodeURIComponent(fi)}&index=${encodeURIComponent(f)}`)).data.message;
+            const da = (await client.get(`${link}?remove=${encodeURIComponent(fi)}&index=${encodeURIComponent(f)}`)).data.message;
             return api.sendMessage(da, event.threadID, event.messageID);
         }
 
         if (args[0] === 'list') {
             if (args[1] === 'all') {
-                const data = (await axios.get(`${link}?list=all`)).data;
+                const data = (await client.get(`${link}?list=all`)).data;
                 const limit = parseInt(args[2]) || 100;
                 const limited = data?.teacher?.teacherList?.slice(0, limit) || [];
                 const teachers = await Promise.all(limited.map(async (item) => {
@@ -90,14 +89,14 @@ module.exports.onStart = async ({
                 const output = teachers.map((t, i) => `${i + 1}/ ${t.name}: ${t.value}`).join('\n');
                 return api.sendMessage(`Total Teach = ${data.length}\n👑 | List of Teachers of baby\n${output}`, event.threadID, event.messageID);
             } else {
-                const d = (await axios.get(`${link}?list=all`)).data;
+                const d = (await client.get(`${link}?list=all`)).data;
                 return api.sendMessage(`❇️ | Total Teach = ${d.length || "api off"}\n♻️ | Total Response = ${d.responseLength || "api off"}`, event.threadID, event.messageID);
             }
         }
 
         if (args[0] === 'msg') {
             const fuk = input.replace("msg ", "");
-            const d = (await axios.get(`${link}?list=${encodeURIComponent(fuk)}`)).data.data;
+            const d = (await client.get(`${link}?list=${encodeURIComponent(fuk)}`)).data.data;
             return api.sendMessage(`Message ${fuk} = ${d}`, event.threadID, event.messageID);
         }
 
@@ -109,21 +108,21 @@ module.exports.onStart = async ({
             if (!editKey || !oldReply || !newReply) {
                 return api.sendMessage('❌ | Invalid format! Use: edit [YourMessage] - [OldReply] - [NewReply]', event.threadID, event.messageID);
             }
-            const dA = (await axios.get(`${link}?edit=${encodeURIComponent(editKey)}&oldReply=${encodeURIComponent(oldReply)}&replace=${encodeURIComponent(newReply)}&senderID=${uid}`)).data.message;
+            const dA = (await client.get(`${link}?edit=${encodeURIComponent(editKey)}&oldReply=${encodeURIComponent(oldReply)}&replace=${encodeURIComponent(newReply)}&senderID=${uid}`)).data.message;
             return api.sendMessage(`${dA}`, event.threadID, event.messageID);
         }
 
         if (args[0] === 'teach' && args[1] === 'sticker') {
             const command = input.replace("teach sticker ", "").replace(/^-\s*/, "").trim();
             if (!command || command.length < 1) return api.sendMessage('❌ | Invalid format! Use: teach sticker - [Reply1], [Reply2]...', event.threadID, event.messageID);
-            const tex = (await axios.get(`${await baseApiUrl()}/baby/sticker?teach=1&reply=${encodeURIComponent(command)}&senderID=${uid}`)).data.message;
+            const tex = (await client.get(`${baseApiUrl()}/baby/sticker?teach=1&reply=${encodeURIComponent(command)}&senderID=${uid}`)).data.message;
             return api.sendMessage(`✅ ${tex}`, event.threadID, event.messageID);
         }
 
         if (args[0] === 'teach' && args[1] === 'picture') {
             const command = input.replace("teach picture ", "").replace(/^-\s*/, "").trim();
             if (!command || command.length < 1) return api.sendMessage('❌ | Invalid format! Use: teach picture - [Reply1], [Reply2]...', event.threadID, event.messageID);
-            const tex = (await axios.get(`${await baseApiUrl()}/baby/picture?teach=1&reply=${encodeURIComponent(command)}&senderID=${uid}`)).data.message;
+            const tex = (await client.get(`${baseApiUrl()}/baby/picture?teach=1&reply=${encodeURIComponent(command)}&senderID=${uid}`)).data.message;
             return api.sendMessage(`✅ ${tex}`, event.threadID, event.messageID);
         }
 
@@ -131,7 +130,7 @@ module.exports.onStart = async ({
             [comd, command] = input.split(/\s*-\s*/);
             final = comd.replace("teach ", "");
             if (!command || command.length < 2) return api.sendMessage('❌ | Invalid format!', event.threadID, event.messageID);
-            const re = await axios.get(`${link}?teach=${encodeURIComponent(final)}&reply=${encodeURIComponent(command)}&senderID=${uid}&threadID=${event.threadID}`);
+            const re = await client.get(`${link}?teach=${encodeURIComponent(final)}&reply=${encodeURIComponent(command)}&senderID=${uid}&threadID=${event.threadID}`);
             const tex = re.data.message;
             let teacherName = "Unknown";
             try {
@@ -151,7 +150,7 @@ module.exports.onStart = async ({
             [comd, command] = input.split(/\s*-\s*/);
             final = comd.replace("teach ", "");
             if (!command || command.length < 2) return api.sendMessage('❌ | Invalid format!', event.threadID, event.messageID);
-            const tex = (await axios.get(`${link}?teach=${encodeURIComponent(final)}&senderID=${uid}&reply=${encodeURIComponent(command)}&key=intro`)).data.message;
+            const tex = (await client.get(`${link}?teach=${encodeURIComponent(final)}&senderID=${uid}&reply=${encodeURIComponent(command)}&key=intro`)).data.message;
             return api.sendMessage(`✅ Replies added ${tex}`, event.threadID, event.messageID);
         }
 
@@ -159,16 +158,16 @@ module.exports.onStart = async ({
             [comd, command] = input.split(/\s*-\s*/);
             final = comd.replace("teach react ", "");
             if (!command || command.length < 2) return api.sendMessage('❌ | Invalid format!', event.threadID, event.messageID);
-            const tex = (await axios.get(`${link}?teach=${encodeURIComponent(final)}&react=${encodeURIComponent(command)}`)).data.message;
+            const tex = (await client.get(`${link}?teach=${encodeURIComponent(final)}&react=${encodeURIComponent(command)}`)).data.message;
             return api.sendMessage(`✅ Replies added ${tex}`, event.threadID, event.messageID);
         }
 
         if (input.includes('amar name ki') || input.includes('amr nam ki') || input.includes('amar nam ki') || input.includes('amr name ki') || input.includes('whats my name')) {
-            const data = (await axios.get(`${link}?text=amar name ki&senderID=${uid}&key=intro`)).data.reply;
+            const data = (await client.get(`${link}?text=amar name ki&senderID=${uid}&key=intro`)).data.reply;
             return api.sendMessage(data, event.threadID, event.messageID);
         }
 
-        const d = (await axios.get(`${link}?text=${encodeURIComponent(input)}&senderID=${uid}&threadID=${event.threadID}&font=1`)).data.reply;
+        const d = (await client.get(`${link}?text=${encodeURIComponent(input)}&senderID=${uid}&threadID=${event.threadID}&font=1`)).data.reply;
         api.sendMessage(d, event.threadID, (error, info) => {
             if (!info) return;
             global.GoatBot.onReply.set(info.messageID, {
@@ -200,7 +199,15 @@ module.exports.onReply = async ({
                 const handled = await sendAttachmentReply(api, event, event.attachments);
                 if (handled) return;
             }
-            const a = (await axios.get(`${await baseApiUrl()}/baby?text=${encodeURIComponent(event.body?.toLowerCase())}&senderID=${event.senderID}&threadID=${event.threadID}&font=1`)).data.reply;
+            let a = null;
+            try {
+                const res = await client.get(`${baseApiUrl()}/baby?text=${encodeURIComponent(event.body?.toLowerCase() || "")}&senderID=${event.senderID}&threadID=${event.threadID}&font=1`);
+                a = res.data?.reply;
+            } catch (_) {
+                const fallbacks = ["I'm listening! Tell me more 😊", "Hmm, what do you think?", "Haha really? Tell me more! 😉", "I hear you! ✨"];
+                a = fallbacks[Math.floor(Math.random() * fallbacks.length)];
+            }
+            if (!a) a = "😊";
             await api.sendMessage(a, event.threadID, (error, info) => {
                 if (!info) return;
                 global.GoatBot.onReply.set(info.messageID, {
@@ -213,7 +220,9 @@ module.exports.onReply = async ({
             }, event.messageID);
         }
     } catch (err) {
-        return api.sendMessage(`Error: ${err.message}`, event.threadID, event.messageID);
+        return api.sendMessage(`Error: ${err.message}`, event.threadID, (e, info) => {
+            if (!e && info?.messageID) setTimeout(() => api.unsendMessage(info.messageID), 8000);
+        }, event.messageID);
     }
 };
 
@@ -245,7 +254,15 @@ module.exports.onChat = async ({
                     });
                 }, event.messageID)
             }
-            const a = (await axios.get(`${await baseApiUrl()}/baby?text=${encodeURIComponent(arr)}&senderID=${event.senderID}&threadID=${event.threadID}&font=1`)).data.reply;
+            let a = null;
+            try {
+                const res = await client.get(`${baseApiUrl()}/baby?text=${encodeURIComponent(arr)}&senderID=${event.senderID}&threadID=${event.threadID}&font=1`);
+                a = res.data?.reply;
+            } catch (_) {
+                const quickReplies = ["Yes? I'm here! 😊", "Hey there! How's your day going? ✨", "Tell me more!", "Aww, yes? 🥰"];
+                a = quickReplies[Math.floor(Math.random() * quickReplies.length)];
+            }
+            if (!a) a = "Hello! 😊";
             return await api.sendMessage(a, event.threadID, (error, info) => {
                 if (!info) return;
                 global.GoatBot.onReply.set(info.messageID, {
@@ -258,6 +275,8 @@ module.exports.onChat = async ({
             }, event.messageID)
         }
     } catch (err) {
-        return api.sendMessage(`Error: ${err.message}`, event.threadID, event.messageID);
+        return api.sendMessage(`Error: ${err.message}`, event.threadID, (e, info) => {
+            if (!e && info?.messageID) setTimeout(() => api.unsendMessage(info.messageID), 8000);
+        }, event.messageID);
     }
 };

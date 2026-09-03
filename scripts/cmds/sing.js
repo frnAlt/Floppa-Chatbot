@@ -18,32 +18,95 @@ module.exports = {
     const query = args.join(" ").trim();
     if (!query) return message.reply("❌ Please provide a song name or YouTube link.");
 
-    const isUrl = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be)\//i.test(query);
+    const isSpotify = /(?:open\.spotify\.com\/track\/|spotify\.link\/|spotify:track:)/i.test(query);
+    const isYtUrl = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be)\//i.test(query);
 
     if (api.setMessageReaction) {
       api.setMessageReaction("🎵", event.messageID, () => {}, true);
     }
 
-    if (isUrl) {
+    if (isSpotify) {
       try {
-        const apiUrl = `https://toshiro-api-editz6t9.vercel.app/api/downloader/yta2?url=${encodeURIComponent(query)}`;
-        const res = await axios.get(apiUrl, { timeout: 45000 });
+        const spUrl = `https://toshiro-api-editz6t9.vercel.app/api/downloader/spdl?url=${encodeURIComponent(query)}`;
+        const res = await axios.get(spUrl, { timeout: 35000 });
 
-        if (!res.data || !res.data.success || !res.data.result) {
-          if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
-          return message.reply("❌ Could not download audio from this URL.");
+        let audioUrl = null;
+        let title = "Spotify Track";
+        let artist = "";
+
+        if (res.data && res.data.success && res.data.result) {
+          const r = res.data.result;
+          audioUrl = r.download_url || r.audio || r.url || r.preview;
+          title = r.title || r.name || title;
+          artist = r.artist || r.author || "";
+        } else if (res.data && res.data.download_url) {
+          audioUrl = res.data.download_url;
+          title = res.data.title || title;
         }
 
-        const { title, download_url, preview, quality } = res.data.result;
-        const audioUrl = download_url || preview;
+        if (!audioUrl) {
+          throw new Error("Could not extract Spotify audio URL.");
+        }
+
+        const audioStream = await global.utils.getStreamFromURL(audioUrl, "sing_spotify.mp3");
+        if (api.setMessageReaction) api.setMessageReaction("✅", event.messageID, () => {}, true);
+
+        return message.reply({
+          body: `🎵 Title: ${title}${artist ? `\n👤 Artist: ${artist}` : ""}\n🎼 Source: Spotify`,
+          attachment: audioStream
+        });
+      } catch (err) {
+        console.error("Spotify download error:", err.message);
+        if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+        return message.reply(`❌ Spotify download failed: ${err.message || err}`);
+      }
+    }
+
+    if (isYtUrl) {
+      try {
+        let audioUrl = null;
+        let title = "Audio Track";
+        let quality = "128kbps";
+
+        // 1. Try Toshiro YouTube Audio (yt-audio)
+        try {
+          const ytAudioUrl = `https://toshiro-api-editz6t9.vercel.app/api/downloader/yt-audio?url=${encodeURIComponent(query)}&quality=128`;
+          const ytRes = await axios.get(ytAudioUrl, { timeout: 35000 });
+          if (ytRes.data && ytRes.data.success && ytRes.data.result) {
+            const r = ytRes.data.result;
+            audioUrl = r.download_url || r.preview;
+            title = r.title || title;
+            quality = r.quality || quality;
+          }
+        } catch (e) {
+          console.warn("yt-audio failed, falling back to yta2:", e.message);
+        }
+
+        // 2. Fallback to yta2
+        if (!audioUrl) {
+          const apiUrl = `https://toshiro-api-editz6t9.vercel.app/api/downloader/yta2?url=${encodeURIComponent(query)}`;
+          const res = await axios.get(apiUrl, { timeout: 35000 });
+          if (res.data && res.data.success && res.data.result) {
+            audioUrl = res.data.result.download_url || res.data.result.preview;
+            title = res.data.result.title || title;
+            quality = res.data.result.quality || quality;
+          }
+        }
+
+        if (!audioUrl) {
+          if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+          return message.reply("❌ Could not download YouTube audio from this URL.");
+        }
+
         const audioStream = await global.utils.getStreamFromURL(audioUrl, "sing.mp3");
 
         await message.reply({
-          body: `🎧 Title: ${title || "Audio"}\n🎼 Quality: ${quality || "128kbps"}`,
+          body: `🎧 Title: ${title}\n🎼 Quality: ${quality}`,
           attachment: audioStream
         });
 
         if (api.setMessageReaction) api.setMessageReaction("✅", event.messageID, () => {}, true);
+        return;
       } catch (err) {
         console.error("Sing URL download error:", err);
         if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
@@ -116,22 +179,46 @@ module.exports = {
     }
 
     try {
-      const res = await axios.get(
-        `https://toshiro-api-editz6t9.vercel.app/api/downloader/yta2?url=${encodeURIComponent(selected.url)}`,
-        { timeout: 60000 }
-      );
+      let audioUrl = null;
+      let title = selected.title || "Audio";
+      let quality = "128kbps";
 
-      if (!res.data || !res.data.success || !res.data.result) {
+      // 1. Try yt-audio
+      try {
+        const ytAudioUrl = `https://toshiro-api-editz6t9.vercel.app/api/downloader/yt-audio?url=${encodeURIComponent(selected.url)}&quality=128`;
+        const ytRes = await axios.get(ytAudioUrl, { timeout: 35000 });
+        if (ytRes.data && ytRes.data.success && ytRes.data.result) {
+          const r = ytRes.data.result;
+          audioUrl = r.download_url || r.preview;
+          title = r.title || title;
+          quality = r.quality || quality;
+        }
+      } catch (e) {
+        console.warn("onReply yt-audio failed, falling back to yta2:", e.message);
+      }
+
+      // 2. Fallback to yta2
+      if (!audioUrl) {
+        const res = await axios.get(
+          `https://toshiro-api-editz6t9.vercel.app/api/downloader/yta2?url=${encodeURIComponent(selected.url)}`,
+          { timeout: 45000 }
+        );
+        if (res.data && res.data.success && res.data.result) {
+          audioUrl = res.data.result.download_url || res.data.result.preview;
+          title = res.data.result.title || title;
+          quality = res.data.result.quality || quality;
+        }
+      }
+
+      if (!audioUrl) {
         if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
         return message.reply("❌ Audio processing failed.");
       }
 
-      const { title, download_url, preview, quality } = res.data.result;
-      const audioUrl = download_url || preview;
       const audioStream = await global.utils.getStreamFromURL(audioUrl, "sing.mp3");
 
       await message.reply({
-        body: `🎧 ${title || selected.title}\n⏱️ Duration: ${selected.duration || "N/A"}\n🎼 Quality: ${quality || "128kbps"}`,
+        body: `🎧 ${title}\n⏱️ Duration: ${selected.duration || "N/A"}\n🎼 Quality: ${quality}`,
         attachment: audioStream
       });
 

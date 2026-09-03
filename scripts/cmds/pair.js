@@ -27,30 +27,40 @@ module.exports = {
     try {
       const { participantIDs } = await api.getThreadInfo(threadID);
       const botID = api.getCurrentUserID();
-      const senderData = await usersData.get(senderID);
-      const nameSender = senderData?.name || "User";
+      let uid1 = String(senderID);
+      let uid2 = null;
+      const mentionKeys = mentions ? Object.keys(mentions) : [];
 
-      let uid2, name2;
+      if (mentionKeys.length >= 2) {
+        uid1 = mentionKeys[0];
+        uid2 = mentionKeys[1];
+      } else if (mentionKeys.length === 1) {
+        uid2 = mentionKeys[0];
+        if (event.messageReply) {
+          const rUid = event.messageReply.senderID || event.messageReply.actorFbId;
+          if (rUid && rUid !== uid2) uid1 = String(rUid);
+        }
+      } else if (event.messageReply) {
+        const rUid = event.messageReply.senderID || event.messageReply.actorFbId;
+        if (rUid) uid2 = String(rUid);
+      }
 
-      if (mentions && Object.keys(mentions).length > 0) {
-        uid2 = Object.keys(mentions)[0];
-        const u2Data = await usersData.get(uid2);
-        name2 = u2Data?.name || mentions[uid2]?.replace("@", "") || "Partner";
-      } else {
+      if (!uid2) {
         const listUserID = participantIDs.filter(id => id != botID && id != senderID);
         if (listUserID.length === 0) {
           return message.reply("❌ Not enough members to pair in this chat.");
         }
         uid2 = listUserID[Math.floor(Math.random() * listUserID.length)];
-        const u2Data = await usersData.get(uid2);
-        name2 = u2Data?.name || "Partner";
       }
+
+      const nameSender = await usersData.getName(uid1).catch(() => "User 1");
+      const name2 = await usersData.getName(uid2).catch(() => "User 2");
 
       if (api.setMessageReaction) {
         api.setMessageReaction("💖", messageID, () => {}, true);
       }
 
-      const avatar1 = `https://graph.facebook.com/${senderID}/picture?width=512&height=512&access_token=${token}`;
+      const avatar1 = `https://graph.facebook.com/${uid1}/picture?width=512&height=512&access_token=${token}`;
       const avatar2 = `https://graph.facebook.com/${uid2}/picture?width=512&height=512&access_token=${token}`;
       const lovePercent = Math.floor(Math.random() * 51) + 50; // 50% to 100%
 
@@ -59,7 +69,7 @@ module.exports = {
       const stream = await global.utils.getStreamFromURL(apiUrl, "pair.png");
 
       const arrayTag = [
-        { id: senderID, tag: nameSender },
+        { id: uid1, tag: nameSender },
         { id: uid2, tag: name2 }
       ];
 

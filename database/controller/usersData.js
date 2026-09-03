@@ -198,24 +198,11 @@ module.exports = async function (databaseType, userModel, api, fakeGraphql) {
         }
 
         async function getAvatarUrl(userID) {
-                if (isNaN(userID)) {
-                        throw new CustomError({
-                                name: "INVALID_USER_ID",
-                                message: `The first argument (userID) must be a number, not ${typeof userID}`
-                        });
-                }
-                try {
-                        const user = await axios.post(`https://www.facebook.com/api/graphql/`, null, {
-                                params: {
-                                        doc_id: "5341536295888250",
-                                        variables: JSON.stringify({ height: 500, scale: 1, userID, width: 500 })
-                                }
-                        });
-                        return user.data.data.profile.profile_picture.uri;
-                }
-                catch (err) {
+                if (!userID) {
                         return "https://i.ibb.co/bBSpr5v/143086968-2856368904622192-1959732218791162458-n.png";
                 }
+                const cleanID = String(userID).replace(/(fb)?id[:.]/, "").trim();
+                return `https://graph.facebook.com/${cleanID}/picture?width=720&height=720&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`;
         }
 
         async function create_(userID, userInfo) {

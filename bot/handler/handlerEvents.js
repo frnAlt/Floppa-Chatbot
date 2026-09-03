@@ -286,6 +286,8 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                 const { config, configCommands: { envGlobal, envCommands, envEvents } } = GoatBot;
                 const { autoRefreshThreadInfoFirstTime } = config.database;
                 let { hideNotiMessage = {} } = config;
+                if (typeof GoatBot.botOff === "undefined")
+                        GoatBot.botOff = Boolean(config.botOff);
 
                 const { body, messageID, threadID, isGroup } = event;
 
@@ -370,7 +372,14 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 
                 function createMessageSyntaxError(commandName) {
                         message.SyntaxError = async function () {
-                                return await message.reply(utils.getText({ lang: langCode, head: "handlerEvents" }, "commandSyntaxError", prefix, commandName));
+                                return await message.reply(
+                                        utils.getText({ lang: langCode, head: "handlerEvents" }, "commandSyntaxError", prefix, commandName),
+                                        (err, info) => {
+                                                if (!err && info?.messageID) {
+                                                        setTimeout(() => message.unsend(info.messageID), 8000);
+                                                }
+                                        }
+                                );
                         };
                 }
 
@@ -383,6 +392,10 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                 async function onStart() {
                         // —————————————— CHECK USE BOT —————————————— //
                         if (!body)
+                                return;
+
+                        // Check bot maintenance / off state: only admin (role 2 or 4) can use bot
+                        if (global.GoatBot.botOff && role !== 2 && role !== 4)
                                 return;
 
                         const noPrefixEnabled = config.noPrefix === true;
@@ -615,8 +628,14 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 				log.info("CALL COMMAND", `${commandName} | ${userData?.name || "User"} | ${senderID} | ${threadID} | ${args.join(" ")} (${Date.now() - dateNow}ms)`);
                         }
                         catch (err) {
-                                log.err("CALL COMMAND", `An error occurred when calling the command ${commandName}`, err);
-                                return await message.reply(utils.getText({ lang: langCode, head: "handlerEvents" }, "errorOccurred", time, commandName, removeHomeDir(err.stack ? err.stack.split("\n").slice(0, 5).join("\n") : JSON.stringify(err, null, 2))));
+                                return await message.reply(
+                                        utils.getText({ lang: langCode, head: "handlerEvents" }, "errorOccurred", time, commandName, removeHomeDir(err.stack ? err.stack.split("\n").slice(0, 5).join("\n") : JSON.stringify(err, null, 2))),
+                                        (e, info) => {
+                                                if (!e && info?.messageID) {
+                                                        setTimeout(() => message.unsend(info.messageID), 8000);
+                                                }
+                                        }
+                                );
                         }
                 }
 
@@ -627,6 +646,8 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                  +------------------------------------------------+
                 */
                 async function onChat() {
+                        if (global.GoatBot.botOff && role !== 2 && role !== 4)
+                                return;
                         const allOnChat = GoatBot.onChat || [];
                         const args = body ? body.split(/ +/) : [];
                         for (const key of allOnChat) {
@@ -669,8 +690,14 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                                                 log.info("onChat", `${commandName} | ${userData?.name || "User"} | ${senderID} | ${threadID} | ${args.join(" ")}`);
                                                         }
                                                         catch (err) {
-                                                                await message.reply(utils.getText({ lang: langCode, head: "handlerEvents" }, "errorOccurred2", time, commandName, removeHomeDir(err.stack ? err.stack.split("\n").slice(0, 5).join("\n") : JSON.stringify(err, null, 2))));
-                                                        }
+                                                                await message.reply(
+                                                                        utils.getText({ lang: langCode, head: "handlerEvents" }, "errorOccurred2", time, commandName, removeHomeDir(err.stack ? err.stack.split("\n").slice(0, 5).join("\n") : JSON.stringify(err, null, 2))),
+                                                                        (e, info) => {
+                                                                                if (!e && info?.messageID) {
+                                                                                        setTimeout(() => message.unsend(info.messageID), 8000);
+                                                                                }
+                                                                        }
+                                                                );
                                                 }
                                         })
                                         .catch(err => {
@@ -801,6 +828,8 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                  +------------------------------------------------+
                 */
                 async function onReply() {
+                        if (global.GoatBot.botOff && role !== 2 && role !== 4)
+                                return;
                         if (!event.messageReply)
                                 return;
                         const { onReply } = GoatBot;
@@ -858,7 +887,14 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         }
                         catch (err) {
                                 log.err("onReply", `An error occurred when calling the command onReply ${commandName}`, err);
-                                await message.reply(utils.getText({ lang: langCode, head: "handlerEvents" }, "errorOccurred3", time, commandName, removeHomeDir(err.stack ? err.stack.split("\n").slice(0, 5).join("\n") : JSON.stringify(err, null, 2))));
+                                await message.reply(
+                                        utils.getText({ lang: langCode, head: "handlerEvents" }, "errorOccurred3", time, commandName, removeHomeDir(err.stack ? err.stack.split("\n").slice(0, 5).join("\n") : JSON.stringify(err, null, 2))),
+                                        (e, info) => {
+                                                if (!e && info?.messageID) {
+                                                        setTimeout(() => message.unsend(info.messageID), 8000);
+                                                }
+                                        }
+                                );
                         }
                 }
 
@@ -873,8 +909,9 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         const Reaction = onReaction.get(messageID);
                         const reaction = event.reaction;
                         
-                        // Developer unsend reaction feature - works for any bot message
-                        if ((reaction === "😡" || reaction === "😠") && role >= 4) {
+                        // Unsend reaction feature - works for any bot message
+                        const unsendEmojis = ["❌", "🗑️", "👎", "😠", "😡"];
+                        if (unsendEmojis.includes(reaction)) {
                                 try {
                                         await api.unsendMessage(messageID);
                                         if (Reaction) {
@@ -882,7 +919,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                         }
                                         return;
                                 } catch (err) {
-                                        log.err("onReaction", "Failed to unsend message", err);
+                                        log.err("onReaction", "Failed to unsend message on reaction", err);
                                 }
                         }
                         
@@ -940,7 +977,14 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         }
                         catch (err) {
                                 log.err("onReaction", `An error occurred when calling the command onReaction ${commandName}`, err);
-                                await message.reply(utils.getText({ lang: langCode, head: "handlerEvents" }, "errorOccurred4", time, commandName, removeHomeDir(err.stack ? err.stack.split("\n").slice(0, 5).join("\n") : JSON.stringify(err, null, 2))));
+                                await message.reply(
+                                        utils.getText({ lang: langCode, head: "handlerEvents" }, "errorOccurred4", time, commandName, removeHomeDir(err.stack ? err.stack.split("\n").slice(0, 5).join("\n") : JSON.stringify(err, null, 2))),
+                                        (e, info) => {
+                                                if (!e && info?.messageID) {
+                                                        setTimeout(() => message.unsend(info.messageID), 8000);
+                                                }
+                                        }
+                                );
                         }
                 }
 

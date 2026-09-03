@@ -1,7 +1,7 @@
 module.exports = {
 	config: {
 		name: "unsend",
-		aliases: ["u","r","uns"],
+		aliases: ["u", "usend", "r", "uns"],
 		version: "1.2",
 		author: "frnAlt",
 		countDown: 5,
@@ -27,8 +27,21 @@ module.exports = {
 	},
 
 	onStart: async function ({ message, event, api, getLang }) {
-		if (!event.messageReply || event.messageReply.senderID != api.getCurrentUserID())
+		if (!event.messageReply || !event.messageReply.messageID)
 			return message.reply(getLang("syntaxError"));
-		message.unsend(event.messageReply.messageID);
+
+		const botID = String(api.getCurrentUserID());
+		const replySender = String(event.messageReply.senderID || event.messageReply.actorFbId || "");
+
+		if (replySender && replySender !== botID) {
+			return message.reply("You can only unsend messages sent by the bot.");
+		}
+
+		try {
+			await message.unsend(event.messageReply.messageID);
+		} catch (err) {
+			console.error("[UNSEND ERROR]:", err);
+			return message.reply("Could not unsend this message. It may have already been unsent.");
+		}
 	}
 };

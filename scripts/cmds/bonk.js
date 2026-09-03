@@ -21,112 +21,52 @@ module.exports = {
     }
   },
 
-  onStart: async function ({ api, event }) {
-    const cacheDir = path.join(__dirname, "cache");
-    await fs.ensureDir(cacheDir);
-
-    let filePath;
-
+  onStart: async function ({ api, event, message, args, usersData }) {
     try {
-      let targetID;
+      let one = String(event.senderID);
+      let two = null;
+      const mentions = event.mentions ? Object.keys(event.mentions) : [];
 
-      if (event.messageReply?.senderID) {
-        targetID = event.messageReply.senderID;
-      } else if (
-        event.mentions &&
-        Object.keys(event.mentions).length > 0
-      ) {
-        targetID = Object.keys(event.mentions)[0];
-      } else {
-        return api.sendMessage(
-          "👤 Please reply to or mention someone.",
-          event.threadID,
-          event.messageID
-        );
+      if (mentions.length >= 2) {
+        one = mentions[0];
+        two = mentions[1];
+      } else if (mentions.length === 1) {
+        two = mentions[0];
+        if (event.messageReply) {
+          const rUid = event.messageReply.senderID || event.messageReply.actorFbId;
+          if (rUid && rUid !== two) one = String(rUid);
+        }
+      } else if (event.messageReply) {
+        const rUid = event.messageReply.senderID || event.messageReply.actorFbId;
+        if (rUid) two = String(rUid);
+      } else if (args && args.length >= 2 && /^\d+$/.test(args[0]) && /^\d+$/.test(args[1])) {
+        one = args[0];
+        two = args[1];
+      } else if (args && args.length >= 1 && /^\d+$/.test(args[0])) {
+        two = args[0];
       }
 
-      const userInfo = await api
-        .getUserInfoV2(targetID)
-        .catch(() => null);
+      if (!two) {
+        return message.reply("👤 Please reply to or mention someone to bonk!");
+      }
 
-      const targetUser =
-        userInfo?.[targetID] ||
-        userInfo?.data?.[targetID] ||
-        userInfo?.data ||
-        {};
+      const targetName = await usersData.getName(two).catch(() => "Target");
+      const token = "6628568379%7Cc1e620fa708a1d5696fb991c1bde5662";
+      const avatar1 = `https://graph.facebook.com/${two}/picture?width=720&height=720&access_token=${token}`;
+      const avatar2 = `https://graph.facebook.com/${one}/picture?width=720&height=720&access_token=${token}`;
 
-      const targetName =
-        targetUser.name ||
-        `${targetUser.firstName || ""} ${targetUser.lastName || ""}`.trim() ||
-        "Target";
+      const apiUrl = `https://toshiro-api-editz6t9.vercel.app/api/canvas/bonk?avatar1=${encodeURIComponent(avatar1)}&avatar2=${encodeURIComponent(avatar2)}`;
 
-      const token =
-        "6628568379%7Cc1e620fa708a1d5696fb991c1bde5662";
+      const stream = await global.utils.getStreamFromURL(apiUrl, "bonk.png");
 
-      const avatar1 =
-        `https://graph.facebook.com/${targetID}/picture` +
-        `?width=720&height=720` +
-        `&access_token=${token}`;
-
-      const avatar2 =
-        `https://graph.facebook.com/${event.senderID}/picture` +
-        `?width=720&height=720` +
-        `&access_token=${token}`;
-
-      const apiUrl =
-        `https://toshiro-api-editz6t9.vercel.app/api/canvas/bonk` +
-        `?avatar1=${encodeURIComponent(avatar1)}` +
-        `&avatar2=${encodeURIComponent(avatar2)}`;
-
-      filePath = path.join(
-        cacheDir,
-        `bonk_${Date.now()}.png`
-      );
-
-      const response = await axios.get(apiUrl, {
-        responseType: "arraybuffer",
-        timeout: 60000,
-        maxRedirects: 5,
-        headers: {
-          "User-Agent": "Mozilla/5.0",
-          "Accept": "image/png,image/jpeg,image/*,*/*"
-        }
+      return message.reply({
+        body: `🔨 Bonk!\n🎯 ${targetName}`,
+        attachment: stream
       });
 
-      if (!response.data) {
-        throw new Error("Empty response from Bonk API.");
-      }
-
-      await fs.writeFile(
-        filePath,
-        Buffer.from(response.data)
-      );
-
-      await api.sendMessage(
-        {
-          body: `🔨 Bonk!\n🎯 ${targetName}`,
-          attachment: fs.createReadStream(filePath)
-        },
-        event.threadID,
-        event.messageID
-      );
-
     } catch (error) {
-      console.error(
-        "Bonk:",
-        error.response?.status || error.message
-      );
-
-      await api.sendMessage(
-        `❌ Failed to generate bonk canvas.\n\n${error.response?.status || error.message}`,
-        event.threadID,
-        event.messageID
-      );
-
-    } finally {
-      if (filePath && await fs.pathExists(filePath)) {
-        await fs.remove(filePath).catch(() => {});
-      }
+      console.error("Bonk error:", error.message);
+      return message.reply(`❌ Failed to generate bonk canvas: ${error.message}`);
     }
   }
 };

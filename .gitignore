@@ -13,3 +13,4 @@ fca/node_modules/
 TEST_LOGS.txt
 temp/*
 !temp/.gitkeep
+scratch/

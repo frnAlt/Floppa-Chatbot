@@ -21,94 +21,41 @@ module.exports = {
     }
   },
 
-  onStart: async function ({ api, event }) {
-    const cacheDir = path.join(__dirname, "cache");
-    await fs.ensureDir(cacheDir);
+  onStart: async function ({ api, event, message, args }) {
+    let imageUrl = "";
+    const token = "6628568379%7Cc1e620fa708a1d5696fb991c1bde5662";
 
-    let filePath;
+    if (event.messageReply?.attachments?.length > 0 && (event.messageReply.attachments[0].type === "photo" || event.messageReply.attachments[0].type === "image")) {
+      imageUrl = event.messageReply.attachments[0].url;
+    } else if (event.mentions && Object.keys(event.mentions).length > 0) {
+      const uid = Object.keys(event.mentions)[0];
+      imageUrl = `https://graph.facebook.com/${uid}/picture?width=720&height=720&access_token=${token}`;
+    } else if (event.messageReply) {
+      const uid = event.messageReply.senderID || event.messageReply.actorFbId;
+      if (uid) imageUrl = `https://graph.facebook.com/${uid}/picture?width=720&height=720&access_token=${token}`;
+    } else if (args[0] && /^\d+$/.test(args[0].trim())) {
+      imageUrl = `https://graph.facebook.com/${args[0].trim()}/picture?width=720&height=720&access_token=${token}`;
+    } else if (args[0] && args[0].startsWith("http")) {
+      imageUrl = args[0];
+    } else {
+      imageUrl = `https://graph.facebook.com/${event.senderID}/picture?width=720&height=720&access_token=${token}`;
+    }
+
+    if (api.setMessageReaction) {
+      api.setMessageReaction("🔥", event.messageID, () => {}, true);
+    }
 
     try {
-      let uid;
+      const apiUrl = `https://toshiro-api-editz6t9.vercel.app/api/canvas/burn?avatar=${encodeURIComponent(imageUrl)}`;
+      const stream = await global.utils.getStreamFromURL(apiUrl, "burn.png");
 
-      if (
-        event.mentions &&
-        Object.keys(event.mentions).length > 0
-      ) {
-        uid = Object.keys(event.mentions)[0];
-      } else if (event.messageReply?.senderID) {
-        uid = event.messageReply.senderID;
-      } else {
-        return api.sendMessage(
-          "👤 Please mention or reply to a user.",
-          event.threadID,
-          event.messageID
-        );
-      }
-
-      const token =
-        "6628568379%7Cc1e620fa708a1d5696fb991c1bde5662";
-
-      const avatar =
-        `https://graph.facebook.com/${uid}/picture` +
-        `?width=720&height=720` +
-        `&access_token=${token}`;
-
-      const apiUrl =
-        `https://toshiro-api-editz6t9.vercel.app/api/canvas/burn` +
-        `?avatar=${encodeURIComponent(avatar)}`;
-
-      filePath = path.join(
-        cacheDir,
-        `burn_${uid}_${Date.now()}.png`
-      );
-
-      const response = await axios.get(apiUrl, {
-        responseType: "arraybuffer",
-        timeout: 60000,
-        maxRedirects: 5,
-        headers: {
-          "User-Agent": "Mozilla/5.0",
-          "Accept": "image/png,image/jpeg,image/*,*/*"
-        }
+      return message.reply({
+        body: "🔥 *BURNING!*",
+        attachment: stream
       });
-
-      if (!response.data) {
-        throw new Error("Empty response from Burn API.");
-      }
-
-      await fs.writeFile(
-        filePath,
-        Buffer.from(response.data)
-      );
-
-      await api.sendMessage(
-        {
-          body: "🔥 Burn Canvas",
-          attachment: fs.createReadStream(filePath)
-        },
-        event.threadID,
-        event.messageID
-      );
-
     } catch (error) {
-      console.error(
-        "Burn:",
-        error.response?.status || error.message
-      );
-
-      await api.sendMessage(
-        `❌ Failed to generate burn canvas.\n\n${error.response?.status || error.message}`,
-        event.threadID,
-        event.messageID
-      );
-
-    } finally {
-      if (
-        filePath &&
-        await fs.pathExists(filePath)
-      ) {
-        await fs.remove(filePath).catch(() => {});
-      }
+      console.error("Burn error:", error.message);
+      return message.reply(`❌ Failed to generate burn effect: ${error.message}`);
     }
   }
 };

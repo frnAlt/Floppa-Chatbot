@@ -1,36 +1,64 @@
 const fs = require("fs-extra");
-let createCanvas = null, loadImage = null, registerFont = null; try { const _c = require("canvas"); createCanvas = _c.createCanvas; loadImage = _c.loadImage; registerFont = _c.registerFont; } catch (e) {}
+const path = require("path");
+const { Readable } = require("stream");
+
+let createCanvas = null, loadImage = null;
+try {
+  const _c = require("@napi-rs/canvas");
+  createCanvas = _c.createCanvas;
+  loadImage = _c.loadImage;
+} catch (_) {
+  try {
+    const _c = require("canvas");
+    createCanvas = _c.createCanvas;
+    loadImage = _c.loadImage;
+  } catch (__) {}
+}
 
 module.exports = {
   config: {
     name: "kiss",
-    version: "1.0.11",
+    version: "2.0.0",
     author: "frnAlt",
     countDown: 5,
     role: 0,
+    shortDescription: { en: "Kiss someone or two tagged users" },
     longDescription: "{p}kiss @mention or reply someone you want to kiss that person 😚",
     category: "funny",
-    guide: "{p}kiss and mention someone you want to kiss 🥴",
-	 usePrefix : true,//you can use this cmd to no prefix, just set the true to false.
-	 premium: false,
-    notes : " If you change the author then the command will not work and not usable"
+    guide: "{p}kiss @user or {p}kiss @user1 @user2 or reply to a message"
   },
 
-  onStart: async function ({ api, message, event, usersData }) {
-	const owner = module.exports.config;
-	const eAuth = "UmFraWIgQWRpbA==";
-	const dAuth = Buffer.from(eAuth, "base64").toString("utf8");
-		if(owner.author !== dAuth) return message.reply("you've changed the author name, please set it to default(Rakib Adil) otherwise this command will not work.🙂");
+  onStart: async function ({ api, message, event, args, usersData }) {
+    if (!createCanvas || !loadImage) {
+      return message.reply("Canvas rendering library is currently unavailable on this system.");
+    }
 
-    let one = event.senderID, two;
-    const mention = Object.keys(event.mentions);
-    if(mention.length > 0){
-        two = mention[0];
-    }else if(event.type === "message_reply"){
-        two = event.messageReply.senderID;
-    }else{
-        message.reply("please mention or reply someone message to kiss him/her 🌚")
-    };
+    let one = String(event.senderID);
+    let two = null;
+    const mentions = event.mentions ? Object.keys(event.mentions) : [];
+
+    if (mentions.length >= 2) {
+      one = mentions[0];
+      two = mentions[1];
+    } else if (mentions.length === 1) {
+      two = mentions[0];
+      if (event.messageReply) {
+        const rUid = event.messageReply.senderID || event.messageReply.actorFbId;
+        if (rUid && rUid !== two) one = String(rUid);
+      }
+    } else if (event.messageReply) {
+      const rUid = event.messageReply.senderID || event.messageReply.actorFbId;
+      if (rUid) two = String(rUid);
+    } else if (args && args.length >= 2 && /^\d+$/.test(args[0]) && /^\d+$/.test(args[1])) {
+      one = args[0];
+      two = args[1];
+    } else if (args && args.length >= 1 && /^\d+$/.test(args[0])) {
+      two = args[0];
+    }
+
+    if (!two) {
+      return message.reply("Please @mention 1 or 2 users, or reply to someone to kiss them! 😚");
+    }
 
     try {
       const avatarURL1 = await usersData.getAvatarUrl(one);
@@ -61,18 +89,16 @@ module.exports = {
       ctx.drawImage(avatar2, 90, 280, 170, 170);
       ctx.restore();
 
-      const outputPath = `${__dirname}/tmp/kiss_image.png`;
       const buffer = canvas.toBuffer("image/png");
+      const stream = Readable.from(buffer);
 
-      fs.writeFileSync(outputPath, buffer);
-
-      message.reply({
+      return message.reply({
         body: "Ummmmaaaaahhh! 😽😘",
-        attachment: fs.createReadStream(outputPath)
-      }, () => fs.unlinkSync(outputPath));
+        attachment: stream
+      });
     } catch (error) {
-      console.error(error.message);
-      message.reply("an error occurred, please try again later.🐸")
+      console.error("[KISS ERROR]:", error);
+      return message.reply("An error occurred while generating the kiss image. Please try again.");
     }
   }
 };
