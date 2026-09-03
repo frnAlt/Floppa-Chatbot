@@ -193,7 +193,9 @@ module.exports = async function (databaseType, threadModel, api, fakeGraphql) {
                                 }
 				if (!threadInfo) {
 					try {
-						threadInfo = await api.getThreadInfo(threadID);
+						const fetchPromise = api.getThreadInfo(threadID);
+						const timeoutPromise = new Promise((_, rej) => setTimeout(() => rej(new Error("Timeout")), 2500));
+						threadInfo = await Promise.race([fetchPromise, timeoutPromise]);
 					} catch (err) {
 						threadInfo = {
 							threadName: "Messenger Chat",

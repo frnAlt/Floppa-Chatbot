@@ -22,6 +22,9 @@ function getType(obj) {
         return Object.prototype.toString.call(obj).slice(8, -1);
 }
 
+let _cachedSpamBannedThreads = null;
+let _lastSpamBannedCheck = 0;
+
 async function checkSpamBannedThread(threadID, globalData) {
         // Use the new spam tracker first (in-memory, fast)
         if (spamTracker.isBanned(threadID)) {
@@ -32,22 +35,29 @@ async function checkSpamBannedThread(threadID, globalData) {
                 return false;
         }
 
-        // Fallback to database check
-        try {
-                const spamBannedThreads = (await globalData.get("spamBannedThreads", "data", {})) || {};
-                if (spamBannedThreads[threadID]) {
-                        if (spamBannedThreads[threadID].expireTime > Date.now()) {
-                                // Sync to memory tracker
-                                spamTracker.banThread(threadID, spamBannedThreads[threadID].reason, spamBannedThreads[threadID].expireTime - Date.now());
-                                return true;
-                        } else {
-                                delete spamBannedThreads[threadID];
-                                if (typeof globalData.set === "function") {
-                                        await globalData.set("spamBannedThreads", spamBannedThreads, "data");
-                                }
+        const now = Date.now();
+        if (!_cachedSpamBannedThreads || now - _lastSpamBannedCheck > 30000) {
+                try {
+                        _cachedSpamBannedThreads = (await globalData.get("spamBannedThreads", "data", {})) || {};
+                        _lastSpamBannedCheck = now;
+                } catch (_) {
+                        _cachedSpamBannedThreads = {};
+                }
+        }
+
+        const spamBannedThreads = _cachedSpamBannedThreads;
+        if (spamBannedThreads[threadID]) {
+                if (spamBannedThreads[threadID].expireTime > now) {
+                        // Sync to memory tracker
+                        spamTracker.banThread(threadID, spamBannedThreads[threadID].reason, spamBannedThreads[threadID].expireTime - now);
+                        return true;
+                } else {
+                        delete spamBannedThreads[threadID];
+                        if (typeof globalData.set === "function") {
+                                globalData.set("spamBannedThreads", spamBannedThreads, "data").catch(() => {});
                         }
                 }
-        } catch (_) {}
+        }
         return false;
 }
 
@@ -330,9 +340,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                 && !global.db.receivedTheFirstMessage[threadID]
                         ) {
                                 global.db.receivedTheFirstMessage[threadID] = true;
-                                try {
-                                        await threadsData.refreshInfo(threadID);
-                                } catch (_) {}
+                                threadsData.refreshInfo(threadID).catch(() => {});
                         }
                 }
 

@@ -38,7 +38,11 @@ module.exports = (api, threadModel, userModel, dashBoardModel, globalModel, user
 
                         const message = createFuncMessage(api, event);
 
-                        await handlerCheckDB(usersData, threadsData, event);
+                        // Run DB sanity check in background to prevent blocking command dispatch
+                        handlerCheckDB(usersData, threadsData, event).catch(err => {
+                                log.err("HANDLER", "Background DB check error:", err.message || err);
+                        });
+
                         const handlerChat = await handlerEvents(event, message);
                         if (!handlerChat)
                                 return;

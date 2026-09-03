@@ -143,8 +143,8 @@
     "randomUserAgent": false,
     "persona": "desktop",
     "stealthMode": true,
-    "maxConcurrentRequests": 5,
-    "maxRequestsPerMinute": 50,
+    "maxConcurrentRequests": 10,
+    "maxRequestsPerMinute": 150,
     "requestCooldownMs": 60000,
     "errorCacheTtlMs": 300000
   }

@@ -226,7 +226,9 @@ module.exports = async function (databaseType, userModel, api, fakeGraphql) {
                                 }
 				if (!userInfo) {
 					try {
-						const fetched = await api.getUserInfo(userID);
+						const fetchPromise = api.getUserInfo(userID);
+						const timeoutPromise = new Promise((_, rej) => setTimeout(() => rej(new Error("Timeout")), 2500));
+						const fetched = await Promise.race([fetchPromise, timeoutPromise]);
 						userInfo = fetched?.[userID] || { name: `Facebook User ${userID}`, gender: "UNKNOWN" };
 					} catch (err) {
 						userInfo = { name: `Facebook User ${userID}`, gender: "UNKNOWN" };
