@@ -140,7 +140,7 @@
     "forceLogin": true,
     "simulateTyping": false,
     "randomUserAgent": false,
-    "persona": "desktop",
+    "persona": "mobile",
     "stealthMode": true,
     "maxConcurrentRequests": 5,
     "maxRequestsPerMinute": 50,
