@@ -135,7 +135,7 @@
     "listenTyping": true,
     "updatePresence": false,
     "autoMarkDelivery": false,
-    "autoMarkRead": true,
+    "autoMarkRead": false,
     "autoReconnect": true,
     "forceLogin": true,
     "simulateTyping": false,
