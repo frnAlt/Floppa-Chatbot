@@ -237,12 +237,19 @@ module.exports = async function (databaseType, userModel, api, fakeGraphql) {
                                                 message: `The first argument (userID) must be a number, not ${typeof userID}`
                                         });
                                 }
-                                userInfo = userInfo || (await api.getUserInfo(userID))[userID];
-                                let userData = {
-                                        userID,
-                                        name: userInfo.name,
-                                        gender: userInfo.gender,
-                                        vanity: userInfo.vanity,
+				if (!userInfo) {
+					try {
+						const fetched = await api.getUserInfo(userID);
+						userInfo = fetched?.[userID] || { name: `Facebook User ${userID}`, gender: "UNKNOWN" };
+					} catch (err) {
+						userInfo = { name: `Facebook User ${userID}`, gender: "UNKNOWN" };
+					}
+				}
+				let userData = {
+					userID,
+					name: userInfo.name || `Facebook User ${userID}`,
+					gender: userInfo.gender || "UNKNOWN",
+					vanity: userInfo.vanity || null,
                                         exp: 0,
                                         money: 0,
                                         banned: {},

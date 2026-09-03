@@ -77,4 +77,4 @@ jobs:
 
       - name: Run Full Diagnostic Test Suite
         if: ${{ inputs.run_full_diagnostics != false }}
-        run: node scratch/test_all_commands.js
+        run: node scripts/test_cli_runner.js

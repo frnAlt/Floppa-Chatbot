@@ -191,26 +191,46 @@ module.exports = async function (databaseType, threadModel, api, fakeGraphql) {
                                                 message: `The first argument (threadID) must be a number, not a ${typeof threadID}`
                                         });
                                 }
-                                threadInfo = threadInfo || await api.getThreadInfo(threadID);
-                                const { threadName, userInfo, adminIDs } = threadInfo;
-                                const newAdminsIDs = adminIDs.reduce(function (_, b) {
-                                        _.push(b.id);
-                                        return _;
-                                }, []);
+				if (!threadInfo) {
+					try {
+						threadInfo = await api.getThreadInfo(threadID);
+					} catch (err) {
+						threadInfo = {
+							threadName: "Messenger Chat",
+							userInfo: [{ id: threadID, name: "User", gender: "UNKNOWN" }],
+							adminIDs: [],
+							nicknames: {},
+							emoji: "👍",
+							approvalMode: false,
+							threadType: 1
+						};
+					}
+				}
+				const threadName = threadInfo.threadName || "Messenger Chat";
+				const userInfo = Array.isArray(threadInfo.userInfo) ? threadInfo.userInfo : [];
+				const adminIDs = Array.isArray(threadInfo.adminIDs) ? threadInfo.adminIDs : [];
+				const nicknames = threadInfo.nicknames || {};
+				const newAdminsIDs = adminIDs.reduce(function (_, b) {
+					if (b && b.id) _.push(b.id);
+					else if (typeof b === "string") _.push(b);
+					return _;
+				}, []);
 
-                                const newMembers = userInfo.reduce(function (arr, user) {
-                                        const userID = user.id;
-                                        arr.push({
-                                                userID,
-                                                name: user.name,
-                                                gender: user.gender,
-                                                nickname: threadInfo.nicknames[userID] || null,
-                                                inGroup: true,
-                                                count: 0,
-                                                permissionConfigDashboard: false
-                                        });
-                                        return arr;
-                                }, []);
+				const newMembers = userInfo.reduce(function (arr, user) {
+					if (user && user.id) {
+						const userID = user.id;
+						arr.push({
+							userID,
+							name: user.name || "Facebook User",
+							gender: user.gender || "UNKNOWN",
+							nickname: nicknames[userID] || null,
+							inGroup: true,
+							count: 0,
+							permissionConfigDashboard: false
+						});
+					}
+					return arr;
+				}, []);
 
                                 let threadData = {
                                         threadID,

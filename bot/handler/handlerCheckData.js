@@ -10,11 +10,18 @@ module.exports = async function (usersData, threadsData, event) {
         // ———————————— CHECK THREAD DATA ———————————— //
         if (threadID) {
                 try {
-                        // createThreadDataError is a Map<threadID, timestamp> — expires after 5 min
-                        const errTime = global.temp.createThreadDataError.get(threadID);
-                        if (errTime) {
-                                if (Date.now() - errTime < 5 * 60 * 1000) return;
-                                global.temp.createThreadDataError.delete(threadID); // expired, retry allowed
+                        if (!global.temp) global.temp = {};
+                        if (!global.temp.createThreadDataError) global.temp.createThreadDataError = new Map();
+
+                        const errMap = global.temp.createThreadDataError;
+                        if (typeof errMap.get === "function") {
+                                const errTime = errMap.get(threadID);
+                                if (errTime) {
+                                        if (Date.now() - errTime < 5 * 60 * 1000) return;
+                                        errMap.delete(threadID); // expired, retry allowed
+                                }
+                        } else if (typeof errMap.has === "function" && errMap.has(threadID)) {
+                                return;
                         }
 
                         const findInCreatingThreadData = creatingThreadData.find(t => t.threadID == threadID);
@@ -31,7 +38,11 @@ module.exports = async function (usersData, threadsData, event) {
                 }
                 catch (err) {
                         if (err.name != "DATA_ALREADY_EXISTS") {
-                                global.temp.createThreadDataError.set(threadID, Date.now());
+                                if (typeof global.temp.createThreadDataError.set === "function") {
+                                        global.temp.createThreadDataError.set(threadID, Date.now());
+                                } else if (typeof global.temp.createThreadDataError.add === "function") {
+                                        global.temp.createThreadDataError.add(threadID);
+                                }
                                 log.err("DATABASE", getText("handlerCheckData", "cantCreateThread", threadID), err);
                         }
                 }

@@ -48,6 +48,15 @@ module.exports = {
 		}
 		console.log(`${getCurrentTime()} ${colors.hex("#eb6734", `${characters} ${prefix}:`)}`, message);
 	},
+	debug: function (prefix, message, ...extra) {
+		const isDebug = process.env.DEBUG || process.argv.includes('--debug') || global.GoatBot?.config?.debug;
+		if (!isDebug) return;
+		if (message === undefined) {
+			message = prefix;
+			prefix = "DEBUG";
+		}
+		console.log(`${getCurrentTime()} ${colors.magentaBright(`${characters} [DEBUG] ${prefix}:`)}`, message, ...extra);
+	},
 	dev: (...args) => {
 		if (["development", "production"].includes(process.env.NODE_ENV) == false)
 			return;

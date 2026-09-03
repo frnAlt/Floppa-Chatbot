@@ -28,18 +28,26 @@ async function checkSpamBannedThread(threadID, globalData) {
                 return true;
         }
 
-        // Fallback to database check
-        const spamBannedThreads = await globalData.get("spamBannedThreads", "data", {});
-        if (spamBannedThreads[threadID]) {
-                if (spamBannedThreads[threadID].expireTime > Date.now()) {
-                        // Sync to memory tracker
-                        spamTracker.banThread(threadID, spamBannedThreads[threadID].reason, spamBannedThreads[threadID].expireTime - Date.now());
-                        return true;
-                } else {
-                        delete spamBannedThreads[threadID];
-                        await globalData.set("spamBannedThreads", spamBannedThreads, "data");
-                }
+        if (!globalData || typeof globalData.get !== "function") {
+                return false;
         }
+
+        // Fallback to database check
+        try {
+                const spamBannedThreads = (await globalData.get("spamBannedThreads", "data", {})) || {};
+                if (spamBannedThreads[threadID]) {
+                        if (spamBannedThreads[threadID].expireTime > Date.now()) {
+                                // Sync to memory tracker
+                                spamTracker.banThread(threadID, spamBannedThreads[threadID].reason, spamBannedThreads[threadID].expireTime - Date.now());
+                                return true;
+                        } else {
+                                delete spamBannedThreads[threadID];
+                                if (typeof globalData.set === "function") {
+                                        await globalData.set("spamBannedThreads", spamBannedThreads, "data");
+                                }
+                        }
+                }
+        } catch (_) {}
         return false;
 }
 
@@ -60,7 +68,12 @@ async function trackCommandSpam(threadID, threadName, globalData, message) {
         const result = spamTracker.trackCommand(threadID, message.body?.split(' ')[0] || 'unknown');
 
         if (result.shouldBan) {
-                const spamBannedThreads = await globalData.get("spamBannedThreads", "data", {});
+                let spamBannedThreads = {};
+                if (globalData && typeof globalData.get === "function") {
+                        try {
+                                spamBannedThreads = (await globalData.get("spamBannedThreads", "data", {})) || {};
+                        } catch (_) {}
+                }
                 const banDuration = spamConfig.banDuration * 60 * 60 * 1000;
                 const now = Date.now();
 
@@ -71,7 +84,11 @@ async function trackCommandSpam(threadID, threadName, globalData, message) {
                         reason: "Command spam flood detected"
                 };
 
-                await globalData.set("spamBannedThreads", spamBannedThreads, "data");
+                if (globalData && typeof globalData.set === "function") {
+                        try {
+                                await globalData.set("spamBannedThreads", spamBannedThreads, "data");
+                        } catch (_) {}
+                }
 
                 const hours = spamConfig.banDuration;
                 message.reply(`⛔ | This group has been temporarily banned for ${hours} hours due to command spam.\n\nPlease wait or contact an admin to unban.`);
@@ -193,11 +210,12 @@ function getRoleConfig(utils, command, isGroup, threadData, commandName) {
 
 function isBannedOrOnlyAdmin(userData, threadData, senderID, threadID, isGroup, commandName, message, lang) {
         const config = global.GoatBot.config;
-        const { adminBot, hideNotiMessage } = config;
+        const adminBot = config.adminBot || [];
+        const hideNotiMessage = config.hideNotiMessage || {};
 
         // check if user banned
-        const infoBannedUser = userData.banned;
-        if (infoBannedUser.status == true) {
+        const infoBannedUser = userData?.banned;
+        if (infoBannedUser && infoBannedUser.status == true) {
                 const { reason, date } = infoBannedUser;
                 if (hideNotiMessage.userBanned == false)
                         message.reply(getText("userBanned", reason, date, senderID, lang));
@@ -206,9 +224,9 @@ function isBannedOrOnlyAdmin(userData, threadData, senderID, threadID, isGroup, 
 
         // check if only admin bot
         if (
-                config.adminOnly.enable == true
+                config.adminOnly?.enable == true
                 && !adminBot.includes(senderID)
-                && !config.adminOnly.ignoreCommand.includes(commandName)
+                && !(config.adminOnly?.ignoreCommand || []).includes(commandName)
         ) {
                 if (hideNotiMessage.adminOnly == false)
                         message.reply(getText("onlyAdminBot", null, null, null, lang));
@@ -216,21 +234,21 @@ function isBannedOrOnlyAdmin(userData, threadData, senderID, threadID, isGroup, 
         }
 
         // ==========    Check Thread    ========== //
-        if (isGroup == true) {
+        if (isGroup == true && threadData) {
                 if (
-                        threadData.data.onlyAdminBox === true
-                        && !threadData.adminIDs.includes(senderID)
-                        && !(threadData.data.ignoreCommanToOnlyAdminBox || []).includes(commandName)
+                        threadData.data?.onlyAdminBox === true
+                        && Array.isArray(threadData.adminIDs) && !threadData.adminIDs.includes(senderID)
+                        && !(threadData.data?.ignoreCommanToOnlyAdminBox || []).includes(commandName)
                 ) {
                         // check if only admin box
-                        if (!threadData.data.hideNotiMessageOnlyAdminBox)
+                        if (!threadData.data?.hideNotiMessageOnlyAdminBox)
                                 message.reply(getText("onlyAdminBox", null, null, null, lang));
                         return true;
                 }
 
                 // check if thread banned
                 const infoBannedThread = threadData.banned;
-                if (infoBannedThread.status == true) {
+                if (infoBannedThread && infoBannedThread.status == true) {
                         const { reason, date } = infoBannedThread;
                         if (hideNotiMessage.threadBanned == false)
                                 message.reply(getText("threadBanned", reason, date, threadID, lang));
@@ -280,13 +298,28 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                 let threadData = global.db.allThreadData.find(t => t.threadID == threadID);
                 let userData = global.db.allUserData.find(u => u.userID == senderID);
 
-                if (!userData && !isNaN(senderID))
-                        userData = await usersData.create(senderID);
+                if (!userData && !isNaN(senderID)) {
+                        try {
+                                userData = await usersData.create(senderID);
+                        } catch (err) {
+                                userData = { userID: String(senderID), name: `User ${senderID}`, money: 0, exp: 0, data: {} };
+                        }
+                }
 
                 if (!threadData && !isNaN(threadID)) {
-                        if (global.temp.createThreadDataError.has(threadID))
-                                return;
-                        threadData = await threadsData.create(threadID);
+                        try {
+                                threadData = await threadsData.create(threadID);
+                        } catch (err) {
+                                threadData = {
+                                        threadID: String(threadID),
+                                        threadName: isGroup ? "Group Chat" : "Direct Message",
+                                        members: [{ userID: String(senderID), inGroup: true, permissionConfigDashboard: false }],
+                                        adminIDs: [],
+                                        settings: {},
+                                        data: { prefix: config.prefix || "!" },
+                                        isGroup: Boolean(isGroup)
+                                };
+                        }
                         global.db.receivedTheFirstMessage[threadID] = true;
                 }
                 else {
@@ -295,7 +328,9 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                 && !global.db.receivedTheFirstMessage[threadID]
                         ) {
                                 global.db.receivedTheFirstMessage[threadID] = true;
-                                await threadsData.refreshInfo(threadID);
+                                try {
+                                        await threadsData.refreshInfo(threadID);
+                                } catch (_) {}
                         }
                 }
 
@@ -383,8 +418,11 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                 }
                         }
                         // ————————————— SET COMMAND NAME ————————————— //
-                        if (command)
-                                commandName = command.config.name;
+                        if (command) {
+                                if (!command.config && command.meta) command.config = command.meta;
+                                if (!command.onStart && command.entry) command.onStart = command.entry;
+                                commandName = command.config?.name || command.meta?.name || commandName;
+                        }
                         // ——————— FUNCTION REMOVE COMMAND NAME ———————— //
                         function removeCommandNameFromBody(body_, prefix_, commandName_) {
                                 if (arguments.length) {
@@ -570,7 +608,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                         }
                                 }
                                 
-                                log.info("CALL COMMAND", `${commandName} | ${userData.name} | ${senderID} | ${threadID} | ${args.join(" ")}`);
+				log.info("CALL COMMAND", `${commandName} | ${userData?.name || "User"} | ${senderID} | ${threadID} | ${args.join(" ")} (${Date.now() - dateNow}ms)`);
                         }
                         catch (err) {
                                 log.err("CALL COMMAND", `An error occurred when calling the command ${commandName}`, err);
@@ -624,7 +662,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                                                 return;
                                                         try {
                                                                 await handler();
-                                                                log.info("onChat", `${commandName} | ${userData.name} | ${senderID} | ${threadID} | ${args.join(" ")}`);
+                                                                log.info("onChat", `${commandName} | ${userData?.name || "User"} | ${senderID} | ${threadID} | ${args.join(" ")}`);
                                                         }
                                                         catch (err) {
                                                                 await message.reply(utils.getText({ lang: langCode, head: "handlerEvents" }, "errorOccurred2", time, commandName, removeHomeDir(err.stack ? err.stack.split("\n").slice(0, 5).join("\n") : JSON.stringify(err, null, 2))));
@@ -679,7 +717,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                                 if (typeof handler == "function") {
                                                         try {
                                                                 await handler();
-                                                                log.info("onAnyEvent", `${commandName} | ${senderID} | ${userData.name} | ${threadID}`);
+                                                                log.info("onAnyEvent", `${commandName} | ${senderID} | ${userData?.name || "User"} | ${threadID}`);
                                                         }
                                                         catch (err) {
                                                                 message.reply(utils.getText({ lang: langCode, head: "handlerEvents" }, "errorOccurred7", time, commandName, removeHomeDir(err.stack ? err.stack.split("\n").slice(0, 5).join("\n") : JSON.stringify(err, null, 2))));
@@ -736,7 +774,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                                                                 return;
                                                                         try {
                                                                                 await handler();
-                                                                                log.info("onFirstChat", `${commandName} | ${userData.name} | ${senderID} | ${threadID} | ${args.join(" ")}`);
+                                                                                log.info("onFirstChat", `${commandName} | ${userData?.name || "User"} | ${senderID} | ${threadID} | ${args.join(" ")}`);
                                                                         }
                                                                         catch (err) {
                                                                                 await message.reply(utils.getText({ lang: langCode, head: "handlerEvents" }, "errorOccurred2", time, commandName, removeHomeDir(err.stack ? err.stack.split("\n").slice(0, 5).join("\n") : JSON.stringify(err, null, 2))));
@@ -812,7 +850,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                         commandName,
                                         getLang: getText2
                                 });
-                                log.info("onReply", `${commandName} | ${userData.name} | ${senderID} | ${threadID} | ${args.join(" ")}`);
+                                log.info("onReply", `${commandName} | ${userData?.name || "User"} | ${senderID} | ${threadID} | ${args.join(" ")}`);
                         }
                         catch (err) {
                                 log.err("onReply", `An error occurred when calling the command onReply ${commandName}`, err);
@@ -894,7 +932,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                         commandName,
                                         getLang: getText2
                                 });
-                                log.info("onReaction", `${commandName} | ${userData.name} | ${senderID} | ${threadID} | ${event.reaction}`);
+                                log.info("onReaction", `${commandName} | ${userData?.name || "User"} | ${senderID} | ${threadID} | ${event.reaction}`);
                         }
                         catch (err) {
                                 log.err("onReaction", `An error occurred when calling the command onReaction ${commandName}`, err);
@@ -926,7 +964,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                         });
                                         if (typeof handler == "function") {
                                                 await handler();
-                                                log.info("EVENT COMMAND", `Event: ${commandName} | ${author} | ${userData.name} | ${threadID}`);
+                                                log.info("EVENT COMMAND", `Event: ${commandName} | ${author} | ${userData?.name || "User"} | ${threadID}`);
                                         }
                                 }
                                 catch (err) {
@@ -976,7 +1014,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                                 if (typeof handler == "function") {
                                                         try {
                                                                 await handler();
-                                                                log.info("onEvent", `${commandName} | ${author} | ${userData.name} | ${threadID}`);
+                                                                log.info("onEvent", `${commandName} | ${author} | ${userData?.name || "User"} | ${threadID}`);
                                                         }
                                                         catch (err) {
                                                                 message.reply(utils.getText({ lang: langCode, head: "handlerEvents" }, "errorOccurred6", time, commandName, removeHomeDir(err.stack ? err.stack.split("\n").slice(0, 5).join("\n") : JSON.stringify(err, null, 2))));

@@ -232,8 +232,8 @@ function getPrefix(threadID) {
         let prefix = global.GoatBot.config.prefix;
         const threadData = global.db.allThreadData.find(t => t.threadID == threadID);
         if (threadData)
-                prefix = threadData.data.prefix || prefix;
-        return prefix;
+                prefix = threadData?.data?.prefix || prefix;
+        return prefix || global.GoatBot?.config?.prefix || "!";
 }
 
 function getTime(timestamps, format) {
@@ -242,7 +242,14 @@ function getTime(timestamps, format) {
                 format = timestamps;
                 timestamps = undefined;
         }
-        return moment(timestamps).tz(config.timeZone).format(format);
+        const tz = global.GoatBot?.config?.timeZone || global.FloppaBot?.config?.timeZone || config.timeZone || "Asia/Dhaka";
+        try {
+                const m = moment(timestamps).tz(tz);
+                if (m && typeof m.format === 'function') {
+                        return m.format(format);
+                }
+        } catch (_) {}
+        return moment(timestamps).format(format);
 }
 
 /**
