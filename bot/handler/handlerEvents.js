@@ -387,7 +387,9 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 
                         const noPrefixEnabled = config.noPrefix === true;
                         const userCanSkipPrefix = role === 2 || role === 4 || noPrefixEnabled;
-                        const hasPrefix = body.startsWith(prefix);
+                        const validPrefixes = Array.from(new Set([prefix, "~", "!"].filter(Boolean)));
+                        const matchedPrefix = validPrefixes.find(p => body.startsWith(p));
+                        const hasPrefix = Boolean(matchedPrefix);
                         const hasNoPrefix = userCanSkipPrefix && !hasPrefix;
 
                         if (!hasPrefix && !hasNoPrefix) {
@@ -406,7 +408,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         }
                         const dateNow = Date.now();
                         const args = hasPrefix
-                                ? body.slice(prefix.length).trim().split(/ +/)
+                                ? body.slice(matchedPrefix.length).trim().split(/ +/)
                                 : body.trim().split(/ +/);
                         // ————————————  CHECK HAS COMMAND ——————————— //
                         let commandName = args.shift().toLowerCase();

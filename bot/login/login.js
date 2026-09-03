@@ -549,7 +549,7 @@ async function getAppStateToLogin(loginWithEmail) {
                                                                 value: vParts.join("=").trim().replace(/^"(.*)"$/, "$1"),
                                                                 domain: "facebook.com",
                                                                 path: "/",
-                                                                hostOnly: true,
+                                                                hostOnly: false,
                                                                 creation: new Date().toISOString(),
                                                                 lastAccessed: new Date().toISOString()
                                                         };
