@@ -287,8 +287,16 @@ module.exports = async function (databaseType, threadModel, api, fakeGraphql) {
                                                 }));
                                         }
                                         const threadInfo = await get_(threadID);
-                                        newThreadInfo = newThreadInfo || await api.getThreadInfo(threadID);
-                                        const { userInfo, adminIDs, nicknames } = newThreadInfo;
+                                        if (!threadInfo) return resolve(null);
+                                        try {
+                                                newThreadInfo = newThreadInfo || await api.getThreadInfo(threadID);
+                                        } catch (_) {
+                                                newThreadInfo = null;
+                                        }
+                                        if (!newThreadInfo || !Array.isArray(newThreadInfo.userInfo)) {
+                                                return resolve(threadInfo);
+                                        }
+                                        const { userInfo = [], adminIDs = [], nicknames = {} } = newThreadInfo;
                                         let oldMembers = threadInfo.members;
                                         const newMembers = [];
                                         for (const user of userInfo) {

@@ -933,15 +933,7 @@ async function startBot(loginWithEmail) {
                                 dataGban = {};
                         }
                         // ———————————————— NOTIFICATIONS ———————————————— //
-                        let notification;
-                        try {
-                                const getNoti = await axios.get("https://raw.githubusercontent.com/ntkhang03/Goat-Bot-V2-Gban/master/notification.txt", { timeout: 10000 });
-                                notification = getNoti.data;
-                        }
-                        catch (err) {
-                                log.warn("NOTIFICATION", "Can't get notifications data — skipping (network issue)");
-                                notification = "";
-                        }
+                        let notification = "Floppa-Chatbot Engine is operating at maximum performance. Ready to receive commands.";
                         if (global.GoatBot.config.autoRefreshFbstate == true) {
                                 changeFbStateByCode = true;
                                 try {
@@ -1067,10 +1059,8 @@ async function startBot(loginWithEmail) {
                         log.master("NOTIFICATION", (notification || "").trim());
                         log.master("SUCCESS", getText('login', 'runBot'));
                         log.master("LOAD TIME", `${convertTime(Date.now() - global.GoatBot.startTime)}`);
-                        logColor("#f5ab00", createLine("COPYRIGHT"));
-                        // —————————————————— COPYRIGHT INFO —————————————————— //
-                        // console.log(`\x1b[1m\x1b[33mCOPYRIGHT:\x1b[0m\x1b[1m\x1b[37m \x1b[0m\x1b[1m\x1b[36mProject GoatBot v2 created by ntkhang03 (https://github.com/ntkhang03), please do not sell this source code or claim it as your own. Thank you!\x1b[0m`);
-                        console.log(`\x1b[1m\x1b[33m${("COPYRIGHT:")}\x1b[0m\x1b[1m\x1b[37m \x1b[0m\x1b[1m\x1b[36m${("Project GoatBot v2 created by ntkhang03 (https://github.com/ntkhang03), please do not sell this source code or claim it as your own. Thank you!")}\x1b[0m`);
+                        logColor("#f5ab00", createLine("FLOPPA CHATBOT"));
+                        console.log(`\x1b[1m\x1b[33m${("FLOPPA-CHATBOT:")}\x1b[0m\x1b[1m\x1b[37m \x1b[0m\x1b[1m\x1b[36m${("Floppa-Chatbot v1.5.35 - Intelligent Facebook Messenger Bot Engine | Developer: Gtajisan (Farhan Muh Tasim) | Maintained by frnAlt")}\x1b[0m`);
                         logColor("#f5ab00", character);
                         global.GoatBot.config.adminBot = adminBot;
                         writeFileSync(global.client.dirConfig, JSON.stringify(global.GoatBot.config, null, 2));
