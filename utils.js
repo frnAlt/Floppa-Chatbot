@@ -401,7 +401,10 @@ function message(api, event) {
 
                                 const cb = typeof callback === 'function' ? callback : undefined;
                                 const replyId = event.messageID || undefined;
-                                return await api.sendMessage(form, event.threadID, cb, replyId, event.isGroup);
+                                log.info("REPLY", `Sending reply to thread ${event.threadID}...`);
+                                const res = await api.sendMessage(form, event.threadID, cb, replyId, event.isGroup);
+                                log.info("REPLY", `Reply sent successfully to thread ${event.threadID} (ID: ${res?.messageID || 'ok'})`);
+                                return res;
                         }
                         catch (err) {
                                 if (JSON.stringify(err).includes('spam')) {

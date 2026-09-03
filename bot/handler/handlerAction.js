@@ -50,6 +50,7 @@ module.exports = (api, threadModel, userModel, dashBoardModel, globalModel, user
                                 case "message_reply":
                                 case "message_unsend":
                                         if (event.body || event.attachments?.length > 0) {
+                                                log.info("MESSAGE", `${event.type.toUpperCase()}: [${event.threadID}] ${event.senderID} -> "${event.body || '[Attachment]'}"`);
                                                 if (!global.chatLogs) global.chatLogs = [];
                                                 global.chatLogs.unshift({
                                                         id: event.messageID || Date.now(),

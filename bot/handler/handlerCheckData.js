@@ -30,6 +30,7 @@ module.exports = async function (usersData, threadsData, event) {
                                         return;
 
                                 const threadData = await threadsData.create(threadID);
+                                if (global.db && global.db.receivedTheFirstMessage) global.db.receivedTheFirstMessage[threadID] = true;
                                 log.info("DATABASE", `New Thread: ${threadID} | ${threadData.threadName} | ${config.database.type}`);
                         }
                         else {
