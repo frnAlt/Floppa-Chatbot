@@ -235,7 +235,24 @@ function checkAndTrimString(string) {
 }
 
 function filterKeysAppState(appState) {
-        return appState.filter(item => ["c_user", "xs", "datr", "fr", "sb", "i_user"].includes(item.key));
+        if (!Array.isArray(appState)) return [];
+        return appState
+                .map(item => {
+                        if (!item) return null;
+                        const key = item.key || item.name;
+                        const value = item.value !== undefined ? item.value : "";
+                        if (!key || value === "") return null;
+                        return {
+                                key: String(key).trim(),
+                                value: String(value).trim(),
+                                domain: item.domain ? String(item.domain).replace(/^\./, "") : "facebook.com",
+                                path: item.path || "/",
+                                hostOnly: item.hostOnly ?? false,
+                                creation: item.creation || new Date().toISOString(),
+                                lastAccessed: item.lastAccessed || new Date().toISOString()
+                        };
+                })
+                .filter(item => item && item.key && item.value && item.key !== "x-referer");
 }
 
 global.responseUptimeCurrent = responseUptimeSuccess;
@@ -428,27 +445,28 @@ function isNetScapeCookie(cookie) {
 }
 
 function netScapeToCookies(cookieData) {
+        if (typeof parseUniversalCookies === "function") {
+                const parsed = parseUniversalCookies(cookieData);
+                if (parsed && parsed.length > 0) return parsed;
+        }
         const cookies = [];
-        const lines = cookieData.split('\n');
-        lines.forEach((line) => {
-                if (line.trim().startsWith('#')) {
-                        return;
-                }
-                const fields = line.split('\t').map((field) => field.trim()).filter((field) => field.length > 0);
-                if (fields.length < 7) {
-                        return;
-                }
-                const cookie = {
-                        key: fields[5],
-                        value: fields[6],
-                        domain: fields[0],
-                        path: fields[2],
-                        hostOnly: fields[1] === 'TRUE',
-                        creation: new Date(fields[4] * 1000).toISOString(),
+        const lines = cookieData.split(/\r?\n/);
+        for (const line of lines) {
+                let trimmed = line.trim();
+                if (!trimmed || (trimmed.startsWith('#') && !trimmed.startsWith('#HttpOnly_'))) continue;
+                trimmed = trimmed.replace(/^#HttpOnly_/i, '').trim();
+                const fields = trimmed.split(/\t+|\s{2,}/);
+                if (fields.length < 7) continue;
+                cookies.push({
+                        key: fields[5].trim(),
+                        value: fields[6].trim(),
+                        domain: fields[0].trim().replace(/^\./, ""),
+                        path: fields[2].trim() || "/",
+                        hostOnly: fields[1].toUpperCase() === 'TRUE',
+                        creation: new Date(Number(fields[4]) > 0 ? Number(fields[4]) * 1000 : Date.now()).toISOString(),
                         lastAccessed: new Date().toISOString()
-                };
-                cookies.push(cookie);
-        });
+                });
+        }
         return cookies;
 }
 
@@ -697,10 +715,15 @@ async function startBot(loginWithEmail) {
         log.info("LOGIN FACEBOOK", getText('login', 'currentlyLogged'));
 
         let appState = await getAppStateToLogin(loginWithEmail);
-        changeFbStateByCode = true;
-        appState = filterKeysAppState(appState);
-        writeFileSync(dirAccount, JSON.stringify(appState, null, 2));
-        setTimeout(() => changeFbStateByCode = false, 1000);
+        if (Array.isArray(appState) && appState.length > 0) {
+                changeFbStateByCode = true;
+                const filtered = filterKeysAppState(appState);
+                if (filtered && filtered.length > 0) {
+                        appState = filtered;
+                        writeFileSync(dirAccount, JSON.stringify(appState, null, 2));
+                }
+                setTimeout(() => changeFbStateByCode = false, 1000);
+        }
         // ——————————————————— LOGIN ———————————————————— //
         (function loginBot(appState) {
                 global.GoatBot.commands = new Map();
