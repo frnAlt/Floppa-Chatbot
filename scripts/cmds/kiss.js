@@ -1,24 +1,13 @@
 const fs = require("fs-extra");
 const path = require("path");
 const { Readable } = require("stream");
-
-let createCanvas = null, loadImage = null;
-try {
-  const _c = require("@napi-rs/canvas");
-  createCanvas = _c.createCanvas;
-  loadImage = _c.loadImage;
-} catch (_) {
-  try {
-    const _c = require("canvas");
-    createCanvas = _c.createCanvas;
-    loadImage = _c.loadImage;
-  } catch (__) {}
-}
+const { createCanvas, loadImage, isCanvasAvailable } = require("../../func/canvasHelper.js");
+const { Jimp } = require("jimp");
 
 module.exports = {
   config: {
     name: "kiss",
-    version: "2.0.0",
+    version: "2.2.0",
     author: "frnAlt",
     countDown: 5,
     role: 0,
@@ -29,10 +18,6 @@ module.exports = {
   },
 
   onStart: async function ({ api, message, event, args, usersData }) {
-    if (!createCanvas || !loadImage) {
-      return message.reply("Canvas rendering library is currently unavailable on this system.");
-    }
-
     let one = String(event.senderID);
     let two = null;
     const mentions = event.mentions ? Object.keys(event.mentions) : [];
@@ -56,6 +41,15 @@ module.exports = {
       two = args[0];
     }
 
+    // Name match fallback if mentions was omitted
+    if (!two && args && args.length > 0) {
+      const raw = args.join(" ").replace(/^@/, "").trim().toLowerCase();
+      const allM = global.db?.allThreadData?.find(t => t.threadID == event.threadID)?.members || [];
+      const found = allM.find(m => m.name && m.name.toLowerCase().includes(raw)) ||
+                    global.db?.allUserData?.find(u => u.name && u.name.toLowerCase().includes(raw));
+      if (found) two = String(found.userID || found.id);
+    }
+
     if (!two) {
       return message.reply("Please @mention 1 or 2 users, or reply to someone to kiss them! 😚");
     }
@@ -63,37 +57,106 @@ module.exports = {
     try {
       const avatarURL1 = await usersData.getAvatarUrl(one);
       const avatarURL2 = await usersData.getAvatarUrl(two);
+      const name1 = await usersData.getName(one).catch(() => "You");
+      const name2 = await usersData.getName(two).catch(() => "Crush");
 
-      const canvas = createCanvas(950, 850);
-      const ctx = canvas.getContext("2d");
+      // 1. Canvas Renderer
+      if (isCanvasAvailable && typeof createCanvas === "function") {
+        const canvas = createCanvas(850, 480);
+        const ctx = canvas.getContext("2d");
 
-      const background = await loadImage("https://files.catbox.moe/6qg782.jpg");
-      ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
+        // Romantic crimson / magenta gradient
+        const grad = ctx.createLinearGradient(0, 0, 850, 480);
+        grad.addColorStop(0, "#f857a6");
+        grad.addColorStop(1, "#ff5858");
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 850, 480);
 
-      const avatar1 = await loadImage(avatarURL1);
-      const avatar2 = await loadImage(avatarURL2);
+        // Glassmorphic container
+        ctx.fillStyle = "rgba(0, 0, 0, 0.25)";
+        if (typeof ctx.roundRect === "function") {
+          ctx.beginPath();
+          ctx.roundRect(40, 40, 770, 400, 24);
+          ctx.fill();
+        } else {
+          ctx.fillRect(40, 40, 770, 400);
+        }
 
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(725, 250, 85, 0, Math.PI * 2);
-      ctx.closePath();
-      ctx.clip();
-      ctx.drawImage(avatar1, 640, 170, 170, 170);
-      ctx.restore();
+        // Title text
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 32px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("💋 SWEET KISS 💋", 425, 95);
 
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(175, 370, 85, 0, Math.PI * 2);
-      ctx.closePath();
-      ctx.clip();
-      ctx.drawImage(avatar2, 90, 280, 170, 170);
-      ctx.restore();
+        // Load avatars safely
+        const av1 = await loadImage(avatarURL1).catch(() => null);
+        const av2 = await loadImage(avatarURL2).catch(() => null);
 
-      const buffer = canvas.toBuffer("image/png");
+        // Draw Avatar 1 (Left)
+        if (av1) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(260, 240, 80, 0, Math.PI * 2);
+          ctx.lineWidth = 6;
+          ctx.strokeStyle = "#ffffff";
+          ctx.stroke();
+          ctx.closePath();
+          ctx.clip();
+          ctx.drawImage(av1, 180, 160, 160, 160);
+          ctx.restore();
+        }
+
+        // Kiss emoji in center
+        ctx.font = "52px sans-serif";
+        ctx.fillText("😽😘", 425, 255);
+
+        // Draw Avatar 2 (Right)
+        if (av2) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(590, 240, 80, 0, Math.PI * 2);
+          ctx.lineWidth = 6;
+          ctx.strokeStyle = "#ffffff";
+          ctx.stroke();
+          ctx.closePath();
+          ctx.clip();
+          ctx.drawImage(av2, 510, 160, 160, 160);
+          ctx.restore();
+        }
+
+        // Names
+        ctx.font = "bold 22px sans-serif";
+        ctx.fillText(name1, 260, 370);
+        ctx.fillText(name2, 590, 370);
+
+        const buffer = canvas.toBuffer("image/png");
+        const stream = Readable.from(buffer);
+
+        return message.reply({
+          body: `💋 Ummmmaaaaahhh! ${name1} gives a passionate kiss to ${name2}! 😽😘`,
+          attachment: stream
+        });
+      }
+
+      // 2. Jimp Fallback
+      const bg = new Jimp({ width: 850, height: 480, color: 0xf857a6ff });
+      const av1 = await Jimp.read(avatarURL1).catch(() => null);
+      const av2 = await Jimp.read(avatarURL2).catch(() => null);
+
+      if (av1) {
+        av1.resize({ w: 160, h: 160 }).circle();
+        bg.composite(av1, 180, 160);
+      }
+      if (av2) {
+        av2.resize({ w: 160, h: 160 }).circle();
+        bg.composite(av2, 510, 160);
+      }
+
+      const buffer = await bg.getBuffer("image/png");
       const stream = Readable.from(buffer);
 
       return message.reply({
-        body: "Ummmmaaaaahhh! 😽😘",
+        body: `💋 Ummmmaaaaahhh! ${name1} gives a passionate kiss to ${name2}! 😽😘`,
         attachment: stream
       });
     } catch (error) {

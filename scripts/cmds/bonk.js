@@ -46,6 +46,15 @@ module.exports = {
         two = args[0];
       }
 
+      // Fallback: name search if mentions omitted
+      if (!two && args && args.length > 0) {
+        const raw = args.join(" ").replace(/^@/, "").trim().toLowerCase();
+        const allM = global.db?.allThreadData?.find(t => t.threadID == event.threadID)?.members || [];
+        const found = allM.find(m => m.name && m.name.toLowerCase().includes(raw)) ||
+                      global.db?.allUserData?.find(u => u.name && u.name.toLowerCase().includes(raw));
+        if (found) two = String(found.userID || found.id);
+      }
+
       if (!two) {
         return message.reply("👤 Please reply to or mention someone to bonk!");
       }

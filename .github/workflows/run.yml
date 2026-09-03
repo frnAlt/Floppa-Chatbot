@@ -42,7 +42,7 @@ jobs:
             ${{ runner.os }}-node-
 
       - name: Install Dependencies
-        run: npm install && npm rebuild sqlite3 canvas bcrypt
+        run: npm install --include=optional && (npm rebuild sqlite3 canvas bcrypt 2>/dev/null || true)
 
       - name: Configure Credentials If Provided
         env:

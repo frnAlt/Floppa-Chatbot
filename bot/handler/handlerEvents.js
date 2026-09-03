@@ -347,6 +347,39 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                 if (typeof threadData?.settings?.hideNotiMessage == "object")
                         hideNotiMessage = threadData.settings.hideNotiMessage;
 
+                // Automatically populate event.mentions from text if Facebook omitted them
+                if (typeof body === "string" && body.includes("@")) {
+                        if (!event.mentions || typeof event.mentions !== "object") {
+                                event.mentions = {};
+                        }
+                        const members = threadData?.members || [];
+                        const lowerBody = body.toLowerCase();
+                        for (const m of members) {
+                                if (!m || !m.name || !m.userID) continue;
+                                const lowerName = m.name.toLowerCase();
+                                if (lowerBody.includes("@" + lowerName)) {
+                                        event.mentions[String(m.userID)] = m.name;
+                                } else if (m.nickname && lowerBody.includes("@" + m.nickname.toLowerCase())) {
+                                        event.mentions[String(m.userID)] = m.name;
+                                } else {
+                                        const nameParts = lowerName.split(/\s+/).filter(p => p.length > 2);
+                                        if (nameParts.length > 1 && nameParts.every(p => lowerBody.includes(p))) {
+                                                event.mentions[String(m.userID)] = m.name;
+                                        }
+                                }
+                        }
+                        if (Object.keys(event.mentions).length === 0 && global.db?.allUserData) {
+                                for (const u of global.db.allUserData) {
+                                        if (!u || !u.name || !u.userID) continue;
+                                        const lowerName = u.name.toLowerCase();
+                                        if (lowerBody.includes("@" + lowerName)) {
+                                                event.mentions[String(u.userID)] = u.name;
+                                                break;
+                                        }
+                                }
+                        }
+                }
+
                 const prefix = getPrefix(threadID);
                 const role = getRole(threadData, senderID);
                 const input = new InputClass({ api, event, message, role, prefix, args: body ? body.trim().split(/\s+/).slice(1) : [] });

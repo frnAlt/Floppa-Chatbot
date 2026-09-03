@@ -46,40 +46,46 @@ module.exports = {
 			const toUnsend = threadBotMsgs.splice(-targetCount);
 			let unsentCount = 0;
 
+			// Unsend sequentially with brief delay to avoid Facebook rate limits
 			for (const mid of toUnsend.reverse()) {
 				try {
 					await api.unsendMessage(mid);
 					unsentCount++;
+					await new Promise(r => setTimeout(r, 250));
 				} catch (_) {}
+			}
+
+			// Clean up the command call itself if possible
+			if (event.messageID) {
+				api.unsendMessage(event.messageID).catch(() => {});
 			}
 
 			const notice = await message.reply(`🧹 Cleaned up ${unsentCount} bot message(s).`);
 			if (notice?.messageID) {
 				setTimeout(() => {
 					api.unsendMessage(notice.messageID).catch(() => {});
-				}, 4000);
+				}, 3500);
 			}
 			return;
 		}
 
 		// Mode 2: Unsend by reply
 		if (event.messageReply && event.messageReply.messageID) {
-			const replySender = String(event.messageReply.senderID || event.messageReply.actorFbId || "");
-			if (replySender && replySender !== botID) {
-				return message.reply("You can only unsend messages sent by the bot.");
-			}
-
 			try {
-				await message.unsend(event.messageReply.messageID);
+				await api.unsendMessage(event.messageReply.messageID);
 				// Also remove from tracked messages if present
 				const threadBotMsgs = global.botSentMessages?.get(event.threadID);
 				if (threadBotMsgs) {
 					const idx = threadBotMsgs.indexOf(event.messageReply.messageID);
 					if (idx !== -1) threadBotMsgs.splice(idx, 1);
 				}
+				// Remove the !u command message too
+				if (event.messageID) {
+					api.unsendMessage(event.messageID).catch(() => {});
+				}
 			} catch (err) {
 				console.error("[UNSEND ERROR]:", err);
-				return message.reply("Could not unsend this message. It may have already been unsent.");
+				return message.reply("Could not unsend this message. It may have already been unsent or cannot be removed.");
 			}
 			return;
 		}

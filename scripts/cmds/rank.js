@@ -1,5 +1,6 @@
-const { createCanvas, loadImage } = require("@napi-rs/canvas");
+const { createCanvas, loadImage, isCanvasAvailable } = require("../../func/canvasHelper.js");
 const { Readable } = require("stream");
+const axios = require("axios");
 
 let deltaNext = 5;
 const expToLevel = (exp, delta = deltaNext) => Math.floor((1 + Math.sqrt(1 + 8 * exp / delta)) / 2);
@@ -79,7 +80,14 @@ async function makeRankCard(userID, usersData, threadsData, threadID, delta = 5,
 	try {
 		const avatarUrl = await usersData.getAvatarUrl(userID).catch(() => null);
 		if (avatarUrl) {
-			avatarImg = await loadImage(avatarUrl);
+			const res = await axios.get(avatarUrl, {
+				responseType: "arraybuffer",
+				timeout: 5000,
+				headers: { "User-Agent": "Mozilla/5.0" }
+			}).catch(() => null);
+			if (res?.data) {
+				avatarImg = await loadImage(Buffer.from(res.data)).catch(() => null);
+			}
 		}
 	} catch (_) {}
 
@@ -251,12 +259,55 @@ module.exports = {
 		}
 
 		try {
+			if (!isCanvasAvailable || typeof createCanvas !== "function") {
+				for (const userID of targetUsers) {
+					const userRecord = await usersData.get(userID).catch(() => ({}));
+					const exp = typeof userRecord?.exp === "number" && !isNaN(userRecord.exp) ? userRecord.exp : 0;
+					const name = userRecord?.name || `User ${userID}`;
+					const levelUser = expToLevel(exp, deltaNext);
+					const currentLevelExp = levelToExp(levelUser, deltaNext);
+					const nextLevelExp = levelToExp(levelUser + 1, deltaNext);
+					const expNeed = nextLevelExp - currentLevelExp;
+					const currentProgress = exp - currentLevelExp;
+					const percent = Math.min(100, Math.max(0, Math.floor((currentProgress / (expNeed || 1)) * 100)));
+
+					const allUsers = (await usersData.getAll().catch(() => [])) || [];
+					allUsers.sort((a, b) => (b.exp || 0) - (a.exp || 0));
+					let rank = allUsers.findIndex(u => String(u.userID) === String(userID)) + 1;
+					if (rank <= 0) rank = allUsers.length + 1;
+
+					const filledBlocks = Math.round(percent / 10);
+					const emptyBlocks = 10 - filledBlocks;
+					const progressBar = "█".repeat(filledBlocks) + "░".repeat(emptyBlocks);
+
+					const cardBody = 
+						`╔════════════ 🏆 RANK PROFILE ════════════╗\n` +
+						`👤 Member: ${name}\n` +
+						`🎖️ Global Rank: #${rank} | ⚡ Level: ${levelUser}\n` +
+						`📊 Progress: [${progressBar}] ${percent}%\n` +
+						`✨ EXP: ${exp.toLocaleString()} / ${nextLevelExp.toLocaleString()}\n` +
+						`╚════════════════════════════════════════╝`;
+
+					let avatarStream = null;
+					try {
+						const avatarUrl = await usersData.getAvatarUrl(userID);
+						avatarStream = await global.utils.getStreamFromURL(avatarUrl, `avatar_${userID}.jpg`).catch(() => null);
+					} catch (_) {}
+
+					await message.reply({
+						body: cardBody,
+						...(avatarStream ? { attachment: avatarStream } : {})
+					});
+				}
+				return;
+			}
+
 			const rankCards = await Promise.all(targetUsers.map(async userID => {
 				return await makeRankCard(userID, usersData, threadsData, event.threadID, deltaNext, api);
 			}));
 
 			return message.reply({
-				attachment: rankCards
+				attachment: rankCards.filter(Boolean)
 			});
 		} catch (err) {
 			console.error("[RANK CARD ERROR]:", err);
