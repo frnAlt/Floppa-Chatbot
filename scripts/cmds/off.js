@@ -4,15 +4,15 @@ const path = require("path");
 module.exports = {
   config: {
     name: "off",
-    aliases: ["botoff", "maintenance"],
+    aliases: ["on", "botoff", "boton", "maintenance"],
     version: "1.0.0",
     author: "frnAlt",
     countDown: 2,
     role: 2,
-    shortDescription: { en: "Turn the bot OFF" },
-    longDescription: { en: "Turn the bot OFF. Only bot admins can use the bot, and all regular responses are disabled." },
+    shortDescription: { en: "Turn the bot OFF or ON" },
+    longDescription: { en: "Toggle bot status. When OFF, only bot admins can use the bot, and all regular responses are disabled." },
     category: "admin",
-    guide: { en: "{pn}" }
+    guide: { en: "{pn} or {p}on or {p}off" }
   },
 
   onStart: async function ({ message, args, commandName }) {
