@@ -2,7 +2,7 @@ const axios = require("axios");
 
 const client = axios.create({ timeout: 25000 });
 
-async function getYouTubeAudio(youtubeUrl) {
+async function getYouTubeAudio(youtubeUrl, titleFallback = "") {
   // 1. Primary: yta2 API (Fast CDN ymcdn.org)
   try {
     const apiUrl = `https://toshiro-api-editz6t9.vercel.app/api/downloader/yta2?url=${encodeURIComponent(youtubeUrl)}`;
@@ -12,11 +12,10 @@ async function getYouTubeAudio(youtubeUrl) {
       const r = res.data.result;
       const candidates = [r.download_url, r.preview].filter(Boolean);
       for (const candidate of candidates) {
-        // Skip dead render spin-down hosts
         if (candidate.includes("onrender.com")) continue;
         return {
           audioUrl: candidate,
-          title: r.title || "YouTube Audio",
+          title: r.title || titleFallback || "YouTube Audio",
           quality: r.quality || "128kbps",
           duration: r.duration || "N/A"
         };
@@ -36,7 +35,7 @@ async function getYouTubeAudio(youtubeUrl) {
       for (const candidate of candidates) {
         return {
           audioUrl: candidate,
-          title: r.title || "YouTube Audio",
+          title: r.title || titleFallback || "YouTube Audio",
           quality: r.quality || "128kbps",
           duration: r.duration || "N/A"
         };
@@ -44,6 +43,24 @@ async function getYouTubeAudio(youtubeUrl) {
     }
   } catch (err) {
     console.warn("[SING] yt-audio secondary failed:", err.message);
+  }
+
+  // 3. Tertiary fallback: nkx.lol music search
+  if (titleFallback) {
+    try {
+      const searchRes = await client.get(`https://play.nkx.lol/search?q=${encodeURIComponent(titleFallback)}&limit=1`, { timeout: 10000 });
+      const top = searchRes.data?.results?.[0];
+      if (top?.audio_cdn_url) {
+        return {
+          audioUrl: top.audio_cdn_url,
+          title: top.title || titleFallback,
+          quality: "128kbps",
+          duration: "N/A"
+        };
+      }
+    } catch (e) {
+      console.warn("[SING] nkx tertiary failed:", e.message);
+    }
   }
 
   return null;
@@ -167,6 +184,8 @@ module.exports = {
           global.GoatBot.onReply.set(info.messageID, {
             commandName,
             author: event.senderID,
+            threadID: event.threadID,
+            timestamp: Date.now(),
             results
           });
         }
@@ -200,7 +219,7 @@ module.exports = {
     }
 
     try {
-      const audioData = await getYouTubeAudio(selected.url);
+      const audioData = await getYouTubeAudio(selected.url, selected.title);
       if (!audioData || !audioData.audioUrl) {
         if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
         return message.reply(`❌ Could not fetch audio stream for "${selected.title}".`);

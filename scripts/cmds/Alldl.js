@@ -58,42 +58,66 @@ module.exports = {
       let downloadUrl = "";
       let title = "Downloaded Media";
 
-      // 1. Primary: Toshiro All Downloader V2
+      // 1. Primary: Toshiro All Downloader (Most reliable from Goatbot-V2)
       try {
         const res = await axios.get(
-          `https://toshiro-api-editz6t9.vercel.app/api/downloader/alldlv2?url=${encodeURIComponent(url)}`,
-          { timeout: 35000 }
+          `https://toshiro-api-editz6t9.vercel.app/api/downloader/alldl?url=${encodeURIComponent(url)}`,
+          { timeout: 25000 }
         );
 
-        if (res.data && res.data.success && res.data.result) {
+        if (res.data?.success && res.data?.result) {
           const r = res.data.result;
           title = r.title || title;
-
-          if (isAudio && r.audios && r.audios.length > 0) {
-            const m4a = r.audios.find(a => a.format === "M4A" || a.format === "MP3");
-            downloadUrl = (m4a || r.audios[0]).url;
-          } else if (r.medias && r.medias.length > 0) {
-            // Find a good video format (prefer 720P or 480P or 360P to stay under FB upload limits)
-            const preferred = r.medias.find(m => m.quality === "720P" || m.quality === "480P" || m.quality === "360P");
-            downloadUrl = (preferred || r.medias[0]).url;
-          } else if (r.audios && r.audios.length > 0) {
-            downloadUrl = r.audios[0].url;
+          if (isAudio) {
+            downloadUrl = r.audio || r.video || r.url;
+          } else {
+            downloadUrl = r.video || r.high_quality || r.url;
           }
         }
       } catch (e) {
-        console.warn("alldlv2 failed, trying fallback:", e.message);
+        console.warn("alldl v1 failed, trying alldlv2:", e.message);
       }
 
-      // 2. Fallback: YouTube Audio if YouTube and audio requested
-      if (!downloadUrl && isAudio && /(?:youtube\.com|youtu\.be)/i.test(url)) {
+      // 2. Secondary: Toshiro All Downloader V2
+      if (!downloadUrl) {
+        try {
+          const res = await axios.get(
+            `https://toshiro-api-editz6t9.vercel.app/api/downloader/alldlv2?url=${encodeURIComponent(url)}`,
+            { timeout: 25000 }
+          );
+
+          if (res.data && res.data.success && res.data.result) {
+            const r = res.data.result;
+            title = r.title || title;
+
+            if (isAudio && r.audios && r.audios.length > 0) {
+              const m4a = r.audios.find(a => a.format === "M4A" || a.format === "MP3");
+              downloadUrl = (m4a || r.audios[0]).url;
+            } else if (r.medias && r.medias.length > 0) {
+              const preferred = r.medias.find(m => m.quality === "720P" || m.quality === "480P" || m.quality === "360P");
+              downloadUrl = (preferred || r.medias[0]).url;
+            } else if (r.videos && r.videos.length > 0) {
+              downloadUrl = r.videos[0].url;
+            } else if (r.audios && r.audios.length > 0) {
+              downloadUrl = r.audios[0].url;
+            }
+          }
+        } catch (e) {
+          console.warn("alldlv2 failed:", e.message);
+        }
+      }
+
+      // 3. Fallback: YouTube Audio
+      if (!downloadUrl && /(?:youtube\.com|youtu\.be)/i.test(url)) {
         try {
           const ytRes = await axios.get(
             `https://toshiro-api-editz6t9.vercel.app/api/downloader/yt-audio?url=${encodeURIComponent(url)}&quality=128`,
-            { timeout: 35000 }
+            { timeout: 25000 }
           );
           if (ytRes.data && ytRes.data.success && ytRes.data.result) {
             downloadUrl = ytRes.data.result.download_url || ytRes.data.result.preview;
             title = ytRes.data.result.title || title;
+            isAudio = true;
           }
         } catch (_) {}
       }

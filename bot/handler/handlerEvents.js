@@ -307,6 +307,10 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 
                 const senderID = event.userID || event.senderID || event.author;
 
+                const botID = String(api?.getCurrentUserID?.() || GoatBot?.botID || global.botID || "");
+                if (botID && String(senderID) === botID)
+                        return;
+
                 let threadData = global.db.allThreadData.find(t => t.threadID == threadID);
                 let userData = global.db.allUserData.find(u => u.userID == senderID);
 
@@ -440,7 +444,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                 return;
 
                         const noPrefixEnabled = config.noPrefix === true;
-                        const userCanSkipPrefix = role === 2 || role === 4 || noPrefixEnabled;
+                        const userCanSkipPrefix = (role === 2 || role === 4) && noPrefixEnabled;
                         const validPrefixes = Array.from(new Set([prefix, "~", "!"].filter(Boolean)));
                         const matchedPrefix = validPrefixes.find(p => body.startsWith(p));
                         const hasPrefix = Boolean(matchedPrefix);
@@ -872,13 +876,39 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                 async function onReply() {
                         if (global.GoatBot.botOff && role !== 2 && role !== 4)
                                 return;
-                        if (!event.messageReply)
-                                return;
+
                         const { onReply } = GoatBot;
-                        const Reply = onReply.get(event.messageReply.messageID);
+                        let Reply = null;
+                        let replyTargetMID = null;
+
+                        if (event.messageReply?.messageID) {
+                                Reply = onReply.get(event.messageReply.messageID);
+                                replyTargetMID = event.messageReply.messageID;
+                        }
+
+                        // Seamless fallback: If user typed response without swipe-to-reply, resolve recent pending prompt
+                        if (!Reply && onReply && onReply.size > 0 && body) {
+                                const now = Date.now();
+                                for (const [mid, r] of onReply.entries()) {
+                                        if (
+                                                String(r.author) === String(senderID) &&
+                                                (!r.threadID || String(r.threadID) === String(threadID)) &&
+                                                (!r.timestamp || (now - r.timestamp < 180000))
+                                        ) {
+                                                Reply = r;
+                                                replyTargetMID = mid;
+                                                if (!event.messageReply) {
+                                                        event.messageReply = { messageID: mid, senderID: global.GoatBot?.botID, body: "" };
+                                                }
+                                                break;
+                                        }
+                                }
+                        }
+
                         if (!Reply)
                                 return;
-                        Reply.delete = () => onReply.delete(messageID);
+
+                        Reply.delete = () => onReply.delete(replyTargetMID);
                         const commandName = Reply.commandName;
                         if (!commandName) {
                                 message.reply(utils.getText({ lang: langCode, head: "handlerEvents" }, "cannotFindCommandName"));
