@@ -127,6 +127,40 @@ module.exports = async function (api, threadModel, userModel, dashBoardModel, gl
 				if (!command.onStart && (command.entry || command.run || command.onCall)) {
 					const entryHandler = command.entry || command.run || command.onCall;
 					command.onStart = async function (ctx) {
+						if (!ctx) ctx = {};
+						const argsList = ctx.args || [];
+						const input = ctx.event?.input || {
+							body: ctx.event?.body,
+							args: argsList,
+							arguments: argsList,
+							propertyArray: argsList,
+							senderID: ctx.event?.senderID,
+							threadID: ctx.event?.threadID,
+							messageID: ctx.event?.messageID,
+							sid: ctx.event?.senderID,
+							tid: ctx.event?.threadID,
+							setReply: (mid, data) => global.GoatBot?.onReply?.set(mid, { ...data, author: ctx.event?.senderID, threadID: ctx.event?.threadID }),
+							delReply: (mid) => global.GoatBot?.onReply?.delete(mid)
+						};
+						if (!input.arguments) input.arguments = argsList;
+						if (!input.propertyArray) input.propertyArray = argsList;
+						if (!ctx.args) ctx.args = argsList;
+						const getLang = ctx.getLang || ((key, ...args) => {
+							const langObj = command.langs?.[global.GoatBot?.config?.language || "en"] || command.langs?.en || {};
+							let text = langObj[key] || key;
+							args.forEach((val, idx) => { text = text.replace(new RegExp(`%${idx + 1}`, "g"), val); });
+							return text;
+						});
+						const output = ctx.event?.output || {
+							reply: (data) => ctx.message?.reply(data),
+							send: (data) => ctx.message?.send ? ctx.message.send(data) : ctx.message?.reply(data),
+							react: (emoji) => ctx.message?.reaction ? ctx.message.reaction(emoji) : ctx.api?.setMessageReaction?.(emoji, ctx.event?.messageID, () => {}, true),
+							error: (err) => ctx.message?.reply(`❌ Error in "${configCommand.name}": ${err?.message || err}`)
+						};
+						ctx.input = input;
+						ctx.output = output;
+						ctx.getLang = getLang;
+						ctx.ctx = ctx;
 						return entryHandler(ctx);
 					};
 				}

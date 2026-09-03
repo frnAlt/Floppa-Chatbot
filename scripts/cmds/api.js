@@ -548,6 +548,7 @@ const home = new spectral_home_1.SpectralCMDHome({
         aliases: [`${key.at(0)}${key.at(1)}${key.at(-1)}`],
     };
 }));
-async function entry({ ctx }) {
+async function entry(context) {
+    const ctx = context?.ctx || context;
     return home.runInContext(ctx);
 }

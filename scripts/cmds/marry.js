@@ -131,6 +131,7 @@ module.exports = {
 
                 const buffer = canvas.toBuffer("image/png");
                 const stream = Readable.from(buffer);
+                stream.path = "marry.png";
 
                 return message.reply({
                     body: `Congratulations ${userName1} and ${userName2} on your wedding! 💒💍🤵👰`,
@@ -154,6 +155,7 @@ module.exports = {
 
             const buffer = await bg.getBuffer("image/png");
             const stream = Readable.from(buffer);
+            stream.path = "marry.png";
 
             return message.reply({
                 body: `Congratulations ${userName1} and ${userName2} on your wedding! 💒💍🤵👰`,

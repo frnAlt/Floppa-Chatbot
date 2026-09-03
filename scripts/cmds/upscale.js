@@ -1,23 +1,38 @@
 const axios = require("axios");
 
 function extractImageUrl(args, event) {
-  let imageUrl = args.find(arg => arg.startsWith("http"));
+  let imageUrl = args.find(arg => typeof arg === "string" && arg.startsWith("http"));
 
   if (!imageUrl && event.messageReply?.attachments?.length > 0) {
-    const imageAttachment = event.messageReply.attachments.find(
-      att => att.type === "photo" || att.type === "image"
-    );
-    if (imageAttachment && imageAttachment.url) {
-      imageUrl = imageAttachment.url;
-    }
-  } else if (!imageUrl && event.attachments?.length > 0) {
-    const imageAttachment = event.attachments.find(
-      att => att.type === "photo" || att.type === "image"
-    );
-    if (imageAttachment && imageAttachment.url) {
-      imageUrl = imageAttachment.url;
+    for (const att of event.messageReply.attachments) {
+      const url = att.url || att.previewUrl || att.largePreviewUrl || att.thumbnailUrl;
+      if (url) {
+        imageUrl = url;
+        break;
+      }
     }
   }
+
+  if (!imageUrl && event.attachments?.length > 0) {
+    for (const att of event.attachments) {
+      const url = att.url || att.previewUrl || att.largePreviewUrl || att.thumbnailUrl;
+      if (url) {
+        imageUrl = url;
+        break;
+      }
+    }
+  }
+
+  const token = "6628568379%7Cc1e620fa708a1d5696fb991c1bde5662";
+  if (!imageUrl && event.mentions && Object.keys(event.mentions).length > 0) {
+    const targetUID = Object.keys(event.mentions)[0];
+    imageUrl = `https://graph.facebook.com/${targetUID}/picture?width=720&height=720&access_token=${token}`;
+  } else if (!imageUrl && event.messageReply?.senderID) {
+    imageUrl = `https://graph.facebook.com/${event.messageReply.senderID}/picture?width=720&height=720&access_token=${token}`;
+  } else if (!imageUrl && event.senderID) {
+    imageUrl = `https://graph.facebook.com/${event.senderID}/picture?width=720&height=720&access_token=${token}`;
+  }
+
   return imageUrl;
 }
 

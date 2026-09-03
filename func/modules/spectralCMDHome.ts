@@ -326,11 +326,18 @@ export class SpectralCMDHome {
 
   async runInContext(ctx: CommandContext) {
     const { input, output } = ctx;
+    if (!ctx.getLang) {
+      ctx.getLang = (key: string, ...args: any[]) => {
+        let text = key;
+        args.forEach((val, idx) => { text = text.replace(new RegExp(`%${idx + 1}`, "g"), val); });
+        return text;
+      };
+    }
     ctx.cancelCooldown?.();
     const key =
-      (this.options.isHypen && "propertyArray" in input
+      (this.options.isHypen && input && "propertyArray" in input && Array.isArray(input.propertyArray)
         ? input.propertyArray[this.options.argIndex]
-        : input.arguments[this.options.argIndex] || "") || "";
+        : (input?.arguments || input?.args || [])[this.options.argIndex] || "") || "";
     const targets = this.findTargets(key);
     const spectralArgs = this.options.isHypen
       ? ctx.args
@@ -500,11 +507,15 @@ export class SpectralCMDHome {
   }
 
   handleError(error: any, ctx: CommandContext) {
-    console.error("Error:", error);
+    console.error("Error in SpectralCMDHome:", error);
     if (this.options.errorHandler) {
       this.options.errorHandler(error, ctx);
-    } else {
+    } else if (typeof ctx?.output?.error === "function") {
       ctx.output.error(error);
+    } else if (typeof ctx?.output?.reply === "function") {
+      ctx.output.reply(`❌ Error in "${this.options.defaultKey || "command"}": ${error.message || error}`);
+    } else {
+      console.error(error);
     }
   }
 

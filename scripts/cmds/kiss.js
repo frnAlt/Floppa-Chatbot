@@ -131,6 +131,7 @@ module.exports = {
 
         const buffer = canvas.toBuffer("image/png");
         const stream = Readable.from(buffer);
+        stream.path = "kiss.png";
 
         return message.reply({
           body: `💋 Ummmmaaaaahhh! ${name1} gives a passionate kiss to ${name2}! 😽😘`,
@@ -154,6 +155,7 @@ module.exports = {
 
       const buffer = await bg.getBuffer("image/png");
       const stream = Readable.from(buffer);
+      stream.path = "kiss.png";
 
       return message.reply({
         body: `💋 Ummmmaaaaahhh! ${name1} gives a passionate kiss to ${name2}! 😽😘`,

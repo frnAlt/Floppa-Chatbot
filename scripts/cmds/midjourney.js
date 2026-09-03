@@ -34,31 +34,39 @@ module.exports = {
     }
 
     try {
-      const apiUrl = `https://toshiro-api-editz6t9.vercel.app/api/image/mj?prompt=${encodeURIComponent(prompt)}`;
-      const res = await axios.get(apiUrl, { timeout: 90000 });
+      let attachments = [];
 
-      if (!res.data || !res.data.success || !res.data.result) {
-        if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
-        return message.reply("❌ Failed to generate MidJourney images. Please try a different prompt.");
+      // 1. Primary: Toshiro MidJourney API
+      try {
+        const apiUrl = `https://toshiro-api-editz6t9.vercel.app/api/image/mj?prompt=${encodeURIComponent(prompt)}`;
+        const res = await axios.get(apiUrl, { timeout: 35000 });
+
+        if (res.data && res.data.success && res.data.result) {
+          const { images, image } = res.data.result;
+          const imageUrls = images && images.length > 0 ? images : (image ? [image] : []);
+          if (imageUrls.length > 0) {
+            const streamPromises = imageUrls.map((url, i) =>
+              global.utils.getStreamFromURL(url, `mj_${Date.now()}_${i}.png`).catch(() => null)
+            );
+            attachments = (await Promise.all(streamPromises)).filter(Boolean);
+          }
+        }
+      } catch (primaryErr) {
+        console.warn("[MJ] Primary API failed, trying Pollinations fallback:", primaryErr.message);
       }
 
-      const { images, image } = res.data.result;
-      const imageUrls = images && images.length > 0 ? images : (image ? [image] : []);
-
-      if (imageUrls.length === 0) {
-        if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
-        return message.reply("❌ No image data returned from MidJourney API.");
+      // 2. High-speed Fallback: Pollinations MidJourney simulation
+      if (attachments.length === 0) {
+        const fallbackUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt + " masterpiece midjourney style 8k render")}?width=1024&height=1024&nologo=true&seed=${Date.now()}`;
+        const stream = await global.utils.getStreamFromURL(fallbackUrl, `mj_${Date.now()}.png`).catch(() => null);
+        if (stream) {
+          attachments.push(stream);
+        }
       }
-
-      const streamPromises = imageUrls.map((url, i) =>
-        global.utils.getStreamFromURL(url, `mj_${Date.now()}_${i}.png`).catch(() => null)
-      );
-
-      const attachments = (await Promise.all(streamPromises)).filter(Boolean);
 
       if (attachments.length === 0) {
         if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
-        return message.reply("❌ Failed to load image attachments.");
+        return message.reply("❌ Failed to generate MidJourney images. Please try a different prompt.");
       }
 
       await message.reply({

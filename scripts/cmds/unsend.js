@@ -90,6 +90,21 @@ module.exports = {
 			return;
 		}
 
+		// Mode 3: Default !u without reply or args -> unsend last bot message in this thread
+		const threadBotMsgs = global.botSentMessages?.get(event.threadID) || [];
+		if (threadBotMsgs.length > 0) {
+			const lastMID = threadBotMsgs.pop();
+			try {
+				await api.unsendMessage(lastMID);
+				if (event.messageID) {
+					api.unsendMessage(event.messageID).catch(() => {});
+				}
+				return;
+			} catch (err) {
+				console.error("[UNSEND ERROR]:", err);
+			}
+		}
+
 		return message.reply(getLang("syntaxError", commandName));
 	}
 };

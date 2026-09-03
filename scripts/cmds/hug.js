@@ -131,6 +131,7 @@ module.exports = {
 
         const buffer = canvas.toBuffer("image/png");
         const stream = Readable.from(buffer);
+        stream.path = "hug.png";
 
         return message.reply({
           body: `🫂 ${name1} gives ${name2} a warm and loving hug! 💞`,
@@ -154,6 +155,7 @@ module.exports = {
 
       const buffer = await bg.getBuffer("image/png");
       const stream = Readable.from(buffer);
+      stream.path = "hug.png";
 
       return message.reply({
         body: `🫂 ${name1} gives ${name2} a warm and loving hug! 💞`,
