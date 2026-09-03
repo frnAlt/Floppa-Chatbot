@@ -28,7 +28,8 @@ module.exports = {
                                 const { addedParticipants } = event.logMessageData;
                                 for (const user of addedParticipants) {
                                         const findUser = warnList.find(warnEntry => warnEntry.userID == user.userFbId);
-                                        if (findUser && findUser.list >= 3) {
+                                        const warnCount = Array.isArray(findUser?.list) ? findUser.list.length : (typeof findUser?.list === 'number' ? findUser.list : 0);
+                                        if (findUser && warnCount >= 3) {
                                                 const userName = user.fullName;
                                                 const uid = user.userFbId;
                                                 message.send({

@@ -3,84 +3,90 @@ const { drive, getStreamFromURL, getExtFromUrl, getTime } = global.utils;
 module.exports = {
 	config: {
 		name: "setwelcome",
-		aliases: ["setwc"],
-		version: "1.7",
+		aliases: ["welcome", "setwc", "wc"],
+		version: "2.0.0",
 		author: "frnAlt",
 		countDown: 5,
 		role: 1,
 		description: {
-			vi: "Chỉnh sửa nội dung tin nhắn chào mừng thành viên mới tham gia vào nhóm chat của bạn",
-			en: "Edit welcome message content when new member join your group chat"
+			vi: "Bật/tắt và tùy chỉnh tin nhắn chào mừng thành viên mới tham gia nhóm",
+			en: "Toggle and customize welcome message when new members join your group"
 		},
 		category: "custom",
 		guide: {
 			vi: {
-				body: "   {pn} text [<nội dung> | reset]: chỉnh sửa nội dung văn bản hoặc reset về mặc định, với những shortcut có sẵn:"
-					+ "\n  + {userName}: tên của thành viên mới"
-					+ "\n  + {userNameTag}: tên của thành viên mới (tag)"
-					+ "\n  + {boxName}:  tên của nhóm chat"
-					+ "\n  + {multiple}: bạn || các bạn"
-					+ "\n  + {session}:  buổi trong ngày"
-					+ "\n\n   Ví dụ:"
-					+ "\n    {pn} text Hello {userName}, welcome to {boxName}, chúc {multiple} một ngày mới vui vẻ"
-					+ "\n"
-					+ "\n   Reply (phản hồi) hoặc gửi kèm một tin nhắn có file với nội dung {pn} file: để thêm tệp đính kèm vào tin nhắn chào mừng (ảnh, video, audio)"
-					+ "\n\n   Ví dụ:"
-					+ "\n    {pn} file reset: xóa gửi file",
-				attachment: {
-					[`${__dirname}/assets/guide/setwelcome/setwelcome_vi_1.png`]: "https://i.ibb.co/vd6bQrW/setwelcome-vi-1.png"
-				}
+				body: "   {pn} [on | off]: bật hoặc tắt tin nhắn chào mừng"
+					+ "\n   {pn} text [<nội dung> | reset]: chỉnh sửa nội dung tin nhắn hoặc reset về mặc định"
+					+ "\n   Shortcuts khả dụng:"
+					+ "\n   • {userName}: tên thành viên mới"
+					+ "\n   • {userNameTag}: tag thành viên mới"
+					+ "\n   • {userID}: ID Facebook của thành viên mới"
+					+ "\n   • {inviterName}: tên người thêm vào nhóm"
+					+ "\n   • {inviterID}: ID Facebook người thêm"
+					+ "\n   • {memberCount}: tổng số thành viên nhóm"
+					+ "\n   • {boxName}: tên nhóm chat"
+					+ "\n   • {multiple}: bạn || các bạn"
+					+ "\n   • {session}: buổi trong ngày"
+					+ "\n   {pn} file [reset]: gửi kèm file để làm tệp đính kèm chào mừng"
 			},
 			en: {
-				body: "   {pn} text [<content> | reset]: edit text content or reset to default, with some shortcuts:"
-					+ "\n  + {userName}: new member name"
-					+ "\n  + {userNameTag}: new member name (tag)"
-					+ "\n  + {boxName}:  group chat name"
-					+ "\n  + {multiple}: you || you guys"
-					+ "\n  + {session}:  session in day"
-					+ "\n\n   Example:"
-					+ "\n    {pn} text Hello {userName}, welcome to {boxName}, have a nice day {multiple}"
-					+ "\n"
-					+ "\n   Reply (phản hồi) or send a message with file with content {pn} file: to add file attachments to welcome message (image, video, audio)"
-					+ "\n\n   Example:"
-					+ "\n    {pn} file reset: delete file attachments",
-				attachment: {
-					[`${__dirname}/assets/guide/setwelcome/setwelcome_en_1.png`]: "https://i.ibb.co/vsCz0ks/setwelcome-en-1.png"
-				}
+				body: "   {pn} [on | off]: turn on or off welcome message"
+					+ "\n   {pn} text [<content> | reset]: edit welcome text or reset to default"
+					+ "\n   Available shortcuts:"
+					+ "\n   • {userName}: new member name"
+					+ "\n   • {userNameTag}: mention new member"
+					+ "\n   • {userID}: new member's Facebook UID"
+					+ "\n   • {inviterName}: name of who added them"
+					+ "\n   • {inviterID}: UID of who added them"
+					+ "\n   • {memberCount}: total member count"
+					+ "\n   • {boxName}: group chat name"
+					+ "\n   • {multiple}: you || you guys"
+					+ "\n   • {session}: session in day"
+					+ "\n   {pn} file [reset]: attach media to welcome message"
 			}
 		}
 	},
 
 	langs: {
 		vi: {
-			turnedOn: "Đã bật chức năng chào mừng thành viên mới",
-			turnedOff: "Đã tắt chức năng chào mừng thành viên mới",
-			missingContent: "Vui lùng nhập nội dung tin nhắn",
-			edited: "Đã chỉnh sửa nội dung tin nhắn chào mừng của nhóm bạn thành: %1",
-			reseted: "Đã reset nội dung tin nhắn chào mừng",
+			status: "📌 Trạng thái chào mừng: %1\n📝 Nội dung hiện tại:\n%2",
+			turnedOn: "✅ Đã bật chức năng chào mừng thành viên mới",
+			turnedOff: "❌ Đã tắt chức năng chào mừng thành viên mới",
+			missingContent: "Vui lòng nhập nội dung tin nhắn",
+			edited: "Đã chỉnh sửa nội dung tin nhắn chào mừng của nhóm bạn thành:\n%1",
+			reseted: "Đã reset nội dung tin nhắn chào mừng về mặc định",
 			noFile: "Không có tệp đính kèm tin nhắn chào mừng nào để xóa",
 			resetedFile: "Đã reset tệp đính kèm thành công",
 			missingFile: "Hãy phản hồi tin nhắn này kèm file ảnh/video/audio",
 			addedFile: "Đã thêm %1 tệp đính kèm vào tin nhắn chào mừng của nhóm bạn"
 		},
 		en: {
-			turnedOn: "Turned on welcome message",
-			turnedOff: "Turned off welcome message",
+			status: "📌 Welcome Message Status: %1\n📝 Current Template:\n%2",
+			turnedOn: "✅ Turned on welcome message",
+			turnedOff: "❌ Turned off welcome message",
 			missingContent: "Please enter welcome message content",
-			edited: "Edited welcome message content of your group to: %1",
-			reseted: "Reseted welcome message content",
+			edited: "Edited welcome message content of your group to:\n%1",
+			reseted: "Reset welcome message content to default",
 			noFile: "No file attachments to delete",
-			resetedFile: "Reseted file attachments successfully",
-			missingFile: "Please reply this message with image/video/audio file",
-			addedFile: "Added %1 file attachments to your group welcome message"
+			resetedFile: "Reset file attachments successfully",
+			missingFile: "Please reply to this message with image/video/audio file",
+			addedFile: "Added %1 file attachment(s) to welcome message"
 		}
 	},
 
 	onStart: async function ({ args, threadsData, message, event, commandName, getLang }) {
 		const { threadID, senderID, body } = event;
-		const { data, settings } = await threadsData.get(threadID);
+		const threadRecord = await threadsData.get(threadID);
+		const data = threadRecord?.data || {};
+		const settings = threadRecord?.settings || {};
 
-		switch (args[0]) {
+		if (!args[0]) {
+			const isEnabled = settings.sendWelcomeMessage !== false;
+			const currentMsg = data.welcomeMessage || "(Default template showing name, user ID, inviter, and member count)";
+			return message.reply(getLang("status", isEnabled ? "ON ✅" : "OFF ❌", currentMsg));
+		}
+
+		switch (args[0].toLowerCase()) {
 			case "text": {
 				if (!args[1])
 					return message.reply(getLang("missingContent"));
@@ -124,7 +130,7 @@ module.exports = {
 			}
 			case "on":
 			case "off": {
-				settings.sendWelcomeMessage = args[0] == "on";
+				settings.sendWelcomeMessage = args[0].toLowerCase() == "on";
 				await threadsData.set(threadID, { settings });
 				message.reply(settings.sendWelcomeMessage ? getLang("turnedOn") : getLang("turnedOff"));
 				break;

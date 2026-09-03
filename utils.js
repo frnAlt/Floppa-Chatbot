@@ -343,12 +343,28 @@ function jsonStringifyColor(obj, filter, indent, level) {
 
 
 function message(api, event) {
+        function recordBotMessage(mid, threadID) {
+                if (!mid || !threadID) return;
+                if (!global.botSentMessages) global.botSentMessages = new Map();
+                const list = global.botSentMessages.get(threadID) || [];
+                list.push(mid);
+                if (list.length > 60) list.shift();
+                global.botSentMessages.set(threadID, list);
+        }
+
         async function sendMessageError(err) {
                 if (typeof err === "object" && !err.stack)
                         err = utils.removeHomeDir(JSON.stringify(err, null, 2));
                 else
                         err = utils.removeHomeDir(`${err.name || err.error}: ${err.message}`);
-                return await api.sendMessage(utils.getText("utils", "errorOccurred", err), event.threadID, event.messageID);
+                const sent = await api.sendMessage(utils.getText("utils", "errorOccurred", err), event.threadID, event.messageID);
+                if (sent?.messageID) {
+                        recordBotMessage(sent.messageID, event.threadID);
+                        setTimeout(() => {
+                                api.unsendMessage(sent.messageID).catch(() => {});
+                        }, 8000);
+                }
+                return sent;
         }
 
         // Helper function to send typing indicator
@@ -378,7 +394,18 @@ function message(api, event) {
                                 }
 
                                 const cb = typeof callback === 'function' ? callback : undefined;
-                                return await api.sendMessage(form, event.threadID, cb, undefined, event.isGroup);
+                                const res = await api.sendMessage(form, event.threadID, cb, undefined, event.isGroup);
+                                if (res?.messageID) {
+                                        recordBotMessage(res.messageID, event.threadID);
+                                        const text = typeof form === 'string' ? form : (form?.body || '');
+                                        if (options.autoUnsend || text.startsWith("❌") || text.toLowerCase().startsWith("error:")) {
+                                                const delayMs = options.autoUnsendDelay || 8000;
+                                                setTimeout(() => {
+                                                        api.unsendMessage(res.messageID).catch(() => {});
+                                                }, delayMs);
+                                        }
+                                }
+                                return res;
                         }
                         catch (err) {
                                 if (JSON.stringify(err).includes('spam')) {
@@ -401,9 +428,17 @@ function message(api, event) {
 
                                 const cb = typeof callback === 'function' ? callback : undefined;
                                 const replyId = event.messageID || undefined;
-                                log.info("REPLY", `Sending reply to thread ${event.threadID}...`);
                                 const res = await api.sendMessage(form, event.threadID, cb, replyId, event.isGroup);
-                                log.info("REPLY", `Reply sent successfully to thread ${event.threadID} (ID: ${res?.messageID || 'ok'})`);
+                                if (res?.messageID) {
+                                        recordBotMessage(res.messageID, event.threadID);
+                                        const text = typeof form === 'string' ? form : (form?.body || '');
+                                        if (options.autoUnsend || text.startsWith("❌") || text.toLowerCase().startsWith("error:")) {
+                                                const delayMs = options.autoUnsendDelay || 8000;
+                                                setTimeout(() => {
+                                                        api.unsendMessage(res.messageID).catch(() => {});
+                                                }, delayMs);
+                                        }
+                                }
                                 return res;
                         }
                         catch (err) {

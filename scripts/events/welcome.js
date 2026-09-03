@@ -1,108 +1,144 @@
-const { getTime, drive } = global.utils || {};
+const { getTime, drive, getStreamFromURL } = global.utils || {};
 
 module.exports = {
-        config: {
-                name: "welcome",
-                version: "1.4",
-                author: "NTKhang",
-                category: "events"
-        },
+	config: {
+		name: "welcome",
+		version: "2.0.0",
+		author: "frnAlt",
+		category: "events"
+	},
 
-        langs: {
-                vi: {
-                        session1: "sáng",
-                        session2: "trưa",
-                        session3: "chiều",
-                        session4: "tối",
-                        multiple1: "bạn",
-                        multiple2: "các bạn",
-                        welcomeMessage: "Cảm ơn bạn đã thêm mình vào nhóm!\nPrefix của bot: %1\nĐể xem danh sách lệnh, vui lòng nhập: %1help",
-                        defaultWelcomeMessage: "Chào mừng {multiple} đã đến với {boxName}! Chúc {multiple} một buổi {session} vui vẻ 🎉"
-                },
-                en: {
-                        session1: "morning",
-                        session2: "noon",
-                        session3: "afternoon",
-                        session4: "evening",
-                        multiple1: "you",
-                        multiple2: "you guys",
-                        welcomeMessage: "Thank you for inviting me to the group!\nBot prefix: %1\nTo view the list of commands, please enter: %1help",
-                        defaultWelcomeMessage: "Welcome {multiple} to {boxName}! Have a great {session} 🎉"
-                }
-        },
+	langs: {
+		vi: {
+			session1: "sáng",
+			session2: "trưa",
+			session3: "chiều",
+			session4: "tối",
+			multiple1: "bạn",
+			multiple2: "các bạn",
+			welcomeBot: "Cảm ơn bạn đã thêm mình vào nhóm!\nPrefix của bot: %1\nĐể xem danh sách lệnh, vui lòng nhập: %1help",
+			defaultWelcomeMessage: "👋 Chào mừng {multiple} đã đến với {boxName}!\n👤 Tên: {userName}\n🆔 ID: {userID}\n👥 Người thêm: {inviterName}\n🔢 Thành viên thứ: {memberCount}\nChúc {multiple} một buổi {session} vui vẻ 🎉"
+		},
+		en: {
+			session1: "morning",
+			session2: "noon",
+			session3: "afternoon",
+			session4: "evening",
+			multiple1: "you",
+			multiple2: "you guys",
+			welcomeBot: "Thank you for inviting me to the group!\nBot prefix: %1\nTo view commands, type: %1help",
+			defaultWelcomeMessage: "👋 Welcome {multiple} to {boxName}!\n👤 Name: {userName}\n🆔 ID: {userID}\n👥 Added by: {inviterName}\n🔢 Total Members: {memberCount}\nHave a wonderful {session}! 🎉"
+		}
+	},
 
-        onStart: async ({ threadsData, message, event, api, getLang, client }) => {
-                if (event.logMessageType !== "log:subscribe")
-                        return;
+	onStart: async ({ threadsData, usersData, message, event, api, getLang }) => {
+		if (event.logMessageType !== "log:subscribe")
+			return;
 
-                return async function () {
-                        const { threadID } = event;
-                        const { addedParticipants } = event.logMessageData;
-                        if (!addedParticipants || addedParticipants.length === 0)
-                                return;
+		return async function () {
+			const { threadID, author } = event;
+			const { addedParticipants } = event.logMessageData;
+			if (!addedParticipants || addedParticipants.length === 0)
+				return;
 
-                        const botID = api.getCurrentUserID();
+			const botID = String(api.getCurrentUserID());
 
-                        // ── Case 1: Bot itself was added to the group ──
-                        if (addedParticipants.some(item => item.userFbId == botID)) {
-                                const prefix = global.utils.getPrefix(threadID);
-                                return message.send(getLang("welcomeMessage", prefix));
-                        }
+			let threadData;
+			try {
+				threadData = await threadsData.get(threadID);
+			} catch (_) {
+				return;
+			}
 
-                        // ── Case 2: Regular member(s) joined ──
-                        let threadData;
-                        try {
-                                threadData = await threadsData.get(threadID);
-                        } catch (e) {
-                                return;
-                        }
+			const settings = threadData?.settings || {};
 
-                        if (!threadData.settings.sendWelcomeMessage)
-                                return;
+			// ── Case 1: Bot itself joined ──
+			if (addedParticipants.some(item => String(item.userFbId) === botID)) {
+				if (settings.sendWelcomeBotJoinMessage === false || settings.sendWelcomeMessage === false) {
+					return;
+				}
+				const prefix = global.utils.getPrefix(threadID);
+				return message.send(getLang("welcomeBot", prefix));
+			}
 
-                        const hours = +getTime("HH");
-                        const session =
-                                hours < 10 ? getLang("session1") :
-                                hours < 12 ? getLang("session2") :
-                                hours < 18 ? getLang("session3") :
-                                             getLang("session4");
+			// ── Case 2: Regular member(s) joined ──
+			if (settings.sendWelcomeMessage === false) {
+				return;
+			}
 
-                        const isMultiple = addedParticipants.length > 1;
-                        const multiple = isMultiple ? getLang("multiple2") : getLang("multiple1");
-                        const threadName = threadData.threadName;
+			const hours = +getTime("HH");
+			const session =
+				hours < 10 ? getLang("session1") :
+				hours < 12 ? getLang("session2") :
+				hours < 18 ? getLang("session3") :
+				getLang("session4");
 
-                        let { welcomeMessage = getLang("defaultWelcomeMessage") } = threadData.data;
+			const isMultiple = addedParticipants.length > 1;
+			const multiple = isMultiple ? getLang("multiple2") : getLang("multiple1");
+			const threadName = threadData.threadName || "Group Chat";
 
-                        // Build mention list when {userNameTag} placeholder is used
-                        const hasMentionTag = welcomeMessage.includes("{userNameTag}");
-                        const mentions = hasMentionTag
-                                ? addedParticipants.map(u => ({ tag: u.fullName, id: u.userFbId }))
-                                : null;
+			// Get inviter (normal person who added)
+			let inviterName = "Group Link / Admin";
+			let inviterID = String(author || "N/A");
+			if (author && author !== botID) {
+				try {
+					inviterName = await usersData.getName(author) || "Group Admin";
+				} catch (_) {
+					inviterName = "Group Member";
+				}
+			}
 
-                        const namesList = addedParticipants.map(u => u.fullName).join(", ");
-                        const firstName = addedParticipants[0].fullName;
+			// Count total members
+			const memberCount = Array.isArray(threadData.members) ? threadData.members.length : (addedParticipants.length);
 
-                        welcomeMessage = welcomeMessage
-                                .replace(/\{userName\}/g, isMultiple ? namesList : firstName)
-                                .replace(/\{userNameTag\}/g, isMultiple ? namesList : firstName)
-                                .replace(/\{multiple\}/g, multiple)
-                                .replace(/\{boxName\}|\{threadName\}/g, threadName)
-                                .replace(/\{session\}/g, session);
+			let { welcomeMessage = getLang("defaultWelcomeMessage") } = (threadData.data || {});
 
-                        const form = { body: welcomeMessage };
-                        if (mentions) form.mentions = mentions;
+			const namesList = addedParticipants.map(u => u.fullName).join(", ");
+			const uidsList = addedParticipants.map(u => u.userFbId).join(", ");
+			const firstUser = addedParticipants[0];
 
-                        if (threadData.data.welcomeAttachment && threadData.data.welcomeAttachment.length > 0) {
-                                const streams = threadData.data.welcomeAttachment.map(fileId =>
-                                        drive.getFile(fileId, "stream")
-                                );
-                                const settled = await Promise.allSettled(streams);
-                                form.attachment = settled
-                                        .filter(({ status }) => status === "fulfilled")
-                                        .map(({ value }) => value);
-                        }
+			// Mentions setup
+			const hasMentionTag = welcomeMessage.includes("{userNameTag}");
+			const mentions = hasMentionTag
+				? addedParticipants.map(u => ({ tag: u.fullName, id: u.userFbId }))
+				: null;
 
-                        message.send(form);
-                };
-        }
+			welcomeMessage = welcomeMessage
+				.replace(/\{userName\}/g, isMultiple ? namesList : firstUser.fullName)
+				.replace(/\{userNameTag\}/g, isMultiple ? namesList : firstUser.fullName)
+				.replace(/\{userID\}|\{userFbId\}/g, isMultiple ? uidsList : firstUser.userFbId)
+				.replace(/\{inviterName\}|\{authorName\}/g, inviterName)
+				.replace(/\{inviterID\}|\{authorID\}/g, inviterID)
+				.replace(/\{memberCount\}/g, String(memberCount))
+				.replace(/\{multiple\}/g, multiple)
+				.replace(/\{boxName\}|\{threadName\}/g, threadName)
+				.replace(/\{session\}/g, session);
+
+			const form = { body: welcomeMessage };
+			if (mentions) form.mentions = mentions;
+
+			// Handle Attachments: custom welcome attachments or member avatar fallback
+			if (threadData.data?.welcomeAttachment && threadData.data.welcomeAttachment.length > 0 && drive?.getFile) {
+				try {
+					const streams = threadData.data.welcomeAttachment.map(fileId =>
+						drive.getFile(fileId, "stream")
+					);
+					const settled = await Promise.allSettled(streams);
+					form.attachment = settled
+						.filter(({ status }) => status === "fulfilled")
+						.map(({ value }) => value);
+				} catch (_) {}
+			} else if (!isMultiple && firstUser?.userFbId) {
+				try {
+					const avatarUrl = await usersData.getAvatarUrl(firstUser.userFbId).catch(() => null);
+					if (avatarUrl && typeof getStreamFromURL === "function") {
+						const avatarStream = await getStreamFromURL(avatarUrl).catch(() => null);
+						if (avatarStream) form.attachment = avatarStream;
+					}
+				} catch (_) {}
+			}
+
+			message.send(form);
+		};
+	}
 };
