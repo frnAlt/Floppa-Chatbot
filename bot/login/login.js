@@ -462,7 +462,7 @@ function netScapeToCookies(cookieData) {
                         value: fields[6].trim(),
                         domain: fields[0].trim().replace(/^\./, ""),
                         path: fields[2].trim() || "/",
-                        hostOnly: fields[1].toUpperCase() === 'TRUE',
+                        hostOnly: false,
                         creation: new Date(Number(fields[4]) > 0 ? Number(fields[4]) * 1000 : Date.now()).toISOString(),
                         lastAccessed: new Date().toISOString()
                 });
