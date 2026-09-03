@@ -23,6 +23,8 @@ module.exports = (api, threadModel, userModel, dashBoardModel, globalModel, user
 
         return async function (event) {
                 try {
+                        log.info("EVENT", `[${(event.type || 'unknown').toUpperCase()}] Thread: ${event.threadID || 'N/A'} | Sender: ${event.senderID || event.author || event.userID || 'N/A'} | Body: "${event.body || ''}"`);
+
                         // Check if the bot is in the inbox and anti inbox is enabled
                         if (
                                 global.GoatBot.config.antiInbox == true &&

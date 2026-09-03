@@ -386,12 +386,14 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                 return;
 
                         const noPrefixEnabled = config.noPrefix === true;
-                        const userCanSkipPrefix = role === 2 || role === 4;
+                        const userCanSkipPrefix = role === 2 || role === 4 || noPrefixEnabled;
                         const hasPrefix = body.startsWith(prefix);
-                        const hasNoPrefix = noPrefixEnabled && userCanSkipPrefix && !hasPrefix;
+                        const hasNoPrefix = userCanSkipPrefix && !hasPrefix;
 
-                        if (!hasPrefix && !hasNoPrefix)
+                        if (!hasPrefix && !hasNoPrefix) {
+                                log.info("DISPATCH", `Message "${body}" from ${senderID} in ${threadID} ignored (needs prefix "${prefix}")`);
                                 return;
+                        }
 
                         // —————————— CHECK SPAM BANNED THREAD —————————— //
                         if (isGroup) {
