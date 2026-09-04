@@ -579,7 +579,7 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
 		case "ForcedFetch":
 			if (!v.delta.threadKey) return;
 			var mid = v.delta.messageId;
-			var tid = v.delta.threadKey.threadFbId;
+			var tid = v.delta.threadKey.threadFbId || v.delta.threadKey.otherUserFbId;
 			if (mid && tid) {
 				const form = {
 					"av": ctx.globalOptions.pageID,
@@ -636,64 +636,75 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
 										})();
 									break;
 								case "UserMessage":
-									log.info("ff-Return", {
-										type: "message",
-										senderID: utils.formatID(fetchData.message_sender.id),
-										body: fetchData.message.text || "",
-										threadID: utils.formatID(tid.toString()),
-										messageID: fetchData.message_id,
-										attachments: [{
-											type: "share",
-											ID: fetchData.extensible_attachment.legacy_attachment_id,
-											url: fetchData.extensible_attachment.story_attachment.url,
+									if (!ctx.globalOptions.selfListen && fetchData.message_sender && (fetchData.message_sender.id.toString() === ctx.userID || fetchData.message_sender.id.toString() === ctx.i_userID)) return;
+									if (!ctx.loggedIn) return;
 
-											title: fetchData.extensible_attachment.story_attachment.title_with_entities.text,
-											description: fetchData.extensible_attachment.story_attachment.description.text,
-											source: fetchData.extensible_attachment.story_attachment.source,
+									const attachments = [];
+									if (fetchData.blob_attachments && fetchData.blob_attachments.length > 0) {
+										fetchData.blob_attachments.forEach(att => {
+											try {
+												attachments.push(utils._formatAttachment(att));
+											} catch (ex) {
+												attachments.push({ type: "unknown", error: ex.message || ex, rawAttachment: att });
+											}
+										});
+									} else if (fetchData.extensible_attachment && Object.keys(fetchData.extensible_attachment).length > 0) {
+										try {
+											attachments.push(utils._formatAttachment({ extensible_attachment: fetchData.extensible_attachment }));
+										} catch (ex) {
+											const storyAtt = fetchData.extensible_attachment.story_attachment || {};
+											attachments.push({
+												type: "share",
+												ID: fetchData.extensible_attachment.legacy_attachment_id,
+												url: storyAtt.url,
+												title: storyAtt.title_with_entities ? storyAtt.title_with_entities.text : null,
+												description: storyAtt.description ? storyAtt.description.text : null,
+												source: storyAtt.source ? (storyAtt.source.text || storyAtt.source) : null,
+												image: storyAtt.media && storyAtt.media.image ? storyAtt.media.image.uri : null,
+												width: storyAtt.media && storyAtt.media.image ? storyAtt.media.image.width : null,
+												height: storyAtt.media && storyAtt.media.image ? storyAtt.media.image.height : null,
+												playable: storyAtt.media ? (storyAtt.media.is_playable || false) : false,
+												duration: storyAtt.media ? (storyAtt.media.playable_duration_in_ms || 0) : 0,
+												subattachments: fetchData.extensible_attachment.subattachments,
+												properties: storyAtt.properties || {}
+											});
+										}
+									} else if (fetchData.sticker) {
+										attachments.push({
+											type: "sticker",
+											ID: fetchData.sticker.id,
+											url: fetchData.sticker.url,
+											packID: fetchData.sticker.pack ? fetchData.sticker.pack.id : null,
+											width: fetchData.sticker.width,
+											height: fetchData.sticker.height
+										});
+									}
 
-											image: ((fetchData.extensible_attachment.story_attachment.media || {}).image || {}).uri,
-											width: ((fetchData.extensible_attachment.story_attachment.media || {}).image || {}).width,
-											height: ((fetchData.extensible_attachment.story_attachment.media || {}).image || {}).height,
-											playable: (fetchData.extensible_attachment.story_attachment.media || {}).is_playable || false,
-											duration: (fetchData.extensible_attachment.story_attachment.media || {}).playable_duration_in_ms || 0,
+									const mentions = {};
+									if (fetchData.message && fetchData.message.ranges) {
+										fetchData.message.ranges.forEach(mention => {
+											if (mention.entity && mention.entity.id && fetchData.message.text) {
+												mentions[mention.entity.id] = fetchData.message.text.substring(
+													mention.offset,
+													mention.offset + mention.length
+												);
+											}
+										});
+									}
 
-											subattachments: fetchData.extensible_attachment.subattachments,
-											properties: fetchData.extensible_attachment.story_attachment.properties
-										}],
-										mentions: {},
-										timestamp: parseInt(fetchData.timestamp_precise),
-										participantIDs: (fetchData.participants || (fetchData.messageMetadata ? fetchData.messageMetadata.cid ? fetchData.messageMetadata.cid.canonicalParticipantFbids : fetchData.messageMetadata.participantIds : []) || []),
-										isGroup: (fetchData.message_sender.id != tid.toString())
-									});
 									globalCallback(null, {
 										type: "message",
-										senderID: utils.formatID(fetchData.message_sender.id),
-										body: fetchData.message.text || "",
+										senderID: utils.formatID(fetchData.message_sender ? fetchData.message_sender.id : ""),
+										body: (fetchData.message && fetchData.message.text) || "",
 										threadID: utils.formatID(tid.toString()),
 										messageID: fetchData.message_id,
-										attachments: [{
-											type: "share",
-											ID: fetchData.extensible_attachment.legacy_attachment_id,
-											url: fetchData.extensible_attachment.story_attachment.url,
-
-											title: fetchData.extensible_attachment.story_attachment.title_with_entities.text,
-											description: fetchData.extensible_attachment.story_attachment.description.text,
-											source: fetchData.extensible_attachment.story_attachment.source,
-
-											image: ((fetchData.extensible_attachment.story_attachment.media || {}).image || {}).uri,
-											width: ((fetchData.extensible_attachment.story_attachment.media || {}).image || {}).width,
-											height: ((fetchData.extensible_attachment.story_attachment.media || {}).image || {}).height,
-											playable: (fetchData.extensible_attachment.story_attachment.media || {}).is_playable || false,
-											duration: (fetchData.extensible_attachment.story_attachment.media || {}).playable_duration_in_ms || 0,
-
-											subattachments: fetchData.extensible_attachment.subattachments,
-											properties: fetchData.extensible_attachment.story_attachment.properties
-										}],
-										mentions: {},
+										attachments: attachments,
+										mentions: mentions,
 										timestamp: parseInt(fetchData.timestamp_precise),
 										participantIDs: (fetchData.participants || (fetchData.messageMetadata ? fetchData.messageMetadata.cid ? fetchData.messageMetadata.cid.canonicalParticipantFbids : fetchData.messageMetadata.participantIds : []) || []),
-										isGroup: (fetchData.message_sender.id != tid.toString())
+										isGroup: Boolean(v.delta.threadKey.threadFbId)
 									});
+									break;
 							}
 						} else {
 							log.error("forcedFetch", fetchData);

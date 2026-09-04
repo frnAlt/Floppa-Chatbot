@@ -4,7 +4,7 @@ const btch = require("btch-downloader");
 module.exports = {
   config: {
     name: "alldl",
-    aliases: ["fbdl", "igdl", "ttdl", "dl"],
+    aliases: ["fbdl", "igdl", "ttdl", "dl", "autodl"],
     version: "3.0.0",
     author: "frnAlt",
     countDown: 5,

@@ -70,7 +70,9 @@ const ALIASES = {
   "@root": path.join(__dirname, ".."),
   "uuid/v4": path.join(__dirname, "uuidV4Shim.js"),
   "@napi-rs/canvas": path.join(__dirname, "napiCanvasShim.js"),
-  "canvas": path.join(__dirname, "napiCanvasShim.js")
+  "canvas": path.join(__dirname, "napiCanvasShim.js"),
+  "bcrypt": path.join(__dirname, "bcryptShim.js"),
+  "bcryptjs": path.join(__dirname, "bcryptShim.js")
 };
 
 // Hook into Module._resolveFilename for alias interception
