@@ -1,66 +1,39 @@
 const axios = require("axios");
+const yts = require("yt-search");
+const btch = require("btch-downloader");
 
 const client = axios.create({ timeout: 25000 });
 
 async function getYouTubeAudio(youtubeUrl, titleFallback = "") {
-  // 1. Primary: yta2 API (Fast CDN ymcdn.org)
+  // 1. Primary: btch-downloader (high-speed ymcdn / fast MP3 stream)
   try {
-    const apiUrl = `https://toshiro-api-editz6t9.vercel.app/api/downloader/yta2?url=${encodeURIComponent(youtubeUrl)}`;
-    const res = await client.get(apiUrl, { timeout: 25000 });
-
-    if (res.data && res.data.success && res.data.result) {
-      const r = res.data.result;
-      const candidates = [r.download_url, r.preview].filter(Boolean);
-      for (const candidate of candidates) {
-        if (candidate.includes("onrender.com")) continue;
-        return {
-          audioUrl: candidate,
-          title: r.title || titleFallback || "YouTube Audio",
-          quality: r.quality || "128kbps",
-          duration: r.duration || "N/A"
-        };
-      }
+    const res = await btch.youtube(youtubeUrl);
+    if (res && res.status !== false && res.mp3) {
+      return {
+        audioUrl: res.mp3,
+        title: res.title || titleFallback || "YouTube Audio",
+        quality: "128kbps",
+        duration: res.duration || "N/A"
+      };
     }
   } catch (err) {
-    console.warn("[SING] yta2 primary failed:", err.message);
+    console.warn("[SING] btch.youtube primary failed:", err.message);
   }
 
-  // 2. Secondary fallback: yt-audio with short timeout
+  // 2. Secondary fallback: public high-reliability ytdl mirror
   try {
-    const ytAudioUrl = `https://toshiro-api-editz6t9.vercel.app/api/downloader/yt-audio?url=${encodeURIComponent(youtubeUrl)}&quality=128`;
-    const res = await client.get(ytAudioUrl, { timeout: 8000 });
-    if (res.data && res.data.success && res.data.result) {
-      const r = res.data.result;
-      const candidates = [r.download_url, r.preview].filter(Boolean);
-      for (const candidate of candidates) {
-        return {
-          audioUrl: candidate,
-          title: r.title || titleFallback || "YouTube Audio",
-          quality: r.quality || "128kbps",
-          duration: r.duration || "N/A"
-        };
-      }
+    const mirrorUrl = `https://api.siputzx.my.id/api/d/ytmp3?url=${encodeURIComponent(youtubeUrl)}`;
+    const { data } = await client.get(mirrorUrl, { timeout: 15000 });
+    if (data?.status && (data?.data?.dl || data?.data?.url)) {
+      return {
+        audioUrl: data.data.dl || data.data.url,
+        title: data.data.title || titleFallback || "YouTube Audio",
+        quality: "128kbps",
+        duration: "N/A"
+      };
     }
   } catch (err) {
-    console.warn("[SING] yt-audio secondary failed:", err.message);
-  }
-
-  // 3. Tertiary fallback: nkx.lol music search
-  if (titleFallback) {
-    try {
-      const searchRes = await client.get(`https://play.nkx.lol/search?q=${encodeURIComponent(titleFallback)}&limit=1`, { timeout: 10000 });
-      const top = searchRes.data?.results?.[0];
-      if (top?.audio_cdn_url) {
-        return {
-          audioUrl: top.audio_cdn_url,
-          title: top.title || titleFallback,
-          quality: "128kbps",
-          duration: "N/A"
-        };
-      }
-    } catch (e) {
-      console.warn("[SING] nkx tertiary failed:", e.message);
-    }
+    console.warn("[SING] Secondary mirror failed:", err.message);
   }
 
   return null;
@@ -70,7 +43,7 @@ module.exports = {
   config: {
     name: "sing",
     aliases: ["song", "music", "play"],
-    version: "2.1.0",
+    version: "3.0.0",
     author: "frnAlt",
     countDown: 5,
     role: 0,
@@ -94,22 +67,11 @@ module.exports = {
     // ── Mode 1: Spotify URL ──
     if (isSpotify) {
       try {
-        const spUrl = `https://toshiro-api-editz6t9.vercel.app/api/downloader/spdl?url=${encodeURIComponent(query)}`;
-        const res = await client.get(spUrl, { timeout: 30000 });
-
-        let audioUrl = null;
-        let title = "Spotify Track";
-        let artist = "";
-
-        if (res.data && res.data.success && res.data.result) {
-          const r = res.data.result;
-          audioUrl = r.download_url || r.audio || r.url || r.preview;
-          title = r.title || r.name || title;
-          artist = r.artist || r.author || "";
-        } else if (res.data && res.data.download_url) {
-          audioUrl = res.data.download_url;
-          title = res.data.title || title;
-        }
+        const spUrl = `https://api.siputzx.my.id/api/d/spotify?url=${encodeURIComponent(query)}`;
+        const res = await client.get(spUrl, { timeout: 25000 });
+        let audioUrl = res.data?.data?.download || res.data?.data?.url || res.data?.download_url;
+        let title = res.data?.data?.title || "Spotify Track";
+        let artist = res.data?.data?.artist || "";
 
         if (!audioUrl) throw new Error("Could not extract Spotify audio stream.");
 
@@ -152,20 +114,27 @@ module.exports = {
 
     // ── Mode 3: YouTube Search & Interactive Reply ──
     try {
-      const searchUrl = `https://toshiro-api-editz6t9.vercel.app/api/downloader/yta2?search=${encodeURIComponent(query)}`;
-      const res = await client.get(searchUrl, { timeout: 25000 });
+      const searchRes = await yts(query);
+      const videos = searchRes?.videos || [];
 
-      if (!res.data || !res.data.success || !res.data.results || res.data.results.length === 0) {
+      if (videos.length === 0) {
         if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
         return message.reply(`❌ No songs found for "${query}".`);
       }
 
-      const results = res.data.results.slice(0, 6);
+      const results = videos.slice(0, 6).map(v => ({
+        title: v.title,
+        url: v.url,
+        duration: v.timestamp || (v.seconds ? `${Math.floor(v.seconds / 60)}:${v.seconds % 60}` : "N/A"),
+        thumbnail: v.thumbnail,
+        author: v.author?.name || "Unknown"
+      }));
+
       let msg = `🎶 Search results for "${query}":\n\n`;
       const thumbnailPromises = [];
 
       results.forEach((item, index) => {
-        msg += `${index + 1}. ${item.title}\n[⏱️ ${item.duration || "N/A"}]\n\n`;
+        msg += `${index + 1}. ${item.title}\n[⏱️ ${item.duration} | 👤 ${item.author}]\n\n`;
         if (item.thumbnail) {
           thumbnailPromises.push(
             global.utils.getStreamFromURL(item.thumbnail, `sing_thumb_${index}.jpg`).catch(() => null)
@@ -200,7 +169,6 @@ module.exports = {
   onReply: async function ({ message, event, Reply, api }) {
     if (String(event.senderID) !== String(Reply.author)) return;
 
-    // Robust number extraction (supports "1", "#1", "1.", "song 1", etc.)
     const match = String(event.body || "").trim().match(/\d+/);
     const choice = match ? parseInt(match[0], 10) : NaN;
 
@@ -228,7 +196,7 @@ module.exports = {
       const audioStream = await global.utils.getStreamFromURL(audioData.audioUrl, "sing.mp3");
 
       await message.reply({
-        body: `🎧 ${audioData.title || selected.title}\n⏱️ Duration: ${selected.duration || audioData.duration || "N/A"}\n🎼 Quality: ${audioData.quality || "128kbps"}`,
+        body: `🎧 ${audioData.title || selected.title}\n⏱️ Duration: ${selected.duration || "N/A"}\n🎼 Quality: ${audioData.quality || "128kbps"}`,
         attachment: audioStream
       });
 

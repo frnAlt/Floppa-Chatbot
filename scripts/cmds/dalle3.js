@@ -7,7 +7,7 @@ const API_ENDPOINT = "https://neokex-img-api.vercel.app/generate";
 module.exports = {
   config: {
     name: "dalle3",
-    aliases: ["dalle"],
+    aliases: ["dalle-3", "dalle_3"],
     version: "1.0", 
     author: "frnAlt",
     countDown: 15,

@@ -48,25 +48,64 @@ module.exports = {
     }
 
     try {
-      const apiUrl = `https://toshiro-api-editz6t9.vercel.app/api/search/tiksearch?keyword=${encodeURIComponent(query)}`;
-      const res = await axios.get(apiUrl, { timeout: 30000 });
+      let mediaUrl = "";
+      let title = "TikTok Media";
+      let author = "Unknown";
+      let duration = 0;
 
-      if (!res.data || !res.data.success || !res.data.result) {
-        if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
-        return message.reply(`❌ No TikTok results found for "${query}".`);
+      const isDirectLink = /(?:https?:\/\/)?(?:www\.|vt\.|vm\.)?tiktok\.com\//i.test(query);
+
+      if (isDirectLink) {
+        // Direct link download via btch-downloader
+        const btch = require("btch-downloader");
+        try {
+          const res = await btch.ttdl(query);
+          if (res && res.status !== false) {
+            title = res.title || title;
+            author = res.developer || "TikTok Creator";
+            mediaUrl = isAudio ? (res.audio || res.video) : (res.video || res.audio);
+          }
+        } catch (e) {
+          console.warn("[TIKTOK] btch.ttdl direct failed:", e.message);
+        }
+
+        // Secondary fallback for direct link
+        if (!mediaUrl) {
+          try {
+            const tikwm = await axios.get(`https://www.tikwm.com/api/?url=${encodeURIComponent(query)}`, { timeout: 15000 });
+            if (tikwm.data?.code === 0 && tikwm.data?.data) {
+              const d = tikwm.data.data;
+              title = d.title || title;
+              author = d.author?.unique_id || author;
+              duration = d.duration || 0;
+              mediaUrl = isAudio ? (d.music || d.play) : (d.play || d.music);
+            }
+          } catch (_) {}
+        }
+      } else {
+        // Search query: search via public mirror
+        try {
+          const mirrorSearch = `https://api.siputzx.my.id/api/s/tiktok?query=${encodeURIComponent(query)}`;
+          const res = await axios.get(mirrorSearch, { timeout: 20000 });
+          if (res.data?.status && res.data?.data?.[0]) {
+            const first = res.data.data[0];
+            title = first.title || title;
+            author = first.author?.nickname || author;
+            mediaUrl = isAudio ? (first.music || first.nowm || first.play) : (first.nowm || first.play || first.music);
+          }
+        } catch (e) {
+          console.warn("[TIKTOK] Search mirror failed:", e.message);
+        }
       }
-
-      const { title, author, duration, video, music } = res.data.result;
-      const mediaUrl = isAudio ? (music || video) : video;
 
       if (!mediaUrl) {
         if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
-        return message.reply("❌ Unable to retrieve media download link.");
+        return message.reply(`❌ Could not retrieve TikTok media for "${query}". Please check the link or search keyword.`);
       }
 
       const stream = await global.utils.getStreamFromURL(
         mediaUrl,
-        isAudio ? "tiktok_audio.mp3" : "tiktok_video.mp4"
+        isAudio ? `tiktok_${Date.now()}.mp3` : `tiktok_${Date.now()}.mp4`
       );
 
       const bodyText = isAudio

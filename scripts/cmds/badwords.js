@@ -171,8 +171,8 @@ module.exports = {
 				if (role < 1)
 					return message.reply(getLang("onlyAdmin4"));
 				let userID;
-				if (Object.keys(event.mentions)[0])
-					userID = Object.keys(event.mentions)[0];
+				if (Object.keys(event.mentions || {})[0])
+					userID = Object.keys(event.mentions || {})[0];
 				else if (args[1])
 					userID = args[1];
 				else if (event.messageReply)

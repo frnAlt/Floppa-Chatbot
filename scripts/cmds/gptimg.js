@@ -3,7 +3,7 @@ const axios = require("axios");
 module.exports = {
   config: {
     name: "gptimg",
-    aliases: ["gptimage", "gpt4img", "aiimage", "gptart"],
+    aliases: ["gptimage", "gpt4img", "gptart"],
     version: "1.0.0",
     author: "frnAlt",
     countDown: 8,

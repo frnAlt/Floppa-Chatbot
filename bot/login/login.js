@@ -952,6 +952,48 @@ async function startBot(loginWithEmail) {
                                 }
                                 setTimeout(() => changeFbStateByCode = false, 1000);
                         }
+
+                        // ——————————— CONTINUOUS APPSTATE PERSISTENCE ——————————— //
+                        if (global.intervalSaveAppState) {
+                                clearInterval(global.intervalSaveAppState);
+                        }
+                        if (global.GoatBot.config.autoRefreshFbstate !== false) {
+                                global.intervalSaveAppState = setInterval(() => {
+                                        try {
+                                                if (!api || typeof api.getAppState !== "function") return;
+                                                const currentAppState = api.getAppState();
+                                                if (Array.isArray(currentAppState) && currentAppState.length > 0) {
+                                                        const filtered = filterKeysAppState(currentAppState);
+                                                        if (filtered && filtered.length > 0) {
+                                                                changeFbStateByCode = true;
+                                                                writeFileSync(dirAccount, JSON.stringify(filtered, null, 2));
+                                                                try {
+                                                                        writeFileSync(path.join(process.cwd(), "appstate.json"), JSON.stringify(filtered, null, 2));
+                                                                } catch (_) {}
+                                                                latestChangeContentAccount = fs.statSync(dirAccount).mtimeMs;
+                                                                setTimeout(() => { changeFbStateByCode = false; }, 1000);
+                                                        }
+                                                }
+                                        } catch (_) {}
+                                }, 3 * 60 * 1000);
+
+                                const saveOnExit = () => {
+                                        try {
+                                                if (api && typeof api.getAppState === "function") {
+                                                        const currentAppState = api.getAppState();
+                                                        if (Array.isArray(currentAppState) && currentAppState.length > 0) {
+                                                                const filtered = filterKeysAppState(currentAppState);
+                                                                if (filtered && filtered.length > 0) {
+                                                                        writeFileSync(dirAccount, JSON.stringify(filtered, null, 2));
+                                                                        try { writeFileSync(path.join(process.cwd(), "appstate.json"), JSON.stringify(filtered, null, 2)); } catch (_) {}
+                                                                }
+                                                        }
+                                                }
+                                        } catch (_) {}
+                                };
+                                process.once("SIGINT", saveOnExit);
+                                process.once("SIGTERM", saveOnExit);
+                        }
                         if (hasBanned == true) {
                                 log.err('GBAN', getText('login', 'youAreBanned'));
                                 process.exit();
@@ -1184,13 +1226,13 @@ async function startBot(loginWithEmail) {
                                                                 callbackListenTime[keyListen] = () => { };
                                                         const cookieString = appState.map(i => i.key + "=" + i.value).join("; ");
 
-                                                        let times = 5;
+                                                        let times = 30;
 
                                                         const spin = createOraDots(getText('login', 'retryCheckLiveCookie', times));
                                                         const countTimes = setInterval(() => {
                                                                 times--;
-                                                                if (times == 0)
-                                                                        times = 5;
+                                                                if (times <= 0)
+                                                                        times = 30;
                                                                 spin.text = getText('login', 'retryCheckLiveCookie', times);
                                                         }, 1000);
 
@@ -1206,7 +1248,7 @@ async function startBot(loginWithEmail) {
                                                                                 isSendNotiErrorMessage = false;
                                                                                 global.GoatBot.Listening = api.listenMqtt(createCallBackListen(keyListen));
                                                                         }
-                                                                }, 5000);
+                                                                }, 30000);
                                                         }
                                                 }
                                                 return;

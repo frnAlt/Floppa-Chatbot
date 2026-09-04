@@ -351,11 +351,12 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                 if (typeof threadData?.settings?.hideNotiMessage == "object")
                         hideNotiMessage = threadData.settings.hideNotiMessage;
 
+                if (!event.mentions || typeof event.mentions !== "object") {
+                        event.mentions = {};
+                }
+
                 // Automatically populate event.mentions from text if Facebook omitted them
                 if (typeof body === "string" && body.includes("@")) {
-                        if (!event.mentions || typeof event.mentions !== "object") {
-                                event.mentions = {};
-                        }
                         const members = threadData?.members || [];
                         const lowerBody = body.toLowerCase();
                         for (const m of members) {

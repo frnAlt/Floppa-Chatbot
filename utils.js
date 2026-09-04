@@ -541,36 +541,52 @@ async function downloadFile(url = "", path = "") {
 }
 
 async function findUid(link) {
+        if (!link) throw new Error("Please provide a Facebook profile link or user ID.");
+        const clean = String(link).trim();
+        // 1. Direct numeric UID
+        if (/^\d+$/.test(clean)) return clean;
+
+        // 2. Direct regex extraction from URL (e.g. ?id=1000... or facebook.com/1000...)
+        const directMatch = clean.match(/[?&]id=(\d+)/) || clean.match(/facebook\.com\/(?:profile\.php\?id=)?(\d+)/);
+        if (directMatch && directMatch[1]) return directMatch[1];
+
+        // 3. Try lookup via public lookup APIs
         try {
                 const response = await axios.post(
                         'https://seomagnifier.com/fbid',
                         new URLSearchParams({
                                 'facebook': '1',
-                                'sitelink': link
+                                'sitelink': clean
                         }),
                         {
                                 headers: {
-                                        'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                                        'Cookie': 'PHPSESSID=0d8feddd151431cf35ccb0522b056dc6'
-                                }
+                                        'content-type': 'application/x-www-form-urlencoded; charset=UTF-8'
+                                },
+                                timeout: 10000
                         }
                 );
-                const id = response.data;
-                // try another method if this one fails
-                if (isNaN(id)) {
-                        const html = await axios.get(link);
-                        const $ = cheerio.load(html.data);
-                        const el = $('meta[property="al:android:url"]').attr('content');
-                        if (!el) {
-                                throw new Error('UID not found');
-                        }
+                const id = String(response.data).trim();
+                if (/^\d+$/.test(id)) return id;
+        } catch (_) {}
+
+        try {
+                const html = await axios.get(clean, {
+                        headers: {
+                                "User-Agent": "Mozilla/5.0 (Linux; Android 14; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Mobile Safari/537.36"
+                        },
+                        timeout: 10000
+                });
+                const $ = cheerio.load(html.data);
+                const el = $('meta[property="al:android:url"]').attr('content');
+                if (el) {
                         const number = el.split('/').pop();
-                        return number;
+                        if (/^\d+$/.test(number)) return number;
                 }
-                return id;
-        } catch (error) {
-                throw new Error('An unexpected error occurred. Please try again.');
-        }
+                const entityMatch = html.data.match(/"entity_id":"(\d+)"/) || html.data.match(/"userID":"(\d+)"/);
+                if (entityMatch && entityMatch[1]) return entityMatch[1];
+        } catch (_) {}
+
+        throw new Error("Could not resolve Facebook UID from this link.");
 }
 
 async function getStreamsFromAttachment(attachments) {

@@ -1,187 +1,208 @@
-// @ts-check
-
-/**
- * @type {CommandMeta}
- */
-export const meta = {
-  name: "ytdl",
-  description: "Search YouTube videos and stream them via haji-mix-api.",
-  author: "frnAlt",
-  version: "1.0.4",
-  usage: "{prefix}{name} <search query>",
-  category: "Media",
-  permissions: [0],
-  noPrefix: false,
-  waitingTime: 10,
-  requirement: "3.0.0",
-  otherNames: ["vid", "youtube", "ytb"],
-  icon: "🎥",
-  noLevelUI: true,
-  noWeb: true,
-};
-
+const axios = require("axios");
 const yts = require("yt-search");
+const btch = require("btch-downloader");
 
-/**
- * @type {CommandStyle}
- */
-export const style = {
-  title: "🎥 YouTube Video",
-  titleFont: "bold",
-  contentFont: "none",
-};
+const client = axios.create({ timeout: 30000 });
 
-import { defineEntry } from "@cass/define";
-import { UNISpectra } from "@cass/unispectra";
-
-export const langs = {
-  en: {
-    noQuery:
-      "Please provide a search query for a YouTube video!\nExample: {prefix}ytdl never gonna give you up",
-    noResults: "No videos found with that query!",
-    error: "Error fetching video data: %1",
-    invalidSelection: "Please select a valid number between 1 and 5!",
-    invalidFormat:
-      "Please reply in the format: number | video or number | audio\nExample: 1 | video",
-  },
-};
-
-async function fetchVideoData(query) {
+async function getYouTubeVideo(youtubeUrl, titleFallback = "") {
+  // 1. Primary: btch-downloader
   try {
-    const searchResults = await yts(query);
-    return searchResults.videos.slice(0, 5).map((vid) => ({
-      id: { videoId: vid.videoId },
-      snippet: {
-        title: vid.title,
-        channelTitle: vid.author.name,
-        publishedAt: vid.ago,
-      },
-      fallback: true,
-    }));
-  } catch (error) {
-    console.error("yt-search error:", error.message);
-    throw error;
+    const res = await btch.youtube(youtubeUrl);
+    if (res && res.status !== false) {
+      return {
+        videoUrl: res.mp4,
+        audioUrl: res.mp3,
+        title: res.title || titleFallback || "YouTube Video",
+        duration: res.duration || "N/A"
+      };
+    }
+  } catch (err) {
+    console.warn("[YTDL] btch.youtube primary failed:", err.message);
   }
+
+  // 2. Secondary fallback
+  try {
+    const mirrorUrl = `https://api.siputzx.my.id/api/d/ytmp4?url=${encodeURIComponent(youtubeUrl)}`;
+    const { data } = await client.get(mirrorUrl, { timeout: 20000 });
+    if (data?.status && (data?.data?.dl || data?.data?.url)) {
+      return {
+        videoUrl: data.data.dl || data.data.url,
+        title: data.data.title || titleFallback || "YouTube Video",
+        duration: "N/A"
+      };
+    }
+  } catch (err) {
+    console.warn("[YTDL] Secondary mirror failed:", err.message);
+  }
+
+  return null;
 }
 
-/**
- *
- * @param {any[]} videos
- * @returns
- */
-function formatVideoList(videos) {
-  return (
-    videos
-      .map((vid, index) => {
-        // const videoId = vid.id.videoId;
-        // const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
-        const publishedAt = vid.snippet.publishedAt || "Unknown";
-        return ` • ${index + 1}. **${
-          vid.snippet.title
-        }** (Uploaded ${publishedAt})`;
-      })
-      .join("\n") +
-    "\n━━━━━━━━━━━━━━━\n✦ Reply with: number | video or number | audio\nExample: 1 | video"
-  );
-}
+module.exports = {
+  config: {
+    name: "ytdl",
+    aliases: ["video", "ytvideo"],
+    version: "2.0.0",
+    author: "frnAlt",
+    countDown: 5,
+    role: 0,
+    shortDescription: { en: "Download YouTube videos" },
+    longDescription: { en: "Search or download YouTube videos directly in MP4 format or MP3 audio" },
+    category: "media",
+    guide: { en: "{pn} <video name or YouTube URL>\n{pn} -a <query> (audio only)" }
+  },
 
-function formatVideoDetails(video) {
-  const videoId = video.id.videoId;
-  const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
-  const publishedAt = video.snippet.publishedAt || "Unknown";
-  return `🎥 **${video.snippet.title}**\n${UNISpectra.arrow} ${video.snippet.channelTitle}\n${UNISpectra.arrowFromT} Uploaded ${publishedAt}\n🔗 ${videoUrl}`;
-}
+  onStart: async function ({ message, args, event, api, commandName }) {
+    if (!args[0]) {
+      return message.reply("❌ Please provide a YouTube video title or link.\nExample: {p}ytdl Alan Walker Faded");
+    }
 
-export const entry = defineEntry(
-  async ({ input, output, args, prefix, commandName, getLang }) => {
+    let isAudioOnly = false;
+    let query = args.join(" ").trim();
+
+    if (args[0] === "-a" || args[0] === "--audio") {
+      isAudioOnly = true;
+      query = args.slice(1).join(" ").trim();
+    }
+
+    if (!query) {
+      return message.reply("❌ Please provide a search query or YouTube link.");
+    }
+
+    if (api.setMessageReaction) {
+      api.setMessageReaction("🎥", event.messageID, () => {}, true);
+    }
+
+    const isYtUrl = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be)\//i.test(query);
+
+    // Mode 1: Direct YouTube URL
+    if (isYtUrl) {
+      try {
+        const media = await getYouTubeVideo(query);
+        const downloadUrl = isAudioOnly ? (media?.audioUrl || media?.videoUrl) : media?.videoUrl;
+
+        if (!downloadUrl) {
+          if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+          return message.reply("❌ Could not extract video stream from this link.");
+        }
+
+        const ext = isAudioOnly ? "mp3" : "mp4";
+        const stream = await global.utils.getStreamFromURL(downloadUrl, `ytdl_${Date.now()}.${ext}`);
+
+        if (api.setMessageReaction) api.setMessageReaction("✅", event.messageID, () => {}, true);
+
+        return message.reply({
+          body: `🎬 ${media.title}\n⏱️ Duration: ${media.duration || "N/A"}`,
+          attachment: stream
+        });
+      } catch (err) {
+        console.error("[YTDL] Direct download error:", err.message);
+        if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+        return message.reply(`❌ Download failed: ${err.message || err}`);
+      }
+    }
+
+    // Mode 2: YouTube Search with reply selection
     try {
-      const query = args.join(" ").trim();
+      const searchRes = await yts(query);
+      const videos = searchRes?.videos || [];
 
-      if (!query) {
-        return output.reply(getLang("noQuery", prefix, commandName));
+      if (videos.length === 0) {
+        if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+        return message.reply(`❌ No videos found for "${query}".`);
       }
 
-      await output.reply(
-        `🔎 | Searching YouTube for **"${query}"**.\n⏳ | Please **wait**...🤍`
-      );
+      const results = videos.slice(0, 6).map(v => ({
+        title: v.title,
+        url: v.url,
+        duration: v.timestamp || "N/A",
+        thumbnail: v.thumbnail,
+        author: v.author?.name || "Unknown"
+      }));
 
-      const videos = await fetchVideoData(query);
+      let msg = `🎬 YouTube Search: "${query}"\n\n`;
+      const thumbnailPromises = [];
 
-      if (!videos || videos.length === 0) {
-        return output.reply(getLang("noResults"));
-      }
-
-      const messageInfo = await output.reply(formatVideoList(videos));
-
-      input.setReply(messageInfo.messageID, {
-        key: "ytdl",
-        id: input.senderID,
-        results: videos,
+      results.forEach((item, index) => {
+        msg += `${index + 1}. ${item.title}\n[⏱️ ${item.duration} | 👤 ${item.author}]\n\n`;
+        if (item.thumbnail) {
+          thumbnailPromises.push(
+            global.utils.getStreamFromURL(item.thumbnail, `ytdl_thumb_${index}.jpg`).catch(() => null)
+          );
+        }
       });
-    } catch (error) {
-      console.error("Entry error:", error.message);
-      output.reply(getLang("error", error.message));
+
+      msg += `👉 Reply with a number (1-${results.length}) to download the video!\nAdd "audio" or "-a" (e.g. "1 audio") for MP3.`;
+
+      const thumbnails = (await Promise.all(thumbnailPromises)).filter(Boolean);
+
+      message.reply(
+        { body: msg.trim(), attachment: thumbnails },
+        (err, info) => {
+          if (err || !info) return;
+          global.GoatBot.onReply.set(info.messageID, {
+            commandName,
+            author: event.senderID,
+            threadID: event.threadID,
+            timestamp: Date.now(),
+            results
+          });
+        }
+      );
+    } catch (err) {
+      console.error("[YTDL] Search error:", err.message);
+      if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+      return message.reply("❌ Search error. Please try again later.");
+    }
+  },
+
+  onReply: async function ({ message, event, Reply, api }) {
+    if (String(event.senderID) !== String(Reply.author)) return;
+
+    const bodyText = String(event.body || "").trim().toLowerCase();
+    const wantAudio = bodyText.includes("audio") || bodyText.includes("mp3") || bodyText.includes("-a");
+
+    const match = bodyText.match(/\d+/);
+    const choice = match ? parseInt(match[0], 10) : NaN;
+
+    if (isNaN(choice) || choice < 1 || choice > Reply.results.length) {
+      return message.reply(`❌ Invalid choice. Reply with a number from 1 to ${Reply.results.length}.`);
+    }
+
+    const selected = Reply.results[choice - 1];
+
+    if (api.unsendMessage && event.messageReply?.messageID) {
+      api.unsendMessage(event.messageReply.messageID).catch(() => {});
+    }
+
+    if (api.setMessageReaction) {
+      api.setMessageReaction("⏳", event.messageID, () => {}, true);
+    }
+
+    try {
+      const media = await getYouTubeVideo(selected.url, selected.title);
+      const downloadUrl = wantAudio ? (media?.audioUrl || media?.videoUrl) : media?.videoUrl;
+
+      if (!downloadUrl) {
+        if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+        return message.reply(`❌ Could not fetch video stream for "${selected.title}".`);
+      }
+
+      const ext = wantAudio ? "mp3" : "mp4";
+      const stream = await global.utils.getStreamFromURL(downloadUrl, `ytdl_${Date.now()}.${ext}`);
+
+      await message.reply({
+        body: `🎬 ${media.title || selected.title}\n⏱️ Duration: ${selected.duration || "N/A"}\n📦 Format: ${ext.toUpperCase()}`,
+        attachment: stream
+      });
+
+      if (api.setMessageReaction) {
+        api.setMessageReaction("✅", event.messageID, () => {}, true);
+      }
+    } catch (err) {
+      console.error("[YTDL] onReply download error:", err.message);
+      if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+      message.reply("❌ Failed to download video. The file may exceed Facebook size limits or the stream is unavailable.");
     }
   }
-);
-
-/**
- *
- * @param {CommandContext & { repObj: { id: string; results: any[] } }} param0
- * @returns
- */
-export async function reply({ input, output, repObj, detectID, langParser }) {
-  const getLang = langParser.createGetLang(langs);
-  console.log("Reply function triggered:", { input, repObj, detectID });
-
-  const { id, results } = repObj;
-
-  if (input.senderID !== id || !results) {
-    console.log("Reply ignored: Invalid sender or no results");
-    return;
-  }
-
-  const parts = input.body.trim().split(/\s*\|\s*/);
-  if (parts.length !== 2) {
-    console.log("Invalid reply format:", input.body);
-    return output.reply(getLang("invalidFormat"));
-  }
-
-  const selection = parseInt(parts[0]);
-  const format = parts[1].toLowerCase();
-
-  if (isNaN(selection) || selection < 1 || selection > 5) {
-    console.log("Invalid selection:", parts[0]);
-    return output.reply(getLang("invalidSelection"));
-  }
-
-  if (format !== "video" && format !== "audio") {
-    console.log("Invalid format:", format);
-    return output.reply(getLang("invalidFormat"));
-  }
-
-  const selectedVideo = results[selection - 1];
-  if (!selectedVideo) {
-    console.log("No video found for selection:", selection);
-    return output.reply(getLang("invalidSelection"));
-  }
-
-  input.delReply(String(detectID));
-
-  const videoId = selectedVideo.id.videoId;
-  const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
-  const streamUrl = `https://haji-mix-api.gleeze.com/api/autodl?url=${encodeURIComponent(
-    videoUrl
-  )}&stream=true`;
-
-  try {
-    console.log(`Streaming media from:`, streamUrl);
-    await output.reply({
-      body: formatVideoDetails(selectedVideo),
-      attachment: await global.utils.getStreamFromURL(streamUrl),
-    });
-  } catch (error) {
-    console.error("Error streaming media:", error.message);
-    output.reply(getLang("error", error.message));
-  }
-}
+};

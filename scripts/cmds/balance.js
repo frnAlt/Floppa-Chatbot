@@ -333,8 +333,8 @@ module.exports = {
             
             if (event.messageReply) {
                 targetID = event.messageReply.senderID;
-            } else if (Object.keys(event.mentions).length > 0) {
-                targetID = Object.keys(event.mentions)[0];
+            } else if (Object.keys(event.mentions || {}).length > 0) {
+                targetID = Object.keys(event.mentions || {})[0];
             } else if (args[0] && !isNaN(args[0])) {
                 targetID = args[0];
             }

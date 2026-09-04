@@ -618,8 +618,8 @@ Welcome to ${BANK_NAME}!`,
                 let targetID;
                 let amount;
 
-                if (Object.keys(event.mentions).length > 0) {
-                    targetID = Object.keys(event.mentions)[0];
+                if (Object.keys(event.mentions || {}).length > 0) {
+                    targetID = Object.keys(event.mentions || {})[0];
                     amount = parseInt(args[2]) || parseInt(args[1]);
                 } else {
                     targetID = args[1];

@@ -23,6 +23,9 @@ module.exports = (api, threadModel, userModel, dashBoardModel, globalModel, user
 
         return async function (event) {
                 try {
+                        if (!event.mentions || typeof event.mentions !== "object") {
+                                event.mentions = {};
+                        }
                         if (event.messageReply && event.type === "message") {
                                 event.type = "message_reply";
                         }

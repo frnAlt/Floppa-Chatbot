@@ -1,12 +1,11 @@
 const axios = require("axios");
-const fs = require("fs-extra");
-const path = require("path");
+const btch = require("btch-downloader");
 
 module.exports = {
   config: {
     name: "alldl",
-    aliases: ["fbdl", "igdl", "ttdl", "ytdl", "dl"],
-    version: "2.6",
+    aliases: ["fbdl", "igdl", "ttdl", "dl"],
+    version: "3.0.0",
     author: "frnAlt",
     countDown: 5,
     role: 0,
@@ -25,7 +24,7 @@ module.exports = {
     }
 
     let url = args[0];
-    let isAudio = args.includes("--a");
+    let isAudio = args.includes("--a") || args.includes("-a");
 
     if (event.type === "message_reply") {
       const urlMatch = event.messageReply.body.match(/https?:\/\/[^\s]+/);
@@ -58,76 +57,62 @@ module.exports = {
       let downloadUrl = "";
       let title = "Downloaded Media";
 
-      // 1. Primary: Toshiro All Downloader (Most reliable from Goatbot-V2)
+      // 1. Primary engine: btch-downloader
       try {
-        const res = await axios.get(
-          `https://toshiro-api-editz6t9.vercel.app/api/downloader/alldl?url=${encodeURIComponent(url)}`,
-          { timeout: 25000 }
-        );
-
-        if (res.data?.success && res.data?.result) {
-          const r = res.data.result;
-          title = r.title || title;
-          if (isAudio) {
-            downloadUrl = r.audio || r.video || r.url;
-          } else {
-            downloadUrl = r.video || r.high_quality || r.url;
+        if (/tiktok\.com/i.test(url)) {
+          const res = await btch.ttdl(url);
+          if (res && res.status !== false) {
+            title = res.title || "TikTok Media";
+            downloadUrl = isAudio ? (res.audio || res.video) : (res.video || res.audio);
+          }
+        } else if (/youtube\.com|youtu\.be/i.test(url)) {
+          const res = await btch.youtube(url);
+          if (res && res.status !== false) {
+            title = res.title || "YouTube Media";
+            downloadUrl = isAudio ? res.mp3 : (res.mp4 || res.mp3);
+          }
+        } else if (/facebook\.com|fb\.watch/i.test(url)) {
+          const res = await btch.fbdown(url);
+          if (res && res.status !== false) {
+            title = res.title || "Facebook Video";
+            downloadUrl = res.Normal_video || res.HD || res.audio;
+          }
+        } else if (/instagram\.com/i.test(url)) {
+          const res = await btch.igdl(url);
+          if (res && res.status !== false && res.result && res.result.length > 0) {
+            title = "Instagram Media";
+            downloadUrl = res.result[0].url;
+          }
+        } else if (/twitter\.com|x\.com/i.test(url)) {
+          const res = await btch.twitter(url);
+          if (res && res.status !== false) {
+            title = res.title || "Twitter Media";
+            downloadUrl = res.url ? (res.url[0]?.hd || res.url[0]?.sd) : "";
           }
         }
       } catch (e) {
-        console.warn("alldl v1 failed, trying alldlv2:", e.message);
+        console.warn("[ALLDL] btch-downloader engine error:", e.message);
       }
 
-      // 2. Secondary: Toshiro All Downloader V2
+      // 2. Secondary fallback: public mirror
       if (!downloadUrl) {
         try {
-          const res = await axios.get(
-            `https://toshiro-api-editz6t9.vercel.app/api/downloader/alldlv2?url=${encodeURIComponent(url)}`,
-            { timeout: 25000 }
-          );
-
-          if (res.data && res.data.success && res.data.result) {
-            const r = res.data.result;
+          const mirror = `https://api.siputzx.my.id/api/d/alldl?url=${encodeURIComponent(url)}`;
+          const { data } = await axios.get(mirror, { timeout: 20000 });
+          if (data?.status && data?.data) {
+            const r = data.data;
             title = r.title || title;
-
-            if (isAudio && r.audios && r.audios.length > 0) {
-              const m4a = r.audios.find(a => a.format === "M4A" || a.format === "MP3");
-              downloadUrl = (m4a || r.audios[0]).url;
-            } else if (r.medias && r.medias.length > 0) {
-              const preferred = r.medias.find(m => m.quality === "720P" || m.quality === "480P" || m.quality === "360P");
-              downloadUrl = (preferred || r.medias[0]).url;
-            } else if (r.videos && r.videos.length > 0) {
-              downloadUrl = r.videos[0].url;
-            } else if (r.audios && r.audios.length > 0) {
-              downloadUrl = r.audios[0].url;
-            }
-          }
-        } catch (e) {
-          console.warn("alldlv2 failed:", e.message);
-        }
-      }
-
-      // 3. Fallback: YouTube Audio
-      if (!downloadUrl && /(?:youtube\.com|youtu\.be)/i.test(url)) {
-        try {
-          const ytRes = await axios.get(
-            `https://toshiro-api-editz6t9.vercel.app/api/downloader/yt-audio?url=${encodeURIComponent(url)}&quality=128`,
-            { timeout: 25000 }
-          );
-          if (ytRes.data && ytRes.data.success && ytRes.data.result) {
-            downloadUrl = ytRes.data.result.download_url || ytRes.data.result.preview;
-            title = ytRes.data.result.title || title;
-            isAudio = true;
+            downloadUrl = isAudio ? (r.audio || r.video || r.url) : (r.video || r.url);
           }
         } catch (_) {}
       }
 
       if (!downloadUrl) {
-        throw new Error("Could not find a valid download link for this URL.");
+        throw new Error("Could not extract a downloadable stream for this link.");
       }
 
       const ext = isAudio ? "mp3" : "mp4";
-      const mediaStream = await global.utils.getStreamFromURL(downloadUrl, `download.${ext}`);
+      const mediaStream = await global.utils.getStreamFromURL(downloadUrl, `download_${Date.now()}.${ext}`);
 
       await message.reply({
         body: `📥 ${title}`,
@@ -138,7 +123,7 @@ module.exports = {
     } catch (error) {
       console.error("[ALLDL ERROR]:", error.message);
       if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
-      return message.reply(`❌ Could not download media: ${error.message || "Request timed out or unsupported link."}`);
+      return message.reply(`❌ Download failed: ${error.message || "Unsupported URL or service timeout."}`);
     }
   }
 };

@@ -50,7 +50,7 @@ module.exports = {
                         case "-a": {
                                 if (args[1]) {
                                         let uids = [];
-                                        if (Object.keys(event.mentions).length > 0)
+                                        if (Object.keys(event.mentions || {}).length > 0)
                                                 uids = Object.keys(event.mentions);
                                         else if (event.messageReply)
                                                 uids.push(event.messageReply.senderID);
@@ -80,8 +80,10 @@ module.exports = {
                         case "-r": {
                                 if (args[1]) {
                                         let uids = [];
-                                        if (Object.keys(event.mentions).length > 0)
-                                                uids = Object.keys(event.mentions)[0];
+                                        if (Object.keys(event.mentions || {}).length > 0)
+                                                uids = Object.keys(event.mentions);
+                                        else if (event.messageReply)
+                                                uids.push(event.messageReply.senderID);
                                         else
                                                 uids = args.filter(arg => !isNaN(arg));
                                         const notAdminIds = [];

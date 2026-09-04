@@ -1,7 +1,8 @@
 module.exports = {
 	config: {
 		name: "all",
-		version: "1.2",
+		aliases: ["tagall", "tag"],
+		version: "2.0.0",
 		author: "frnAlt",
 		countDown: 5,
 		role: 1,
@@ -16,27 +17,29 @@ module.exports = {
 		}
 	},
 
-	onStart: async function ({ message, event, args }) {
-		const { participantIDs } = event;
-		const lengthAllUser = participantIDs.length;
-		const mentions = [];
-		let body = args.join(" ") || "@all";
-		let bodyLength = body.length;
-		let i = 0;
-		for (const uid of participantIDs) {
-			let fromIndex = 0;
-			if (bodyLength < lengthAllUser) {
-				body += body[bodyLength - 1];
-				bodyLength++;
-			}
-			if (body.slice(0, i).lastIndexOf(body[i]) != -1)
-				fromIndex = i;
-			mentions.push({
-				tag: body[i],
-				id: uid, fromIndex
-			});
-			i++;
+	onStart: async function ({ message, event, args, threadsData }) {
+		let participantIDs = event.participantIDs;
+		if (!participantIDs || !participantIDs.length) {
+			try {
+				const threadInfo = await threadsData.get(event.threadID);
+				participantIDs = threadInfo?.members ? threadInfo.members.map(m => m.userID) : [];
+			} catch (_) {}
 		}
-		message.reply({ body, mentions });
+		if (!participantIDs || !participantIDs.length) {
+			return message.reply("❌ Could not retrieve member list for this group.");
+		}
+		const mentions = [];
+		let body = args.join(" ").trim() || "@everyone";
+		if (body.length < participantIDs.length) {
+			body += " ".repeat(participantIDs.length - body.length);
+		}
+		for (let idx = 0; idx < participantIDs.length; idx++) {
+			mentions.push({
+				tag: body[idx],
+				id: String(participantIDs[idx]),
+				fromIndex: idx
+			});
+		}
+		return message.reply({ body, mentions });
 	}
 };

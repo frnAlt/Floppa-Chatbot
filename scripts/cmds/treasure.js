@@ -11,7 +11,7 @@ export const meta = {
   category: "Idle Accumulation Games",
   permissions: [0],
   noPrefix: false,
-  otherNames: ["hunt"],
+  otherNames: ["treasurehunt", "thunt"],
   shopPrice: 300,
   requirement: "1.0.0",
   icon: "🏴‍☠️",

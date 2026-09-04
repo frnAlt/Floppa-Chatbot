@@ -44,7 +44,10 @@ module.exports = {
 			await kickAndCheckError(event.messageReply.senderID);
 		}
 		else {
-			const uids = Object.keys(event.mentions);
+			let uids = Object.keys(event.mentions || {});
+			if (uids.length === 0) {
+				uids = args.filter(a => /^\d+$/.test(a));
+			}
 			if (uids.length === 0)
 				return message.SyntaxError();
 			if (await kickAndCheckError(uids.shift()) === "ERROR")

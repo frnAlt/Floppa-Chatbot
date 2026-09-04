@@ -3,7 +3,7 @@ const aiCore = require("../../system/ai-core.js");
 module.exports = {
   config: {
     name: "ai",
-    aliases: ["ask", "agent", "gpt", "astrabot", "ai-chat"],
+    aliases: ["ask", "agent", "astrabot", "ai-chat"],
     version: "2.1",
     author: "frnAlt",
     countDown: 3,

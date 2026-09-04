@@ -88,7 +88,7 @@
   "autoReloginWhenChangeAccount": false,
   "autoRestartWhenListenMqttError": false,
   "restartListenMqtt": {
-    "enable": true,
+    "enable": false,
     "timeRestart": 3600000,
     "delayAfterStopListening": 2000,
     "logNoti": true
@@ -129,22 +129,23 @@
     "duration": 0
   },
   "optionsFca": {
-    "online": true,
+    "online": false,
     "selfListen": true,
     "selfListenEvent": true,
     "listenEvents": true,
-    "listenTyping": true,
+    "listenTyping": false,
     "updatePresence": false,
     "autoMarkDelivery": false,
     "autoMarkRead": false,
     "autoReconnect": true,
-    "forceLogin": true,
+    "forceLogin": false,
     "simulateTyping": false,
-    "randomUserAgent": false,
-    "persona": "desktop",
+    "randomUserAgent": true,
+    "persona": "mobile",
+    "userAgent": "Mozilla/5.0 (Linux; Android 14; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Mobile Safari/537.36",
     "stealthMode": true,
-    "maxConcurrentRequests": 10,
-    "maxRequestsPerMinute": 150,
+    "maxConcurrentRequests": 5,
+    "maxRequestsPerMinute": 50,
     "requestCooldownMs": 60000,
     "errorCacheTtlMs": 300000
   }

@@ -38,26 +38,20 @@ module.exports = {
 			const maxLimit = 25;
 			const targetCount = Math.min(count, maxLimit);
 
-			const threadBotMsgs = global.botSentMessages?.get(event.threadID) || [];
+			const threadBotMsgs = global.botSentMessages?.get(String(event.threadID)) || [];
 			if (threadBotMsgs.length === 0) {
-				return message.reply("No recent bot messages recorded in this chat to clean up.");
+				return message.reply("❌ No recent bot messages recorded in this chat to unsend.");
 			}
 
 			const toUnsend = threadBotMsgs.splice(-targetCount);
 			let unsentCount = 0;
 
-			// Unsend sequentially with brief delay to avoid Facebook rate limits
 			for (const mid of toUnsend.reverse()) {
 				try {
 					await api.unsendMessage(mid);
 					unsentCount++;
 					await new Promise(r => setTimeout(r, 250));
 				} catch (_) {}
-			}
-
-			// Clean up the command call itself if possible
-			if (event.messageID) {
-				api.unsendMessage(event.messageID).catch(() => {});
 			}
 
 			const notice = await message.reply(`🧹 Cleaned up ${unsentCount} bot message(s).`);
@@ -71,40 +65,43 @@ module.exports = {
 
 		// Mode 2: Unsend by reply
 		if (event.messageReply && event.messageReply.messageID) {
+			const replySender = String(event.messageReply.senderID);
+			if (replySender !== botID) {
+				return message.reply("❌ I can only unsend messages sent by me!");
+			}
+
 			try {
 				await api.unsendMessage(event.messageReply.messageID);
-				// Also remove from tracked messages if present
-				const threadBotMsgs = global.botSentMessages?.get(event.threadID);
+				const threadBotMsgs = global.botSentMessages?.get(String(event.threadID));
 				if (threadBotMsgs) {
 					const idx = threadBotMsgs.indexOf(event.messageReply.messageID);
 					if (idx !== -1) threadBotMsgs.splice(idx, 1);
 				}
-				// Remove the !u command message too
-				if (event.messageID) {
-					api.unsendMessage(event.messageID).catch(() => {});
+				if (api.setMessageReaction) {
+					api.setMessageReaction("✅", event.messageID, () => {}, true);
 				}
 			} catch (err) {
-				console.error("[UNSEND ERROR]:", err);
-				return message.reply("Could not unsend this message. It may have already been unsent or cannot be removed.");
+				console.error("[UNSEND ERROR]:", err.message);
+				return message.reply("❌ Could not unsend this message. It may have already been unsent.");
 			}
 			return;
 		}
 
-		// Mode 3: Default !u without reply or args -> unsend last bot message in this thread
-		const threadBotMsgs = global.botSentMessages?.get(event.threadID) || [];
+		// Mode 3: Default without reply or args -> unsend last bot message in this thread
+		const threadBotMsgs = global.botSentMessages?.get(String(event.threadID)) || [];
 		if (threadBotMsgs.length > 0) {
 			const lastMID = threadBotMsgs.pop();
 			try {
 				await api.unsendMessage(lastMID);
-				if (event.messageID) {
-					api.unsendMessage(event.messageID).catch(() => {});
+				if (api.setMessageReaction) {
+					api.setMessageReaction("✅", event.messageID, () => {}, true);
 				}
 				return;
 			} catch (err) {
-				console.error("[UNSEND ERROR]:", err);
+				console.error("[UNSEND ERROR]:", err.message);
 			}
 		}
 
-		return message.reply(getLang("syntaxError", commandName));
+		return message.reply("❌ No bot message to unsend. Reply to any bot message with {p}unsend or specify a count: {p}unsend <number>");
 	}
 };

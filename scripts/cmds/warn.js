@@ -230,9 +230,13 @@ module.exports = {
 					uid = event.messageReply.senderID;
 					reason = args.join(" ").trim();
 				}
-				else if (Object.keys(event.mentions)[0]) {
+				else if (Object.keys(event.mentions || {})[0]) {
 					uid = Object.keys(event.mentions)[0];
 					reason = args.join(" ").replace(event.mentions[uid], "").trim();
+				}
+				else if (args[0] && /^\d+$/.test(args[0])) {
+					uid = args[0];
+					reason = args.slice(1).join(" ").trim();
 				}
 				else {
 					return message.reply(getLang("invalidUid4"));

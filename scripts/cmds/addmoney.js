@@ -2,56 +2,51 @@ module.exports = {
     config: {
         name: "addmoney",
         aliases: [],
-        version: "2.4.78",
+        version: "2.5.0",
         author: "frnAlt",
         countDown: 5,
         role: 2,
-        shortDescription: "Add money to another user's balance",
+        shortDescription: "Add money to another user balance",
         longDescription: {
-            en: "Add money to another user's balance using the addmoney command. Reply to a user's message to give them money.",
+            en: "Add money to another user balance using the addmoney command. Reply to a user message or mention a user."
         },
         category: "economy",
         guide: {
-            en: "!addmoney <amount> - Reply to a message or mention a user to add money to their balance.",
-        },
+            en: "{pn} @mention <amount> or reply to a user with {pn} <amount>"
+        }
     },
-    ST: async function ({ api, event, args, usersData, message }) {
+    onStart: async function ({ api, event, args, usersData, message }) {
         const { getPrefix } = global.utils;
         const p = getPrefix(event.threadID);
-        const senderID = event.senderID;
         let recipientID;
-        const addAmount = parseInt(args[0]);
+        let addAmount = parseInt(args[0]);
 
-        // Validate the amount to add
-        if (isNaN(addAmount) || addAmount <= 0) {
-            return message.reply(`Invalid amount. Please enter a valid amount to add.\nUsage: ${p}addmoney <amount>\nExample: ${p}addmoney 100`);
-        }
-
-        // Determine the recipient based on reply or mention
         if (event.messageReply) {
-            recipientID = event.messageReply.senderID; // User who was replied to
-        } else if (Object.keys(event.mentions).length) {
-            recipientID = Object.keys(event.mentions)[0]; // Mentioned user
-        } else {
-            return message.reply(`Please reply to a user or mention a user to add money.\nUsage: ${p}addmoney @mention <amount>\nExample: ${p}addmoney @JohnDoe 100`);
+            recipientID = event.messageReply.senderID;
+        } else if (event.mentions && Object.keys(event.mentions).length > 0) {
+            recipientID = Object.keys(event.mentions)[0];
+            addAmount = parseInt(args[args.length - 1]);
+        } else if (args[1] && /^\d+$/.test(args[0])) {
+            recipientID = args[0];
+            addAmount = parseInt(args[1]);
         }
 
-        // Fetch user data for the recipient
+        if (isNaN(addAmount) || addAmount <= 0) {
+            return message.reply("Invalid amount. Please enter a valid amount.\nUsage: " + p + "addmoney @mention <amount>");
+        }
+
+        if (!recipientID) {
+            return message.reply("Please reply to a user or mention a user to add money.\nUsage: " + p + "addmoney @mention <amount>");
+        }
+
         const recipientData = await usersData.get(recipientID);
-
-        // Check if recipient exists
         if (!recipientData) {
-            return message.reply("Recipient not found. Please ensure the mentioned user is valid.");
+            return message.reply("Recipient not found. Please ensure the user has interacted with the bot.");
         }
 
-        // Update recipient's balance
-        recipientData.money += addAmount;
-
-        // Save the updated data
+        recipientData.money = (recipientData.money || 0) + addAmount;
         await usersData.set(recipientID, recipientData);
 
-        // Send a confirmation message
-        message.reply(`Successfully added ${addAmount} money to ${recipientData.name}'s balance.`);
-    },
+        return message.reply("Successfully added " + addAmount.toLocaleString() + " coins to " + recipientData.name + "'s balance.");
+    }
 };
-module.exports.onStart = module.exports.ST;

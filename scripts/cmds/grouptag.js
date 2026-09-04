@@ -79,20 +79,22 @@ module.exports = {
 	},
 
 	onStart: async function ({ message, event, args, threadsData, getLang }) {
-		const { threadID, mentions } = event;
+		const threadID = event.threadID;
+		const mentions = event.mentions || {};
 		for (const uid in mentions)
-			mentions[uid] = mentions[uid].replace("@", "");
+			mentions[uid] = (mentions[uid] || "").replace("@", "");
 		const groupTags = await threadsData.get(threadID, "data.groupTags", []);
 
 		switch (args[0]) {
 			case "add": {
-				const mentionsID = Object.keys(event.mentions);
-				const content = (args.slice(1) || []).join(" ");
-				const groupTagName = content.slice(0, content.indexOf(event.mentions[mentionsID[0]]) - 1).trim();
-				if (!groupTagName)
-					return message.reply(getLang("noGroupTagName"));
+				const mentionsID = Object.keys(event.mentions || {});
 				if (mentionsID.length === 0)
 					return message.reply(getLang("noMention"));
+				const content = (args.slice(1) || []).join(" ");
+				const firstMention = event.mentions[mentionsID[0]] || "";
+				const groupTagName = firstMention ? content.slice(0, content.indexOf(firstMention) - 1).trim() : content.trim();
+				if (!groupTagName)
+					return message.reply(getLang("noGroupTagName"));
 
 				const oldGroupTag = groupTags.find(tag => tag.name.toLowerCase() === groupTagName.toLowerCase());
 				if (oldGroupTag) {
@@ -152,13 +154,14 @@ module.exports = {
 				return showInfoGroupTag(message, groupTag, getLang);
 			}
 			case "del": {
+				const mentionsID = Object.keys(mentions);
+				if (mentionsID.length === 0)
+					return message.reply(getLang("noMention", args[1] || ""));
 				const content = (args.slice(1) || []).join(" ");
-				const mentionsID = Object.keys(event.mentions);
-				const groupTagName = content.slice(0, content.indexOf(mentions[mentionsID[0]]) - 1).trim();
+				const firstMention = mentions[mentionsID[0]] || "";
+				const groupTagName = firstMention ? content.slice(0, content.indexOf(firstMention) - 1).trim() : content.trim();
 				if (!groupTagName)
 					return message.reply(getLang("noGroupTagName"));
-				if (mentionsID.length === 0)
-					return message.reply(getLang("noMention", groupTagName));
 				const oldGroupTag = groupTags.find(tag => tag.name.toLowerCase() === groupTagName.toLowerCase());
 				if (!oldGroupTag)
 					return message.reply(getLang("noExistedGroupTag", groupTagName));

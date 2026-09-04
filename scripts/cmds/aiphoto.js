@@ -2,14 +2,14 @@ const axios = require("axios");
 
 module.exports = {
   config: {
-    name: "aiphoto",
-    aliases: ["aip"],
-    version: "1.0",
-    author: "frnAlt", //API by RIFAT
-    countDown: 10,
+    name: "photo",
+    aliases: ["aiphoto", "aip", "aiimage"],
+    version: "2.0.0",
+    author: "frnAlt",
+    countDown: 8,
     role: 0,
-    shortDescription: { en: "Generate AI image with AI Photo" },
-    longDescription: { en: "Generate images using AI Photo model" },
+    shortDescription: { en: "Generate AI images from text prompts" },
+    longDescription: { en: "Generate high-resolution AI art using Flux and SDXL via Pollinations AI" },
     category: "image",
     guide: {
       en: "{pn} <prompt>"
@@ -17,42 +17,36 @@ module.exports = {
   },
 
   onStart: async function ({ message, event, api, args }) {
-    const hasPrompt = args.length > 0;
-
-    if (!hasPrompt) {
-      return message.reply("Please provide a prompt.");
+    if (!args[0]) {
+      return message.reply("❌ Please provide a prompt describing the image you want to generate.\nExample: {p}photo beautiful sunset over futuristic cyberpunk city");
     }
 
     const prompt = args.join(" ").trim();
-    const model = "ai photo";
 
     try {
-      api.setMessageReaction("⏳", event.messageID, () => {}, true);
-
-      const res = await axios.get("https://fluxcdibai-1.onrender.com/generate", {
-        params: { prompt, model },
-        timeout: 120000
-      });
-
-      const data = res.data;
-      const resultUrl = data?.data?.imageResponseVo?.url;
-
-      if (!resultUrl) {
-        api.setMessageReaction("❌", event.messageID, () => {}, true);
-        return message.reply("Failed to generate image.");
+      if (api.setMessageReaction) {
+        api.setMessageReaction("🎨", event.messageID, () => {}, true);
       }
 
-      api.setMessageReaction("✅", event.messageID, () => {}, true);
+      const seed = Math.floor(Math.random() * 1000000);
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&seed=${seed}&nologo=true`;
+
+      const stream = await global.utils.getStreamFromURL(imageUrl, `photo_${Date.now()}.jpg`);
+
+      if (api.setMessageReaction) {
+        api.setMessageReaction("✅", event.messageID, () => {}, true);
+      }
 
       await message.reply({
-        body: "Image generated 🐦",
-        attachment: await global.utils.getStreamFromURL(resultUrl)
+        body: `🎨 Generated Image for: "${prompt}"`,
+        attachment: stream
       });
-
     } catch (err) {
-      console.error(err);
-      api.setMessageReaction("❌", event.messageID, () => {}, true);
-      return message.reply("Error while generating image.");
+      console.error("[PHOTO ERROR]:", err.message);
+      if (api.setMessageReaction) {
+        api.setMessageReaction("❌", event.messageID, () => {}, true);
+      }
+      return message.reply(`❌ Failed to generate image: ${err.message || "Request timed out."}`);
     }
   }
 };
