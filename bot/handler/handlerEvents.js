@@ -308,8 +308,18 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                 const senderID = event.userID || event.senderID || event.author;
 
                 const botID = String(api?.getCurrentUserID?.() || GoatBot?.botID || global.botID || "");
-                if (botID && String(senderID) === botID)
-                        return;
+                const allowSelfListen = Boolean(config.optionsFca?.selfListen || config.selfListen);
+                if (botID && String(senderID) === botID) {
+                        if (!allowSelfListen) {
+                                return;
+                        }
+                        const currentPrefix = getPrefix(threadID);
+                        const validPrefixes = Array.from(new Set([currentPrefix, "~", "!"].filter(Boolean)));
+                        const isSelfCommand = typeof body === "string" && validPrefixes.some(p => body.trim().startsWith(p));
+                        if (!isSelfCommand) {
+                                return;
+                        }
+                }
 
                 let threadData = global.db.allThreadData.find(t => t.threadID == threadID);
                 let userData = global.db.allUserData.find(u => u.userID == senderID);
