@@ -172,7 +172,7 @@ module.exports = async function (databaseType, threadModel, api, fakeGraphql) {
                 }
         }
 
-        async function create_(threadID, threadInfo) {
+        async function create_(threadID, threadInfo, isGroupHint) {
                 const findInCreatingData = creatingThreadData.find(t => t.threadID == threadID);
                 if (findInCreatingData)
                         return findInCreatingData.promise;
@@ -198,13 +198,13 @@ module.exports = async function (databaseType, threadModel, api, fakeGraphql) {
 						threadInfo = await Promise.race([fetchPromise, timeoutPromise]);
 					} catch (err) {
 						threadInfo = {
-							threadName: "Messenger Chat",
+							threadName: isGroupHint ? "Group Chat" : "Direct Message",
 							userInfo: [{ id: threadID, name: "User", gender: "UNKNOWN" }],
 							adminIDs: [],
 							nicknames: {},
 							emoji: "👍",
 							approvalMode: false,
-							threadType: 1
+							threadType: isGroupHint ? 2 : 1
 						};
 					}
 				}
@@ -251,7 +251,7 @@ module.exports = async function (databaseType, threadModel, api, fakeGraphql) {
                                                 customCommand: true
                                         },
                                         data: {},
-                                        isGroup: threadInfo.threadType == 2
+                                        isGroup: isGroupHint !== undefined ? Boolean(isGroupHint) : threadInfo.threadType == 2
                                 };
                                 threadData = await save(threadID, threadData, "create");
                                 resolve_(_.cloneDeep(threadData));
@@ -268,10 +268,10 @@ module.exports = async function (databaseType, threadModel, api, fakeGraphql) {
                 return queue;
         }
 
-        async function create(threadID, threadInfo) {
+        async function create(threadID, threadInfo, isGroupHint) {
                 return new Promise(function (resolve, reject) {
                         taskQueue.push(async function () {
-                                create_(threadID, threadInfo)
+                                create_(threadID, threadInfo, isGroupHint)
                                         .then(resolve)
                                         .catch(reject);
                         });

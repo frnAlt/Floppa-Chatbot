@@ -345,6 +345,59 @@ async function runDiagnostics() {
     logTest("WORKFLOW", "Command execution '!ping' failed", false, err.message);
   }
 
+  // ──────────────── Test Case E: Direct Message (DM) Command Execution ────────────────
+  try {
+    lastReply = null;
+    require(path.join(cwd, "func/cooldownManager.js")).clear();
+    const dmPingEvent = {
+      type: "message",
+      body: "!ping",
+      messageID: "msg_dm_ping_01",
+      threadID: "9999",
+      senderID: "9999",
+      isGroup: false
+    };
+    const handlerChat = await handlerEvents(dmPingEvent, createMockMessage(dmPingEvent));
+    if (handlerChat && typeof handlerChat.onStart === "function") {
+      await handlerChat.onStart();
+    }
+    const bodyText = typeof lastReply === "string" ? lastReply : (lastReply?.body || "");
+    const dmSuccess = bodyText && (
+      bodyText.includes("Pong") ||
+      bodyText.includes("latency") ||
+      bodyText.includes("🏓")
+    );
+    logTest("WORKFLOW", "Direct Message (DM) command execution '!ping' delivers response", dmSuccess);
+  } catch (err) {
+    logTest("WORKFLOW", "Direct Message (DM) command execution failed", false, err.message);
+  }
+
+  // ──────────────── Test Case F: Direct Message (DM) Interactive Greeting Helper ────────────────
+  try {
+    lastReply = null;
+    const dmHelloEvent = {
+      type: "message",
+      body: "hello",
+      messageID: "msg_dm_hello_01",
+      threadID: "9999",
+      senderID: "9999",
+      isGroup: false
+    };
+    const handlerChat = await handlerEvents(dmHelloEvent, createMockMessage(dmHelloEvent));
+    if (handlerChat && typeof handlerChat.onStart === "function") {
+      await handlerChat.onStart();
+    }
+    const bodyText = typeof lastReply === "string" ? lastReply : (lastReply?.body || "");
+    const dmGreetSuccess = bodyText && (
+      bodyText.includes("Direct Messages") ||
+      bodyText.includes("DM") ||
+      bodyText.includes("Floppa")
+    );
+    logTest("WORKFLOW", "Direct Message (DM) casual greeting triggers onboarding assistant helper", dmGreetSuccess);
+  } catch (err) {
+    logTest("WORKFLOW", "Direct Message (DM) greeting test failed", false, err.message);
+  }
+
   // ──────────────── Summary ────────────────
   console.log("\n\x1b[36m============================================================\x1b[0m");
   console.log(`\x1b[36mDiagnostic Results: ${results.passed}/${results.total} Passed (${results.failed} Failed)\x1b[0m`);

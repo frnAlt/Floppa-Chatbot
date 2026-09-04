@@ -324,7 +324,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 
                 if (!threadData && !isNaN(threadID)) {
                         try {
-                                threadData = await threadsData.create(threadID);
+                                threadData = await threadsData.create(threadID, null, Boolean(isGroup));
                         } catch (err) {
                                 threadData = {
                                         threadID: String(threadID),
@@ -394,6 +394,8 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         userModel, threadModel, prefix, dashBoardModel,
                         globalModel, dashBoardData, globalData, envCommands,
                         envEvents, envGlobal, role,
+                        isGroup: Boolean(isGroup),
+                        isDM: !isGroup,
                         input, output,
                         usersDB: usersData,
                         threadsDB: threadsData,
@@ -435,6 +437,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         +-----------------------------------------------+
                 */
                 let isUserCallCommand = false;
+                let hasPrefix = false;
                 async function onStart() {
                         // —————————————— CHECK USE BOT —————————————— //
                         if (!body)
@@ -448,12 +451,42 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         const userCanSkipPrefix = (role === 2 || role === 4) && noPrefixEnabled;
                         const validPrefixes = Array.from(new Set([prefix, "~", "!"].filter(Boolean)));
                         const matchedPrefix = validPrefixes.find(p => body.startsWith(p));
-                        const hasPrefix = Boolean(matchedPrefix);
-                        const hasNoPrefix = userCanSkipPrefix && !hasPrefix;
+                        hasPrefix = Boolean(matchedPrefix);
+                        let hasNoPrefix = false;
 
-                        if (!hasPrefix && !hasNoPrefix) {
-                                log.info("DISPATCH", `Message "${body}" from ${senderID} in ${threadID} ignored (needs prefix "${prefix}")`);
-                                return;
+                        if (!hasPrefix) {
+                                const firstWord = body.trim().split(/ +/)[0]?.toLowerCase();
+                                const potentialCmd = firstWord ? (GoatBot.commands.get(firstWord) || GoatBot.commands.get(GoatBot.aliases.get(firstWord))) : null;
+                                const cmdAllowsNoPrefix = Boolean(
+                                        potentialCmd?.config?.noPrefix === true ||
+                                        potentialCmd?.config?.noPrefix === "both" ||
+                                        potentialCmd?.meta?.noPrefix === true ||
+                                        potentialCmd?.meta?.noPrefix === "both"
+                                );
+
+                                if (potentialCmd && (noPrefixEnabled || userCanSkipPrefix || cmdAllowsNoPrefix)) {
+                                        hasNoPrefix = true;
+                                } else if (!isGroup) {
+                                        const cleanText = body.trim().toLowerCase();
+                                        if (/^(hi|hello|hey|test|testing|hola|alo|salam|assalamu alaikum|sup|yo|bot)\b/i.test(cleanText)) {
+                                                const botName = config.nickNameBot || "Floppa Bot 🐱";
+                                                return await message.reply(
+                                                        `👋 Hello! I'm ${botName}.\n\n` +
+                                                        `You are in Direct Messages (DM)! All features and commands work right here in DM as well as group chats.\n\n` +
+                                                        `💡 Quick commands to test:\n` +
+                                                        `• ${prefix}help - View full command catalog\n` +
+                                                        `• ${prefix}ai <prompt> - Chat with AI\n` +
+                                                        `• ${prefix}gemini <prompt> - Google Gemini AI\n` +
+                                                        `• ${prefix}ping - Check bot response speed\n` +
+                                                        `• ${prefix}sing <song name> - Listen & stream music\n` +
+                                                        `• ${prefix}alldl <url> - Download video/audio\n\n` +
+                                                        `Type ${prefix}help to explore everything!`
+                                                );
+                                        }
+                                        return;
+                                } else {
+                                        return;
+                                }
                         }
 
                         // —————————— CHECK SPAM BANNED THREAD —————————— //
@@ -499,7 +532,11 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                         return body_.replace(new RegExp(`^${prefix_}(\\s+|)${commandName_}`, "i"), "").trim();
                                 }
                                 else {
-                                        return body.replace(new RegExp(`^${prefix}(\\s+|)${commandName}`, "i"), "").trim();
+                                        const pfx = hasPrefix ? (matchedPrefix || prefix) : "";
+                                        const regex = pfx
+                                                ? new RegExp(`^${pfx.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\s+|)${commandName}`, "i")
+                                                : new RegExp(`^(\\s+|)?${commandName}`, "i");
+                                        return body.replace(regex, "").trim();
                                 }
                         }
                         // —————  CHECK BANNED OR ONLY ADMIN BOX  ————— //
@@ -607,7 +644,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         if (!canUseCommand(role, needRole)) {
                                 if (!hideNotiMessage.needRoleToUseCmd) {
                                         if (needRole == 1)
-                                                return await message.reply(utils.getText({ lang: langCode, head: "handlerEvents" }, "onlyAdmin", commandName));
+                                                return await message.reply(!isGroup ? "❌ This command is only available in group chats." : utils.getText({ lang: langCode, head: "handlerEvents" }, "onlyAdmin", commandName));
                                         else if (needRole == 2)
                                                 return await message.reply(utils.getText({ lang: langCode, head: "handlerEvents" }, "onlyAdminBot2", commandName));
                                         else if (needRole == 3)
@@ -888,7 +925,9 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         }
 
                         // Seamless fallback: If user typed response without swipe-to-reply, resolve recent pending prompt
-                        if (!Reply && onReply && onReply.size > 0 && body) {
+                        const firstWord = body ? body.trim().split(/ +/)[0]?.toLowerCase() : "";
+                        const isPotentialCmd = Boolean(firstWord && (GoatBot.commands.has(firstWord) || GoatBot.aliases.has(firstWord)));
+                        if (!isUserCallCommand && !hasPrefix && !isPotentialCmd && !Reply && onReply && onReply.size > 0 && body) {
                                 const now = Date.now();
                                 for (const [mid, r] of onReply.entries()) {
                                         if (

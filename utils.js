@@ -381,6 +381,10 @@ function message(api, event) {
                 }
         }
 
+        const resolvedIsGroup = event.isGroup !== undefined
+                ? Boolean(event.isGroup)
+                : (event.threadID && event.senderID ? String(event.threadID) !== String(event.senderID) : false);
+
         return {
                 send: async (form, callback, options = {}) => {
                         try {
@@ -394,7 +398,7 @@ function message(api, event) {
                                 }
 
                                 const cb = typeof callback === 'function' ? callback : undefined;
-                                const res = await api.sendMessage(form, event.threadID, cb, undefined, event.isGroup);
+                                const res = await api.sendMessage(form, event.threadID, cb, undefined, resolvedIsGroup);
                                 if (res?.messageID) {
                                         recordBotMessage(res.messageID, event.threadID);
                                         const text = typeof form === 'string' ? form : (form?.body || '');
@@ -428,7 +432,7 @@ function message(api, event) {
 
                                 const cb = typeof callback === 'function' ? callback : undefined;
                                 const replyId = event.messageID || undefined;
-                                const res = await api.sendMessage(form, event.threadID, cb, replyId, event.isGroup);
+                                const res = await api.sendMessage(form, event.threadID, cb, replyId, resolvedIsGroup);
                                 if (res?.messageID) {
                                         recordBotMessage(res.messageID, event.threadID);
                                         const text = typeof form === 'string' ? form : (form?.body || '');
@@ -448,6 +452,17 @@ function message(api, event) {
                                 log.err("MESSAGE_REPLY", `Failed to reply in thread ${event.threadID}:`, err.message || err);
                                 throw err;
                         }
+                },
+                sendDM: async (form, callback, options = {}) => {
+                        const targetUserID = event.senderID || event.userID || event.author;
+                        if (!targetUserID) throw new Error("sendDM requires a valid sender/user ID");
+                        const cb = typeof callback === 'function' ? callback : undefined;
+                        return api.sendMessage(form, targetUserID, cb, undefined, false);
+                },
+                sendGroup: async (form, callback, options = {}) => {
+                        if (!event.threadID) throw new Error("sendGroup requires a valid threadID");
+                        const cb = typeof callback === 'function' ? callback : undefined;
+                        return api.sendMessage(form, event.threadID, cb, undefined, true);
                 },
                 unsend: async (messageID, callback) => await api.unsendMessage(messageID, callback),
                 reaction: async (emoji, messageID, callback) => {
