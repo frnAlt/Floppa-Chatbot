@@ -74,9 +74,11 @@ async function runDiagnostics() {
     "func/mdToText.js"
   ];
 
+  const vm = require("vm");
   for (const file of coreFiles) {
     try {
-      execSync(`node --check "${file}"`, { stdio: "pipe" });
+      const code = fs.readFileSync(path.join(cwd, file), "utf8");
+      new vm.Script(code);
       logTest("SYNTAX", `Core syntax clean: ${file}`, true);
     } catch (e) {
       logTest("SYNTAX", `Core syntax error: ${file}`, false, e.message);
@@ -85,6 +87,7 @@ async function runDiagnostics() {
 
   // ──────────────── 3. Commands & Events Loading ────────────────
   console.log("\n\x1b[33m--- 3. Command & Event Script Load Validation ---\x1b[0m");
+  require(path.join(cwd, "func/moduleResolver.js"));
   const cmdsDir = path.join(cwd, "scripts/cmds");
   const cmdFiles = fs.readdirSync(cmdsDir).filter(f => f.endsWith(".js") && !f.endsWith(".eg.js"));
 
@@ -92,19 +95,16 @@ async function runDiagnostics() {
   for (const file of cmdFiles) {
     const filePath = path.join(cmdsDir, file);
     try {
-      execSync(`node --check "${filePath}"`, { stdio: "pipe" });
+      require(filePath);
       cmdsPassed++;
     } catch (e) {
-      logTest("CMD_SYNTAX", `Command script error: ${file}`, false, e.message);
+      logTest("CMD_LOAD", `Command script error: ${file}`, false, e.message);
     }
   }
-  logTest("CMD_SYNTAX", `All ${cmdsPassed}/${cmdFiles.length} commands passed syntax check`, cmdsPassed === cmdFiles.length);
+  logTest("CMD_LOAD", `All ${cmdsPassed}/${cmdFiles.length} commands passed load validation`, cmdsPassed === cmdFiles.length);
 
   // ──────────────── 4. In-Memory Bot Response Workflow Self-Test ────────────────
   console.log("\n\x1b[33m--- 4. Messenger Bot Command & Response Workflow Self-Test ---\x1b[0m");
-
-  // Setup mock global environment
-  require(path.join(cwd, "func/moduleResolver.js"));
 
   const config = JSON.parse(fs.readFileSync(path.join(cwd, "config.json"), "utf8"));
   config.botOff = false;
