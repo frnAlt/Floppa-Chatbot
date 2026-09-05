@@ -1,17 +1,17 @@
 {
-  "generatedAt": "2026-09-05T10:38:47.195Z",
+  "generatedAt": "2026-09-05T10:56:23.295Z",
   "systemStatus": {
-    "sessionId": "session_1788604695114_8iokm",
-    "uptimeSeconds": 32,
-    "uptimeHuman": "0m 32s",
-    "status": "online",
-    "botID": "61593675886067",
+    "sessionId": "session_1788605782420_s1tmr",
+    "uptimeSeconds": 0,
+    "uptimeHuman": "0m 0s",
+    "status": "stopped",
+    "botID": null,
     "botName": null,
-    "mqttConnected": true,
+    "mqttConnected": false,
     "mqttDisconnects": 0,
-    "totalEventsCaptured": 0,
+    "totalEventsCaptured": 1,
     "totalCommandsExecuted": 0,
-    "totalErrorsRecorded": 0
+    "totalErrorsRecorded": 1
   },
   "stability": {
     "lastCheckpointWarning": null,
@@ -20,7 +20,38 @@
     "e2eeErrors": 0,
     "httpMercuryFallbacks": 0
   },
-  "recentErrors": [],
+  "recentErrors": [
+    {
+      "time": "2026-09-05T10:56:22.425Z",
+      "source": "TEST_SUITE",
+      "message": "Diagnostic non-fatal self-test error",
+      "context": {
+        "context": "unit_test"
+      }
+    },
+    {
+      "time": "2026-09-05T10:55:40.497Z",
+      "source": "TEST_SUITE",
+      "message": "test error",
+      "context": {}
+    },
+    {
+      "time": "2026-09-05T10:55:31.603Z",
+      "source": "TEST_SUITE",
+      "message": "Diagnostic non-fatal self-test error",
+      "context": {
+        "context": "unit_test"
+      }
+    },
+    {
+      "time": "2026-09-05T10:53:36.684Z",
+      "source": "TEST_SUITE",
+      "message": "Diagnostic non-fatal self-test error",
+      "context": {
+        "context": "unit_test"
+      }
+    }
+  ],
   "recentCommands": [
     {
       "time": "2026-09-05T10:23:23.809Z",
@@ -33,6 +64,38 @@
   ],
   "recentChatLogs": [
     {
+      "time": "2026-09-05T10:56:22.424Z",
+      "type": "message",
+      "threadID": "10001",
+      "senderID": "9999",
+      "isGroup": true,
+      "body": "!ping"
+    },
+    {
+      "time": "2026-09-05T10:55:40.496Z",
+      "type": "message",
+      "threadID": "10001",
+      "senderID": "9999",
+      "isGroup": true,
+      "body": "!ping"
+    },
+    {
+      "time": "2026-09-05T10:55:31.602Z",
+      "type": "message",
+      "threadID": "10001",
+      "senderID": "9999",
+      "isGroup": true,
+      "body": "!ping"
+    },
+    {
+      "time": "2026-09-05T10:53:36.684Z",
+      "type": "message",
+      "threadID": "10001",
+      "senderID": "9999",
+      "isGroup": true,
+      "body": "!ping"
+    },
+    {
       "time": "2026-09-05T10:23:23.806Z",
       "type": "message",
       "threadID": "123",
@@ -42,11 +105,11 @@
     }
   ],
   "aiDiagnosticSummary": {
-    "health": "EXCELLENT",
+    "health": "STABLE_WITH_NOTICES",
     "notesForAgent": [
       "No active checkpoint restriction detected",
-      "MQTT real-time message stream is active",
-      "Total errors this run: 0"
+      "MQTT not currently connected or reconnecting",
+      "Total errors this run: 1"
     ]
   }
 }

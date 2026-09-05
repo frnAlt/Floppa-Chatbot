@@ -261,6 +261,10 @@ class SystemMemoryDB {
     };
   }
 
+  getSnapshot() {
+    return this.generateAISnapshot();
+  }
+
   async flush() {
     try {
       this.dirty = false;
