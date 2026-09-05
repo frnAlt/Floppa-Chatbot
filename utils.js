@@ -412,6 +412,29 @@ function message(api, event) {
                                 return res;
                         }
                         catch (err) {
+                                const errStr = String(err?.message || err || "");
+                                if (!resolvedIsGroup && (errStr.includes("1545116") || errStr.includes("E2EE") || errStr.includes("cutover") || errStr.includes("1545041"))) {
+                                        const senderUID = String(event.senderID || event.userID || event.author || event.threadID || "");
+                                        let sharedGroup = null;
+                                        if (global.db && Array.isArray(global.db.allThreadData)) {
+                                                sharedGroup = global.db.allThreadData.find(t => 
+                                                        t.isGroup && t.members && t.members.some(m => String(m.userID) === senderUID)
+                                                );
+                                        }
+                                        if (sharedGroup) {
+                                                try {
+                                                        const userObj = (global.db.allUserData || []).find(u => String(u.userID) === senderUID);
+                                                        const uName = userObj?.name || `User ${senderUID}`;
+                                                        const textContent = typeof form === "string" ? form : (form?.body || "");
+                                                        const bridgeMsg = typeof form === "object" ? { ...form } : {};
+                                                        bridgeMsg.body = `💬 [DM Bridge for ${uName}]:\n\n${textContent}\n\nℹ️ (Facebook E2EE restricts 1-on-1 private bot messages; bridged to your active group chat)`;
+                                                        log.warn("DM_BRIDGE", `Bridged DM message for ${uName} (${senderUID}) to group ${sharedGroup.threadID} due to Facebook E2EE`);
+                                                        return await api.sendMessage(bridgeMsg, sharedGroup.threadID, undefined, undefined, true);
+                                                } catch (bErr) {
+                                                        log.warn("DM_BRIDGE", `Failed to bridge DM to group: ${bErr.message}`);
+                                                }
+                                        }
+                                }
                                 if (JSON.stringify(err).includes('spam')) {
                                         setErrorUptime();
                                 }
@@ -446,6 +469,29 @@ function message(api, event) {
                                 return res;
                         }
                         catch (err) {
+                                const errStr = String(err?.message || err || "");
+                                if (!resolvedIsGroup && (errStr.includes("1545116") || errStr.includes("E2EE") || errStr.includes("cutover") || errStr.includes("1545041"))) {
+                                        const senderUID = String(event.senderID || event.userID || event.author || event.threadID || "");
+                                        let sharedGroup = null;
+                                        if (global.db && Array.isArray(global.db.allThreadData)) {
+                                                sharedGroup = global.db.allThreadData.find(t => 
+                                                        t.isGroup && t.members && t.members.some(m => String(m.userID) === senderUID)
+                                                );
+                                        }
+                                        if (sharedGroup) {
+                                                try {
+                                                        const userObj = (global.db.allUserData || []).find(u => String(u.userID) === senderUID);
+                                                        const uName = userObj?.name || `User ${senderUID}`;
+                                                        const textContent = typeof form === "string" ? form : (form?.body || "");
+                                                        const bridgeMsg = typeof form === "object" ? { ...form } : {};
+                                                        bridgeMsg.body = `💬 [DM Bridge for ${uName}]:\n\n${textContent}\n\nℹ️ (Facebook E2EE restricts 1-on-1 private bot messages; bridged to your active group chat)`;
+                                                        log.warn("DM_BRIDGE", `Bridged DM reply for ${uName} (${senderUID}) to group ${sharedGroup.threadID} due to Facebook E2EE`);
+                                                        return await api.sendMessage(bridgeMsg, sharedGroup.threadID, undefined, undefined, true);
+                                                } catch (bErr) {
+                                                        log.warn("DM_BRIDGE", `Failed to bridge DM reply to group: ${bErr.message}`);
+                                                }
+                                        }
+                                }
                                 if (JSON.stringify(err).includes('spam')) {
                                         setErrorUptime();
                                 }

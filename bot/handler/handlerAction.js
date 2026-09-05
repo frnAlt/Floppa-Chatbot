@@ -31,8 +31,8 @@ module.exports = (api, threadModel, userModel, dashBoardModel, globalModel, user
 
         return async function (event) {
                 try {
-                        // Ignore Meta AI system bot (thread/sender 156025504001094)
-                        if (String(event?.threadID) === "156025504001094" || String(event?.senderID) === "156025504001094") {
+                        // Ignore Meta AI system bot itself when speaking (senderID 156025504001094) to avoid reply loops
+                        if (String(event?.senderID) === "156025504001094") {
                                 return;
                         }
 

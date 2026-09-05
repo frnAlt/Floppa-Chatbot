@@ -310,6 +310,13 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                 const botID = String(api?.getCurrentUserID?.() || GoatBot?.botID || global.botID || "");
                 const allowSelfListen = Boolean(config.optionsFca?.selfListen || config.selfListen);
                 if (botID && String(senderID) === botID) {
+                        const isAutomatedBotMsg = Boolean(
+                                (event.messageID && global.botSentMessages?.get(String(threadID))?.includes(event.messageID)) ||
+                                (event.offlineThreadingId && Array.from(global.botSentMessages?.values() || []).some(list => list.includes(event.offlineThreadingId)))
+                        );
+                        if (isAutomatedBotMsg) {
+                                return;
+                        }
                         if (!allowSelfListen) {
                                 return;
                         }
@@ -318,7 +325,8 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         const firstWord = typeof body === "string" ? body.trim().split(/ +/)[0]?.toLowerCase() : "";
                         const isSelfCommand = typeof body === "string" && (
                                 validPrefixes.some(p => body.trim().startsWith(p)) ||
-                                (!isGroup && Boolean(GoatBot.commands.has(firstWord) || GoatBot.aliases.has(firstWord)))
+                                !isGroup ||
+                                Boolean(GoatBot.commands.has(firstWord) || GoatBot.aliases.has(firstWord))
                         );
                         if (!isSelfCommand) {
                                 return;
@@ -467,8 +475,19 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                 let hasPrefix = false;
                 async function onStart() {
                         // —————————————— CHECK USE BOT —————————————— //
-                        if (!body)
+                        if (!body) {
+                                if (!isGroup && event.attachments && Array.isArray(event.attachments) && event.attachments.some(a => a.isUnrecognized || (a.ID && String(a.ID).startsWith("ee.mid")) || a.description === "Unsupported shared content.")) {
+                                        return await message.reply(
+                                                "🔒 [Facebook E2EE Notice]\n\n" +
+                                                "Your Facebook Messenger app has End-to-End Encryption (E2EE) enabled on this direct chat, which hides message text from third-party bot integrations.\n\n" +
+                                                "💡 To chat with Floppa Bot:\n" +
+                                                "1. Chat with Floppa Bot in any Facebook group (group chats are never E2EE encrypted)!\n" +
+                                                "2. Or add Floppa Bot to a new group chat with you.\n\n" +
+                                                "All 281 commands and AI features work seamlessly!"
+                                        );
+                                }
                                 return;
+                        }
 
                         const noPrefixEnabled = config.noPrefix === true;
                         const userCanSkipPrefix = (role === 2 || role === 4) && noPrefixEnabled;
@@ -512,7 +531,8 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 
                                         // Auto conversational AI in DM: If someone chats in DM with a question or comment, answer with AI!
                                         try {
-                                                const aiCore = require("../../system/ai-core.js");
+                                                const aiCorePath = require('path').join(process.cwd(), "system/ai-core.js");
+                                                const aiCore = require(aiCorePath);
                                                 const contextId = `${threadID}_${senderID}`;
                                                 const aiResponse = await aiCore.generateCompletion({
                                                         prompt: body.trim(),

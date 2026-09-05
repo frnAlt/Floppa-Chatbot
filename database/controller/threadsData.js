@@ -192,20 +192,47 @@ module.exports = async function (databaseType, threadModel, api, fakeGraphql) {
                                         });
                                 }
 				if (!threadInfo) {
-					try {
-						const fetchPromise = api.getThreadInfo(threadID);
-						const timeoutPromise = new Promise((_, rej) => setTimeout(() => rej(new Error("Timeout")), 2500));
-						threadInfo = await Promise.race([fetchPromise, timeoutPromise]);
-					} catch (err) {
+					if (isGroupHint === false) {
+						let dmUserName = "Facebook User";
+						let dmGender = "UNKNOWN";
+						try {
+							if (typeof api.getUserInfo === "function") {
+								const uInfoMap = await Promise.race([
+									api.getUserInfo(threadID),
+									new Promise((_, r) => setTimeout(() => r(new Error("Timeout")), 1500))
+								]);
+								const u = uInfoMap && uInfoMap[threadID];
+								if (u && u.name) {
+									dmUserName = u.name;
+									dmGender = u.gender || "UNKNOWN";
+								}
+							}
+						} catch (_) {}
 						threadInfo = {
-							threadName: isGroupHint ? "Group Chat" : "Direct Message",
-							userInfo: [{ id: threadID, name: "User", gender: "UNKNOWN" }],
+							threadName: dmUserName,
+							userInfo: [{ id: String(threadID), name: dmUserName, gender: dmGender }],
 							adminIDs: [],
 							nicknames: {},
 							emoji: "👍",
 							approvalMode: false,
-							threadType: isGroupHint ? 2 : 1
+							threadType: 1
 						};
+					} else {
+						try {
+							const fetchPromise = api.getThreadInfo(threadID);
+							const timeoutPromise = new Promise((_, rej) => setTimeout(() => rej(new Error("Timeout")), 2500));
+							threadInfo = await Promise.race([fetchPromise, timeoutPromise]);
+						} catch (err) {
+							threadInfo = {
+								threadName: isGroupHint ? "Group Chat" : "Messenger Chat",
+								userInfo: [{ id: String(threadID), name: "User", gender: "UNKNOWN" }],
+								adminIDs: [],
+								nicknames: {},
+								emoji: "👍",
+								approvalMode: false,
+								threadType: isGroupHint ? 2 : 1
+							};
+						}
 					}
 				}
 				const threadName = threadInfo.threadName || "Messenger Chat";

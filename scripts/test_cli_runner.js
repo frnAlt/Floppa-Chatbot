@@ -512,6 +512,67 @@ async function runDiagnostics() {
     logTest("WORKFLOW", "Meta AI filtering test failed", false, err.message);
   }
 
+  // ──────────────── Test Case K: Direct Message (DM) Mobile E2EE Detection ────────────────
+  try {
+    lastReply = null;
+    require(path.join(cwd, "func/cooldownManager.js")).clear();
+    const dmE2eeEvent = {
+      type: "message",
+      body: "",
+      messageID: "msg_dm_e2ee_01",
+      threadID: "7777",
+      senderID: "7777",
+      attachments: [{
+        type: "share",
+        ID: "ee.mid.$cAAC12345",
+        description: "Unsupported shared content.",
+        isUnrecognized: true
+      }],
+      isGroup: false
+    };
+    const handlerChat = await handlerEvents(dmE2eeEvent, createMockMessage(dmE2eeEvent));
+    if (handlerChat && typeof handlerChat.onStart === "function") {
+      await handlerChat.onStart();
+    }
+    const bodyText = typeof lastReply === "string" ? lastReply : (lastReply?.body || "");
+    const e2eeNoticeSuccess = bodyText && bodyText.includes("Facebook E2EE Notice");
+    logTest("WORKFLOW", "Direct Message (DM) mobile E2EE attachment triggers guidance notice", e2eeNoticeSuccess);
+  } catch (err) {
+    logTest("WORKFLOW", "Direct Message (DM) mobile E2EE test failed", false, err.message);
+  }
+
+  // ──────────────── Test Case L: Direct Message (DM) Outbound E2EE Group Bridging ────────────────
+  try {
+    global.db.allThreadData = [{
+      threadID: "1125755322432660",
+      threadName: "Private Stuff Testing",
+      isGroup: true,
+      members: [{ userID: "9999" }]
+    }];
+    global.db.allUserData = [{
+      userID: "9999",
+      name: "Farhan Muh Tasim"
+    }];
+    let bridgedThread = null;
+    let bridgedPayload = null;
+    const bridgeMockApi = {
+      sendMessage: async (m, t, cb, replyTo, isGrp) => {
+        if (t === "9999") {
+          throw new Error("Direct thread 9999 is end-to-end encrypted (E2EE) by Facebook. error 1545116");
+        }
+        bridgedThread = t;
+        bridgedPayload = m;
+        return { messageID: "mid.bridged" };
+      }
+    };
+    const bridgeMsg = utils.message(bridgeMockApi, { threadID: "9999", senderID: "9999", isGroup: false });
+    await bridgeMsg.reply("Testing DM bridge fallback");
+    const bridgeSuccess = bridgedThread === "1125755322432660" && bridgedPayload?.body?.includes("DM Bridge for Farhan");
+    logTest("WORKFLOW", "Direct Message (DM) outbound E2EE automatically bridges to active group chat", bridgeSuccess);
+  } catch (err) {
+    logTest("WORKFLOW", "Direct Message (DM) E2EE bridging test failed", false, err.message);
+  }
+
   // ──────────────── 5. FCA SendMessage Unit Tests ────────────────
   console.log("\n\x1b[33m--- 5. Native FCA Outbound SendMessage Engine Tests ---\x1b[0m");
   try {
