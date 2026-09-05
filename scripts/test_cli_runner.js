@@ -755,6 +755,83 @@ async function runDiagnostics() {
     logTest("WORKFLOW", "dm.js subcommand testing failed", false, err.message);
   }
 
+  // ──────────────── Test Case Q: scripts/cmds/chat.js Conversational AI & onReply ────────────────
+  try {
+    const chatCmd = require(path.join(cwd, "scripts/cmds/chat.js"));
+    logTest("WORKFLOW", "chat.js command config loaded with proper schema", chatCmd.config.name === "chat" && Array.isArray(chatCmd.config.aliases));
+
+    let chatReplied = "";
+    const chatMockMessage = {
+      reply: async (content, cb) => {
+        chatReplied = typeof content === "string" ? content : (content?.body || "");
+        if (typeof cb === "function") cb(null, { messageID: "mid.chat_response_1" });
+        return { messageID: "mid.chat_response_1" };
+      },
+      reaction: async () => {}
+    };
+
+    // 1. Check status subcommand
+    await chatCmd.onStart({
+      api: {},
+      event: { threadID: "10001", senderID: "9999", isGroup: false },
+      args: ["status"],
+      message: chatMockMessage,
+      prefix: "!",
+      usersData: { getName: async () => "Tester" }
+    });
+    const statusSuccess = chatReplied.toLowerCase().includes("status") && chatReplied.toLowerCase().includes("provider");
+    logTest("WORKFLOW", "scripts/cmds/chat.js !chat status returns active model provider and context", statusSuccess);
+
+    // 2. Chat prompt execution
+    chatReplied = "";
+    await chatCmd.onStart({
+      api: {},
+      event: { threadID: "10001", senderID: "9999", isGroup: false },
+      args: ["Hello", "Floppa!"],
+      message: chatMockMessage,
+      prefix: "!",
+      usersData: { getName: async () => "Tester" }
+    });
+    const promptSuccess = chatReplied.includes("Floppa AI");
+    const onReplyRegistered = Boolean(global.GoatBot?.onReply?.has("mid.chat_response_1"));
+    logTest("WORKFLOW", "scripts/cmds/chat.js executes prompt and registers onReply for continuous dialogue", promptSuccess && onReplyRegistered);
+
+    // 3. Chat onReply continuation
+    let onReplyReplied = "";
+    const onReplyMockMessage = {
+      reply: async (content, cb) => {
+        onReplyReplied = typeof content === "string" ? content : (content?.body || "");
+        if (typeof cb === "function") cb(null, { messageID: "mid.chat_response_2" });
+        return { messageID: "mid.chat_response_2" };
+      },
+      reaction: async () => {}
+    };
+    await chatCmd.onReply({
+      api: {},
+      event: { threadID: "10001", senderID: "9999", body: "What is your favorite color?", isGroup: false },
+      message: onReplyMockMessage,
+      Reply: global.GoatBot.onReply.get("mid.chat_response_1") || { contextId: "10001_9999", author: "9999" },
+      usersData: { getName: async () => "Tester" }
+    });
+    const replySuccess = onReplyReplied.includes("Floppa AI") && Boolean(global.GoatBot?.onReply?.has("mid.chat_response_2"));
+    logTest("WORKFLOW", "scripts/cmds/chat.js onReply seamlessly maintains multi-turn conversation", replySuccess);
+
+    // 4. Check reset subcommand
+    chatReplied = "";
+    await chatCmd.onStart({
+      api: {},
+      event: { threadID: "10001", senderID: "9999", isGroup: false },
+      args: ["reset"],
+      message: chatMockMessage,
+      prefix: "!",
+      usersData: { getName: async () => "Tester" }
+    });
+    const resetSuccess = chatReplied.includes("Conversational memory") && chatReplied.includes("reset");
+    logTest("WORKFLOW", "scripts/cmds/chat.js !chat reset clears conversational context", resetSuccess);
+  } catch (err) {
+    logTest("WORKFLOW", "chat.js testing failed", false, err.message);
+  }
+
   // ──────────────── 5. FCA SendMessage Unit Tests ────────────────
   console.log("\n\x1b[33m--- 5. Native FCA Outbound SendMessage Engine Tests ---\x1b[0m");
   try {

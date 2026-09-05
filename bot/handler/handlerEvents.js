@@ -321,7 +321,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                 return;
                         }
                         const currentPrefix = getPrefix(threadID);
-                        const validPrefixes = Array.from(new Set([currentPrefix, "~", "!"].filter(Boolean)));
+                        const validPrefixes = Array.from(new Set([currentPrefix, "/", "~", "!"].filter(Boolean)));
                         const firstWord = typeof body === "string" ? body.trim().split(/ +/)[0]?.toLowerCase() : "";
                         const isSelfCommand = typeof body === "string" && (
                                 validPrefixes.some(p => body.trim().startsWith(p)) ||
@@ -499,7 +499,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 
                         const noPrefixEnabled = config.noPrefix === true;
                         const userCanSkipPrefix = (role === 2 || role === 4) && noPrefixEnabled;
-                        const validPrefixes = Array.from(new Set([prefix, "~", "!"].filter(Boolean)));
+                        const validPrefixes = Array.from(new Set([prefix, "/", "~", "!"].filter(Boolean)));
                         const matchedPrefix = validPrefixes.find(p => body.startsWith(p));
                         hasPrefix = Boolean(matchedPrefix);
                         let hasNoPrefix = false;
@@ -547,11 +547,22 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                                         contextId
                                                 });
                                                 if (aiResponse) {
-                                                        return await message.reply(`🤖 [Floppa AI]\n\n${aiResponse}`);
-                                                }
-                                        } catch (aiErr) {
-                                                return await message.reply(`👋 I'm Floppa Bot! Type ${prefix}help to see commands, or ${prefix}ai ${body.trim()} to ask me anything!`);
-                                        }
+							return await message.reply(`🤖 [Floppa AI]\n\n${aiResponse}`, (err, info) => {
+								if (!err && info?.messageID) {
+									if (!global.GoatBot) global.GoatBot = {};
+									if (!global.GoatBot.onReply) global.GoatBot.onReply = new Map();
+									global.GoatBot.onReply.set(info.messageID, {
+										commandName: "chat",
+										author: senderID,
+										contextId,
+										messageID: info.messageID
+									});
+								}
+							});
+						}
+					} catch (aiErr) {
+						return await message.reply(`👋 I'm Floppa Bot! Type ${prefix}help to see commands, or ${prefix}chat ${body.trim()} to ask me anything!`);
+					}
                                         return;
                                 } else {
                                         return;

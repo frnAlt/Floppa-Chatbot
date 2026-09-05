@@ -389,9 +389,9 @@ function message(api, event) {
                         try {
                                 global.statusAccountBot = 'good';
 
-                                // Check if typing indicator is enabled in config (non-blocking)
+                                // Check if typing indicator is enabled in config or active DM (non-blocking)
                                 const typingConfig = global.GoatBot?.config?.typingIndicator;
-                                const typingEnabled = typingConfig === true || (typeof typingConfig === 'object' && typingConfig?.enable === true);
+                                const typingEnabled = !resolvedIsGroup || typingConfig === true || (typeof typingConfig === 'object' && typingConfig?.enable === true);
                                 if (typingEnabled && (typeof form === 'string' || form?.body) && typeof api?.sendTypingIndicator === 'function') {
                                         api.sendTypingIndicator(true, event.threadID).catch(() => {});
                                 }
@@ -464,9 +464,9 @@ function message(api, event) {
                         try {
                                 global.statusAccountBot = 'good';
 
-                                // Check if typing indicator is enabled in config (non-blocking)
+                                // Check if typing indicator is enabled in config or active DM (non-blocking)
                                 const typingConfig = global.GoatBot?.config?.typingIndicator;
-                                const typingEnabled = typingConfig === true || (typeof typingConfig === 'object' && typingConfig?.enable === true);
+                                const typingEnabled = !resolvedIsGroup || typingConfig === true || (typeof typingConfig === 'object' && typingConfig?.enable === true);
                                 if (typingEnabled && (typeof form === 'string' || form?.body) && typeof api?.sendTypingIndicator === 'function') {
                                         api.sendTypingIndicator(true, event.threadID).catch(() => {});
                                 }
@@ -596,6 +596,14 @@ function message(api, event) {
                                         setErrorUptime();
                                 }
                                 console.error("❌ [REACTION] Error setting reaction:", err.message || err);
+                        }
+                },
+                typing: async (isTyping = true, threadID) => {
+                        const targetThreadID = threadID || event.threadID;
+                        if (typeof api.sendTypingIndicator === 'function' && targetThreadID) {
+                                try {
+                                        return await api.sendTypingIndicator(Boolean(isTyping), targetThreadID);
+                                } catch (_) {}
                         }
                 },
                 err: async (err) => await sendMessageError(err),
