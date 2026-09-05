@@ -226,11 +226,10 @@ function getExtFromUrl(url = "") {
 }
 
 function getPrefix(threadID) {
-        if (!threadID || isNaN(threadID))
-                throw new Error('The first argument (threadID) must be a number');
+        if (!threadID) return global.GoatBot?.config?.prefix || "!";
         threadID = String(threadID);
-        let prefix = global.GoatBot.config.prefix;
-        const threadData = global.db.allThreadData.find(t => t.threadID == threadID);
+        let prefix = global.GoatBot?.config?.prefix || "!";
+        const threadData = global.db?.allThreadData?.find(t => t.threadID == threadID);
         if (threadData)
                 prefix = threadData?.data?.prefix || prefix;
         return prefix || global.GoatBot?.config?.prefix || "!";
@@ -415,16 +414,35 @@ function message(api, event) {
                                 const errStr = String(err?.message || err || "");
                                 if (!resolvedIsGroup && (errStr.includes("1545116") || errStr.includes("E2EE") || errStr.includes("cutover") || errStr.includes("1545041"))) {
                                         const senderUID = String(event.senderID || event.userID || event.author || event.threadID || "");
+                                        const userObj = (global.db?.allUserData || []).find(u => String(u.userID) === senderUID);
+                                        const uName = userObj?.name || `User ${senderUID}`;
+
+                                        // 1. Try routing to dedicated unencrypted private 2-person room
+                                        try {
+                                                let pMgr = global.privateThreadManager;
+                                                if (!pMgr) {
+                                                        try { pMgr = require(require('path').join(process.cwd(), "func/privateThreadManager")); } catch (_) {}
+                                                }
+                                                if (pMgr) {
+                                                        const privateTID = await pMgr.getOrCreatePrivateThread(api, senderUID, uName);
+                                                        if (privateTID && String(privateTID) !== String(event.threadID)) {
+                                                                log.warn("DM_ROUTER", `Routed DM message for ${uName} (${senderUID}) to private room ${privateTID} due to Facebook E2EE`);
+                                                                return await api.sendMessage(form, privateTID, undefined, undefined, true);
+                                                        }
+                                                }
+                                        } catch (pErr) {
+                                                log.warn("DM_ROUTER", `Private room routing failed: ${pErr.message}`);
+                                        }
+
+                                        // 2. Fallback to shared active group chat
                                         let sharedGroup = null;
                                         if (global.db && Array.isArray(global.db.allThreadData)) {
                                                 sharedGroup = global.db.allThreadData.find(t => 
-                                                        t.isGroup && t.members && t.members.some(m => String(m.userID) === senderUID)
+                                                        t.isGroup && t.members && t.members.some(m => String(m.userID || m.id || m) === senderUID)
                                                 );
                                         }
                                         if (sharedGroup) {
                                                 try {
-                                                        const userObj = (global.db.allUserData || []).find(u => String(u.userID) === senderUID);
-                                                        const uName = userObj?.name || `User ${senderUID}`;
                                                         const textContent = typeof form === "string" ? form : (form?.body || "");
                                                         const bridgeMsg = typeof form === "object" ? { ...form } : {};
                                                         bridgeMsg.body = `💬 [DM Bridge for ${uName}]:\n\n${textContent}\n\nℹ️ (Facebook E2EE restricts 1-on-1 private bot messages; bridged to your active group chat)`;
@@ -472,16 +490,35 @@ function message(api, event) {
                                 const errStr = String(err?.message || err || "");
                                 if (!resolvedIsGroup && (errStr.includes("1545116") || errStr.includes("E2EE") || errStr.includes("cutover") || errStr.includes("1545041"))) {
                                         const senderUID = String(event.senderID || event.userID || event.author || event.threadID || "");
+                                        const userObj = (global.db?.allUserData || []).find(u => String(u.userID) === senderUID);
+                                        const uName = userObj?.name || `User ${senderUID}`;
+
+                                        // 1. Try routing to dedicated unencrypted private 2-person room
+                                        try {
+                                                let pMgr = global.privateThreadManager;
+                                                if (!pMgr) {
+                                                        try { pMgr = require(require('path').join(process.cwd(), "func/privateThreadManager")); } catch (_) {}
+                                                }
+                                                if (pMgr) {
+                                                        const privateTID = await pMgr.getOrCreatePrivateThread(api, senderUID, uName);
+                                                        if (privateTID && String(privateTID) !== String(event.threadID)) {
+                                                                log.warn("DM_ROUTER", `Routed DM reply for ${uName} (${senderUID}) to private room ${privateTID} due to Facebook E2EE`);
+                                                                return await api.sendMessage(form, privateTID, undefined, undefined, true);
+                                                        }
+                                                }
+                                        } catch (pErr) {
+                                                log.warn("DM_ROUTER", `Private room routing failed: ${pErr.message}`);
+                                        }
+
+                                        // 2. Fallback to shared active group chat
                                         let sharedGroup = null;
                                         if (global.db && Array.isArray(global.db.allThreadData)) {
                                                 sharedGroup = global.db.allThreadData.find(t => 
-                                                        t.isGroup && t.members && t.members.some(m => String(m.userID) === senderUID)
+                                                        t.isGroup && t.members && t.members.some(m => String(m.userID || m.id || m) === senderUID)
                                                 );
                                         }
                                         if (sharedGroup) {
                                                 try {
-                                                        const userObj = (global.db.allUserData || []).find(u => String(u.userID) === senderUID);
-                                                        const uName = userObj?.name || `User ${senderUID}`;
                                                         const textContent = typeof form === "string" ? form : (form?.body || "");
                                                         const bridgeMsg = typeof form === "object" ? { ...form } : {};
                                                         bridgeMsg.body = `💬 [DM Bridge for ${uName}]:\n\n${textContent}\n\nℹ️ (Facebook E2EE restricts 1-on-1 private bot messages; bridged to your active group chat)`;

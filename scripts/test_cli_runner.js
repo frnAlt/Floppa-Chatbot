@@ -573,6 +573,60 @@ async function runDiagnostics() {
     logTest("WORKFLOW", "Direct Message (DM) E2EE bridging test failed", false, err.message);
   }
 
+  // ──────────────── Test Case M: Dedicated Private 2-Person Room E2EE Routing ────────────────
+  try {
+    const pMgr = require(path.join(cwd, "func/privateThreadManager"));
+    pMgr.registerPrivateThread("8888", "1089640446736327");
+    const retrievedTID = pMgr.getPrivateThread("8888");
+    logTest("WORKFLOW", "PrivateThreadManager registers and retrieves dedicated unencrypted room", retrievedTID === "1089640446736327");
+
+    let privateRoutedThread = null;
+    const privateMockApi = {
+      sendMessage: async (m, t) => {
+        if (t === "8888") {
+          throw new Error("Direct thread 8888 is end-to-end encrypted (E2EE) by Facebook. error 1545116");
+        }
+        privateRoutedThread = t;
+        return { messageID: "mid.private_routed" };
+      }
+    };
+    const privateMsg = utils.message(privateMockApi, { threadID: "8888", senderID: "8888", isGroup: false });
+    await privateMsg.reply("Testing private room delivery");
+    logTest("WORKFLOW", "Direct Message (DM) automatically routes to dedicated private room upon E2EE error", privateRoutedThread === "1089640446736327");
+  } catch (err) {
+    logTest("WORKFLOW", "Private thread routing test failed", false, err.message);
+  }
+
+  // ──────────────── Test Case N: Native createNewGroup 1-Participant Support ────────────────
+  try {
+    const createNewGroupFactory = require(path.join(cwd, "fca/src/apis/createNewGroup"));
+    let capturedParticipants = null;
+    const defaultFuncsMock = {
+      post: async (url, jar, form) => {
+        const parsedVars = JSON.parse(form.variables);
+        capturedParticipants = parsedVars.input.participants;
+        return {
+          statusCode: 200,
+          body: 'for (;;);' + JSON.stringify({
+            data: {
+              messenger_group_thread_create: {
+                thread: {
+                  thread_key: { thread_fbid: "999888777" }
+                }
+              }
+            }
+          })
+        };
+      }
+    };
+    const createGroupFn = createNewGroupFactory(defaultFuncsMock, {}, { userID: "61593675886067" });
+    const createdTID = await createGroupFn(["100094924471568"], "Floppa Private Test");
+    const allowsOneUser = createdTID === "999888777" && Array.isArray(capturedParticipants) && capturedParticipants.some(p => p.fbid === "100094924471568");
+    logTest("WORKFLOW", "Native FCA createNewGroup allows 1 user to create 2-person unencrypted private room", allowsOneUser);
+  } catch (err) {
+    logTest("WORKFLOW", "createNewGroup 1-user test failed", false, err.message);
+  }
+
   // ──────────────── 5. FCA SendMessage Unit Tests ────────────────
   console.log("\n\x1b[33m--- 5. Native FCA Outbound SendMessage Engine Tests ---\x1b[0m");
   try {

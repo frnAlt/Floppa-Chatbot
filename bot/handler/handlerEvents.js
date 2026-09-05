@@ -364,6 +364,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         if (
                                 autoRefreshThreadInfoFirstTime === true
                                 && !global.db.receivedTheFirstMessage[threadID]
+                                && Boolean(isGroup)
                         ) {
                                 global.db.receivedTheFirstMessage[threadID] = true;
                                 threadsData.refreshInfo(threadID).catch(() => {});
@@ -419,18 +420,23 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                 event.targetID = repliedUID;
                         }
                 }
-
                 const prefix = getPrefix(threadID);
                 const role = getRole(threadData, senderID);
                 const input = new InputClass({ api, event, message, role, prefix, args: body ? body.trim().split(/\s+/).slice(1) : [] });
                 const output = new OutputClass({ api, event, message });
+                const isTwoPersonThread = Boolean(
+                        !isGroup ||
+                        (threadData?.members && threadData.members.length === 2) ||
+                        (threadData?.threadName && threadData.threadName.toLowerCase().startsWith("floppa private"))
+                );
                 const parameters = {
                         api, usersData, threadsData, message, event,
                         userModel, threadModel, prefix, dashBoardModel,
                         globalModel, dashBoardData, globalData, envCommands,
                         envEvents, envGlobal, role,
                         isGroup: Boolean(isGroup),
-                        isDM: !isGroup,
+                        isDM: !isGroup || isTwoPersonThread,
+                        isTwoPersonThread,
                         input, output,
                         usersDB: usersData,
                         threadsDB: threadsData,
@@ -477,13 +483,15 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         // —————————————— CHECK USE BOT —————————————— //
                         if (!body) {
                                 if (!isGroup && event.attachments && Array.isArray(event.attachments) && event.attachments.some(a => a.isUnrecognized || (a.ID && String(a.ID).startsWith("ee.mid")) || a.description === "Unsupported shared content.")) {
+                                        const uObj = (global.db?.allUserData || []).find(u => String(u.userID) === String(senderID));
+                                        const uName = uObj?.name || "";
                                         return await message.reply(
-                                                "🔒 [Facebook E2EE Notice]\n\n" +
-                                                "Your Facebook Messenger app has End-to-End Encryption (E2EE) enabled on this direct chat, which hides message text from third-party bot integrations.\n\n" +
-                                                "💡 To chat with Floppa Bot:\n" +
-                                                "1. Chat with Floppa Bot in any Facebook group (group chats are never E2EE encrypted)!\n" +
-                                                "2. Or add Floppa Bot to a new group chat with you.\n\n" +
-                                                "All 281 commands and AI features work seamlessly!"
+                                                `🔒 [Facebook E2EE Notice]\n\n` +
+                                                `👋 Hey ${uName || "there"}!\n\n` +
+                                                `Your Facebook Messenger app has End-to-End Encryption (E2EE) enabled on this direct chat, which hides message text from third-party bot integrations.\n\n` +
+                                                `🔒 I've opened a dedicated private room for us where everything is 100% unencrypted and works seamlessly!\n\n` +
+                                                `💡 You can also add Floppa Bot to any group chat or chat directly in any shared group.\n\n` +
+                                                `Type ${prefix}help to explore all features!`
                                         );
                                 }
                                 return;
@@ -506,9 +514,9 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                         potentialCmd?.meta?.noPrefix === "both"
                                 );
 
-                                if (potentialCmd && (noPrefixEnabled || userCanSkipPrefix || cmdAllowsNoPrefix || !isGroup)) {
+                                if (potentialCmd && (noPrefixEnabled || userCanSkipPrefix || cmdAllowsNoPrefix || !isGroup || isTwoPersonThread)) {
                                         hasNoPrefix = true;
-                                } else if (!isGroup) {
+                                } else if (!isGroup || isTwoPersonThread) {
                                         if (global.GoatBot.botOff && role !== 2 && role !== 4) {
                                                 return await message.reply("⚠️ Bot is currently turned OFF by the administrator. Only administrators can use commands.");
                                         }

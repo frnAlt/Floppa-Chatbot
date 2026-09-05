@@ -14,8 +14,8 @@ module.exports = function (defaultFuncs, api, ctx) {
 			throw { error: "createNewGroup: participantIDs should be an array." };
 		}
 
-		if (participantIDs.length < 2) {
-			throw { error: "createNewGroup: participantIDs should have at least 2 IDs." };
+		if (participantIDs.length < 1) {
+			throw { error: "createNewGroup: participantIDs should have at least 1 ID." };
 		}
 
 		let resolveFunc = function () { };

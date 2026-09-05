@@ -31,6 +31,7 @@ const { execSync } = require('child_process');
 const path = require("path");
 
 const TTLMap = require("./func/TTLMap.js");
+global.privateThreadManager = require("./func/privateThreadManager.js");
 
 process.env.BLUEBIRD_W_FORGOTTEN_RETURN = 0;
 
