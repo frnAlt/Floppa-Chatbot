@@ -1,0 +1,52 @@
+{
+  "generatedAt": "2026-09-05T10:23:26.315Z",
+  "systemStatus": {
+    "sessionId": "session_1788603803803_2j7t6",
+    "uptimeSeconds": 2,
+    "uptimeHuman": "0m 2s",
+    "status": "stopped",
+    "botID": null,
+    "botName": null,
+    "mqttConnected": false,
+    "mqttDisconnects": 0,
+    "totalEventsCaptured": 1,
+    "totalCommandsExecuted": 1,
+    "totalErrorsRecorded": 0
+  },
+  "stability": {
+    "lastCheckpointWarning": null,
+    "cookieLive": null,
+    "lastCookieCheck": null,
+    "e2eeErrors": 0,
+    "httpMercuryFallbacks": 0
+  },
+  "recentErrors": [],
+  "recentCommands": [
+    {
+      "time": "2026-09-05T10:23:23.809Z",
+      "command": "ping",
+      "threadID": "123",
+      "durationMs": 15,
+      "success": true,
+      "error": null
+    }
+  ],
+  "recentChatLogs": [
+    {
+      "time": "2026-09-05T10:23:23.806Z",
+      "type": "message",
+      "threadID": "123",
+      "senderID": "456",
+      "isGroup": true,
+      "body": "test ping"
+    }
+  ],
+  "aiDiagnosticSummary": {
+    "health": "EXCELLENT",
+    "notesForAgent": [
+      "No active checkpoint restriction detected",
+      "MQTT not currently connected or reconnecting",
+      "Total errors this run: 0"
+    ]
+  }
+}

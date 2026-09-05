@@ -743,8 +743,14 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                 }
                                 
 				log.info("CALL COMMAND", `${commandName} | ${userData?.name || "User"} | ${senderID} | ${threadID} | ${args.join(" ")} (${Date.now() - dateNow}ms)`);
+                                if (global.systemMemoryDB) {
+                                        global.systemMemoryDB.recordCommand(commandName, event, Date.now() - dateNow);
+                                }
                         }
                         catch (err) {
+                                if (global.systemMemoryDB) {
+                                        global.systemMemoryDB.recordCommand(commandName, event, Date.now() - dateNow, err);
+                                }
                                 return await message.reply(
                                         utils.getText({ lang: langCode, head: "handlerEvents" }, "errorOccurred", time, commandName, removeHomeDir(err.stack ? err.stack.split("\n").slice(0, 5).join("\n") : JSON.stringify(err, null, 2))),
                                         (e, info) => {
@@ -950,7 +956,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                 return;
 
                         // Never intercept commands or messages starting with any prefix (-gay, !help, /cmd, .cmd)
-                        if (isUserCallCommand || hasPrefix || (body && /^[!/#.$-~]/.test(body.trim())))
+                        if (isUserCallCommand || hasPrefix || (body && /^[!#$%\&*+\-./:<=>?@\\^_`~]/.test(body.trim())))
                                 return;
 
                         const { onReply } = GoatBot;

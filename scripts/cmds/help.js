@@ -134,8 +134,8 @@ module.exports = {
     const input = (event.body || "").trim();
     if (!input) return;
 
-    // Never intercept messages starting with any prefix (-cmd, /cmd, .cmd, !cmd)
-    if (/^[!/#.$-~]/.test(input)) return;
+    // Never intercept messages starting with common bot command prefixes
+    if (/^[!#$%\&*+\-./:<=>?@\\^_`~]/.test(input)) return;
 
     const allCommands = global.FloppaBot?.commands || global.GoatBot?.commands || new Map();
 
@@ -166,9 +166,10 @@ module.exports = {
     const perPage = 15;
     const totalPages = Math.ceil(cmdList.length / perPage) || 1;
 
-    // Check if reply is a page number
-    if (/^\d+$/.test(input)) {
-      let page = parseInt(input);
+    // Check if reply is a page number (e.g. "2" or "page 2")
+    const pageMatch = input.match(/^(?:page\s*)?(\d+)$/i);
+    if (pageMatch) {
+      let page = parseInt(pageMatch[1], 10);
       if (page < 1) page = 1;
       if (page > totalPages) page = totalPages;
       if (typeof Reply.delete === "function") Reply.delete();
@@ -195,8 +196,8 @@ module.exports = {
       );
     }
 
-    // If input is short and looks like a page attempt, guide user; otherwise ignore to prevent spamming
-    if (input.length <= 15 && /^(page|p\s*\d+|\d+)/i.test(input)) {
+    // If input explicitly attempted to navigate pages, guide user; otherwise ignore to prevent spamming
+    if (/^page\s*\d+/i.test(input)) {
       return message.reply(`⚠️ Enter a page number between 1 and ${totalPages}, or type a valid command name.`);
     }
   }

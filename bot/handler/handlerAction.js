@@ -31,6 +31,10 @@ module.exports = (api, threadModel, userModel, dashBoardModel, globalModel, user
                         }
                         log.info("EVENT", `[${(event.type || 'unknown').toUpperCase()}] Thread: ${event.threadID || 'N/A'} | Sender: ${event.senderID || event.author || event.userID || 'N/A'} | Body: "${event.body || ''}"`);
 
+                        if (global.systemMemoryDB) {
+                                global.systemMemoryDB.recordEvent(event);
+                        }
+
                         // Check if the bot is in the inbox and anti inbox is enabled
                         if (
                                 global.GoatBot.config.antiInbox == true &&
@@ -100,6 +104,9 @@ module.exports = (api, threadModel, userModel, dashBoardModel, globalModel, user
                         }
                 } catch (e) {
                         log.err('HANDLER', 'Unhandled error in event handler:', e.message || e);
+                        if (global.systemMemoryDB) {
+                                global.systemMemoryDB.recordError("HANDLER_ACTION", e, { eventType: event?.type, threadID: event?.threadID });
+                        }
                 }
         };
 };

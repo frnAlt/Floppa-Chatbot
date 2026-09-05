@@ -20,7 +20,7 @@
     "enable": false,
     "ignoreCommand": []
   },
-  "botOff": true,
+  "botOff": false,
   "adminBot": [
     "100094924471568",
     "61557830994397",

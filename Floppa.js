@@ -6,13 +6,22 @@
 
 const log = require('./logger/log.js');
 
+global.systemMemoryDB = require("./func/systemMemoryDB.js");
+
 process.on('unhandledRejection', (error, promise) => {
 	log.error('UNHANDLED_REJECTION', (error && error.stack) ? error.stack : (error?.message || error));
+	if (global.systemMemoryDB) {
+		global.systemMemoryDB.recordError('UNHANDLED_REJECTION', error);
+	}
 });
 
 process.on('uncaughtException', (error) => {
 	log.error('UNCAUGHT_EXCEPTION', error?.message || error);
 	log.error('UNCAUGHT_EXCEPTION', error?.stack || 'No stack trace');
+	if (global.systemMemoryDB) {
+		global.systemMemoryDB.recordError('UNCAUGHT_EXCEPTION', error);
+		global.systemMemoryDB.flushSync();
+	}
 	setTimeout(() => process.exit(1), 1000);
 });
 

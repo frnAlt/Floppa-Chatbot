@@ -359,7 +359,7 @@ module.exports.onReply = async ({
 
     try {
         const body = event.body ? event.body.trim() : "";
-        if (!body || /^[!/#.$-~]/.test(body)) return;
+        if (!body || /^[!#$%\&*+\-./:<=>?@\\^_`~]/.test(body)) return;
 
         if (typeof Reply.delete === "function") Reply.delete();
 
@@ -399,10 +399,10 @@ module.exports.onChat = async ({
 }) => {
     try {
         const body = event.body ? event.body.trim() : "";
-        if (!body || /^[!/#.$-~]/.test(body)) return;
+        if (!body || /^[!#$%\&*+\-./:<=>?@\\^_`~]/.test(body)) return;
 
         const bodyLower = body.toLowerCase();
-        const hasTrigger = nix.some(t => bodyLower.startsWith(t));
+        const hasTrigger = nix.some(t => bodyLower === t || bodyLower.startsWith(t + " ") || bodyLower.startsWith(t + ","));
 
         if (!hasTrigger) return;
         const uid = String(event.senderID);

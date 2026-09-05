@@ -1,0 +1,56 @@
+{
+  "version": "1.0.0",
+  "createdAt": "2026-09-05T10:23:23.803Z",
+  "currentSession": {
+    "sessionId": "session_1788603803803_2j7t6",
+    "startTime": "2026-09-05T10:23:23.805Z",
+    "startTimestamp": 1788603803803,
+    "status": "stopped",
+    "botID": null,
+    "botName": null,
+    "mqttConnected": false,
+    "mqttDisconnects": 0,
+    "mqttReconnects": 0,
+    "lastMqttPing": null,
+    "totalEventsReceived": 1,
+    "totalCommandsExecuted": 1,
+    "totalErrorsCaught": 0,
+    "uptimeSeconds": 2,
+    "endTime": "2026-09-05T10:23:26.314Z",
+    "durationMs": 2511
+  },
+  "sessions": [],
+  "events": [
+    {
+      "id": "evt_1788603803806_tgu2",
+      "timestamp": "2026-09-05T10:23:23.806Z",
+      "type": "message",
+      "threadID": "123",
+      "senderID": "456",
+      "isGroup": true,
+      "bodySnippet": "test ping",
+      "hasAttachments": false,
+      "attachmentTypes": []
+    }
+  ],
+  "errors": [],
+  "commands": [
+    {
+      "timestamp": "2026-09-05T10:23:23.809Z",
+      "command": "ping",
+      "threadID": "123",
+      "senderID": "456",
+      "isGroup": false,
+      "durationMs": 15,
+      "success": true,
+      "errorMsg": null
+    }
+  ],
+  "stabilityMetrics": {
+    "lastCheckpointWarning": null,
+    "cookieLive": null,
+    "lastCookieCheck": null,
+    "e2eeErrors": 0,
+    "httpMercuryFallbacks": 0
+  }
+}
