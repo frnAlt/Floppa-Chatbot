@@ -31,41 +31,17 @@ module.exports = {
     let tempFilePath; 
 
     try {
-      const fullApiUrl = `${API_ENDPOINT}?prompt=${encodeURIComponent(prompt.trim())}`;
-      
-      const imageDownloadResponse = await axios.get(fullApiUrl, {
-          responseType: 'stream',
-          timeout: 45000 
-      });
+      const enhancedPrompt = `${prompt.trim()}, anime aesthetic, makoto shinkai style, high quality anime visual art, colorful, detailed illustration`;
+      const seed = Math.floor(Math.random() * 1000000);
+      const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=768&height=768&nologo=true&seed=${seed}&model=turbo`;
 
-      if (imageDownloadResponse.status !== 200) {
-           throw new Error(`API request failed with status code ${imageDownloadResponse.status}.`);
-      }
-      
-      const cacheDir = path.join(__dirname, 'cache');
-      if (!fs.existsSync(cacheDir)) {
-          await fs.mkdirp(cacheDir); 
-      }
-      
-      tempFilePath = path.join(cacheDir, `supanime_output_${Date.now()}.png`);
-      
-      const writer = fs.createWriteStream(tempFilePath);
-      imageDownloadResponse.data.pipe(writer);
-
-      await new Promise((resolve, reject) => {
-        writer.on("finish", resolve);
-        writer.on("error", (err) => {
-          writer.close();
-          reject(err);
-        });
-      });
+      const stream = await global.utils.getStreamFromURL(url, `supanime_${Date.now()}.png`, { timeout: 15000 });
 
       message.reaction("✅", event.messageID);
       await message.reply({
-        body: `SupAnime image generated ✨`,
-        attachment: fs.createReadStream(tempFilePath)
+        body: `✨ SupAnime image generated:\n"${prompt}"`,
+        attachment: stream
       });
-
     } catch (error) {
       message.reaction("❌", event.messageID);
       

@@ -49,9 +49,12 @@ module.exports = {
 								}
 				},
 
-				onStart: async function ({ message, role, args, commandName, event, threadsData, getLang }) {
-								if (!args[0])
-												return message.SyntaxError();
+				onStart: async function ({ message, role, args, commandName, event, threadsData, getLang, usersData }) {
+								if (!args[0]) {
+												const userName = await usersData.getName(event.senderID).catch(() => "there");
+												const botName = global.GoatBot.config.nickNameBot || "Floppa Bot 🐱";
+												return message.reply(getLang("myPrefix", userName, global.GoatBot.config.prefix, utils.getPrefix(event.threadID), botName));
+								}
 
 								if (args[0] == 'reset') {
 												await threadsData.set(event.threadID, null, "data.prefix");

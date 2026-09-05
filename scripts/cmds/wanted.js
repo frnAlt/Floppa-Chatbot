@@ -25,24 +25,37 @@ module.exports = {
     const token = "6628568379%7Cc1e620fa708a1d5696fb991c1bde5662";
 
     // 1. Check for image attachment in replied message
-    if (event.messageReply?.attachments?.length > 0 && event.messageReply.attachments[0].type === "photo") {
-      imageUrl = event.messageReply.attachments[0].url;
+    if (event.messageReply?.attachments?.length > 0) {
+      const att = event.messageReply.attachments[0];
+      let u = att.url || att.previewUrl || att.largePreviewUrl;
+      if (!u && att.ID && api?.resolvePhotoUrl) {
+        try { u = await api.resolvePhotoUrl(att.ID); } catch (_) {}
+      }
+      if (u) imageUrl = u;
+    }
+    if (!imageUrl && event.attachments?.length > 0) {
+      const att = event.attachments[0];
+      let u = att.url || att.previewUrl || att.largePreviewUrl;
+      if (!u && att.ID && api?.resolvePhotoUrl) {
+        try { u = await api.resolvePhotoUrl(att.ID); } catch (_) {}
+      }
+      if (u) imageUrl = u;
     }
     // 2. Check for mentioned user
-    else if (event.mentions && Object.keys(event.mentions).length > 0) {
+    if (!imageUrl && event.mentions && Object.keys(event.mentions).length > 0) {
       const targetUID = Object.keys(event.mentions)[0];
       imageUrl = `https://graph.facebook.com/${targetUID}/picture?width=720&height=720&access_token=${token}`;
     }
     // 3. Check for replied message sender
-    else if (event.messageReply?.senderID) {
+    else if (!imageUrl && event.messageReply?.senderID) {
       imageUrl = `https://graph.facebook.com/${event.messageReply.senderID}/picture?width=720&height=720&access_token=${token}`;
     }
     // 4. Check for direct URL argument
-    else if (args[0] && args[0].startsWith("http")) {
+    else if (!imageUrl && args[0] && args[0].startsWith("http")) {
       imageUrl = args[0];
     }
     // 5. Default to sender's own avatar
-    else {
+    else if (!imageUrl) {
       imageUrl = `https://graph.facebook.com/${event.senderID}/picture?width=720&height=720&access_token=${token}`;
     }
 

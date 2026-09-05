@@ -124,8 +124,8 @@ module.exports = async function (api, threadModel, userModel, dashBoardModel, gl
 				const commandName = configCommand.name.toLowerCase();
 
 				// Normalize handlers
-				if (!command.onStart && (command.entry || command.run || command.onCall)) {
-					const entryHandler = command.entry || command.run || command.onCall;
+				if (!command.onStart && (command.entry || command.run || command.onCall || command.execute || command.onType)) {
+					const entryHandler = command.entry || command.run || command.onCall || command.execute || command.onType;
 					command.onStart = async function (ctx) {
 						if (!ctx) ctx = {};
 						const argsList = ctx.args || [];
@@ -187,7 +187,13 @@ module.exports = async function (api, threadModel, userModel, dashBoardModel, gl
 				}
 
 				if (!command.onStart && folderModules == "cmds") {
-					throw new Error(`onStart or entry of command "${commandName}" undefined`);
+					if (typeof command.onChat === "function") {
+						command.onStart = async function ({ message }) {
+							return message.reply("This command operates via conversation chat triggers.");
+						};
+					} else {
+						throw new Error(`onStart or entry of command "${commandName}" undefined`);
+					}
 				}
 
 				if (GoatBot[setMap].has(commandName)) {

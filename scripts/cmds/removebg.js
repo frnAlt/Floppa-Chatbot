@@ -2,23 +2,23 @@ const axios = require("axios");
 const fs = require("fs-extra");
 const path = require("path");
 
-function extractImageUrl(args, event) {
+async function extractImageUrl(args, event, api) {
   let imageUrl = args.find(arg => typeof arg === "string" && arg.startsWith("http"));
 
   if (!imageUrl && event.messageReply?.attachments?.length > 0) {
-    const imageAttachment = event.messageReply.attachments.find(
-      att => att.type === "photo" || att.type === "image"
-    );
-    if (imageAttachment && imageAttachment.url) {
-      imageUrl = imageAttachment.url;
+    const att = event.messageReply.attachments[0];
+    let u = att.url || att.previewUrl || att.largePreviewUrl;
+    if (!u && att.ID && api?.resolvePhotoUrl) {
+      try { u = await api.resolvePhotoUrl(att.ID); } catch (_) {}
     }
+    if (u) imageUrl = u;
   } else if (!imageUrl && event.attachments?.length > 0) {
-    const imageAttachment = event.attachments.find(
-      att => att.type === "photo" || att.type === "image"
-    );
-    if (imageAttachment && imageAttachment.url) {
-      imageUrl = imageAttachment.url;
+    const att = event.attachments[0];
+    let u = att.url || att.previewUrl || att.largePreviewUrl;
+    if (!u && att.ID && api?.resolvePhotoUrl) {
+      try { u = await api.resolvePhotoUrl(att.ID); } catch (_) {}
     }
+    if (u) imageUrl = u;
   } else if (!imageUrl && event.mentions && Object.keys(event.mentions).length > 0) {
     const targetUID = Object.keys(event.mentions)[0];
     const token = "6628568379%7Cc1e620fa708a1d5696fb991c1bde5662";
@@ -52,7 +52,7 @@ module.exports = {
   },
 
   onStart: async function ({ api, args, message, event, commandName }) {
-    const imageUrl = extractImageUrl(args, event);
+    const imageUrl = await extractImageUrl(args, event, api);
 
     if (!imageUrl) {
       const prefix = global.GoatBot?.config?.prefix || "";
@@ -70,10 +70,10 @@ module.exports = {
     try {
       let finalStream = null;
 
-      // 1. Primary: Toshiro Background Remover API
+      // 1. Primary: Toshiro Background Remover API (fast 3s timeout)
       try {
         const apiUrl = `https://toshiro-api-editz6t9.vercel.app/api/image/rbg?imgUrl=${encodeURIComponent(imageUrl)}`;
-        const res = await axios.get(apiUrl, { timeout: 45000 });
+        const res = await axios.get(apiUrl, { timeout: 3000 });
 
         if (res.data && res.data.success && res.data.result?.image) {
           const imgData = res.data.result.image;
@@ -90,13 +90,13 @@ module.exports = {
           }
         }
       } catch (err) {
-        console.warn("Toshiro RBG failed, using fallback:", err.message);
+        // Fast fallback to Pollinations turbo
       }
 
       // 2. Fallback: Pollinations transparent background
       if (!finalStream) {
-        const fallbackUrl = `https://image.pollinations.ai/prompt/transparent%20background%20isolated%20subject%20no%20background?image=${encodeURIComponent(imageUrl)}&nologo=true`;
-        finalStream = await global.utils.getStreamFromURL(fallbackUrl, "removed_bg.png");
+        const fallbackUrl = `https://image.pollinations.ai/prompt/transparent%20background%20isolated%20subject%20no%20background?image=${encodeURIComponent(imageUrl)}&width=768&height=768&nologo=true&model=turbo`;
+        finalStream = await global.utils.getStreamFromURL(fallbackUrl, "removed_bg.png", { timeout: 15000 });
       }
 
       if (!finalStream) {

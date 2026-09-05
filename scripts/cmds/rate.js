@@ -13,8 +13,8 @@ module.exports = {
   },
 
   onStart: async function ({ event, message, usersData }) {
-    let mention = Object.keys(event.mentions)[0] || event.senderID;
-    const userName = await usersData.getName(mention);
+    const mention = Object.keys(event.mentions || {})[0] || event.senderID;
+    const userName = event.mentions?.[mention]?.replace(/^@/, "").trim() || (await usersData.getName(mention).catch(() => null)) || "User";
 
     const rating = Math.floor(Math.random() * 101); // 0-100%
     const messages = [

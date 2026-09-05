@@ -29,9 +29,9 @@ module.exports = {
       }
 
       const seed = Math.floor(Math.random() * 1000000);
-      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&seed=${seed}&nologo=true`;
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=768&height=768&seed=${seed}&nologo=true&model=turbo`;
 
-      const stream = await global.utils.getStreamFromURL(imageUrl, `photo_${Date.now()}.jpg`);
+      const stream = await global.utils.getStreamFromURL(imageUrl, `photo_${Date.now()}.jpg`, { timeout: 15000 });
 
       if (api.setMessageReaction) {
         api.setMessageReaction("✅", event.messageID, () => {}, true);

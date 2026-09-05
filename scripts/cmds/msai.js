@@ -34,8 +34,18 @@ module.exports = {
     }
 
     try {
-      const apiUrl = `https://toshiro-api-editz6t9.vercel.app/api/image/msai?prompt=${encodeURIComponent(prompt)}`;
-      const stream = await global.utils.getStreamFromURL(apiUrl, "msai.jpg");
+      let stream = null;
+      try {
+        const apiUrl = `https://toshiro-api-editz6t9.vercel.app/api/image/msai?prompt=${encodeURIComponent(prompt)}`;
+        stream = await global.utils.getStreamFromURL(apiUrl, "msai.jpg", { timeout: 2500 });
+      } catch (_) {}
+
+      if (!stream) {
+        const enhancedPrompt = `${prompt}, magic studio fantasy art, magical glowing aesthetic, vibrant digital masterpiece`;
+        const seed = Math.floor(Math.random() * 1000000);
+        const turboUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=768&height=768&nologo=true&seed=${seed}&model=turbo`;
+        stream = await global.utils.getStreamFromURL(turboUrl, "msai.jpg", { timeout: 15000 });
+      }
 
       await message.reply({
         body: `🔮 Magic Studio AI Generated:\n\n✨ Prompt: "${prompt}"`,

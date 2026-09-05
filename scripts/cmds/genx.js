@@ -30,21 +30,9 @@ module.exports = {
     try {
       if (api.setMessageReaction) api.setMessageReaction("🎨", event.messageID, () => {}, true);
 
-      let stream = null;
-      try {
-        const response = await axios.get(`https://dall-e-tau-steel.vercel.app/kshitiz?prompt=${encodeURIComponent(prompt)}`, { timeout: 25000 });
-        const imageUrl = response.data?.response;
-        if (imageUrl) {
-          stream = await global.utils.getStreamFromURL(imageUrl, `genx_${Date.now()}.jpg`);
-        }
-      } catch (e) {
-        // Fallback
-      }
-
-      if (!stream) {
-        const fallbackUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&seed=${Date.now()}`;
-        stream = await global.utils.getStreamFromURL(fallbackUrl, `genx_${Date.now()}.png`, { timeout: 45000 });
-      }
+      const seed = Math.floor(Math.random() * 1000000);
+      const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=768&height=768&nologo=true&seed=${seed}&model=turbo`;
+      const stream = await global.utils.getStreamFromURL(url, `genx_${Date.now()}.png`, { timeout: 15000 });
 
       if (!stream) throw new Error("Failed to generate image.");
 

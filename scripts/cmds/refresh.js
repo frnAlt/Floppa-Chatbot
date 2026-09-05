@@ -59,7 +59,7 @@ module.exports = {
 		else if (args[0] == "user") {
 			let targetID = event.senderID;
 			if (args[1]) {
-				if (Object.keys(event.mentions).length)
+				if (event.mentions && Object.keys(event.mentions).length)
 					targetID = Object.keys(event.mentions)[0];
 				else
 					targetID = args[1];

@@ -70,8 +70,8 @@ module.exports = {
         return message.reply("👤 Please reply to or mention someone to bonk!");
       }
 
-      const targetName = await usersData.getName(two).catch(() => "Target");
-      const senderName = await usersData.getName(one).catch(() => "Sender");
+      const targetName = event.mentions?.[two]?.replace(/^@/, "").trim() || (await usersData.getName(two).catch(() => null)) || "Target";
+      const senderName = (await usersData.getName(one).catch(() => null)) || "Sender";
       const token = "6628568379%7Cc1e620fa708a1d5696fb991c1bde5662";
       const avatar1 = `https://graph.facebook.com/${two}/picture?width=720&height=720&access_token=${token}`;
       const avatar2 = `https://graph.facebook.com/${one}/picture?width=720&height=720&access_token=${token}`;

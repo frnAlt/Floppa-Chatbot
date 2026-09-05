@@ -53,8 +53,8 @@ module.exports = {
         uid2 = listUserID[Math.floor(Math.random() * listUserID.length)];
       }
 
-      const nameSender = await usersData.getName(uid1).catch(() => "User 1");
-      const name2 = await usersData.getName(uid2).catch(() => "User 2");
+      const nameSender = (await usersData.getName(uid1).catch(() => null)) || "User 1";
+      const name2 = event.mentions?.[uid2]?.replace(/^@/, "").trim() || (await usersData.getName(uid2).catch(() => null)) || "User 2";
 
       if (api.setMessageReaction) {
         api.setMessageReaction("💖", messageID, () => {}, true);

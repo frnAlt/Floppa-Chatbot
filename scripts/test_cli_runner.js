@@ -107,6 +107,9 @@ async function runDiagnostics() {
   require(path.join(cwd, "func/moduleResolver.js"));
 
   const config = JSON.parse(fs.readFileSync(path.join(cwd, "config.json"), "utf8"));
+  config.botOff = false;
+  if (!config.adminBot) config.adminBot = [];
+  config.adminBot.push("9999");
   const configCommands = JSON.parse(fs.readFileSync(path.join(cwd, "configCommands.json"), "utf8"));
 
   global.FloppaBot = {

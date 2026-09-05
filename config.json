@@ -20,9 +20,11 @@
     "enable": false,
     "ignoreCommand": []
   },
-  "botOff": false,
+  "botOff": true,
   "adminBot": [
-    "100094924471568"
+    "100094924471568",
+    "61557830994397",
+    "61557169379945"
   ],
   "premiumUsers": [
     "100094924471568"

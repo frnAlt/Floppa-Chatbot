@@ -132,6 +132,11 @@ module.exports = {
     if (event.senderID !== Reply.author) return;
 
     const input = (event.body || "").trim();
+    if (!input) return;
+
+    // Never intercept messages starting with any prefix (-cmd, /cmd, .cmd, !cmd)
+    if (/^[!/#.$-~]/.test(input)) return;
+
     const allCommands = global.FloppaBot?.commands || global.GoatBot?.commands || new Map();
 
     // Convert map to sorted command array
@@ -162,10 +167,11 @@ module.exports = {
     const totalPages = Math.ceil(cmdList.length / perPage) || 1;
 
     // Check if reply is a page number
-    if (!isNaN(input)) {
+    if (/^\d+$/.test(input)) {
       let page = parseInt(input);
       if (page < 1) page = 1;
       if (page > totalPages) page = totalPages;
+      if (typeof Reply.delete === "function") Reply.delete();
       return sendHelpPage(page, totalPages, cmdList, perPage, prefix, message, event.senderID);
     }
 
@@ -173,6 +179,7 @@ module.exports = {
     const query = input.toLowerCase();
     const found = cmdList.find(c => c.name.toLowerCase() === query || c.aliases.map(a => a.toLowerCase()).includes(query));
     if (found) {
+      if (typeof Reply.delete === "function") Reply.delete();
       const roleStr = found.role === 2 ? "Admin Only (Role 2)" : found.role === 1 ? "Group Admin (Role 1)" : "All Users (Role 0)";
       return message.reply(
         `╭─── [ 🐱 𝗙𝗟𝗢𝗣𝗣𝗔 𝗖𝗢𝗠𝗠𝗔𝗡𝗗 𝗜𝗡𝗙𝗢 ] ───╮\n` +
@@ -188,7 +195,10 @@ module.exports = {
       );
     }
 
-    return message.reply(`⚠️ Enter a page number between 1 and ${totalPages}, or type a valid command name.`);
+    // If input is short and looks like a page attempt, guide user; otherwise ignore to prevent spamming
+    if (input.length <= 15 && /^(page|p\s*\d+|\d+)/i.test(input)) {
+      return message.reply(`⚠️ Enter a page number between 1 and ${totalPages}, or type a valid command name.`);
+    }
   }
 };
 

@@ -1,1 +1,4225 @@
-[]
+[
+  {
+    "threadID": "1542978320254005",
+    "threadName": "Arik and his Allies",
+    "threadThemeID": "911755994940857",
+    "emoji": "👍",
+    "adminIDs": [
+      "61578589084948",
+      "100010168058769",
+      "100069034573191"
+    ],
+    "imageSrc": "https://scontent-sin2-1.xx.fbcdn.net/v/t1.15752-9/792908357_1354334636470545_8890194591013889530_n.jpg?_nc_cat=100&ccb=1-7&_nc_sid=935a9d&_nc_ohc=S4vVCy8H1xMQ7kNvwFZquVb&_nc_oc=AdqmHj0LcD9mTtDmWP3d98xCh4220_5iUT5dFlaDhNy1FD-luLYnLmlaE5ELDdXQsqA&_nc_zt=23&_nc_ht=scontent-sin2-1.xx&_nc_ss=701a0&oh=03_Q7cD6QEmcE5MmHHNBWItCNuiaaccMQ1tQOhOCG7-e1AFboDhDA&oe=6AC31799",
+    "approvalMode": true,
+    "members": [
+      {
+        "userID": "61552090258421",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": "আবু নুয়াস",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61553187972283",
+        "name": "Nirob Ahmed",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61555179035213",
+        "name": "Rayhan Tasdik",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61556941792594",
+        "name": "Javed Tahmid",
+        "gender": "MALE",
+        "nickname": "কিং",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61557481147314",
+        "name": "Salekin Ul Niham",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61557830994397",
+        "name": "Isotope Anmah",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61558763078719",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61558884831902",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61559350970275",
+        "name": "Kaffeinated Kitler",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61560403517414",
+        "name": "Saiful Arefin",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61561499494106",
+        "name": "Toufik Ahmed Raiyan",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61562643644719",
+        "name": "Syed Mahbub Subhani Alfi",
+        "gender": "MALE",
+        "nickname": "সালাফিয়া",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61563787495061",
+        "name": "Saad M",
+        "gender": "MALE",
+        "nickname": "Saad Bond",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61563879140082",
+        "name": "Master Chief",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61564030394282",
+        "name": "Ziauddin Biplob",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61564986581353",
+        "name": "GM Mosaddir V",
+        "gender": "MALE",
+        "nickname": "ওহাবি ইন্জিনিয়ার",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61566351069049",
+        "name": "Alif Alt",
+        "gender": "MALE",
+        "nickname": "টোকাই",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61566515616901",
+        "name": "Rukn Al Din Baybars",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61567445077762",
+        "name": "Imran Khan",
+        "gender": "MALE",
+        "nickname": "মজা",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61568381425192",
+        "name": "Khondokar Alt",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61569742713297",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61570258391097",
+        "name": "Hammod Sumbul",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61572189375651",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": "বঙ্গবন্ধু শেখ মাহাদি",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61573994152640",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": "শিমুল",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61574787634535",
+        "name": "আবু ফাহিম",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61575236872193",
+        "name": "Rubel Frost",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61575494620409",
+        "name": "Meraz Alt III",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61575737797907",
+        "name": "Huzaifa Ferdous II",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61576552591688",
+        "name": "Mortaza Al Tahsin",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61577688094352",
+        "name": "আমার ছটো বেলার সপ্ন কলা খাবো কিন্তু টাকার ওভাবে কনোদিন খেতে পারি নাই একদিন জয়া নাম এর এক খানকিমাগির ব্যাগ থেকে একটা হিরো কনডম পরে যায় আমি তখন ওই কনডম টা বিক্রি করে একটা কলা কিনে খেয়ে ফেলি",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61578066763383",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": "ফয়েড এলিমিনেটোর",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61578186232227",
+        "name": "Tnt Dixlortal",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61578254944743",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": "মুসলিম যোদ্ধা",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61578589084948",
+        "name": "Sadad Ahmed",
+        "gender": "MALE",
+        "nickname": "Hokage",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61578821056311",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61579110343156",
+        "name": "Abu Obayed Islam",
+        "gender": "MALE",
+        "nickname": "আবু ওবায়েদ",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61579171760822",
+        "name": "Yutaev Alter",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61579658842374",
+        "name": "Sadad Ahmed II",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61580025830758",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": "Superman",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61581869081429",
+        "name": "Rehan Abedin",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61583217293764",
+        "name": "Shahriar Kabir Shawon",
+        "gender": "MALE",
+        "nickname": "নিরব ধর্ষক 🥀",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61583633660384",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61584067256745",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": "লু",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61586231073184",
+        "name": "Muttakin Ahmed Arham",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61587893234659",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61587929760859",
+        "name": "Ibn Zahid",
+        "gender": "MALE",
+        "nickname": "কট্টোর কিবোর্ড মুজাহিদ",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61588090130128",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": "প্রেম পাগল বয়",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61590062514293",
+        "name": "Unloved Person",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61590214479979",
+        "name": "Zihad Hossain",
+        "gender": "NEUTER",
+        "nickname": "জিহাদ হোসেন সোহান",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61590222643916",
+        "name": "Omar Faruk",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61590341892450",
+        "name": "Rafi Ibn Nasir",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61590436020504",
+        "name": "Sakib Al Morbeus",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61590530519834",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": "নাহি",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61591120104149",
+        "name": "Sayedul Hoque",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61591177732425",
+        "name": "Sultan Al Baybars",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61591475092459",
+        "name": "Mohammad Shanto Islam",
+        "gender": "MALE",
+        "nickname": "Mahadi Loki",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61592191481463",
+        "name": "Niamur Rahman",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61592933097860",
+        "name": "Jisan Ahmad",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61593675886067",
+        "name": "D. Epstein",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100005173488965",
+        "name": "খন্দকার আহমেদ সামি",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100005331213180",
+        "name": "Sadman Tahmid Ali",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100005768294447",
+        "name": "Le Loi",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100006622201421",
+        "name": "Syed Tanvir Shahriar",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100006916684443",
+        "name": "Touhidul Islam",
+        "gender": "MALE",
+        "nickname": "চুল ছাড়া কাংলু",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100007521527686",
+        "name": "Shiemanto",
+        "gender": "MALE",
+        "nickname": "Shiemanto mitro",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100008306504390",
+        "name": "Tanveer Rishad",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100009076162748",
+        "name": "Imran Khan Emon",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100010168058769",
+        "name": "Niloy Abedin Siddique",
+        "gender": "MALE",
+        "nickname": "কট্টর সালাফি",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100011107846949",
+        "name": "Syed Mohammad Alif",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100012505906014",
+        "name": "Towhidul Mowla Chowdhury",
+        "gender": "MALE",
+        "nickname": "আল বটর কোপাও দেশ বাচাও",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100012959683308",
+        "name": "Syed Imdadur Rahman",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100021237733952",
+        "name": "Anas Iftekhar Ahmed",
+        "gender": "MALE",
+        "nickname": "আনাস",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100021758167939",
+        "name": "EH Fahim",
+        "gender": "MALE",
+        "nickname": "ফাহিম",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100022039913438",
+        "name": "Meherab Hasan",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100023432525361",
+        "name": "Anm Ehsanul Hoque Milon",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100023533547637",
+        "name": "Bayzid Islam",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100024775370079",
+        "name": "Abdullah Al Mahir",
+        "gender": "MALE",
+        "nickname": "MP.Amir Hamza supporter",
+        "inGroup": true,
+        "count": 3,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100024942011792",
+        "name": "Raihan Rahamat Ullah",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100032826111148",
+        "name": "Forkan Xll",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100034050155137",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": "আয়মান আল জাওয়াহিরি",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100034321841211",
+        "name": "Najibullah",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100034686462008",
+        "name": "Mohammad Arib Fagun",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100035040521979",
+        "name": "Sajil Hossain Rafi",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100035643691542",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100036316005020",
+        "name": "Shoaib Hossain",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100036979186747",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": "Baddie hunter",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100038224787456",
+        "name": "Nafis Sajid",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100040851532546",
+        "name": "Tanjilur Rahaman Ratul",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100043318628383",
+        "name": "Asif Khan BG",
+        "gender": "MALE",
+        "nickname": "আসিফ",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100044271406091",
+        "name": "Samin Ahmed",
+        "gender": "MALE",
+        "nickname": "সাবারবাসি বড় ভালো বাসি",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100044625047957",
+        "name": "Saad Deschwarish",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100045269240299",
+        "name": "Abdullah Al Mamun",
+        "gender": "MALE",
+        "nickname": "মামুন",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100045460929584",
+        "name": "Mahfujur Rahman Shanto",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100047096715206",
+        "name": "Mehmed Hamid Iqbal",
+        "gender": "MALE",
+        "nickname": "হামাস মুক্তিযোদ্ধা",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100053352886242",
+        "name": "Muhammad Raihan Mahmud Saad",
+        "gender": "MALE",
+        "nickname": "বন্ধু বিড়াল",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100053650302900",
+        "name": "Daud Fahim",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100054057822286",
+        "name": "Nate Hofmann",
+        "gender": "MALE",
+        "nickname": "এসঠেটিক",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100056016066211",
+        "name": "Morsalin Khan Tuhin",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100056234829931",
+        "name": "Tahsin Kabir",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100057412425372",
+        "name": "فارسيم كورايشي",
+        "gender": "MALE",
+        "nickname": "ফর্সীম",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100058023402971",
+        "name": "Farhan Walid",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100058437580680",
+        "name": "Akib Farhan",
+        "gender": "MALE",
+        "nickname": "আকিব ফারহান",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100060360829057",
+        "name": "Muhammad Ferdaus",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100063663811573",
+        "name": "Ahnaf Bin Sayed",
+        "gender": "MALE",
+        "nickname": "আহনাফ",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100063992779436",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": "নীরব",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100065140182236",
+        "name": "Yousuf Zulqernine",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100066976590359",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100067067022975",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100067959048894",
+        "name": "Ziauddin Biplob",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100068114803820",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": "Balpha male",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100069034573191",
+        "name": "Arik Chowdhury",
+        "gender": "MALE",
+        "nickname": "বাংগুল্যান্ডের দি আরিক কাংলু",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100071016755822",
+        "name": "Sayed Shahriya Mahmud Shihab",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100071292793284",
+        "name": "محمد یحییٰ",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100071647074512",
+        "name": "Ionov Călinescu",
+        "gender": "MALE",
+        "nickname": "হাসান",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100073507728309",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100075525090501",
+        "name": "Abrar Jawad",
+        "gender": "MALE",
+        "nickname": "আবরার যাওয়াদ",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100076570882878",
+        "name": "Mohammed Ali Ohi",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100077928604734",
+        "name": "Ahnaf Rayan",
+        "gender": "MALE",
+        "nickname": "আহনাফ রায়ান",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100078165061007",
+        "name": "Tnt Dixlortal",
+        "gender": "MALE",
+        "nickname": "ধর্ষণের দার্শনিক",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100078301347561",
+        "name": "রা জু",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100079963794139",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100081887426141",
+        "name": "Md Hassan",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100082584504723",
+        "name": "M H Minhaz  Hasan",
+        "gender": "MALE",
+        "nickname": "নারীবিদ্বেষী",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100084027290909",
+        "name": "Shoaib Islam",
+        "gender": "MALE",
+        "nickname": "ফয়েড দমন কমিশন",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100084753756639",
+        "name": "Solarix Theron",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100085701886747",
+        "name": "Rumin Hüdavendigâr",
+        "gender": "MALE",
+        "nickname": "চিংগাম স্যার",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100090053764126",
+        "name": "Mehedi Hassan",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100090473797545",
+        "name": "মসিউর রহমান তনময়",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100091534133264",
+        "name": "Skibidi Arman",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100094551320824",
+        "name": "Sadman Hossain Sami",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100094924471568",
+        "name": "Farhan Muh Tasim",
+        "gender": "MALE",
+        "nickname": "ফারহান মুতাসিম",
+        "inGroup": true,
+        "count": 22,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100095043585007",
+        "name": "Divus Sami",
+        "gender": "MALE",
+        "nickname": "সামি",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      }
+    ],
+    "banned": {},
+    "settings": {
+      "sendWelcomeMessage": true,
+      "sendLeaveMessage": true,
+      "sendRankupMessage": false,
+      "customCommand": true
+    },
+    "data": {},
+    "isGroup": true,
+    "createdAt": "2026-09-05T05:44:03Z",
+    "updatedAt": "2026-09-05T06:13:25Z"
+  },
+  {
+    "threadID": "1125755322432660",
+    "threadName": "Private Stuff Testing",
+    "threadThemeID": null,
+    "emoji": null,
+    "adminIDs": [
+      null
+    ],
+    "imageSrc": "https://scontent-sin11-1.xx.fbcdn.net/v/t1.15752-9/721368655_1692602545198051_2875648399256474797_n.png?stp=dst-png_p960x960&_nc_cat=105&ccb=1-7&_nc_sid=935a9d&_nc_ohc=JxomcVbQXfgQ7kNvwETOomg&_nc_oc=AdpgWwvzwiDeV_h5UNa97e1h3kWNz0MYW2zcXaPMTXiLm68jo7arpw04Bi_1vsQQUv0&_nc_zt=23&_nc_ht=scontent-sin11-1.xx&_nc_ss=701a0&oh=03_Q7cD6QGAuS3_t0FmVW-lI17GutpTdcWUpWAQi4s339rrdwtAAw&oe=6AC32639",
+    "approvalMode": false,
+    "members": [
+      {
+        "userID": "61557169379945",
+        "name": "Goĸʋ Bɭʌcĸ",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 25,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61557830994397",
+        "name": "Isotope Anmah",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61565149468696",
+        "name": "Muhammad Rifat",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61581244201999",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61581760199088",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": "ƙׁׅɑׁׅtׁׅɑׁׅ݊ꪀɑׁ",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61593675886067",
+        "name": "D. Epstein",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100039682844858",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100085528532547",
+        "name": "Gay Bot",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100094924471568",
+        "name": "Farhan Muh Tasim",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 23,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61583322557669",
+        "name": "Tawsin Islam",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0
+      }
+    ],
+    "banned": {},
+    "settings": {
+      "sendWelcomeMessage": true,
+      "sendLeaveMessage": true,
+      "sendRankupMessage": false,
+      "customCommand": true
+    },
+    "data": {},
+    "isGroup": true,
+    "createdAt": "2026-09-05T05:45:15Z",
+    "updatedAt": "2026-09-05T06:29:32Z"
+  },
+  {
+    "threadID": "1544367003567184",
+    "threadName": "𝗘𝗹𝘆𝘀𝗶𝗮𝗻 𝗡𝗶𝗴𝗵𝘁 [Wholesome]",
+    "threadThemeID": "1836995764334664",
+    "emoji": "👍",
+    "adminIDs": [
+      "61586109711460",
+      "61590997072323",
+      "61592216077891",
+      "61593034252044",
+      "61593772027531",
+      "61593983731410",
+      "61594034367849",
+      "61594134232544",
+      "61594195282780",
+      "61594239443100"
+    ],
+    "imageSrc": "https://scontent-sin2-2.xx.fbcdn.net/v/t1.15752-9/597715929_3146314398899962_4750441761029257151_n.jpg?_nc_cat=103&ccb=1-7&_nc_sid=935a9d&_nc_ohc=2Sp1B2uAGpUQ7kNvwF4Tjcs&_nc_oc=Adp5OPCRk2cTD6UDekm9qyxjBjWctPRWPiEReBJeHZXqL9gBTpo_H-FbqV91BEySwnI&_nc_zt=23&_nc_ht=scontent-sin2-2.xx&_nc_ss=701a0&oh=03_Q7cD6QFq2WIm_rsjr-_ijXycfsZDyFU_wyPISV-eT59iNj1f6g&oe=6AC32AE7",
+    "approvalMode": true,
+    "members": [
+      {
+        "userID": "61550318784077",
+        "name": "Bessha Khatun",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61550652564091",
+        "name": "মাফিয়া কুইন",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61550821952191",
+        "name": "Serapio Flavia",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61550931554990",
+        "name": "Zara Sesh",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61550964466274",
+        "name": "Hasan Farhad",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61551791939426",
+        "name": "শাকিব খান",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61552943370049",
+        "name": "আদি নাগ",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61553888024445",
+        "name": "মায়াবী রজকন্যা",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61554340006731",
+        "name": "ঘূর্ণিঝড়",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61554397791356",
+        "name": "তো'গো' না'গি'ন' আ'ফা",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61555242549929",
+        "name": "এই মন তুমাকে দিলাম",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61555302136118",
+        "name": "Wissam Gay",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61555655709631",
+        "name": "অস্লিল মাগি",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61555914207420",
+        "name": "তা নু",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61556261998653",
+        "name": "পাতলা পায়খানা ",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61557525916109",
+        "name": "হেডা খোর",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61558514018016",
+        "name": "হি মু",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61559794426751",
+        "name": "ঢাকা গে ছেলে টপ",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61560327335943",
+        "name": "Arnov Sarker",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61560437081127",
+        "name": "ভার্চুয়াল টপ ভয়েজ কিং",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61560806752181",
+        "name": "ভয়েজার ইরফান",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61561266791951",
+        "name": "আমি চোর আমি বাটপার ",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61561331018762",
+        "name": "আমি বেজি",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61562259186061",
+        "name": "সন্ধ্যার আধাঁর",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61563108004747",
+        "name": "লাইভ টিভি খবর",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61564336212812",
+        "name": "ভয়েজ কিং",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61564893854857",
+        "name": "আপু দাম কত ",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61565740500553",
+        "name": "লেংটা বাবা",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61565742936322",
+        "name": "ডিজে অগি",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61566127829632",
+        "name": "পরিবারের ছোট রাজকন্যা",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61567640139610",
+        "name": "জানোয়ার ",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61569859966449",
+        "name": "মুক্তিযুদ্ধ হয়নি শেষ",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61570666882500",
+        "name": "Adiitya Anair",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61571558244718",
+        "name": "মাদার চোদ",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61572082892663",
+        "name": "Mohhamod Arafat",
+        "gender": "MALE",
+        "nickname": "Izana Obscyros",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61572256290831",
+        "name": "Zephyr'a Yo'na II",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61572535442830",
+        "name": "রাজপ্রাসাদ ",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61572568921442",
+        "name": "আয়মান এর আম্মু ",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61573041159799",
+        "name": "সাপ",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61573083415679",
+        "name": "জানোয়ার ",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61573129050442",
+        "name": "ZaiYan Mallik",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61573291687585",
+        "name": "Wajihaan Zaeef Alt",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61573904222558",
+        "name": "বস্তি ফাইটার্স",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61574448233325",
+        "name": "Minseo Nico",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61574526449162",
+        "name": "আলু১০ টাকা",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61575217614479",
+        "name": "মা হি",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61575387069773",
+        "name": "অ নু রাগীনি",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61576305892855",
+        "name": "আলু ভর্তা",
+        "gender": "NEUTER",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61576633587743",
+        "name": "আমি কারো না",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61577672447842",
+        "name": "বৌদি আমার",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61577838188095",
+        "name": "কামান হাতে পুতিন বলছি",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61578440411097",
+        "name": "Hana Do",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61578895799732",
+        "name": "হাস'কি ভয়ে'জ",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61579506955222",
+        "name": "র ঙ্গ না",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61579980221806",
+        "name": "Pa Khi",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61580416845466",
+        "name": "আদরের রাজ কন্যা",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61580694965164",
+        "name": "Farabi Jaman",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61580865585146",
+        "name": "Mimu Vesperlyn II",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61581423423362",
+        "name": "মান্না ডিপজল",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61581542350891",
+        "name": "কিং ভয়েজার",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61581919370241",
+        "name": "এই বেশ ভালো আছি",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61582157529590",
+        "name": "গে বয় বটম",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61582687063555",
+        "name": "Mahu Mor'che II",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61582771777590",
+        "name": "উম্মাহ পাগলি",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61583377780607",
+        "name": "লুল্লু ভূত",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61583771168760",
+        "name": "আদি নাগিন",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61583807637550",
+        "name": "মাহির বাবু",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61583993364498",
+        "name": "ভুত পেত্নী",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61584142332470",
+        "name": "আয়মান আক্তার",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61584488918732",
+        "name": "Raf U",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61584990295991",
+        "name": "দুই জনের আছে মিল",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61585216105043",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61585313432748",
+        "name": "Sabrina Tabassum",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61585358933037",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": "Reyden.🏳️🗿",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61585637134858",
+        "name": "Neo Elingst",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61586109711460",
+        "name": "Herculean H Exeveil I",
+        "gender": "MALE",
+        "nickname": ".",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61586231073184",
+        "name": "Muttakin Ahmed Arham",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61586711064269",
+        "name": "সুমাইয়া ফেসবুক আইডি",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61587267478065",
+        "name": "Nis'Hu Mor'Che II",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61587299671731",
+        "name": "কবিরাজ তান্ত্রিক গুরু",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61587372095298",
+        "name": "Elowen Althe'a II",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61587682866443",
+        "name": "Tor Mare Cdi",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61587737802790",
+        "name": "খিদা লাগছে",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61588400692657",
+        "name": "মেঘা রান্না করতেছে",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61588833816200",
+        "name": "Rumi Plus",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61589323973308",
+        "name": "Noctypherius Draxmorith",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61589580547728",
+        "name": "ভি এর কলা",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61589714190332",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61590076734944",
+        "name": "ভি এর হট বউ",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61590262716753",
+        "name": "Lexis Craig",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61590290776652",
+        "name": "Aetheria Nyxara",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61590440640882",
+        "name": "ফেসবুক আইডি সুমাইয়া",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61590452952204",
+        "name": "RA HI",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61590461518945",
+        "name": "Zisan あ",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61590477943600",
+        "name": "Yùršxe Ifty II",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61590513453711",
+        "name": "Ahmmeed'z Mahin",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61590660665066",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61590691923144",
+        "name": "কু সু ম",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61590769881559",
+        "name": "বেশ করেছি প্রেম করেছি",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61590856502520",
+        "name": "Iqbal Chowdhuri",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61590922040518",
+        "name": "রুহি মাগি",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61590997072323",
+        "name": "Adrisha Lizzie II",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61591016412100",
+        "name": "Emon Ahmed",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61591024630767",
+        "name": "গুয়ের দেবতা হাগুন দ্বিতীয়",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61591065107104",
+        "name": "উড়ন্ত মাদারচোদ",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61591206812846",
+        "name": "Ivaan Aerion II",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61591249269263",
+        "name": "ঝাল মুড়ি ওয়ালা",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61591347180265",
+        "name": "কালা কুত্তা",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61591494800328",
+        "name": "Zirconiumtetrachloride'z X. Uncontrollable Xs-Tep II",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61591519289068",
+        "name": "VE LV ET Il",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61591663839063",
+        "name": "Safwan Hasan Onoy",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61591676467090",
+        "name": "অদৃশ্য মায়াজাল",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61591708682265",
+        "name": "ইন্টারন্যাশনাল দুষ্টু হুজুর",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61591745766410",
+        "name": "Newtrowoon Zetsu",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61591750920514",
+        "name": "আমি চোর",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61591764755689",
+        "name": "কবিরাজ ঘড়",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61591780215981",
+        "name": "Toōru Zhykawa",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61591882246960",
+        "name": "Raiyan Ravencrest",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61591887466525",
+        "name": "Jui Ephemeral HO",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61591929267985",
+        "name": "Sarmin Sultana Runa",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61592010696268",
+        "name": "ইন্টারন্যাশনাল ঘাড়ত্যাড়া পোলা",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61592027405138",
+        "name": "Ew'r Lunaa",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61592149521854",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61592216077891",
+        "name": "Madre Bienveillance Iı",
+        "gender": "MALE",
+        "nickname": "না্ঁগঁরা্ঁনী্ঁ",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61592290456860",
+        "name": "Sohad Restricted II",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61592315653168",
+        "name": "Shaz",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61592498533325",
+        "name": "প্রেমে পড়া বারন",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61592516470451",
+        "name": "Hydra Alternetmelfoy",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61592525829361",
+        "name": "ভি এর ভাঙ্গা চশমা",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61592526584564",
+        "name": "অরুনিমা নীড়",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61592542360397",
+        "name": "Helix Theodora Il",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61592554558723",
+        "name": "Eclipse Z. Sajib IX",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61592588727413",
+        "name": "Envy Ain't No Sin",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61592623991693",
+        "name": "টু'কাই শাও'ন",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61592685017086",
+        "name": "কুহেলী তরু",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61592805195879",
+        "name": "আয়মান আল গাওহারী বাইট্টা",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61592820489446",
+        "name": "Anas Islam",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61592852544273",
+        "name": "এই তোমরা কেমন আছো",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61592880977967",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61593034252044",
+        "name": "Maybe Adrisha",
+        "gender": "FEMALE",
+        "nickname": "you",
+        "inGroup": true,
+        "count": 8,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61593045597746",
+        "name": "ভালো বাসার ভাত নাই",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61593257954375",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61593283485435",
+        "name": "Aquarius Carl Il",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61593341335270",
+        "name": "Rafi Nocthane",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61593377085007",
+        "name": "ɭɭ-ʚĩɞ Maya ʚĩɞ-ɭɭ",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61593398152704",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61593443003900",
+        "name": "ভালোবাসা সিমাহীন",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61593467084408",
+        "name": "Arthrenax A. Eamin",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61593505146205",
+        "name": "ফেসবুক পাগল ইনস্টাগ্রাম",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61593514794363",
+        "name": "থাপ্পড় চিনোস",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61593549924375",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61593588064772",
+        "name": "Anastasia Everly II",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61593590828727",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61593663225165",
+        "name": "Ma Ri",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61593675886067",
+        "name": "D. Epstein",
+        "gender": "FEMALE",
+        "nickname": "Jeffrey Epstein",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61593678282605",
+        "name": "Shakiraa Alt",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61593700285988",
+        "name": "Tom Jerry",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61593703625317",
+        "name": "Hridoy Ahmed",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61593719535457",
+        "name": "Maha Kyzuki",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61593743312757",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": "নাগ রাজা",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61593772027531",
+        "name": "Dalla Oan",
+        "gender": "FEMALE",
+        "nickname": "নাগিনদের নেতা",
+        "inGroup": true,
+        "count": 6,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61593777670720",
+        "name": "Arthur Osapai",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61593779393463",
+        "name": "Liyana Nill",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61593787507083",
+        "name": "পা' খি",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61593806166165",
+        "name": "Tanvir Ahmed",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61593837728188",
+        "name": "Mahim Iı",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61593843065905",
+        "name": "Choso Kamo",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61593847865671",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61593852755047",
+        "name": "চিত্রা চক্রবর্তী",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61593856472212",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61593888334079",
+        "name": "Geraldine Maxine",
+        "gender": "FEMALE",
+        "nickname": "cute boy",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61593906996937",
+        "name": "Israt Que Il",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61593948515886",
+        "name": "Santiago Lago",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61593948600919",
+        "name": "আমি সবার ব্যবসায়ী",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61593983731410",
+        "name": "Mo Mi",
+        "gender": "FEMALE",
+        "nickname": "Nyra.",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61594008089005",
+        "name": "Aafiya Tamanna",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61594014290332",
+        "name": "Dalla Oan",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61594034367849",
+        "name": "Arena Lwandloluhlee",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61594057763358",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61594111709625",
+        "name": "Suzana Mizuhara II",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61594134232544",
+        "name": "Atlas Ashenlune",
+        "gender": "MALE",
+        "nickname": "A.",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61594154271370",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61594187033148",
+        "name": "Graveaevorynne Gaven Necro Fool II",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61594195282780",
+        "name": "Alexandrielle Lunareth Celesthra",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61594239443100",
+        "name": "Emmysagiricaliix Zoie Zoie",
+        "gender": "FEMALE",
+        "nickname": "Tiyapakhi.",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61594240311735",
+        "name": "Sciara Dusk II",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61594246700674",
+        "name": "মশিউর রহমান",
+        "gender": "MALE",
+        "nickname": "আমি বিবাহিত ৩ বাচ্চার বাপ!",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61594283602029",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100001813634747",
+        "name": "John Ibrahim",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100007870902586",
+        "name": "Sami Magi",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100014359327154",
+        "name": "শিভা মন্ডল",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100014432344465",
+        "name": "ইফতেখার আহমদ",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100017481215241",
+        "name": "আমি গে বন্ধু চাই",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100019273444463",
+        "name": "HR ID OY",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100022872546187",
+        "name": "ই স রা ত",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100024608121313",
+        "name": "পাগলা মারুফ",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100025907146508",
+        "name": "Khanki Ema",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100028362213357",
+        "name": "ঘুমন্ত নাগিন",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100029377134385",
+        "name": "Neta Mihu",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100032177663339",
+        "name": "তোর নানীরে ভালোবাসি",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100032830913383",
+        "name": "মাফিয়া মাফিয়া",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100042503594318",
+        "name": "Rafsan Nahiyan Rafin",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100043941572250",
+        "name": "ভালোবাসার রংধনু",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100045256358230",
+        "name": "নোয়াখালী গ্যাং স্টার",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100051822196635",
+        "name": "তোর মাকে চুদি",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100053313622065",
+        "name": "আমি জানোয়ার মানুষ",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100054015011594",
+        "name": "মানি বেগ খালি আমার",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100057433953806",
+        "name": "নাগ রাজ",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100062014773229",
+        "name": "পচা হাগু",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100068678561599",
+        "name": "এক ইচ্ছেধারি নাগিন",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100069815893093",
+        "name": "বিটিএস ভি এর দাদা",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100072901777378",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100075319404091",
+        "name": "ফেসবুক আহমেদ",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100075604938627",
+        "name": "মাফিয়া মেয়ে",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100075705626947",
+        "name": "আমি বদমাশ খান",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100075785852727",
+        "name": "অভিশপ্ত নাগিন",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100080257391955",
+        "name": "Nexus NÆl Jester",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100080663592188",
+        "name": "Voice KI NG",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100080774667649",
+        "name": "Alex Lucca Bodmash Xoudhury",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100080797421383",
+        "name": "ER EN",
+        "gender": "MALE",
+        "nickname": "বেজি 🦝",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100082510424186",
+        "name": "পাবদা মাছ",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100083746894524",
+        "name": "Astrox Tigris",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100085718252067",
+        "name": "রাসেল ভাইপার সাপ",
+        "gender": "NEUTER",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100086401393978",
+        "name": "ইন্টারন্যাশনাল কিউট ছেলে",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100086489928631",
+        "name": "ডিজে আব্দুল বাসেড",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100087110225048",
+        "name": "Flavia Serapio",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100091089820608",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100091590007489",
+        "name": "মিসেস ফেসবুক আক্তার",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100092238675373",
+        "name": "রাসেল ভাইপার",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100092489055739",
+        "name": "বিশ্বাস করেন রাসেল ভাই",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100092678485520",
+        "name": "Saniya Khanki",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100093217272390",
+        "name": "শিপ ন",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      }
+    ],
+    "banned": {},
+    "settings": {
+      "sendWelcomeMessage": true,
+      "sendLeaveMessage": true,
+      "sendRankupMessage": false,
+      "customCommand": true
+    },
+    "data": {},
+    "isGroup": true,
+    "createdAt": "2026-09-05T05:47:16Z",
+    "updatedAt": "2026-09-05T05:52:37Z"
+  },
+  {
+    "threadID": "6833592926657769",
+    "threadName": "𝐌𝐀𝐑𝐕𝐄𝐋 𝐔𝐍𝐈𝐕𝐄𝐑𝐒𝐄 💚",
+    "threadThemeID": "27855034850773709",
+    "emoji": "👍",
+    "adminIDs": [
+      "61586231073184",
+      "61592202837892",
+      "100045874969459",
+      "100057360684974",
+      "100090146730248"
+    ],
+    "imageSrc": "https://scontent-sin6-3.xx.fbcdn.net/v/t1.15752-9/774510509_1410252721040691_1619732029654188183_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=935a9d&_nc_ohc=fWIh7on2mM8Q7kNvwFcNtNT&_nc_oc=AdqJJy--T-zJlVb3EDQTpCi-nyuDTc2jxVRj_MBM1MzCCgrT3y3Tia44Zsv4yyTgMRY&_nc_zt=23&_nc_ht=scontent-sin6-3.xx&_nc_ss=701a0&oh=03_Q7cD6QHEV1TwKYIkVn-T6razqcPGGf7FcsO2OP8_tsBFW_VSug&oe=6AC31682",
+    "approvalMode": false,
+    "members": [
+      {
+        "userID": "61551402700386",
+        "name": "Siyam Il",
+        "gender": "MALE",
+        "nickname": "Andrew Garfield",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61553834090250",
+        "name": "Zeroex",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61557547907656",
+        "name": "Alfred Eleventeen",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61558571331643",
+        "name": "Hasin Mesbah",
+        "gender": "MALE",
+        "nickname": "Baby Doom",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61560662130869",
+        "name": "Ariyan Hamza",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61568198037515",
+        "name": "Fahad Ibne Rahman",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61568300224765",
+        "name": "Likhon Aura",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61572589351197",
+        "name": "Jannatul Ferdaush Edu",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61574768436935",
+        "name": "Abrar Strange",
+        "gender": "MALE",
+        "nickname": "spider noir",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61577688094352",
+        "name": "আমার ছটো বেলার সপ্ন কলা খাবো কিন্তু টাকার ওভাবে কনোদিন খেতে পারি নাই একদিন জয়া নাম এর এক খানকিমাগির ব্যাগ থেকে একটা হিরো কনডম পরে যায় আমি তখন ওই কনডম টা বিক্রি করে একটা কলা কিনে খেয়ে ফেলি",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61578489132279",
+        "name": "Adiaan Mahmud",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61578773167322",
+        "name": "Adnan Adil",
+        "gender": "MALE",
+        "nickname": "Tony Stark 🫅",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61579863160000",
+        "name": "Jake Adam",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61580204250102",
+        "name": "Ahnaf",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61582241315045",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61583772005815",
+        "name": "Ahmede Faraz",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61585066861502",
+        "name": "RM Mohamed Mustafizur Rahman",
+        "gender": "MALE",
+        "nickname": "Watcher (Uatu)",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61585508072004",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": "DEMON KING",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61586096240414",
+        "name": "Ariful Islam Riad",
+        "gender": "MALE",
+        "nickname": "Amazing Spider-Man 🕷️🕸️💯💫",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61586231073184",
+        "name": "Muttakin Ahmed Arham",
+        "gender": "MALE",
+        "nickname": "HAWKEYE_🏹🛡️ removed you from the group",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61586932114168",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61587038008873",
+        "name": "Shoib",
+        "gender": "MALE",
+        "nickname": "THOR_🌩️",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61588938120924",
+        "name": "Sohan Islam",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61589256757296",
+        "name": "Roktim Sardar",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61590255066979",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": "Miles Morales",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61590302952175",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61590401188219",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61590558454979",
+        "name": "Zeroex Buddy II",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61590764814185",
+        "name": "Speed Ikol",
+        "gender": "MALE",
+        "nickname": "Loki ikol",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61590974180746",
+        "name": "Sabbir Ahmed",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61591061733914",
+        "name": "Alifmahmudsaifullah TheTrue Demonking",
+        "gender": "MALE",
+        "nickname": "DEMON KING",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61591404947620",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61591576030065",
+        "name": "ᏚᎾᏌᏞ ᎡᎬᎪᏢᎪᎡᎬ",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61592202837892",
+        "name": "Shoib Il",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61593675886067",
+        "name": "D. Epstein",
+        "gender": "FEMALE",
+        "nickname": "Epstein এর সোনা Hasin খায়",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100000081657717",
+        "name": "S.M. Naimul Hassan",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100003163411294",
+        "name": "Kıd Cudı",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100003874427916",
+        "name": "Sahrin Pranto",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100004207450758",
+        "name": "Sidratul Moontaha",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100004253835942",
+        "name": "Rastro Jim",
+        "gender": "MALE",
+        "nickname": "Superman",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100004594308068",
+        "name": "Maruf Ahsan Niloy",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100007237530921",
+        "name": "Saikot Hossain",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100007763022945",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100009756542321",
+        "name": "Md. Tanveer Hossain Tarun",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100010964252010",
+        "name": "Ahmed Shovo",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100014595247804",
+        "name": "Ahmed Nirob",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100022082977505",
+        "name": "Mohammed Kamran",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100027788694129",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100030089289743",
+        "name": "Sheikh Ahanaf",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100040466852424",
+        "name": "Sadia Ferdous",
+        "gender": "FEMALE",
+        "nickname": "Black Widow",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100043033294489",
+        "name": "Md Foysal Ahmmed",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100043791758524",
+        "name": "Nahid Alam",
+        "gender": "MALE",
+        "nickname": "Nahid AKA Thor⚡",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100044267304827",
+        "name": "Rafeuzzaman Rushow",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100045874969459",
+        "name": "Muhammad Abu HamZa",
+        "gender": "MALE",
+        "nickname": "Jake lockly 💥",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100052191607177",
+        "name": "Taj Islam",
+        "gender": "MALE",
+        "nickname": "sentry",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100056528588713",
+        "name": "Shariful Rashid",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100056823602756",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100057360684974",
+        "name": "Torikul Islam Muhin",
+        "gender": "MALE",
+        "nickname": "⚡ THOR 💫",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100058437580680",
+        "name": "Akib Farhan",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 1,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100063141213223",
+        "name": "محمود الحسن 󱢏",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100065738138684",
+        "name": "Prince Das Nill",
+        "gender": "MALE",
+        "nickname": "Captain America 🚩",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100067788402956",
+        "name": "Md. Rajib",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100073408808649",
+        "name": "KaZi JunaYed",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100073716710585",
+        "name": "Kevin Raw",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100075147255409",
+        "name": "চন্দ্র দেবতা খনশু",
+        "gender": "MALE",
+        "nickname": "Khonsu",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100075479029160",
+        "name": "Mahmudul Hassan Fahim",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100076070737493",
+        "name": "Asif Mirza",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100077078392618",
+        "name": "Habibur Rahman Showaib",
+        "gender": "MALE",
+        "nickname": "Moon Knight 🌙",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100079308169812",
+        "name": "Sadie Sink",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100080642091366",
+        "name": "Deehan Sabab",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100081565360843",
+        "name": "Abdullah Al Hasib",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100082041487931",
+        "name": "N-Shan Uddin",
+        "gender": "MALE",
+        "nickname": "Steve",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100083746894524",
+        "name": "Astrox Tigris",
+        "gender": "MALE",
+        "nickname": "Dr. Banner_🌱",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100083755151106",
+        "name": "Mohammed Soad",
+        "gender": "MALE",
+        "nickname": "Eren yeager✨",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100085230932171",
+        "name": "Galib Hasan",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100087738716591",
+        "name": "Jarif Reza Apon",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100088833924869",
+        "name": "Tamim Ahmed",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100090146730248",
+        "name": "Taj Islam",
+        "gender": "MALE",
+        "nickname": "BOB the Sentry",
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100090217040353",
+        "name": "Facebook user",
+        "gender": "UNKNOWN",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100090315912136",
+        "name": "MD Anik Hasan",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100092216672817",
+        "name": "Mim Rahman",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100094924471568",
+        "name": "Farhan Muh Tasim",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 2,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "100095217677262",
+        "name": "M A Sourob",
+        "gender": "MALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      }
+    ],
+    "banned": {},
+    "settings": {
+      "sendWelcomeMessage": true,
+      "sendLeaveMessage": true,
+      "sendRankupMessage": false,
+      "customCommand": true
+    },
+    "data": {},
+    "isGroup": true,
+    "createdAt": "2026-09-05T05:47:42Z",
+    "updatedAt": "2026-09-05T06:09:00Z"
+  }
+]

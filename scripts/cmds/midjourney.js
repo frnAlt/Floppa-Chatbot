@@ -36,10 +36,10 @@ module.exports = {
     try {
       let attachments = [];
 
-      // 1. Primary: Toshiro MidJourney API
+      // 1. Primary: Toshiro MidJourney API (with fast 2.5s timeout)
       try {
         const apiUrl = `https://toshiro-api-editz6t9.vercel.app/api/image/mj?prompt=${encodeURIComponent(prompt)}`;
-        const res = await axios.get(apiUrl, { timeout: 12000 });
+        const res = await axios.get(apiUrl, { timeout: 2500 });
 
         if (res.data && res.data.success && res.data.result) {
           const { images, image } = res.data.result;
@@ -52,13 +52,13 @@ module.exports = {
           }
         }
       } catch (primaryErr) {
-        console.warn("[MJ] Primary API failed, trying Pollinations fallback:", primaryErr.message);
+        // Fast failover to high-speed Pollinations turbo
       }
 
       // 2. High-speed Fallback: Pollinations MidJourney simulation
       if (attachments.length === 0) {
-        const fallbackUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt + " masterpiece midjourney style 8k render")}?width=1024&height=1024&nologo=true&seed=${Date.now()}`;
-        const stream = await global.utils.getStreamFromURL(fallbackUrl, `mj_${Date.now()}.png`).catch(() => null);
+        const fallbackUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt + " masterpiece midjourney v6 style 8k octane render cinematic lighting")}?width=768&height=768&nologo=true&seed=${Date.now()}&model=turbo`;
+        const stream = await global.utils.getStreamFromURL(fallbackUrl, `mj_${Date.now()}.png`, { timeout: 15000 }).catch(() => null);
         if (stream) {
           attachments.push(stream);
         }

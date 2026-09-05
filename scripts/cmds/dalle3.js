@@ -30,21 +30,11 @@ module.exports = {
     message.reaction("🎨", event.messageID);
 
     try {
-      let stream = null;
+      const enhancedPrompt = `${prompt.trim()}, dalle 3 masterpiece, ultra detailed, cinematic 8k photorealistic`;
+      const seed = Math.floor(Math.random() * 1000000);
+      const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=768&height=768&nologo=true&seed=${seed}&model=turbo`;
 
-      // 1. Primary: Neokex DALL-E 3 API
-      try {
-        const fullApiUrl = `${API_ENDPOINT}?prompt=${encodeURIComponent(prompt.trim())}&model=dalle3`;
-        stream = await global.utils.getStreamFromURL(fullApiUrl, "dalle3.png", { timeout: 30000 });
-      } catch (e) {
-        // Fallback to high-speed Pollinations DALL-E simulation
-      }
-
-      // 2. High-speed Fallback: Pollinations AI
-      if (!stream) {
-        const fallbackUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt.trim() + " high quality cinematic 8k photorealistic")}?width=1024&height=1024&nologo=true&seed=${Date.now()}`;
-        stream = await global.utils.getStreamFromURL(fallbackUrl, "dalle3.png", { timeout: 45000 });
-      }
+      const stream = await global.utils.getStreamFromURL(url, "dalle3.png", { timeout: 15000 });
 
       if (!stream) {
         throw new Error("Could not retrieve generated image stream.");

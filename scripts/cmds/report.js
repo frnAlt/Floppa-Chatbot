@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const { easyCMD } = require("../../func/definers.js");
-exports.default = easyCMD({
+const reportCmd = easyCMD({
     name: "report",
     description: "Reports a message to bot admins.",
     title: "📝 Report to Admin",
@@ -30,12 +30,20 @@ exports.default = easyCMD({
             minute: "2-digit",
             second: "2-digit",
         });
-        for (const id of Cassidy.config.ADMINBOT) {
-            await output.sendStyled(`**Report from ${userName}**:\n\n${message}\n\n🔍 ***User ID***: ${input.sid}\n🔍 ***Thread ID***: ${input.tid}\n📅 ***Time***: ${time}`, {
-                title: "‼️ Admin Report",
-            }, id);
+        const admins = global.GoatBot?.config?.adminBot || [];
+        for (const id of admins) {
+            if (output.sendStyled) {
+                await output.sendStyled(`**Report from ${userName}**:\n\n${message}\n\n🔍 ***User ID***: ${input.sid}\n🔍 ***Thread ID***: ${input.tid}\n📅 ***Time***: ${time}`, {
+                    title: "‼️ Admin Report",
+                }, id).catch(() => {});
+            } else if (global.api?.sendMessage) {
+                await global.api.sendMessage(`‼️ Admin Report from ${userName}:\n\n${message}\n\nUser ID: ${input.sid}\nThread ID: ${input.tid}\nTime: ${time}`, id).catch(() => {});
+            }
         }
         output.reply("✅ Your report has been sent to the admins.");
         output.reaction("✅");
     },
 });
+
+module.exports = reportCmd;
+module.exports.default = reportCmd;

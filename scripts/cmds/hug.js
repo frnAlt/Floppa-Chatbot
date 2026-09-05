@@ -57,8 +57,8 @@ module.exports = {
     try {
       const avatarURL1 = await usersData.getAvatarUrl(one);
       const avatarURL2 = await usersData.getAvatarUrl(two);
-      const name1 = await usersData.getName(one).catch(() => "You");
-      const name2 = await usersData.getName(two).catch(() => "Friend");
+      const name1 = (await usersData.getName(one).catch(() => null)) || event.mentions?.[one]?.replace(/^@/, "").trim() || "You";
+      const name2 = (await usersData.getName(two).catch(() => null)) || event.mentions?.[two]?.replace(/^@/, "").trim() || "Friend";
 
       // 1. Canvas Renderer
       if (isCanvasAvailable && typeof createCanvas === "function") {

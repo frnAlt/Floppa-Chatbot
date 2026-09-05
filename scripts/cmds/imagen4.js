@@ -30,21 +30,11 @@ module.exports = {
     message.reaction("🎨", event.messageID);
 
     try {
-      let stream = null;
+      const enhancedPrompt = `${prompt.trim()}, google imagen 4 photorealistic style, 8k ultra high resolution`;
+      const seed = Math.floor(Math.random() * 1000000);
+      const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=768&height=768&nologo=true&seed=${seed}&model=turbo`;
 
-      // 1. Primary: Neokex Imagen 4 API
-      try {
-        const fullApiUrl = `${API_ENDPOINT}?prompt=${encodeURIComponent(prompt.trim())}&m=imagen4`;
-        stream = await global.utils.getStreamFromURL(fullApiUrl, "imagen4.png", { timeout: 30000 });
-      } catch (e) {
-        // Fallback to high-speed Pollinations Imagen simulation
-      }
-
-      // 2. High-speed Fallback: Pollinations Imagen
-      if (!stream) {
-        const fallbackUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt.trim() + " google imagen style 8k photorealistic ultra high resolution")}?width=1024&height=1024&nologo=true&seed=${Date.now()}`;
-        stream = await global.utils.getStreamFromURL(fallbackUrl, "imagen4.png", { timeout: 45000 });
-      }
+      const stream = await global.utils.getStreamFromURL(url, "imagen4.png", { timeout: 15000 });
 
       if (!stream) {
         throw new Error("Failed to retrieve generated Imagen 4 image stream.");

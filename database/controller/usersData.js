@@ -171,13 +171,17 @@ module.exports = async function (databaseType, userModel, api, fakeGraphql) {
 
         function getNameInDB(userID) {
                 const userData = global.db.allUserData.find(u => u.userID == userID);
-                if (userData)
+                if (userData && userData.name)
                         return userData.name;
-                else
-                        return null;
+                for (const t of (global.db.allThreadData || [])) {
+                        const m = t.members?.find(mem => mem.userID == userID);
+                        if (m && m.name) return m.name;
+                }
+                return null;
         }
 
         async function getName(userID, checkData = true) {
+                if (!userID) return "User";
                 if (isNaN(userID)) {
                         throw new CustomError({
                                 name: "INVALID_USER_ID",
@@ -185,16 +189,35 @@ module.exports = async function (databaseType, userModel, api, fakeGraphql) {
                         });
                 }
 
-                if (checkData)
-                        return getNameInDB(userID);
+                if (checkData) {
+                        const cached = getNameInDB(userID);
+                        if (cached) return cached;
+                }
 
                 try {
                         const user = await axios.post(`https://www.facebook.com/api/graphql/?q=${`node(${userID}){name}`}`);
-                        return user.data[userID].name;
+                        if (user.data?.[userID]?.name) {
+                                const fetchedName = user.data[userID].name;
+                                const uIdx = global.db.allUserData.findIndex(u => u.userID == userID);
+                                if (uIdx !== -1) global.db.allUserData[uIdx].name = fetchedName;
+                                return fetchedName;
+                        }
                 }
-                catch (error) {
-                        return getNameInDB(userID);
+                catch (error) {}
+
+                if (api && typeof api.getUserInfo === 'function') {
+                        try {
+                                const info = await api.getUserInfo(String(userID));
+                                if (info?.[userID]?.name) {
+                                        const fetchedName = info[userID].name;
+                                        const uIdx = global.db.allUserData.findIndex(u => u.userID == userID);
+                                        if (uIdx !== -1) global.db.allUserData[uIdx].name = fetchedName;
+                                        return fetchedName;
+                                }
+                        } catch (_) {}
                 }
+
+                return getNameInDB(userID) || `User ${userID}`;
         }
 
         async function getAvatarUrl(userID) {

@@ -1,22 +1,24 @@
 const axios = require("axios");
+const { Jimp } = require("jimp");
+const { Readable } = require("stream");
 
 module.exports = {
   config: {
     name: "edit",
     aliases: ["filter", "imagedit", "ai-edit", "transform"],
-    version: "3.0.0",
+    version: "3.1.0",
     author: "frnAlt",
-    countDown: 8,
+    countDown: 5,
     role: 0,
     shortDescription: {
       en: "AI Image Editor and Transformation"
     },
     longDescription: {
-      en: "Applies AI image edits and transformations to photos based on your text prompt using Toshiro AI Image Editor"
+      en: "Applies AI image edits and transformations to photos based on your text prompt using local Canvas & Turbo AI Image Engine"
     },
     category: "ai-image",
     guide: {
-      en: "{pn} <prompt> | Reply to an image\n\nExample:\n• Reply to an image with: {pn} make it anime\n• Reply to an image with: {pn} add sunglasses and cyberpunk neon lighting"
+      en: "{pn} <prompt> | Reply to an image\n\nExample:\n• Reply to an image with: {pn} make it anime\n• Reply to an image with: {pn} blur 10\n• Reply to an image with: {pn} circle"
     }
   },
 
@@ -27,13 +29,23 @@ module.exports = {
     // Extract image URL from reply, direct attachments, URL argument, mentions, or sender
     if (event.messageReply?.attachments?.length > 0) {
       for (const a of event.messageReply.attachments) {
-        const u = a.url || a.previewUrl || a.largePreviewUrl || a.thumbnailUrl;
+        let u = a.url || a.previewUrl || a.largePreviewUrl || a.thumbnailUrl;
+        if (!u && a.ID && api?.resolvePhotoUrl) {
+          try {
+            u = await api.resolvePhotoUrl(a.ID);
+          } catch (_) {}
+        }
         if (u) { imgUrl = u; break; }
       }
     }
     if (!imgUrl && event.attachments?.length > 0) {
       for (const a of event.attachments) {
-        const u = a.url || a.previewUrl || a.largePreviewUrl || a.thumbnailUrl;
+        let u = a.url || a.previewUrl || a.largePreviewUrl || a.thumbnailUrl;
+        if (!u && a.ID && api?.resolvePhotoUrl) {
+          try {
+            u = await api.resolvePhotoUrl(a.ID);
+          } catch (_) {}
+        }
         if (u) { imgUrl = u; break; }
       }
     }
@@ -61,14 +73,14 @@ module.exports = {
       );
     }
 
-    if (api.setMessageReaction) {
+    if (api?.setMessageReaction) {
       api.setMessageReaction("✨", event.messageID, () => {}, true);
     }
 
     const CANVAS_ACTIONS = [
       "circle", "rounded", "resize", "crop", "rotate", "flip",
-      "blur", "sharpen", "grayscale", "sepia", "invert",
-      "brightness", "contrast", "saturation", "hue"
+      "blur", "sharpen", "grayscale", "greyscale", "sepia", "invert",
+      "brightness", "contrast"
     ];
 
     try {
@@ -77,62 +89,64 @@ module.exports = {
       const editPrompt = prompt || "enhance and make it aesthetic";
       const firstArg = (args[0] || "").toLowerCase();
 
+      // 1. Fast Local Jimp processing for canvas actions
       if (imgUrl && CANVAS_ACTIONS.includes(firstArg)) {
         appliedType = `Canvas: ${firstArg.toUpperCase()}`;
         const action = firstArg;
-        const val = args[1];
-        const params = new URLSearchParams();
-        params.append("action", action);
-        params.append("imgUrl", imgUrl);
-        if (action === "rotate" || action === "angle") {
-          if (val) params.append("angle", val);
+        const jimg = await Jimp.read(imgUrl);
+
+        if (action === "circle" || action === "rounded") {
+          jimg.circle();
+        } else if (action === "grayscale" || action === "greyscale") {
+          jimg.greyscale();
+        } else if (action === "sepia") {
+          jimg.sepia();
+        } else if (action === "invert") {
+          jimg.invert();
+        } else if (action === "blur") {
+          const radius = parseInt(args[1], 10) || 5;
+          jimg.blur(Math.min(25, Math.max(1, radius)));
+        } else if (action === "rotate") {
+          const deg = parseInt(args[1], 10) || 90;
+          jimg.rotate(deg);
         } else if (action === "flip") {
-          params.append("mode", val && val.startsWith("v") ? "vertical" : "horizontal");
-        } else if (action === "rounded" || action === "circle") {
-          if (val) params.append("radius", val);
-        } else if (action === "resize" && args[2]) {
-          params.append("width", args[1]);
-          params.append("height", args[2]);
-        } else if (val && !isNaN(Number(val))) {
-          params.append("value", val);
+          const vertical = (args[1] || "").toLowerCase().startsWith("v");
+          jimg.flip({ horizontal: !vertical, vertical });
+        } else if (action === "resize" && args[1] && args[2]) {
+          const w = parseInt(args[1], 10) || 512;
+          const h = parseInt(args[2], 10) || 512;
+          jimg.resize({ w: Math.min(1920, w), h: Math.min(1920, h) });
+        } else if (action === "brightness") {
+          const val = parseInt(args[1], 10) || 20;
+          jimg.color([{ apply: val >= 0 ? "brighten" : "darken", params: [Math.abs(val)] }]);
+        } else if (action === "contrast") {
+          const val = parseFloat(args[1]) || 0.3;
+          jimg.contrast(Math.min(1, Math.max(-1, val)));
         }
 
-        try {
-          const canvasApiUrl = `https://toshiro-api-editz6t9.vercel.app/api/image/canvas?${params.toString()}`;
-          finalStream = await global.utils.getStreamFromURL(canvasApiUrl, `edit_${action}.jpg`);
-        } catch (e) {
-          console.warn("Toshiro canvas action failed:", e.message);
-        }
+        const buf = await jimg.getBuffer("image/png");
+        finalStream = Readable.from(buf);
+        finalStream.path = `edit_${action}.png`;
       }
 
-      if (imgUrl) {
-        if (!finalStream) {
-          // 1. Primary: Toshiro AI Image Edit API
+      // 2. High-speed AI Image Transformation
+      if (!finalStream) {
+        if (imgUrl) {
           try {
-            const apiUrl = `https://toshiro-api-editz6t9.vercel.app/api/image/edit?url=${encodeURIComponent(imgUrl)}&prompt=${encodeURIComponent(editPrompt)}`;
-            finalStream = await global.utils.getStreamFromURL(apiUrl, "edit.jpg");
-          } catch (e) {
-            console.warn("Toshiro Image Edit failed, using fallback:", e.message);
+            const turboUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(editPrompt)}?image=${encodeURIComponent(imgUrl)}&width=768&height=768&model=turbo&nologo=true`;
+            finalStream = await global.utils.getStreamFromURL(turboUrl, "edit.jpg", { timeout: 20000 });
+          } catch (turboErr) {
+            console.warn("[EDIT] Pollinations turbo failed, using local enhance fallback:", turboErr.message);
+            const jimg = await Jimp.read(imgUrl);
+            jimg.contrast(0.2);
+            const buf = await jimg.getBuffer("image/png");
+            finalStream = Readable.from(buf);
+            finalStream.path = "edit.png";
           }
-
-          // 2. Fallback: Pollinations img2img
-          if (!finalStream) {
-            const fallbackUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(editPrompt)}?image=${encodeURIComponent(imgUrl)}&width=1024&height=1024&nologo=true&seed=${Math.floor(Math.random() * 1000000)}`;
-            finalStream = await global.utils.getStreamFromURL(fallbackUrl, "edit.png");
-          }
-        }
-      } else {
-        // Text-to-Image mode if no image provided
-        try {
-          const genUrl = `https://toshiro-api-editz6t9.vercel.app/api/ai/gptimg?prompt=${encodeURIComponent(prompt)}`;
-          const res = await axios.get(genUrl, { timeout: 60000 });
-          if (res.data && res.data.success && res.data.result?.image) {
-            finalStream = await global.utils.getStreamFromURL(res.data.result.image, "gen.jpg");
-          }
-        } catch (e) {
-          console.warn("GPTImg gen failed, using Pollinations:", e.message);
-          const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true`;
-          finalStream = await global.utils.getStreamFromURL(pollinationsUrl, "gen.png");
+        } else {
+          // Text-to-Image mode if no base image
+          const turboUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=768&height=768&model=turbo&nologo=true`;
+          finalStream = await global.utils.getStreamFromURL(turboUrl, "gen.jpg", { timeout: 20000 });
         }
       }
 
@@ -140,7 +154,7 @@ module.exports = {
         throw new Error("Could not process edited image stream.");
       }
 
-      if (api.setMessageReaction) {
+      if (api?.setMessageReaction) {
         api.setMessageReaction("✅", event.messageID, () => {}, true);
       }
 
@@ -152,7 +166,7 @@ module.exports = {
       });
     } catch (err) {
       console.error("Edit command error:", err);
-      if (api.setMessageReaction) {
+      if (api?.setMessageReaction) {
         api.setMessageReaction("❌", event.messageID, () => {}, true);
       }
       return message.reply(`❌ Failed to edit/transform image: ${err.message || err}`);

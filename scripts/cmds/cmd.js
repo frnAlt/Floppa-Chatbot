@@ -338,15 +338,19 @@ function loadScripts(folder, fileName, log, configCommands, api, threadModel, us
 			}
 		}
 		// ———————————————— GET OLD COMMAND ———————————————— //
-		const oldCommand = require(pathCommand);
-		const oldCommandName = oldCommand?.config?.name;
+		let oldCommand = null;
+		try {
+			oldCommand = require(pathCommand);
+			if (oldCommand?.default) oldCommand = oldCommand.default;
+		} catch (_) {}
+		const oldCommandName = oldCommand?.config?.name || oldCommand?.meta?.name;
 		// —————————————— CHECK COMMAND EXIST ——————————————— //
-		if (!oldCommandName) {
+		if (oldCommandName) {
 			if (GoatBot[setMap].get(oldCommandName)?.location != pathCommand)
 				throw new Error(`${commandType} name "${oldCommandName}" is already exist in command "${removeHomeDir(GoatBot[setMap].get(oldCommandName)?.location || "")}"`);
 		}
 		// ————————————————— CHECK ALIASES ————————————————— //
-		if (oldCommand.config.aliases) {
+		if (oldCommand?.config?.aliases) {
 			let oldAliases = oldCommand.config.aliases;
 			if (typeof oldAliases == "string")
 				oldAliases = [oldAliases];
@@ -360,8 +364,10 @@ function loadScripts(folder, fileName, log, configCommands, api, threadModel, us
 
 
 		// ———————————————— GET NEW COMMAND ———————————————— //
-		const command = require(pathCommand);
+		let command = require(pathCommand);
+		if (command?.default) command = command.default;
 		command.location = pathCommand;
+		if (!command.config && command.meta) command.config = command.meta;
 		const configCommand = command.config;
 		if (!configCommand || typeof configCommand != "object")
 			throw new Error("config of command must be an object");
@@ -396,10 +402,24 @@ function loadScripts(folder, fileName, log, configCommands, api, threadModel, us
 			command.onLoad({ api, threadModel, userModel, dashBoardModel, globalModel, threadsData, usersData, dashBoardData, globalData });
 
 		const { envGlobal, envConfig } = configCommand;
-		if (!command.onStart)
-			throw new Error('Function onStart is missing!');
-		if (typeof command.onStart != "function")
-			throw new Error('Function onStart must be a function!');
+		if (folder == "cmds") {
+			if (!command.onStart) {
+				if (typeof command.entry === "function") command.onStart = command.entry;
+				else if (typeof command.onCall === "function") command.onStart = command.onCall;
+				else if (typeof command.run === "function") command.onStart = command.run;
+				else if (typeof command.execute === "function") command.onStart = command.execute;
+				else if (typeof command.onType === "function") command.onStart = command.onType;
+				else if (typeof command.onChat === "function") {
+					command.onStart = async function ({ message }) {
+						return message.reply("This command operates via conversation chat triggers.");
+					};
+				}
+			}
+			if (!command.onStart)
+				throw new Error('Function onStart is missing!');
+			if (typeof command.onStart != "function")
+				throw new Error('Function onStart must be a function!');
+		}
 		if (!scriptName)
 			throw new Error('Name of command is missing!');
 		// ————————————————— CHECK ALIASES ————————————————— //

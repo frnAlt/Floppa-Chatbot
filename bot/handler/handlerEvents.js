@@ -399,6 +399,19 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         }
                 }
 
+                // Tap-to-reply: If user replied to someone's message and no explicit @mentions were provided,
+                // automatically assign the replied user to event.mentions so all commands support tap-to-reply seamlessly!
+                if (Object.keys(event.mentions).length === 0 && event.messageReply) {
+                        const repliedUID = String(event.messageReply.senderID || event.messageReply.actorFbId || event.messageReply.userID || event.messageReply.author || "");
+                        if (repliedUID && repliedUID !== String(api.getCurrentUserID())) {
+                                const members = threadData?.members || [];
+                                const member = members.find(m => String(m.userID) === repliedUID);
+                                const repliedName = member?.name || event.messageReply.senderName || `User ${repliedUID}`;
+                                event.mentions[repliedUID] = repliedName;
+                                event.targetID = repliedUID;
+                        }
+                }
+
                 const prefix = getPrefix(threadID);
                 const role = getRole(threadData, senderID);
                 const input = new InputClass({ api, event, message, role, prefix, args: body ? body.trim().split(/\s+/).slice(1) : [] });
@@ -457,10 +470,6 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         if (!body)
                                 return;
 
-                        // Check bot maintenance / off state: only admin (role 2 or 4) can use bot
-                        if (global.GoatBot.botOff && role !== 2 && role !== 4)
-                                return;
-
                         const noPrefixEnabled = config.noPrefix === true;
                         const userCanSkipPrefix = (role === 2 || role === 4) && noPrefixEnabled;
                         const validPrefixes = Array.from(new Set([prefix, "~", "!"].filter(Boolean)));
@@ -481,6 +490,9 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                 if (potentialCmd && (noPrefixEnabled || userCanSkipPrefix || cmdAllowsNoPrefix || !isGroup)) {
                                         hasNoPrefix = true;
                                 } else if (!isGroup) {
+                                        if (global.GoatBot.botOff && role !== 2 && role !== 4) {
+                                                return await message.reply("⚠️ Bot is currently turned OFF by the administrator. Only administrators can use commands.");
+                                        }
                                         const cleanText = body.trim().toLowerCase();
                                         if (/^(hi|hello|hey|test|testing|hola|alo|salam|assalamu alaikum|sup|yo|bot)\b/i.test(cleanText)) {
                                                 const botName = config.nickNameBot || "Floppa Bot 🐱";
@@ -501,6 +513,14 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                 } else {
                                         return;
                                 }
+                        }
+
+                        // Check bot maintenance / off state: only admin (role 2 or 4) can use bot
+                        if (global.GoatBot.botOff && role !== 2 && role !== 4) {
+                                if (!isGroup) {
+                                        return await message.reply("⚠️ Bot is currently turned OFF by the administrator. Only administrators can use commands at this time.");
+                                }
+                                return;
                         }
 
                         // —————————— CHECK SPAM BANNED THREAD —————————— //
@@ -929,37 +949,25 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         if (global.GoatBot.botOff && role !== 2 && role !== 4)
                                 return;
 
+                        // Never intercept commands or messages starting with any prefix (-gay, !help, /cmd, .cmd)
+                        if (isUserCallCommand || hasPrefix || (body && /^[!/#.$-~]/.test(body.trim())))
+                                return;
+
                         const { onReply } = GoatBot;
                         let Reply = null;
                         let replyTargetMID = null;
 
+                        // onReply ONLY fires when a user explicitly replies to a bot message
                         if (event.messageReply?.messageID) {
                                 Reply = onReply.get(event.messageReply.messageID);
                                 replyTargetMID = event.messageReply.messageID;
                         }
 
-                        // Seamless fallback: If user typed response without swipe-to-reply, resolve recent pending prompt
-                        const firstWord = body ? body.trim().split(/ +/)[0]?.toLowerCase() : "";
-                        const isPotentialCmd = Boolean(firstWord && (GoatBot.commands.has(firstWord) || GoatBot.aliases.has(firstWord)));
-                        if (!isUserCallCommand && !hasPrefix && !isPotentialCmd && !Reply && onReply && onReply.size > 0 && body) {
-                                const now = Date.now();
-                                for (const [mid, r] of onReply.entries()) {
-                                        if (
-                                                String(r.author) === String(senderID) &&
-                                                (!r.threadID || String(r.threadID) === String(threadID)) &&
-                                                (!r.timestamp || (now - r.timestamp < 180000))
-                                        ) {
-                                                Reply = r;
-                                                replyTargetMID = mid;
-                                                if (!event.messageReply) {
-                                                        event.messageReply = { messageID: mid, senderID: global.GoatBot?.botID, body: "" };
-                                                }
-                                                break;
-                                        }
-                                }
-                        }
-
                         if (!Reply)
+                                return;
+
+                        // Ensure only the author of the original prompt (or if author unspecified) can trigger the reply
+                        if (Reply.author && String(Reply.author) !== String(senderID))
                                 return;
 
                         Reply.delete = () => onReply.delete(replyTargetMID);
@@ -1034,20 +1042,6 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         const { onReaction } = GoatBot;
                         const Reaction = onReaction.get(messageID);
                         const reaction = event.reaction;
-                        
-                        // Unsend reaction feature - works for any bot message
-                        const unsendEmojis = ["❌", "🗑️", "👎", "😠", "😡"];
-                        if (unsendEmojis.includes(reaction)) {
-                                try {
-                                        await api.unsendMessage(messageID);
-                                        if (Reaction) {
-                                                onReaction.delete(messageID);
-                                        }
-                                        return;
-                                } catch (err) {
-                                        log.err("onReaction", "Failed to unsend message on reaction", err);
-                                }
-                        }
                         
                         if (!Reaction)
                                 return;

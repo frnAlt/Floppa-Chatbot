@@ -26,19 +26,33 @@ module.exports = {
     let imageUrl = "";
     const token = "6628568379%7Cc1e620fa708a1d5696fb991c1bde5662";
 
-    if (event.messageReply?.attachments?.length > 0 && (event.messageReply.attachments[0].type === "photo" || event.messageReply.attachments[0].type === "image")) {
-      imageUrl = event.messageReply.attachments[0].url;
-    } else if (event.mentions && Object.keys(event.mentions).length > 0) {
+    if (event.messageReply?.attachments?.length > 0) {
+      const att = event.messageReply.attachments[0];
+      let u = att.url || att.previewUrl || att.largePreviewUrl;
+      if (!u && att.ID && api?.resolvePhotoUrl) {
+        try { u = await api.resolvePhotoUrl(att.ID); } catch (_) {}
+      }
+      if (u) imageUrl = u;
+    }
+    if (!imageUrl && event.attachments?.length > 0) {
+      const att = event.attachments[0];
+      let u = att.url || att.previewUrl || att.largePreviewUrl;
+      if (!u && att.ID && api?.resolvePhotoUrl) {
+        try { u = await api.resolvePhotoUrl(att.ID); } catch (_) {}
+      }
+      if (u) imageUrl = u;
+    }
+    if (!imageUrl && event.mentions && Object.keys(event.mentions).length > 0) {
       const uid = Object.keys(event.mentions)[0];
       imageUrl = `https://graph.facebook.com/${uid}/picture?width=720&height=720&access_token=${token}`;
-    } else if (event.messageReply) {
+    } else if (!imageUrl && event.messageReply) {
       const uid = event.messageReply.senderID || event.messageReply.actorFbId;
       if (uid) imageUrl = `https://graph.facebook.com/${uid}/picture?width=720&height=720&access_token=${token}`;
-    } else if (args[0] && /^\d+$/.test(args[0].trim())) {
+    } else if (!imageUrl && args[0] && /^\d+$/.test(args[0].trim())) {
       imageUrl = `https://graph.facebook.com/${args[0].trim()}/picture?width=720&height=720&access_token=${token}`;
-    } else if (args[0] && args[0].startsWith("http")) {
+    } else if (!imageUrl && args[0] && args[0].startsWith("http")) {
       imageUrl = args[0];
-    } else {
+    } else if (!imageUrl) {
       imageUrl = `https://graph.facebook.com/${event.senderID}/picture?width=720&height=720&access_token=${token}`;
     }
 

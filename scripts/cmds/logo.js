@@ -27,7 +27,7 @@ module.exports = {
 			const prompt = args.join(" ");
 			const msg = await api.sendMessage("🎨 Generating your logo... Please wait", threadID);
 
-			const url = `https://image.pollinations.ai/prompt/${encodeURIComponent("Logo design, vector, minimal, clean, " + prompt)}`;
+			const url = `https://image.pollinations.ai/prompt/${encodeURIComponent("Logo design, vector, minimal, clean, " + prompt)}?width=768&height=768&nologo=true&model=turbo`;
 
 			const cacheDir = path.join(__dirname, "cache");
 			if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir, { recursive: true });

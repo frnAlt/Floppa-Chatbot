@@ -1,11 +1,14 @@
 const axios = require("axios");
 
-function extractImageUrl(args, event) {
+async function extractImageUrl(args, event, api) {
   let imageUrl = args.find(arg => typeof arg === "string" && arg.startsWith("http"));
 
   if (!imageUrl && event.messageReply?.attachments?.length > 0) {
     for (const att of event.messageReply.attachments) {
-      const url = att.url || att.previewUrl || att.largePreviewUrl || att.thumbnailUrl;
+      let url = att.url || att.previewUrl || att.largePreviewUrl || att.thumbnailUrl;
+      if (!url && att.ID && api?.resolvePhotoUrl) {
+        try { url = await api.resolvePhotoUrl(att.ID); } catch (_) {}
+      }
       if (url) {
         imageUrl = url;
         break;
@@ -15,7 +18,10 @@ function extractImageUrl(args, event) {
 
   if (!imageUrl && event.attachments?.length > 0) {
     for (const att of event.attachments) {
-      const url = att.url || att.previewUrl || att.largePreviewUrl || att.thumbnailUrl;
+      let url = att.url || att.previewUrl || att.largePreviewUrl || att.thumbnailUrl;
+      if (!url && att.ID && api?.resolvePhotoUrl) {
+        try { url = await api.resolvePhotoUrl(att.ID); } catch (_) {}
+      }
       if (url) {
         imageUrl = url;
         break;
@@ -57,7 +63,7 @@ module.exports = {
   },
 
   onStart: async function ({ api, args, message, event, commandName }) {
-    const imageUrl = extractImageUrl(args, event);
+    const imageUrl = await extractImageUrl(args, event, api);
 
     if (!imageUrl) {
       const prefix = global.GoatBot?.config?.prefix || "";
@@ -73,22 +79,22 @@ module.exports = {
     try {
       let finalStream = null;
 
-      // 1. Primary: Toshiro 4K Upscaler API
+      // 1. Primary: Toshiro 4K Upscaler API (fast 2.5s timeout)
       try {
         const apiUrl = `https://toshiro-api-editz6t9.vercel.app/api/image/4k?imgUrl=${encodeURIComponent(imageUrl)}`;
-        const res = await axios.get(apiUrl, { timeout: 15000 });
+        const res = await axios.get(apiUrl, { timeout: 2500 });
 
         if (res.data && res.data.success && res.data.result?.upscaled) {
-          finalStream = await global.utils.getStreamFromURL(res.data.result.upscaled, "upscale_4k.jpg");
+          finalStream = await global.utils.getStreamFromURL(res.data.result.upscaled, "upscale_4k.jpg", { timeout: 10000 });
         }
       } catch (err) {
-        console.warn("Toshiro 4K primary failed, trying fallback:", err.message);
+        // Fallback to high-speed Pollinations turbo
       }
 
-      // 2. Fallback to Pollinations 4K Enhancement
+      // 2. High-speed Fallback to Pollinations 4K Enhancement
       if (!finalStream) {
-        const fallbackUrl = `https://image.pollinations.ai/prompt/masterpiece%20hyperrealistic%20high%20resolution%204k%20detail?image=${encodeURIComponent(imageUrl)}&width=2048&height=2048&nologo=true`;
-        finalStream = await global.utils.getStreamFromURL(fallbackUrl, "upscale_4k.png");
+        const fallbackUrl = `https://image.pollinations.ai/prompt/masterpiece%20hyperrealistic%20high%20resolution%204k%20detail?image=${encodeURIComponent(imageUrl)}&width=1024&height=1024&nologo=true&model=turbo`;
+        finalStream = await global.utils.getStreamFromURL(fallbackUrl, "upscale_4k.png", { timeout: 15000 });
       }
 
       if (!finalStream) {

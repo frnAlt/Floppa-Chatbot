@@ -1,169 +1,242 @@
-const fs = require("fs-extra");
+const axios = require("axios");
+
+let createCanvas, loadImage;
+try {
+  ({ createCanvas, loadImage } = require("@napi-rs/canvas"));
+} catch (_) {
+  try {
+    ({ createCanvas, loadImage } = require("canvas"));
+  } catch (e) {}
+}
+
+const fs = require("fs");
+
 const path = require("path");
-const { Readable } = require("stream");
-const { createCanvas, loadImage, isCanvasAvailable } = require("../../func/canvasHelper.js");
-const { Jimp } = require("jimp");
+
+const FormData = require("form-data");
+
+async function getStreamFromURL(url) {
+
+  const res = await axios.get(url, { responseType: "stream" });
+
+  return res.data;
+
+}
+
+// === جزء API الفيديو ===
+
+async function getBalance() {
+
+  const pack = generateRandomId();
+
+  await axios.post("https://api.getglam.app/rewards/claim/hdnu30r7auc4kve", null, {
+
+    headers: {
+
+      "User-Agent": "Glam/1.58.4 Android/32 (Samsung SM-A156E)",
+
+      "glam-user-id": pack,
+
+      "user_id": pack,
+
+      "glam-local-date": new Date().toISOString(),
+
+    },
+
+  });
+
+  return pack;
+
+}
+
+async function uploadFile(pack, stream, prompt, duration) {
+
+  const form = new FormData();
+
+  form.append("package_id", pack);
+
+  form.append("media_file", stream);
+
+  form.append("media_type", "image");
+
+  form.append("template_id", "community_img2vid");
+
+  form.append("template_category", "20_coins_dur");
+
+  form.append("frames", JSON.stringify([{
+
+    prompt,
+
+    custom_prompt: prompt,
+
+    start: 0,
+
+    end: 0,
+
+    timings_units: "frames",
+
+    media_type: "image",
+
+    style_id: "chained_falai_img2video",
+
+    rate_modifiers: { duration: duration.toString() + "s" },
+
+  }]));
+
+  const res = await axios.post("https://android.getglam.app/v2/magic_video", form, {
+
+    headers: { ...form.getHeaders(), "User-Agent": "Glam/1.58.4 Android/32 (Samsung SM-A156E)" },
+
+  });
+
+  return res.data.event_id;
+
+}
+
+async function getStatus(taskID, pack) {
+
+  while (true) {
+
+    const res = await axios.get("https://android.getglam.app/v2/magic_video", {
+
+      params: { package_id: pack, event_id: taskID },
+
+      headers: { "User-Agent": "Glam/1.58.4 Android/32 (Samsung SM-A156E)" },
+
+    });
+
+    if (res.data.status === "READY") return [res.data];
+
+    await new Promise(r => setTimeout(r, 2000));
+
+  }
+
+}
+
+function generateRandomId(len = 16) {
+
+  const chars = "abcdef0123456789";
+
+  return Array.from({ length: len }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+
+}
+
+async function imgToVideo(prompt, filePath, duration = 5) {
+
+  const pack = await getBalance();
+
+  const task = await uploadFile(pack, fs.createReadStream(filePath), prompt, duration);
+
+  return await getStatus(task, pack);
+
+}
+
+// === دالة تجيب لينك البروفايل من usersData أو fallback ===
+
+async function getAvatar(uid, usersData) {
+
+  let url = null;
+
+  try {
+
+    url = await usersData.getAvatarUrl(uid);
+
+  } catch (e) {}
+
+  if (!url) {
+
+    url = `https://graph.facebook.com/${uid}/picture?width=512&height=512`;
+
+  }
+
+  return url;
+
+}
+
+// === دمج صورتين في صورة واحدة (تحضير للفيديو) ===
+
+async function mergeAvatars(url1, url2) {
+
+  const img1 = await loadImage(url1);
+
+  const img2 = await loadImage(url2);
+
+  const size = 512;
+
+  const canvas = createCanvas(size * 2, size);
+
+  const ctx = canvas.getContext("2d");
+
+  ctx.drawImage(img1, 0, 0, size, size);
+
+  ctx.drawImage(img2, size, 0, size, size);
+
+  const cacheDir = path.join(__dirname, "cache");
+
+  if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir);
+
+  const filePath = path.join(cacheDir, `kiss_${Date.now()}.png`);
+
+  fs.writeFileSync(filePath, canvas.toBuffer("image/png"));
+
+  return filePath;
+
+}
+
+// === الكوماند ===
 
 module.exports = {
   config: {
     name: "kiss",
-    version: "2.2.0",
-    author: "frnAlt",
-    countDown: 5,
+    aliases: ["بوسة"],
+    version: "1.0.0",
+    author: "Hina",
     role: 0,
-    shortDescription: { en: "Kiss someone or two tagged users" },
-    longDescription: "{p}kiss @mention or reply someone you want to kiss that person 😚",
-    category: "funny",
-    guide: "{p}kiss @user or {p}kiss @user1 @user2 or reply to a message"
+    category: "fun",
+    description: "😘 Send kiss interaction video with the person you reply to",
+    guide: {
+      en: "{p}kiss (reply to a message)",
+      ar: "بوسة (بالرد على شخص)"
+    }
   },
 
-  onStart: async function ({ api, message, event, args, usersData }) {
-    let one = String(event.senderID);
-    let two = null;
-    const mentions = event.mentions ? Object.keys(event.mentions) : [];
-
-    if (mentions.length >= 2) {
-      one = mentions[0];
-      two = mentions[1];
-    } else if (mentions.length === 1) {
-      two = mentions[0];
-      if (event.messageReply) {
-        const rUid = event.messageReply.senderID || event.messageReply.actorFbId;
-        if (rUid && rUid !== two) one = String(rUid);
-      }
-    } else if (event.messageReply) {
-      const rUid = event.messageReply.senderID || event.messageReply.actorFbId;
-      if (rUid) two = String(rUid);
-    } else if (args && args.length >= 2 && /^\d+$/.test(args[0]) && /^\d+$/.test(args[1])) {
-      one = args[0];
-      two = args[1];
-    } else if (args && args.length >= 1 && /^\d+$/.test(args[0])) {
-      two = args[0];
+  onStart: async function (ctx) {
+    const { event, message, usersData } = ctx;
+    const sh = ctx.sh || message;
+    const targetUID = event.messageReply?.senderID || (event.mentions && Object.keys(event.mentions)[0]);
+    if (!targetUID) {
+      return (sh.reply || message.reply)("❌ لازم ترد على رسالة الشخص اللي عايز تبوسه 😘 / Please reply to the user's message.");
     }
+    const uid1 = event.senderID;
+    const uid2 = targetUID;
+    const url1 = await getAvatar(uid1, usersData);
+    const url2 = await getAvatar(uid2, usersData);
+    const prompt = "two people kissing each other, romantic, realistic style";
 
-    // Name match fallback if mentions was omitted
-    if (!two && args && args.length > 0) {
-      const raw = args.join(" ").replace(/^@/, "").trim().toLowerCase();
-      const allM = global.db?.allThreadData?.find(t => t.threadID == event.threadID)?.members || [];
-      const found = allM.find(m => m.name && m.name.toLowerCase().includes(raw)) ||
-                    global.db?.allUserData?.find(u => u.name && u.name.toLowerCase().includes(raw));
-      if (found) two = String(found.userID || found.id);
-    }
-
-    if (!two) {
-      return message.reply("Please @mention 1 or 2 users, or reply to someone to kiss them! 😚");
-    }
+    if (sh.react) await sh.react("⏳");
+    else if (message?.reaction) await message.reaction("⏳");
 
     try {
-      const avatarURL1 = await usersData.getAvatarUrl(one);
-      const avatarURL2 = await usersData.getAvatarUrl(two);
-      const name1 = await usersData.getName(one).catch(() => "You");
-      const name2 = await usersData.getName(two).catch(() => "Crush");
+      const mergedPath = await mergeAvatars(url1, url2);
+      const result = await imgToVideo(prompt, mergedPath);
+      if (sh.react) await sh.react("✅");
+      else if (message?.reaction) await message.reaction("✅");
 
-      // 1. Canvas Renderer
-      if (isCanvasAvailable && typeof createCanvas === "function") {
-        const canvas = createCanvas(850, 480);
-        const ctx = canvas.getContext("2d");
+      const name1 = (await usersData?.getName?.(uid1)) || "Someone";
+      const name2 = (await usersData?.getName?.(uid2)) || "Someone";
 
-        // Romantic crimson / magenta gradient
-        const grad = ctx.createLinearGradient(0, 0, 850, 480);
-        grad.addColorStop(0, "#f857a6");
-        grad.addColorStop(1, "#ff5858");
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, 850, 480);
-
-        // Glassmorphic container
-        ctx.fillStyle = "rgba(0, 0, 0, 0.25)";
-        if (typeof ctx.roundRect === "function") {
-          ctx.beginPath();
-          ctx.roundRect(40, 40, 770, 400, 24);
-          ctx.fill();
-        } else {
-          ctx.fillRect(40, 40, 770, 400);
-        }
-
-        // Title text
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "bold 32px sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText("💋 SWEET KISS 💋", 425, 95);
-
-        // Load avatars safely
-        const av1 = await loadImage(avatarURL1).catch(() => null);
-        const av2 = await loadImage(avatarURL2).catch(() => null);
-
-        // Draw Avatar 1 (Left)
-        if (av1) {
-          ctx.save();
-          ctx.beginPath();
-          ctx.arc(260, 240, 80, 0, Math.PI * 2);
-          ctx.lineWidth = 6;
-          ctx.strokeStyle = "#ffffff";
-          ctx.stroke();
-          ctx.closePath();
-          ctx.clip();
-          ctx.drawImage(av1, 180, 160, 160, 160);
-          ctx.restore();
-        }
-
-        // Kiss emoji in center
-        ctx.font = "52px sans-serif";
-        ctx.fillText("😽😘", 425, 255);
-
-        // Draw Avatar 2 (Right)
-        if (av2) {
-          ctx.save();
-          ctx.beginPath();
-          ctx.arc(590, 240, 80, 0, Math.PI * 2);
-          ctx.lineWidth = 6;
-          ctx.strokeStyle = "#ffffff";
-          ctx.stroke();
-          ctx.closePath();
-          ctx.clip();
-          ctx.drawImage(av2, 510, 160, 160, 160);
-          ctx.restore();
-        }
-
-        // Names
-        ctx.font = "bold 22px sans-serif";
-        ctx.fillText(name1, 260, 370);
-        ctx.fillText(name2, 590, 370);
-
-        const buffer = canvas.toBuffer("image/png");
-        const stream = Readable.from(buffer);
-        stream.path = "kiss.png";
-
-        return message.reply({
-          body: `💋 Ummmmaaaaahhh! ${name1} gives a passionate kiss to ${name2}! 😽😘`,
-          attachment: stream
-        });
-      }
-
-      // 2. Jimp Fallback
-      const bg = new Jimp({ width: 850, height: 480, color: 0xf857a6ff });
-      const av1 = await Jimp.read(avatarURL1).catch(() => null);
-      const av2 = await Jimp.read(avatarURL2).catch(() => null);
-
-      if (av1) {
-        av1.resize({ w: 160, h: 160 }).circle();
-        bg.composite(av1, 180, 160);
-      }
-      if (av2) {
-        av2.resize({ w: 160, h: 160 }).circle();
-        bg.composite(av2, 510, 160);
-      }
-
-      const buffer = await bg.getBuffer("image/png");
-      const stream = Readable.from(buffer);
-      stream.path = "kiss.png";
-
-      return message.reply({
-        body: `💋 Ummmmaaaaahhh! ${name1} gives a passionate kiss to ${name2}! 😽😘`,
-        attachment: stream
+      await (sh.reply || message.reply)({
+        body: `😘 | ${name1} kisses ${name2}`,
+        attachment: await getStreamFromURL(result[0].video_url)
       });
-    } catch (error) {
-      console.error("[KISS ERROR]:", error);
-      return message.reply("An error occurred while generating the kiss image. Please try again.");
+      if (fs.existsSync(mergedPath)) fs.unlinkSync(mergedPath);
+    } catch (err) {
+      console.error("kiss error:", err);
+      (sh.reply || message.reply)("❌ حصل خطأ أثناء إنشاء فيديو البوسة / Error creating kiss animation.");
     }
+  },
+
+  onType: function (ctx) {
+    return this.onStart(ctx);
   }
 };

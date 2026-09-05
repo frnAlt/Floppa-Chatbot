@@ -34,9 +34,9 @@ module.exports = {
 
     try {
       const seed = Math.floor(Math.random() * 1000000);
-      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&seed=${seed}`;
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=768&height=768&nologo=true&seed=${seed}&model=turbo`;
 
-      const stream = await global.utils.getStreamFromURL(imageUrl, "image.png");
+      const stream = await global.utils.getStreamFromURL(imageUrl, "image.png", { timeout: 15000 });
 
       message.reaction("✅", event.messageID);
       await message.reply({
@@ -44,10 +44,10 @@ module.exports = {
         attachment: stream
       });
     } catch (err) {
-      // Fallback to secondary DALL-E / Nano Banana endpoint
+      // Fallback to secondary Pollinations seed
       try {
-        const fallbackUrl = `https://neokex-img-api.vercel.app/generate?prompt=${encodeURIComponent(prompt)}&model=dalle3`;
-        const stream = await global.utils.getStreamFromURL(fallbackUrl, "image.png");
+        const fallbackUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=768&height=768&nologo=true&seed=${Date.now()}&model=turbo`;
+        const stream = await global.utils.getStreamFromURL(fallbackUrl, "image.png", { timeout: 15000 });
 
         message.reaction("✅", event.messageID);
         await message.reply({

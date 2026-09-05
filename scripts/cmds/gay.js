@@ -54,7 +54,7 @@ module.exports = {
     }
 
     try {
-      const name = await usersData.getName(uid).catch(() => "User");
+      const name = event.mentions?.[uid]?.replace(/^@/, "").trim() || (await usersData.getName(uid).catch(() => null)) || "User";
       const apiUrl = `https://toshiro-api-editz6t9.vercel.app/api/canvas/gay?image=${encodeURIComponent(imageUrl)}`;
       const stream = await global.utils.getStreamFromURL(apiUrl, "gay.png");
 

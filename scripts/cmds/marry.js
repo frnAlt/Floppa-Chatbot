@@ -58,8 +58,8 @@ module.exports = {
         try {
             const ppUrl1 = await usersData.getAvatarUrl(one);
             const ppUrl2 = await usersData.getAvatarUrl(two);
-            const userName1 = await usersData.getName(one).catch(() => "User 1");
-            const userName2 = await usersData.getName(two).catch(() => "User 2");
+            const userName1 = (await usersData.getName(one).catch(() => null)) || event.mentions?.[one]?.replace(/^@/, "").trim() || "User 1";
+            const userName2 = (await usersData.getName(two).catch(() => null)) || event.mentions?.[two]?.replace(/^@/, "").trim() || "User 2";
 
             // 1. Canvas Renderer
             if (isCanvasAvailable && typeof createCanvas === "function") {

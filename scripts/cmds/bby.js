@@ -145,7 +145,7 @@ module.exports.config = {
     }
 };
 
-const nix = ["baby", "bby", "bot", "jan", "babu", "janu"];
+const nix = ["baby", "bby", "jan", "babu", "janu"];
 
 async function sendAttachmentReply(api, event, attachments) {
     const attType = attachments[0]?.type;
@@ -323,7 +323,6 @@ module.exports.onStart = async ({
             const fallbacks = [
                 "I'm here! Tell me more about that 😊",
                 "Haha really? That's interesting! ✨",
-                "I hear you! How are you doing today? ✨",
                 "Hmm, what do you think? 😉"
             ];
             rawResponse = fallbacks[Math.floor(Math.random() * fallbacks.length)];
@@ -356,8 +355,14 @@ module.exports.onReply = async ({
     Reply
 }) => {
     if ([api.getCurrentUserID()].includes(event.senderID)) return;
+    if (Reply.author && String(event.senderID) !== String(Reply.author)) return;
 
     try {
+        const body = event.body ? event.body.trim() : "";
+        if (!body || /^[!/#.$-~]/.test(body)) return;
+
+        if (typeof Reply.delete === "function") Reply.delete();
+
         if (event.type === "message_reply") {
             const uid = String(event.senderID);
             if (event.attachments && event.attachments.length > 0) {
@@ -365,7 +370,6 @@ module.exports.onReply = async ({
                 if (handled) return;
             }
 
-            const body = event.body || "";
             recordUserAct(uid, body);
 
             let rawReply = null;
@@ -373,22 +377,13 @@ module.exports.onReply = async ({
                 const res = await client.get(`${baseApiUrl()}/baby?text=${encodeURIComponent(body.toLowerCase())}&senderID=${event.senderID}&threadID=${event.threadID}&font=1`);
                 rawReply = res.data?.reply;
             } catch (_) {
-                const fallbacks = ["I'm listening! Tell me more 😊", "Haha really? 😉", "I hear you! ✨", "What do you think we should do next?"];
+                const fallbacks = ["I'm listening! Tell me more 😊", "Haha really? 😉", "What do you think we should do next?"];
                 rawReply = fallbacks[Math.floor(Math.random() * fallbacks.length)];
             }
             if (!rawReply) rawReply = "😊";
 
             const finalReply = applyToneParody(uid, rawReply);
-
-            await api.sendMessage(finalReply, event.threadID, (error, info) => {
-                if (!info) return;
-                global.GoatBot.onReply.set(info.messageID, {
-                    commandName: module.exports.config.name,
-                    type: "reply",
-                    messageID: info.messageID,
-                    author: event.senderID
-                });
-            }, event.messageID);
+            await api.sendMessage(finalReply, event.threadID, null, event.messageID);
         }
     } catch (err) {
         return api.sendMessage(`❌ Error: ${err.message}`, event.threadID, (e, info) => {
@@ -404,6 +399,8 @@ module.exports.onChat = async ({
 }) => {
     try {
         const body = event.body ? event.body.trim() : "";
+        if (!body || /^[!/#.$-~]/.test(body)) return;
+
         const bodyLower = body.toLowerCase();
         const hasTrigger = nix.some(t => bodyLower.startsWith(t));
 
@@ -418,15 +415,7 @@ module.exports.onChat = async ({
         const cleanText = body.replace(/^\S+\s*/, "").trim();
         if (!cleanText) {
             const randomReplies = ["Hello!", "Yes, I'm here! ✨", "What's up? 😊", "How can I help you?"];
-            return await api.sendMessage(randomReplies[Math.floor(Math.random() * randomReplies.length)], event.threadID, (error, info) => {
-                if (!info) return;
-                global.GoatBot.onReply.set(info.messageID, {
-                    commandName: module.exports.config.name,
-                    type: "reply",
-                    messageID: info.messageID,
-                    author: event.senderID
-                });
-            }, event.messageID);
+            return await api.sendMessage(randomReplies[Math.floor(Math.random() * randomReplies.length)], event.threadID, null, event.messageID);
         }
 
         recordUserAct(uid, cleanText);
@@ -442,16 +431,7 @@ module.exports.onChat = async ({
         if (!rawReply) rawReply = "Hello! 😊";
 
         const finalReply = applyToneParody(uid, rawReply);
-
-        return await api.sendMessage(finalReply, event.threadID, (error, info) => {
-            if (!info) return;
-            global.GoatBot.onReply.set(info.messageID, {
-                commandName: module.exports.config.name,
-                type: "reply",
-                messageID: info.messageID,
-                author: event.senderID
-            });
-        }, event.messageID);
+        return await api.sendMessage(finalReply, event.threadID, null, event.messageID);
 
     } catch (err) {
         return api.sendMessage(`❌ Error: ${err.message}`, event.threadID, (e, info) => {

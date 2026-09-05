@@ -1,8 +1,8 @@
 module.exports = {
 	config: {
 		name: "pfp",
-		aliases: ["profilepic", "getpfp", "userpic", "avatar"],
-		version: "2.0.0",
+		aliases: ["profilepic", "getpfp", "userpic", "dp", "pp"],
+		version: "2.1.0",
 		author: "frnAlt",
 		countDown: 5,
 		role: 0,
@@ -42,16 +42,21 @@ module.exports = {
 
 	onStart: async function ({ api, message, args, event, getLang, usersData, threadsData }) {
 		try {
+			if (api?.setMessageReaction) {
+				api.setMessageReaction("🖼️", event.messageID, () => {}, true);
+			}
+
 			let uid = null;
 			let targetName = null;
 
-			// 1. Reply Check
-			if (event.messageReply) {
-				uid = event.messageReply.senderID || event.messageReply.actorFbId;
-			}
-			// 2. Mentions Object Check (when Facebook sends structured mentions)
-			else if (event.mentions && Object.keys(event.mentions).length > 0) {
+			// 1. Mentions Object Check (explicit tag in message has highest priority)
+			if (event.mentions && Object.keys(event.mentions).length > 0) {
 				uid = Object.keys(event.mentions)[0];
+				targetName = event.mentions[uid]?.replace(/^@/, "").trim();
+			}
+			// 2. Reply Check (reply to a user's message)
+			else if (event.messageReply) {
+				uid = event.messageReply.senderID || event.messageReply.actorFbId || event.messageReply.userID || event.messageReply.author;
 			}
 			// 3. Arguments Provided (UID, Profile Link, or Text Name Tag)
 			else if (args.length > 0) {
@@ -145,9 +150,45 @@ module.exports = {
 				return message.reply(getLang("invalidUID"));
 			}
 
-			const userName = await usersData.getName(uid).catch(() => "User");
-			const avatarURL = `https://graph.facebook.com/${uid}/picture?width=720&height=720&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`;
-			const avatarStream = await global.utils.getStreamFromURL(avatarURL, `pfp_${uid}.jpg`);
+			const userName = targetName || (await usersData.getName(uid).catch(() => null)) || `User ${uid}`;
+			let avatarStream = null;
+
+			// Source 1: Direct Facebook CDN URL from api.getUserInfo (highest quality)
+			if (api && typeof api.getUserInfo === "function") {
+				try {
+					const info = await api.getUserInfo(uid);
+					const directCdnUrl = info?.[uid]?.profilePicUrl || info?.[uid]?.thumbSrc;
+					if (directCdnUrl) {
+						avatarStream = await global.utils.getStreamFromURL(directCdnUrl, `pfp_${uid}.jpg`, { timeout: 15000 }).catch(() => null);
+					}
+				} catch (_) {}
+			}
+
+			// Source 2: Graph API with access token
+			if (!avatarStream) {
+				try {
+					const graphUrl = `https://graph.facebook.com/${uid}/picture?width=720&height=720&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`;
+					avatarStream = await global.utils.getStreamFromURL(graphUrl, `pfp_${uid}.jpg`, { timeout: 15000 }).catch(() => null);
+				} catch (_) {}
+			}
+
+			// Source 3: Graph API type=large
+			if (!avatarStream) {
+				try {
+					const graphUrlLarge = `https://graph.facebook.com/${uid}/picture?type=large`;
+					avatarStream = await global.utils.getStreamFromURL(graphUrlLarge, `pfp_${uid}.jpg`, { timeout: 15000 }).catch(() => null);
+				} catch (_) {}
+			}
+
+			// Source 4: usersData controller fallback
+			if (!avatarStream) {
+				const fallbackUrl = await usersData.getAvatarUrl(uid);
+				avatarStream = await global.utils.getStreamFromURL(fallbackUrl, `pfp_${uid}.jpg`);
+			}
+
+			if (api?.setMessageReaction) {
+				api.setMessageReaction("✅", event.messageID, () => {}, true);
+			}
 
 			await message.reply({
 				body: getLang("success", userName),
@@ -155,6 +196,9 @@ module.exports = {
 			});
 		} catch (err) {
 			console.error("[PFP ERROR]:", err);
+			if (api?.setMessageReaction) {
+				api.setMessageReaction("❌", event.messageID, () => {}, true);
+			}
 			return message.reply(getLang("error", err.message || err));
 		}
 	}

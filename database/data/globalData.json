@@ -4,5 +4,34 @@
     "data": [],
     "createdAt": "2026-07-27T02:35:23Z",
     "updatedAt": "2026-07-27T02:35:23Z"
+  },
+  {
+    "key": "spamBannedThreads",
+    "data": {},
+    "createdAt": "2026-09-05T05:46:51Z",
+    "updatedAt": "2026-09-05T05:46:51Z"
+  },
+  {
+    "key": "analytics",
+    "data": {
+      "prefix": 2,
+      "sing": 2,
+      "gay": 5,
+      "kiss": 5,
+      "bby": 1,
+      "wanted": 1,
+      "rank": 1,
+      "help": 3,
+      "say": 3,
+      "pfp": 3,
+      "off": 3,
+      "admin": 4,
+      "edit": 1,
+      "alldl": 1,
+      "midjourney": 1,
+      "cmd": 2
+    },
+    "createdAt": "2026-09-05T05:47:19Z",
+    "updatedAt": "2026-09-05T06:29:19Z"
   }
 ]
