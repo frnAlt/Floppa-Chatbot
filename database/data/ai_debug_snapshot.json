@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-09-05T10:23:26.315Z",
+  "generatedAt": "2026-09-05T10:38:47.195Z",
   "systemStatus": {
-    "sessionId": "session_1788603803803_2j7t6",
-    "uptimeSeconds": 2,
-    "uptimeHuman": "0m 2s",
-    "status": "stopped",
-    "botID": null,
+    "sessionId": "session_1788604695114_8iokm",
+    "uptimeSeconds": 32,
+    "uptimeHuman": "0m 32s",
+    "status": "online",
+    "botID": "61593675886067",
     "botName": null,
-    "mqttConnected": false,
+    "mqttConnected": true,
     "mqttDisconnects": 0,
-    "totalEventsCaptured": 1,
-    "totalCommandsExecuted": 1,
+    "totalEventsCaptured": 0,
+    "totalCommandsExecuted": 0,
     "totalErrorsRecorded": 0
   },
   "stability": {
@@ -45,7 +45,7 @@
     "health": "EXCELLENT",
     "notesForAgent": [
       "No active checkpoint restriction detected",
-      "MQTT not currently connected or reconnecting",
+      "MQTT real-time message stream is active",
       "Total errors this run: 0"
     ]
   }

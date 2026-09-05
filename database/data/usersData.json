@@ -258,5 +258,18 @@
     "data": {},
     "createdAt": "2026-09-05T06:24:01Z",
     "updatedAt": "2026-09-05T06:24:01Z"
+  },
+  {
+    "userID": "156025504001094",
+    "name": "Meta AI",
+    "gender": "UNKNOWN",
+    "vanity": null,
+    "exp": 1,
+    "money": 0,
+    "banned": {},
+    "settings": {},
+    "data": {},
+    "createdAt": "2026-09-05T10:38:47Z",
+    "updatedAt": "2026-09-05T10:38:48Z"
   }
 ]

@@ -4221,5 +4221,45 @@
     "isGroup": true,
     "createdAt": "2026-09-05T05:47:42Z",
     "updatedAt": "2026-09-05T06:09:00Z"
+  },
+  {
+    "threadID": "156025504001094",
+    "threadName": "Messenger Chat",
+    "threadThemeID": "1035220045073971",
+    "emoji": "✨",
+    "adminIDs": [],
+    "imageSrc": null,
+    "approvalMode": false,
+    "members": [
+      {
+        "userID": "156025504001094",
+        "name": "Meta AI",
+        "gender": "UNKNOWN",
+        "nickname": null,
+        "inGroup": true,
+        "count": 1,
+        "permissionConfigDashboard": false
+      },
+      {
+        "userID": "61593675886067",
+        "name": "D. Epstein",
+        "gender": "FEMALE",
+        "nickname": null,
+        "inGroup": true,
+        "count": 0,
+        "permissionConfigDashboard": false
+      }
+    ],
+    "banned": {},
+    "settings": {
+      "sendWelcomeMessage": true,
+      "sendLeaveMessage": true,
+      "sendRankupMessage": false,
+      "customCommand": true
+    },
+    "data": {},
+    "isGroup": false,
+    "createdAt": "2026-09-05T10:38:48Z",
+    "updatedAt": "2026-09-05T10:38:48Z"
   }
 ]

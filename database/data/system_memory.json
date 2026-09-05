@@ -1,25 +1,42 @@
 {
   "version": "1.0.0",
-  "createdAt": "2026-09-05T10:23:23.803Z",
+  "createdAt": "2026-09-05T10:38:15.114Z",
   "currentSession": {
-    "sessionId": "session_1788603803803_2j7t6",
-    "startTime": "2026-09-05T10:23:23.805Z",
-    "startTimestamp": 1788603803803,
-    "status": "stopped",
-    "botID": null,
+    "sessionId": "session_1788604695114_8iokm",
+    "startTime": "2026-09-05T10:38:15.114Z",
+    "startTimestamp": 1788604695114,
+    "status": "online",
+    "botID": "61593675886067",
     "botName": null,
-    "mqttConnected": false,
+    "mqttConnected": true,
     "mqttDisconnects": 0,
     "mqttReconnects": 0,
     "lastMqttPing": null,
-    "totalEventsReceived": 1,
-    "totalCommandsExecuted": 1,
+    "totalEventsReceived": 0,
+    "totalCommandsExecuted": 0,
     "totalErrorsCaught": 0,
-    "uptimeSeconds": 2,
-    "endTime": "2026-09-05T10:23:26.314Z",
-    "durationMs": 2511
+    "uptimeSeconds": 32
   },
-  "sessions": [],
+  "sessions": [
+    {
+      "sessionId": "session_1788603803803_2j7t6",
+      "startTime": "2026-09-05T10:23:23.805Z",
+      "startTimestamp": 1788603803803,
+      "status": "stopped",
+      "botID": null,
+      "botName": null,
+      "mqttConnected": false,
+      "mqttDisconnects": 0,
+      "mqttReconnects": 0,
+      "lastMqttPing": null,
+      "totalEventsReceived": 1,
+      "totalCommandsExecuted": 1,
+      "totalErrorsCaught": 0,
+      "uptimeSeconds": 2,
+      "endTime": "2026-09-05T10:38:15.115Z",
+      "durationMs": 891312
+    }
+  ],
   "events": [
     {
       "id": "evt_1788603803806_tgu2",

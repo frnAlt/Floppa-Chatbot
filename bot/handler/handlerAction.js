@@ -6,9 +6,17 @@ function safeCall(fn, label) {
         try {
                 const result = fn();
                 if (result && typeof result.catch === 'function')
-                        result.catch(e => log.err('HANDLER', `[${label}] async error:`, e.message || e));
+                        result.catch(e => {
+                                log.err('HANDLER', `[${label}] async error:`, e.message || e);
+                                if (global.systemMemoryDB) {
+                                        global.systemMemoryDB.recordError('HANDLER_' + label, e);
+                                }
+                        });
         } catch (e) {
                 log.err('HANDLER', `[${label}] error:`, e.message || e);
+                if (global.systemMemoryDB) {
+                        global.systemMemoryDB.recordError('HANDLER_' + label, e);
+                }
         }
 }
 
@@ -23,6 +31,11 @@ module.exports = (api, threadModel, userModel, dashBoardModel, globalModel, user
 
         return async function (event) {
                 try {
+                        // Ignore Meta AI system bot (thread/sender 156025504001094)
+                        if (String(event?.threadID) === "156025504001094" || String(event?.senderID) === "156025504001094") {
+                                return;
+                        }
+
                         if (!event.mentions || typeof event.mentions !== "object") {
                                 event.mentions = {};
                         }

@@ -509,6 +509,21 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                                         `Type ${prefix}help to explore everything!`
                                                 );
                                         }
+
+                                        // Auto conversational AI in DM: If someone chats in DM with a question or comment, answer with AI!
+                                        try {
+                                                const aiCore = require("../../system/ai-core.js");
+                                                const contextId = `${threadID}_${senderID}`;
+                                                const aiResponse = await aiCore.generateCompletion({
+                                                        prompt: body.trim(),
+                                                        contextId
+                                                });
+                                                if (aiResponse) {
+                                                        return await message.reply(`🤖 [Floppa AI]\n\n${aiResponse}`);
+                                                }
+                                        } catch (aiErr) {
+                                                return await message.reply(`👋 I'm Floppa Bot! Type ${prefix}help to see commands, or ${prefix}ai ${body.trim()} to ask me anything!`);
+                                        }
                                         return;
                                 } else {
                                         return;
