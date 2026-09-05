@@ -2,7 +2,7 @@ const axios = require("axios");
 const yts = require("yt-search");
 const btch = require("btch-downloader");
 
-const client = axios.create({ timeout: 25000 });
+const client = axios.create({ timeout: 20000 });
 
 async function getYouTubeAudio(youtubeUrl, titleFallback = "") {
   // 1. Primary: btch-downloader (high-speed ymcdn / fast MP3 stream)
@@ -20,7 +20,43 @@ async function getYouTubeAudio(youtubeUrl, titleFallback = "") {
     console.warn("[SING] btch.youtube primary failed:", err.message);
   }
 
-  // 2. Secondary fallback: public high-reliability ytdl mirror
+  // 2. Secondary: Toshiro YouTube Audio API
+  try {
+    const ytAudioUrl = `https://toshiro-api-editz6t9.vercel.app/api/downloader/yt-audio?url=${encodeURIComponent(youtubeUrl)}&quality=128`;
+    const res = await client.get(ytAudioUrl, { timeout: 15000 });
+    const r = res.data?.result;
+    const dl = r?.download_url || r?.preview;
+    if (res.data?.success && dl) {
+      return {
+        audioUrl: dl,
+        title: r.title || titleFallback || "YouTube Audio",
+        quality: r.quality || "128kbps",
+        duration: r.duration || "N/A"
+      };
+    }
+  } catch (err) {
+    console.warn("[SING] Toshiro yt-audio failed:", err.message);
+  }
+
+  // 3. Tertiary: Toshiro yta2 search/downloader
+  try {
+    const queryTerm = titleFallback || youtubeUrl;
+    const yta2Url = `https://toshiro-api-editz6t9.vercel.app/api/downloader/yta2?search=${encodeURIComponent(queryTerm)}&download=1`;
+    const res = await client.get(yta2Url, { timeout: 15000 });
+    const dl = res.data?.download_url || res.data?.result?.download_url || res.data?.result?.audio;
+    if (dl) {
+      return {
+        audioUrl: dl,
+        title: res.data?.title || res.data?.result?.title || titleFallback || "YouTube Audio",
+        quality: "128kbps",
+        duration: "N/A"
+      };
+    }
+  } catch (err) {
+    console.warn("[SING] Toshiro yta2 failed:", err.message);
+  }
+
+  // 4. Quaternary fallback: public high-reliability ytdl mirror
   try {
     const mirrorUrl = `https://api.siputzx.my.id/api/d/ytmp3?url=${encodeURIComponent(youtubeUrl)}`;
     const { data } = await client.get(mirrorUrl, { timeout: 15000 });
@@ -67,11 +103,28 @@ module.exports = {
     // ── Mode 1: Spotify URL ──
     if (isSpotify) {
       try {
-        const spUrl = `https://api.siputzx.my.id/api/d/spotify?url=${encodeURIComponent(query)}`;
-        const res = await client.get(spUrl, { timeout: 25000 });
-        let audioUrl = res.data?.data?.download || res.data?.data?.url || res.data?.download_url;
-        let title = res.data?.data?.title || "Spotify Track";
-        let artist = res.data?.data?.artist || "";
+        let audioUrl = null;
+        let title = "Spotify Track";
+        let artist = "";
+
+        // 1. Primary: Toshiro spdl
+        try {
+          const spRes = await client.get(`https://toshiro-api-editz6t9.vercel.app/api/downloader/spdl?url=${encodeURIComponent(query)}`, { timeout: 15000 });
+          if (spRes.data?.success && (spRes.data?.result?.download_url || spRes.data?.result?.audio)) {
+            audioUrl = spRes.data.result.download_url || spRes.data.result.audio;
+            title = spRes.data.result.title || title;
+            artist = spRes.data.result.artist || "";
+          }
+        } catch (_) {}
+
+        // 2. Secondary fallback: Siputzx spotify
+        if (!audioUrl) {
+          const spUrl = `https://api.siputzx.my.id/api/d/spotify?url=${encodeURIComponent(query)}`;
+          const res = await client.get(spUrl, { timeout: 20000 });
+          audioUrl = res.data?.data?.download || res.data?.data?.url || res.data?.download_url;
+          title = res.data?.data?.title || title;
+          artist = res.data?.data?.artist || "";
+        }
 
         if (!audioUrl) throw new Error("Could not extract Spotify audio stream.");
 
@@ -177,9 +230,10 @@ module.exports = {
     }
 
     const selected = Reply.results[choice - 1];
+    if (typeof Reply.delete === 'function') Reply.delete();
 
     if (api.unsendMessage && event.messageReply?.messageID) {
-      api.unsendMessage(event.messageReply.messageID).catch(() => {});
+      api.unsendMessage(event.messageReply.messageID, event.threadID).catch(() => {});
     }
 
     if (api.setMessageReaction) {

@@ -76,7 +76,7 @@ module.exports = {
       // 1. Primary: Toshiro 4K Upscaler API
       try {
         const apiUrl = `https://toshiro-api-editz6t9.vercel.app/api/image/4k?imgUrl=${encodeURIComponent(imageUrl)}`;
-        const res = await axios.get(apiUrl, { timeout: 60000 });
+        const res = await axios.get(apiUrl, { timeout: 15000 });
 
         if (res.data && res.data.success && res.data.result?.upscaled) {
           finalStream = await global.utils.getStreamFromURL(res.data.result.upscaled, "upscale_4k.jpg");

@@ -39,7 +39,7 @@ module.exports = {
       // 1. Primary: Toshiro MidJourney API
       try {
         const apiUrl = `https://toshiro-api-editz6t9.vercel.app/api/image/mj?prompt=${encodeURIComponent(prompt)}`;
-        const res = await axios.get(apiUrl, { timeout: 35000 });
+        const res = await axios.get(apiUrl, { timeout: 12000 });
 
         if (res.data && res.data.success && res.data.result) {
           const { images, image } = res.data.result;

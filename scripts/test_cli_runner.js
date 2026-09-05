@@ -398,6 +398,33 @@ async function runDiagnostics() {
     logTest("WORKFLOW", "Direct Message (DM) greeting test failed", false, err.message);
   }
 
+  // ──────────────── Test Case G: Direct Message (DM) Prefixless Command Execution ────────────────
+  try {
+    lastReply = null;
+    require(path.join(cwd, "func/cooldownManager.js")).clear();
+    const dmNoPrefixPingEvent = {
+      type: "message",
+      body: "ping",
+      messageID: "msg_dm_noprefix_ping_01",
+      threadID: "9999",
+      senderID: "9999",
+      isGroup: false
+    };
+    const handlerChat = await handlerEvents(dmNoPrefixPingEvent, createMockMessage(dmNoPrefixPingEvent));
+    if (handlerChat && typeof handlerChat.onStart === "function") {
+      await handlerChat.onStart();
+    }
+    const bodyText = typeof lastReply === "string" ? lastReply : (lastReply?.body || "");
+    const dmNoPrefixSuccess = bodyText && (
+      bodyText.includes("Pong") ||
+      bodyText.includes("latency") ||
+      bodyText.includes("🏓")
+    );
+    logTest("WORKFLOW", "Direct Message (DM) prefixless command execution 'ping' delivers response", dmNoPrefixSuccess);
+  } catch (err) {
+    logTest("WORKFLOW", "Direct Message (DM) prefixless command execution failed", false, err.message);
+  }
+
   // ──────────────── Summary ────────────────
   console.log("\n\x1b[36m============================================================\x1b[0m");
   console.log(`\x1b[36mDiagnostic Results: ${results.passed}/${results.total} Passed (${results.failed} Failed)\x1b[0m`);

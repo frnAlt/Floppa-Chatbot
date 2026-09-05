@@ -94,7 +94,20 @@ module.exports = {
         console.warn("[ALLDL] btch-downloader engine error:", e.message);
       }
 
-      // 2. Secondary fallback: public mirror
+      // 2. Secondary engine: Toshiro All Downloader
+      if (!downloadUrl) {
+        try {
+          const toshiroUrl = `https://toshiro-api-editz6t9.vercel.app/api/downloader/alldl?url=${encodeURIComponent(url)}`;
+          const { data } = await axios.get(toshiroUrl, { timeout: 15000 });
+          if (data?.success && data?.result) {
+            const r = data.result;
+            title = r.title || title;
+            downloadUrl = isAudio ? (r.audio || r.video || r.url || r.high_quality) : (r.video || r.high_quality || r.url || r.low_quality);
+          }
+        } catch (_) {}
+      }
+
+      // 3. Tertiary fallback: public mirror
       if (!downloadUrl) {
         try {
           const mirror = `https://api.siputzx.my.id/api/d/alldl?url=${encodeURIComponent(url)}`;

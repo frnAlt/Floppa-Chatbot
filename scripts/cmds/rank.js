@@ -1,4 +1,5 @@
 const { createCanvas, loadImage, isCanvasAvailable } = require("../../func/canvasHelper.js");
+const { Jimp } = require("jimp");
 const { Readable } = require("stream");
 const axios = require("axios");
 
@@ -35,6 +36,29 @@ async function makeRankCard(userID, usersData, threadsData, threadID, delta = 5,
 	allUsers.sort((a, b) => (b.exp || 0) - (a.exp || 0));
 	let rank = allUsers.findIndex(u => String(u.userID) === String(userID)) + 1;
 	if (rank <= 0) rank = allUsers.length + 1;
+
+	// Fallback to Jimp if native canvas is unavailable
+	if (!isCanvasAvailable || typeof createCanvas !== "function") {
+		try {
+			const card = new Jimp({ width: 800, height: 240, color: 0x0a0b12ff });
+			try {
+				const avatarUrl = await usersData.getAvatarUrl(userID);
+				if (avatarUrl) {
+					const av = await Jimp.read(avatarUrl);
+					av.resize({ w: 140, h: 140 });
+					av.circle();
+					card.composite(av, 40, 50);
+				}
+			} catch (_) {}
+			const buf = await card.getBuffer("image/png");
+			const stream = Readable.from(buf);
+			stream.path = `rank_${userID}.png`;
+			return stream;
+		} catch (jimpErr) {
+			console.warn("[RANK] Jimp fallback card error:", jimpErr.message);
+			return null;
+		}
+	}
 
 	// Create Canvas
 	const width = 1000;

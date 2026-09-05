@@ -464,7 +464,17 @@ function message(api, event) {
                         const cb = typeof callback === 'function' ? callback : undefined;
                         return api.sendMessage(form, event.threadID, cb, undefined, true);
                 },
-                unsend: async (messageID, callback) => await api.unsendMessage(messageID, callback),
+                unsend: async (messageID, threadIDOrCallback, maybeCallback) => {
+                        let threadID = event?.threadID;
+                        let callback = undefined;
+                        if (typeof threadIDOrCallback === 'function') {
+                                callback = threadIDOrCallback;
+                        } else if (threadIDOrCallback) {
+                                threadID = threadIDOrCallback;
+                                callback = maybeCallback;
+                        }
+                        return await api.unsendMessage(messageID, threadID, callback);
+                },
                 reaction: async (emoji, messageID, callback) => {
                         try {
                                 global.statusAccountBot = 'good';

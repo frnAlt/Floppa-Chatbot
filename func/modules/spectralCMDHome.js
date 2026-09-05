@@ -192,18 +192,29 @@ class SpectralCMDHome {
             unispectra_1.UNIRedux.standardLine,
             `Page **${page}/${totalPages}** - Use **${ctx.prefix}${ctx.commandName}${this.options.isHypen ? "-" : " "}help [command|page]** ${unispectra_1.UNIRedux.charm}`,
         ].join("\n");
-        return ctx.output.reply(output);
+        return (ctx.output?.reply || ctx.message?.reply || (() => {}))(output);
     }
     async runInContext(ctx) {
-        const { input, output } = ctx;
+        if (!ctx) ctx = {};
+        const input = ctx.input || { arguments: ctx.args || [], args: ctx.args || [] };
+        const output = ctx.output || ctx.message || { reply: (...a) => ctx.message?.reply?.(...a) };
+        ctx.input = input;
+        ctx.output = output;
+        if (!ctx.getLang) {
+            ctx.getLang = (key, ...args) => {
+                let text = key;
+                args.forEach((val, idx) => { text = text.replace(new RegExp(`%${idx + 1}`, "g"), val); });
+                return text;
+            };
+        }
         ctx.cancelCooldown?.();
         const key = (this.options.isHypen && "propertyArray" in input
             ? input.propertyArray[this.options.argIndex]
-            : input.arguments[this.options.argIndex] || "") || "";
+            : (input.arguments || input.args || [])[this.options.argIndex] || "") || "";
         const targets = this.findTargets(key);
         const spectralArgs = this.options.isHypen
             ? ctx.args
-            : ctx.args.slice(this.options.argIndex + 1);
+            : (ctx.args || []).slice(this.options.argIndex + 1);
         const self = this;
         const extraCTX = {
             targets,

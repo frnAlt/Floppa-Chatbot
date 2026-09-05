@@ -474,7 +474,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                         potentialCmd?.meta?.noPrefix === "both"
                                 );
 
-                                if (potentialCmd && (noPrefixEnabled || userCanSkipPrefix || cmdAllowsNoPrefix)) {
+                                if (potentialCmd && (noPrefixEnabled || userCanSkipPrefix || cmdAllowsNoPrefix || !isGroup)) {
                                         hasNoPrefix = true;
                                 } else if (!isGroup) {
                                         const cleanText = body.trim().toLowerCase();

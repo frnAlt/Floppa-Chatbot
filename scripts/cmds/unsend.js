@@ -48,16 +48,20 @@ module.exports = {
 
 			for (const mid of toUnsend.reverse()) {
 				try {
-					await api.unsendMessage(mid);
+					await api.unsendMessage(mid, event.threadID);
 					unsentCount++;
 					await new Promise(r => setTimeout(r, 250));
 				} catch (_) {}
 			}
 
+			if (unsentCount === 0) {
+				return message.reply("❌ Could not unsend messages. They may have already been unsent or are too old.");
+			}
+
 			const notice = await message.reply(`🧹 Cleaned up ${unsentCount} bot message(s).`);
 			if (notice?.messageID) {
 				setTimeout(() => {
-					api.unsendMessage(notice.messageID).catch(() => {});
+					api.unsendMessage(notice.messageID, event.threadID).catch(() => {});
 				}, 3500);
 			}
 			return;
@@ -65,13 +69,16 @@ module.exports = {
 
 		// Mode 2: Unsend by reply
 		if (event.messageReply && event.messageReply.messageID) {
-			const replySender = String(event.messageReply.senderID);
-			if (replySender !== botID) {
+			const replySender = event.messageReply.senderID || event.messageReply.actorFbId;
+			const isBotMsg = (replySender && String(replySender) === botID) ||
+				(global.botSentMessages?.get(String(event.threadID))?.includes(event.messageReply.messageID));
+
+			if (!isBotMsg && replySender && String(replySender) !== botID) {
 				return message.reply("❌ I can only unsend messages sent by me!");
 			}
 
 			try {
-				await api.unsendMessage(event.messageReply.messageID);
+				await api.unsendMessage(event.messageReply.messageID, event.threadID);
 				const threadBotMsgs = global.botSentMessages?.get(String(event.threadID));
 				if (threadBotMsgs) {
 					const idx = threadBotMsgs.indexOf(event.messageReply.messageID);
@@ -80,9 +87,12 @@ module.exports = {
 				if (api.setMessageReaction) {
 					api.setMessageReaction("✅", event.messageID, () => {}, true);
 				}
+				if (api.unsendMessage && event.messageID) {
+					setTimeout(() => api.unsendMessage(event.messageID, event.threadID).catch(() => {}), 1500);
+				}
 			} catch (err) {
 				console.error("[UNSEND ERROR]:", err.message);
-				return message.reply("❌ Could not unsend this message. It may have already been unsent.");
+				return message.reply("❌ Could not unsend this message. It may have already been unsent or is too old.");
 			}
 			return;
 		}
@@ -92,9 +102,12 @@ module.exports = {
 		if (threadBotMsgs.length > 0) {
 			const lastMID = threadBotMsgs.pop();
 			try {
-				await api.unsendMessage(lastMID);
+				await api.unsendMessage(lastMID, event.threadID);
 				if (api.setMessageReaction) {
 					api.setMessageReaction("✅", event.messageID, () => {}, true);
+				}
+				if (api.unsendMessage && event.messageID) {
+					setTimeout(() => api.unsendMessage(event.messageID, event.threadID).catch(() => {}), 1500);
 				}
 				return;
 			} catch (err) {
