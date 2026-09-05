@@ -82,6 +82,7 @@ module.exports = {
   fcaExtension,
   extendFCA: fcaExtension,
   conduitBridge,
-  axeraBridge
+  axeraBridge,
+  privateThreadManager: require("./privateThreadManager.js")
 };
 

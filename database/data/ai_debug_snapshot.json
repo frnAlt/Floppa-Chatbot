@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-05T10:56:23.295Z",
+  "generatedAt": "2026-09-05T12:23:05.099Z",
   "systemStatus": {
-    "sessionId": "session_1788605782420_s1tmr",
+    "sessionId": "session_1788610984525_tylop",
     "uptimeSeconds": 0,
     "uptimeHuman": "0m 0s",
     "status": "stopped",
@@ -22,6 +22,110 @@
   },
   "recentErrors": [
     {
+      "time": "2026-09-05T12:23:04.529Z",
+      "source": "TEST_SUITE",
+      "message": "Diagnostic non-fatal self-test error",
+      "context": {
+        "context": "unit_test"
+      }
+    },
+    {
+      "time": "2026-09-05T12:21:48.892Z",
+      "source": "TEST_SUITE",
+      "message": "Diagnostic non-fatal self-test error",
+      "context": {
+        "context": "unit_test"
+      }
+    },
+    {
+      "time": "2026-09-05T12:21:16.044Z",
+      "source": "TEST_SUITE",
+      "message": "Diagnostic non-fatal self-test error",
+      "context": {
+        "context": "unit_test"
+      }
+    },
+    {
+      "time": "2026-09-05T12:20:44.824Z",
+      "source": "TEST_SUITE",
+      "message": "Diagnostic non-fatal self-test error",
+      "context": {
+        "context": "unit_test"
+      }
+    },
+    {
+      "time": "2026-09-05T12:15:06.331Z",
+      "source": "TEST_SUITE",
+      "message": "Diagnostic non-fatal self-test error",
+      "context": {
+        "context": "unit_test"
+      }
+    },
+    {
+      "time": "2026-09-05T12:12:50.850Z",
+      "source": "TEST_SUITE",
+      "message": "Diagnostic non-fatal self-test error",
+      "context": {
+        "context": "unit_test"
+      }
+    },
+    {
+      "time": "2026-09-05T12:11:45.032Z",
+      "source": "TEST_SUITE",
+      "message": "Diagnostic non-fatal self-test error",
+      "context": {
+        "context": "unit_test"
+      }
+    },
+    {
+      "time": "2026-09-05T12:11:14.968Z",
+      "source": "TEST_SUITE",
+      "message": "Diagnostic non-fatal self-test error",
+      "context": {
+        "context": "unit_test"
+      }
+    },
+    {
+      "time": "2026-09-05T12:10:45.027Z",
+      "source": "TEST_SUITE",
+      "message": "Diagnostic non-fatal self-test error",
+      "context": {
+        "context": "unit_test"
+      }
+    },
+    {
+      "time": "2026-09-05T11:31:21.694Z",
+      "source": "TEST_SUITE",
+      "message": "Diagnostic non-fatal self-test error",
+      "context": {
+        "context": "unit_test"
+      }
+    },
+    {
+      "time": "2026-09-05T11:29:34.848Z",
+      "source": "TEST_SUITE",
+      "message": "Diagnostic non-fatal self-test error",
+      "context": {
+        "context": "unit_test"
+      }
+    },
+    {
+      "time": "2026-09-05T10:58:27.423Z",
+      "source": "TEST_SUITE",
+      "message": "Diagnostic non-fatal self-test error",
+      "context": {
+        "context": "unit_test"
+      }
+    },
+    {
+      "time": "2026-09-05T10:57:24.025Z",
+      "source": "TEST_SUITE",
+      "message": "Diagnostic non-fatal self-test error",
+      "context": {
+        "context": "unit_test"
+      }
+    },
+    {
       "time": "2026-09-05T10:56:22.425Z",
       "source": "TEST_SUITE",
       "message": "Diagnostic non-fatal self-test error",
@@ -34,22 +138,6 @@
       "source": "TEST_SUITE",
       "message": "test error",
       "context": {}
-    },
-    {
-      "time": "2026-09-05T10:55:31.603Z",
-      "source": "TEST_SUITE",
-      "message": "Diagnostic non-fatal self-test error",
-      "context": {
-        "context": "unit_test"
-      }
-    },
-    {
-      "time": "2026-09-05T10:53:36.684Z",
-      "source": "TEST_SUITE",
-      "message": "Diagnostic non-fatal self-test error",
-      "context": {
-        "context": "unit_test"
-      }
     }
   ],
   "recentCommands": [
@@ -63,6 +151,110 @@
     }
   ],
   "recentChatLogs": [
+    {
+      "time": "2026-09-05T12:23:04.529Z",
+      "type": "message",
+      "threadID": "10001",
+      "senderID": "9999",
+      "isGroup": true,
+      "body": "!ping"
+    },
+    {
+      "time": "2026-09-05T12:21:48.891Z",
+      "type": "message",
+      "threadID": "10001",
+      "senderID": "9999",
+      "isGroup": true,
+      "body": "!ping"
+    },
+    {
+      "time": "2026-09-05T12:21:16.043Z",
+      "type": "message",
+      "threadID": "10001",
+      "senderID": "9999",
+      "isGroup": true,
+      "body": "!ping"
+    },
+    {
+      "time": "2026-09-05T12:20:44.824Z",
+      "type": "message",
+      "threadID": "10001",
+      "senderID": "9999",
+      "isGroup": true,
+      "body": "!ping"
+    },
+    {
+      "time": "2026-09-05T12:15:06.331Z",
+      "type": "message",
+      "threadID": "10001",
+      "senderID": "9999",
+      "isGroup": true,
+      "body": "!ping"
+    },
+    {
+      "time": "2026-09-05T12:12:50.849Z",
+      "type": "message",
+      "threadID": "10001",
+      "senderID": "9999",
+      "isGroup": true,
+      "body": "!ping"
+    },
+    {
+      "time": "2026-09-05T12:11:45.029Z",
+      "type": "message",
+      "threadID": "10001",
+      "senderID": "9999",
+      "isGroup": true,
+      "body": "!ping"
+    },
+    {
+      "time": "2026-09-05T12:11:14.967Z",
+      "type": "message",
+      "threadID": "10001",
+      "senderID": "9999",
+      "isGroup": true,
+      "body": "!ping"
+    },
+    {
+      "time": "2026-09-05T12:10:45.027Z",
+      "type": "message",
+      "threadID": "10001",
+      "senderID": "9999",
+      "isGroup": true,
+      "body": "!ping"
+    },
+    {
+      "time": "2026-09-05T11:31:21.694Z",
+      "type": "message",
+      "threadID": "10001",
+      "senderID": "9999",
+      "isGroup": true,
+      "body": "!ping"
+    },
+    {
+      "time": "2026-09-05T11:29:34.847Z",
+      "type": "message",
+      "threadID": "10001",
+      "senderID": "9999",
+      "isGroup": true,
+      "body": "!ping"
+    },
+    {
+      "time": "2026-09-05T10:58:27.422Z",
+      "type": "message",
+      "threadID": "10001",
+      "senderID": "9999",
+      "isGroup": true,
+      "body": "!ping"
+    },
+    {
+      "time": "2026-09-05T10:57:24.025Z",
+      "type": "message",
+      "threadID": "10001",
+      "senderID": "9999",
+      "isGroup": true,
+      "body": "!ping"
+    },
     {
       "time": "2026-09-05T10:56:22.424Z",
       "type": "message",
@@ -78,34 +270,10 @@
       "senderID": "9999",
       "isGroup": true,
       "body": "!ping"
-    },
-    {
-      "time": "2026-09-05T10:55:31.602Z",
-      "type": "message",
-      "threadID": "10001",
-      "senderID": "9999",
-      "isGroup": true,
-      "body": "!ping"
-    },
-    {
-      "time": "2026-09-05T10:53:36.684Z",
-      "type": "message",
-      "threadID": "10001",
-      "senderID": "9999",
-      "isGroup": true,
-      "body": "!ping"
-    },
-    {
-      "time": "2026-09-05T10:23:23.806Z",
-      "type": "message",
-      "threadID": "123",
-      "senderID": "456",
-      "isGroup": true,
-      "body": "test ping"
     }
   ],
   "aiDiagnosticSummary": {
-    "health": "STABLE_WITH_NOTICES",
+    "health": "ATTENTION_NEEDED",
     "notesForAgent": [
       "No active checkpoint restriction detected",
       "MQTT not currently connected or reconnecting",

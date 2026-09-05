@@ -536,11 +536,30 @@ function message(api, event) {
                                 throw err;
                         }
                 },
-                sendDM: async (form, callback, options = {}) => {
-                        const targetUserID = event.senderID || event.userID || event.author;
-                        if (!targetUserID) throw new Error("sendDM requires a valid sender/user ID");
-                        const cb = typeof callback === 'function' ? callback : undefined;
-                        return api.sendMessage(form, targetUserID, cb, undefined, false);
+                sendDM: async (form, targetUIDOrCallback, maybeCallback, options = {}) => {
+                        let uid = event.senderID || event.userID || event.author;
+                        let cb = undefined;
+                        let opts = options;
+                        if (typeof targetUIDOrCallback === "function") {
+                                cb = targetUIDOrCallback;
+                                opts = typeof maybeCallback === "object" ? maybeCallback : {};
+                        } else if (typeof targetUIDOrCallback === "string" || typeof targetUIDOrCallback === "number") {
+                                uid = String(targetUIDOrCallback);
+                                cb = typeof maybeCallback === "function" ? maybeCallback : undefined;
+                                opts = typeof options === "object" ? options : {};
+                        } else if (typeof targetUIDOrCallback === "object" && targetUIDOrCallback !== null && !targetUIDOrCallback.body) {
+                                opts = targetUIDOrCallback;
+                                cb = typeof maybeCallback === "function" ? maybeCallback : undefined;
+                        }
+                        if (!uid) throw new Error("sendDM requires a valid sender/user ID");
+                        let pMgr = global.privateThreadManager;
+                        if (!pMgr) {
+                                try { pMgr = require(require("path").join(process.cwd(), "func/privateThreadManager")); } catch (_) {}
+                        }
+                        if (pMgr) {
+                                return await pMgr.sendDM(api, uid, form, { callback: cb, ...opts });
+                        }
+                        return await api.sendMessage(form, uid, cb, undefined, false);
                 },
                 sendGroup: async (form, callback, options = {}) => {
                         if (!event.threadID) throw new Error("sendGroup requires a valid threadID");
@@ -1106,6 +1125,17 @@ const utils = {
         uploadImgbb,
 
         GoatBotApis,
+        sendDM: async (api, targetUID, form, options = {}) => {
+            let pMgr = global.privateThreadManager;
+            if (!pMgr) {
+                try { pMgr = require(require("path").join(process.cwd(), "func/privateThreadManager")); } catch (_) {}
+            }
+            if (pMgr) {
+                return await pMgr.sendDM(api, targetUID, form, options);
+            }
+            return await api.sendMessage(form, targetUID, options.callback, undefined, false);
+        },
+        privateThreadManager: require("./func/privateThreadManager.js"),
         parseCookies: (() => {
             try { return require("./fca/src/utils/formatters/value/formatCookie").parseUniversalCookies; }
             catch (_) { return (c) => Array.isArray(c) ? c : []; }

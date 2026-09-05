@@ -593,6 +593,7 @@ async function runDiagnostics() {
     const privateMsg = utils.message(privateMockApi, { threadID: "8888", senderID: "8888", isGroup: false });
     await privateMsg.reply("Testing private room delivery");
     logTest("WORKFLOW", "Direct Message (DM) automatically routes to dedicated private room upon E2EE error", privateRoutedThread === "1089640446736327");
+    pMgr.clearPrivateThread("8888");
   } catch (err) {
     logTest("WORKFLOW", "Private thread routing test failed", false, err.message);
   }
@@ -625,6 +626,133 @@ async function runDiagnostics() {
     logTest("WORKFLOW", "Native FCA createNewGroup allows 1 user to create 2-person unencrypted private room", allowsOneUser);
   } catch (err) {
     logTest("WORKFLOW", "createNewGroup 1-user test failed", false, err.message);
+  }
+
+  // ──────────────── Test Case O: utils.sendDM & message.sendDM Verification ────────────────
+  try {
+    const pMgr = require(path.join(cwd, "func/privateThreadManager"));
+    pMgr.registerPrivateThread("7777", "555544443333");
+    let sendDMCalledWith = null;
+    const testApi = {
+      sendMessage: async (m, t, cb, replyTo, isGrp) => {
+        sendDMCalledWith = { m, t, isGrp };
+        return { messageID: "mid.dm_test" };
+      }
+    };
+    const testMsg = utils.message(testApi, { threadID: "10001", senderID: "7777" });
+    await testMsg.sendDM("Hello from sendDM");
+    const sendDMSuccess = sendDMCalledWith && sendDMCalledWith.t === "555544443333" && sendDMCalledWith.isGrp === true;
+    logTest("WORKFLOW", "utils.message.sendDM routes directly to dedicated unencrypted room", sendDMSuccess);
+
+    let utilsSendDMCalledWith = null;
+    const testApi2 = {
+      sendMessage: async (m, t, cb, replyTo, isGrp) => {
+        utilsSendDMCalledWith = { m, t, isGrp };
+        return { messageID: "mid.utils_dm_test" };
+      }
+    };
+    await utils.sendDM(testApi2, "7777", "Direct utils.sendDM");
+    const utilsSendSuccess = utilsSendDMCalledWith && utilsSendDMCalledWith.t === "555544443333";
+    logTest("WORKFLOW", "utils.sendDM helper delivers message to recipient private room", utilsSendSuccess);
+    pMgr.clearPrivateThread("7777");
+  } catch (err) {
+    logTest("WORKFLOW", "sendDM verification failed", false, err.message);
+  }
+
+  // ──────────────── Test Case P: scripts/cmds/dm.js Full Subcommand Lifecycle ────────────────
+  try {
+    const dmCmd = require(path.join(cwd, "scripts/cmds/dm.js"));
+    logTest("WORKFLOW", "dm.js command config loaded with proper schema", dmCmd.config.name === "dm" && Array.isArray(dmCmd.config.aliases));
+
+    let repliedBody = "";
+    const mockMessage = {
+      reply: async (content) => {
+        repliedBody = typeof content === "string" ? content : (content?.body || "");
+        return { messageID: "mid.bot_reply" };
+      },
+      reaction: async () => {}
+    };
+
+    const mockUsersData = {
+      getName: async (uid) => uid === "100094924471568" ? "Farhan Muh Tasim" : `User ${uid}`
+    };
+
+    let fcaOutbound = [];
+    const mockApi = {
+      sendMessage: async (m, t) => {
+        fcaOutbound.push({ m, t });
+        return { messageID: "mid.outbound_" + t, threadID: t };
+      },
+      createNewGroup: async (uids, title) => "888111222"
+    };
+
+    // Ensure global.GoatBot.onReply exists
+    if (!global.GoatBot) global.GoatBot = {};
+    if (!global.GoatBot.onReply) global.GoatBot.onReply = new Map();
+    if (!global.GoatBot.config) global.GoatBot.config = { adminBot: ["100094924471568"] };
+
+    // 1. User executes !dm (access own private room)
+    await dmCmd.onStart({
+      api: mockApi,
+      event: { threadID: "10001", senderID: "100094924471568" },
+      args: [],
+      message: mockMessage,
+      usersData: mockUsersData
+    });
+    const userRoomFound = repliedBody.includes("Floppa Private Room") && repliedBody.includes("1089640446736327");
+    logTest("WORKFLOW", "scripts/cmds/dm.js onStart returns user's active private room", userRoomFound);
+
+    // 2. Admin executes !dm send 100094924471568 Hello Farhan
+    repliedBody = "";
+    await dmCmd.onStart({
+      api: mockApi,
+      event: { threadID: "10001", senderID: "100094924471568" },
+      args: ["send", "100094924471568", "Hello", "Farhan"],
+      message: mockMessage,
+      usersData: mockUsersData
+    });
+    const adminSendSuccess = repliedBody.includes("DM Delivered Successfully") && repliedBody.includes("1089640446736327");
+    logTest("WORKFLOW", "scripts/cmds/dm.js !dm send delivers to private room and registers onReply", adminSendSuccess);
+
+    // 3. User replies to admin's message (triggers onReply relay)
+    let relayMessageSent = null;
+    const relayMockApi = {
+      sendMessage: async (m, t) => {
+        relayMessageSent = { m, t };
+        return { messageID: "mid.relayed_to_admin" };
+      }
+    };
+    await dmCmd.onReply({
+      api: relayMockApi,
+      event: { threadID: "1089640446736327", senderID: "100094924471568", body: "Thank you admin!", attachments: [] },
+      Reply: {
+        commandName: "dm",
+        adminUID: "100094924471568",
+        adminThreadID: "10001",
+        adminMessageID: "mid.orig",
+        targetUID: "100094924471568",
+        type: "user_to_admin"
+      },
+      message: mockMessage,
+      usersData: mockUsersData,
+      commandName: "dm"
+    });
+    const userReplyRelayed = relayMessageSent && relayMessageSent.t === "10001" && relayMessageSent.m.body.includes("Thank you admin!");
+    logTest("WORKFLOW", "scripts/cmds/dm.js onReply bi-directionally relays user reply back to admin chat", userReplyRelayed);
+
+    // 4. Admin executes !dm list
+    repliedBody = "";
+    await dmCmd.onStart({
+      api: mockApi,
+      event: { threadID: "10001", senderID: "100094924471568" },
+      args: ["list"],
+      message: mockMessage,
+      usersData: mockUsersData
+    });
+    const listSuccess = repliedBody.includes("Registered Floppa Private DM Rooms") && repliedBody.includes("1089640446736327");
+    logTest("WORKFLOW", "scripts/cmds/dm.js !dm list returns directory of unencrypted rooms", listSuccess);
+  } catch (err) {
+    logTest("WORKFLOW", "dm.js subcommand testing failed", false, err.message);
   }
 
   // ──────────────── 5. FCA SendMessage Unit Tests ────────────────

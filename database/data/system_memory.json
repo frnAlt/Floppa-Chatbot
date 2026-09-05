@@ -1,10 +1,10 @@
 {
   "version": "1.0.0",
-  "createdAt": "2026-09-05T10:56:22.420Z",
+  "createdAt": "2026-09-05T12:23:04.525Z",
   "currentSession": {
-    "sessionId": "session_1788605782420_s1tmr",
-    "startTime": "2026-09-05T10:56:22.420Z",
-    "startTimestamp": 1788605782420,
+    "sessionId": "session_1788610984525_tylop",
+    "startTime": "2026-09-05T12:23:04.525Z",
+    "startTimestamp": 1788610984525,
     "status": "stopped",
     "botID": null,
     "botName": null,
@@ -16,10 +16,244 @@
     "totalCommandsExecuted": 0,
     "totalErrorsCaught": 1,
     "uptimeSeconds": 0,
-    "endTime": "2026-09-05T10:56:23.294Z",
-    "durationMs": 874
+    "endTime": "2026-09-05T12:23:05.098Z",
+    "durationMs": 573
   },
   "sessions": [
+    {
+      "sessionId": "session_1788610908890_79uyz",
+      "startTime": "2026-09-05T12:21:48.890Z",
+      "startTimestamp": 1788610908890,
+      "status": "stopped",
+      "botID": null,
+      "botName": null,
+      "mqttConnected": false,
+      "mqttDisconnects": 0,
+      "mqttReconnects": 0,
+      "lastMqttPing": null,
+      "totalEventsReceived": 1,
+      "totalCommandsExecuted": 0,
+      "totalErrorsCaught": 1,
+      "uptimeSeconds": 0,
+      "endTime": "2026-09-05T12:23:04.528Z",
+      "durationMs": 75638
+    },
+    {
+      "sessionId": "session_1788610876042_ougeo",
+      "startTime": "2026-09-05T12:21:16.042Z",
+      "startTimestamp": 1788610876042,
+      "status": "stopped",
+      "botID": null,
+      "botName": null,
+      "mqttConnected": false,
+      "mqttDisconnects": 0,
+      "mqttReconnects": 0,
+      "lastMqttPing": null,
+      "totalEventsReceived": 1,
+      "totalCommandsExecuted": 0,
+      "totalErrorsCaught": 1,
+      "uptimeSeconds": 0,
+      "endTime": "2026-09-05T12:21:48.891Z",
+      "durationMs": 32849
+    },
+    {
+      "sessionId": "session_1788610844803_346i4",
+      "startTime": "2026-09-05T12:20:44.804Z",
+      "startTimestamp": 1788610844803,
+      "status": "stopped",
+      "botID": null,
+      "botName": null,
+      "mqttConnected": false,
+      "mqttDisconnects": 0,
+      "mqttReconnects": 0,
+      "lastMqttPing": null,
+      "totalEventsReceived": 1,
+      "totalCommandsExecuted": 0,
+      "totalErrorsCaught": 1,
+      "uptimeSeconds": 0,
+      "endTime": "2026-09-05T12:21:16.043Z",
+      "durationMs": 31240
+    },
+    {
+      "sessionId": "session_1788610506329_74qt6",
+      "startTime": "2026-09-05T12:15:06.330Z",
+      "startTimestamp": 1788610506329,
+      "status": "stopped",
+      "botID": null,
+      "botName": null,
+      "mqttConnected": false,
+      "mqttDisconnects": 0,
+      "mqttReconnects": 0,
+      "lastMqttPing": null,
+      "totalEventsReceived": 1,
+      "totalCommandsExecuted": 0,
+      "totalErrorsCaught": 1,
+      "uptimeSeconds": 0,
+      "endTime": "2026-09-05T12:20:44.821Z",
+      "durationMs": 338492
+    },
+    {
+      "sessionId": "session_1788610370847_ngz01",
+      "startTime": "2026-09-05T12:12:50.847Z",
+      "startTimestamp": 1788610370847,
+      "status": "stopped",
+      "botID": null,
+      "botName": null,
+      "mqttConnected": false,
+      "mqttDisconnects": 0,
+      "mqttReconnects": 0,
+      "lastMqttPing": null,
+      "totalEventsReceived": 1,
+      "totalCommandsExecuted": 0,
+      "totalErrorsCaught": 1,
+      "uptimeSeconds": 0,
+      "endTime": "2026-09-05T12:15:06.330Z",
+      "durationMs": 135483
+    },
+    {
+      "sessionId": "session_1788610305025_7jzaf",
+      "startTime": "2026-09-05T12:11:45.027Z",
+      "startTimestamp": 1788610305025,
+      "status": "stopped",
+      "botID": null,
+      "botName": null,
+      "mqttConnected": false,
+      "mqttDisconnects": 0,
+      "mqttReconnects": 0,
+      "lastMqttPing": null,
+      "totalEventsReceived": 1,
+      "totalCommandsExecuted": 0,
+      "totalErrorsCaught": 1,
+      "uptimeSeconds": 0,
+      "endTime": "2026-09-05T12:12:50.848Z",
+      "durationMs": 65824
+    },
+    {
+      "sessionId": "session_1788610274966_lqvz0",
+      "startTime": "2026-09-05T12:11:14.966Z",
+      "startTimestamp": 1788610274966,
+      "status": "stopped",
+      "botID": null,
+      "botName": null,
+      "mqttConnected": false,
+      "mqttDisconnects": 0,
+      "mqttReconnects": 0,
+      "lastMqttPing": null,
+      "totalEventsReceived": 1,
+      "totalCommandsExecuted": 0,
+      "totalErrorsCaught": 1,
+      "uptimeSeconds": 0,
+      "endTime": "2026-09-05T12:11:45.029Z",
+      "durationMs": 30063
+    },
+    {
+      "sessionId": "session_1788610245025_2u58t",
+      "startTime": "2026-09-05T12:10:45.025Z",
+      "startTimestamp": 1788610245025,
+      "status": "stopped",
+      "botID": null,
+      "botName": null,
+      "mqttConnected": false,
+      "mqttDisconnects": 0,
+      "mqttReconnects": 0,
+      "lastMqttPing": null,
+      "totalEventsReceived": 1,
+      "totalCommandsExecuted": 0,
+      "totalErrorsCaught": 1,
+      "uptimeSeconds": 0,
+      "endTime": "2026-09-05T12:11:14.967Z",
+      "durationMs": 29942
+    },
+    {
+      "sessionId": "session_1788607881692_6yy26",
+      "startTime": "2026-09-05T11:31:21.693Z",
+      "startTimestamp": 1788607881692,
+      "status": "stopped",
+      "botID": null,
+      "botName": null,
+      "mqttConnected": false,
+      "mqttDisconnects": 0,
+      "mqttReconnects": 0,
+      "lastMqttPing": null,
+      "totalEventsReceived": 1,
+      "totalCommandsExecuted": 0,
+      "totalErrorsCaught": 1,
+      "uptimeSeconds": 0,
+      "endTime": "2026-09-05T12:10:45.026Z",
+      "durationMs": 2363334
+    },
+    {
+      "sessionId": "session_1788607774845_csizg",
+      "startTime": "2026-09-05T11:29:34.845Z",
+      "startTimestamp": 1788607774845,
+      "status": "stopped",
+      "botID": null,
+      "botName": null,
+      "mqttConnected": false,
+      "mqttDisconnects": 0,
+      "mqttReconnects": 0,
+      "lastMqttPing": null,
+      "totalEventsReceived": 1,
+      "totalCommandsExecuted": 0,
+      "totalErrorsCaught": 1,
+      "uptimeSeconds": 0,
+      "endTime": "2026-09-05T11:31:21.693Z",
+      "durationMs": 106848
+    },
+    {
+      "sessionId": "session_1788605907416_ry9ie",
+      "startTime": "2026-09-05T10:58:27.416Z",
+      "startTimestamp": 1788605907416,
+      "status": "stopped",
+      "botID": null,
+      "botName": null,
+      "mqttConnected": false,
+      "mqttDisconnects": 0,
+      "mqttReconnects": 0,
+      "lastMqttPing": null,
+      "totalEventsReceived": 1,
+      "totalCommandsExecuted": 0,
+      "totalErrorsCaught": 1,
+      "uptimeSeconds": 0,
+      "endTime": "2026-09-05T11:29:34.846Z",
+      "durationMs": 1867430
+    },
+    {
+      "sessionId": "session_1788605844023_u2e2b",
+      "startTime": "2026-09-05T10:57:24.023Z",
+      "startTimestamp": 1788605844023,
+      "status": "stopped",
+      "botID": null,
+      "botName": null,
+      "mqttConnected": false,
+      "mqttDisconnects": 0,
+      "mqttReconnects": 0,
+      "lastMqttPing": null,
+      "totalEventsReceived": 1,
+      "totalCommandsExecuted": 0,
+      "totalErrorsCaught": 1,
+      "uptimeSeconds": 0,
+      "endTime": "2026-09-05T10:58:27.419Z",
+      "durationMs": 63396
+    },
+    {
+      "sessionId": "session_1788605782420_s1tmr",
+      "startTime": "2026-09-05T10:56:22.420Z",
+      "startTimestamp": 1788605782420,
+      "status": "stopped",
+      "botID": null,
+      "botName": null,
+      "mqttConnected": false,
+      "mqttDisconnects": 0,
+      "mqttReconnects": 0,
+      "lastMqttPing": null,
+      "totalEventsReceived": 1,
+      "totalCommandsExecuted": 0,
+      "totalErrorsCaught": 1,
+      "uptimeSeconds": 0,
+      "endTime": "2026-09-05T10:57:24.024Z",
+      "durationMs": 61604
+    },
     {
       "sessionId": "session_1788605740492_1bekh",
       "startTime": "2026-09-05T10:55:40.494Z",
@@ -166,6 +400,149 @@
       "bodySnippet": "!ping",
       "hasAttachments": false,
       "attachmentTypes": []
+    },
+    {
+      "id": "evt_1788605844025_19ow",
+      "timestamp": "2026-09-05T10:57:24.025Z",
+      "type": "message",
+      "threadID": "10001",
+      "senderID": "9999",
+      "isGroup": true,
+      "bodySnippet": "!ping",
+      "hasAttachments": false,
+      "attachmentTypes": []
+    },
+    {
+      "id": "evt_1788605907422_lja6",
+      "timestamp": "2026-09-05T10:58:27.422Z",
+      "type": "message",
+      "threadID": "10001",
+      "senderID": "9999",
+      "isGroup": true,
+      "bodySnippet": "!ping",
+      "hasAttachments": false,
+      "attachmentTypes": []
+    },
+    {
+      "id": "evt_1788607774847_vevc",
+      "timestamp": "2026-09-05T11:29:34.847Z",
+      "type": "message",
+      "threadID": "10001",
+      "senderID": "9999",
+      "isGroup": true,
+      "bodySnippet": "!ping",
+      "hasAttachments": false,
+      "attachmentTypes": []
+    },
+    {
+      "id": "evt_1788607881694_3z7y",
+      "timestamp": "2026-09-05T11:31:21.694Z",
+      "type": "message",
+      "threadID": "10001",
+      "senderID": "9999",
+      "isGroup": true,
+      "bodySnippet": "!ping",
+      "hasAttachments": false,
+      "attachmentTypes": []
+    },
+    {
+      "id": "evt_1788610245027_mj3q",
+      "timestamp": "2026-09-05T12:10:45.027Z",
+      "type": "message",
+      "threadID": "10001",
+      "senderID": "9999",
+      "isGroup": true,
+      "bodySnippet": "!ping",
+      "hasAttachments": false,
+      "attachmentTypes": []
+    },
+    {
+      "id": "evt_1788610274967_8x08",
+      "timestamp": "2026-09-05T12:11:14.967Z",
+      "type": "message",
+      "threadID": "10001",
+      "senderID": "9999",
+      "isGroup": true,
+      "bodySnippet": "!ping",
+      "hasAttachments": false,
+      "attachmentTypes": []
+    },
+    {
+      "id": "evt_1788610305029_is85",
+      "timestamp": "2026-09-05T12:11:45.029Z",
+      "type": "message",
+      "threadID": "10001",
+      "senderID": "9999",
+      "isGroup": true,
+      "bodySnippet": "!ping",
+      "hasAttachments": false,
+      "attachmentTypes": []
+    },
+    {
+      "id": "evt_1788610370849_v4oy",
+      "timestamp": "2026-09-05T12:12:50.849Z",
+      "type": "message",
+      "threadID": "10001",
+      "senderID": "9999",
+      "isGroup": true,
+      "bodySnippet": "!ping",
+      "hasAttachments": false,
+      "attachmentTypes": []
+    },
+    {
+      "id": "evt_1788610506331_m6kk",
+      "timestamp": "2026-09-05T12:15:06.331Z",
+      "type": "message",
+      "threadID": "10001",
+      "senderID": "9999",
+      "isGroup": true,
+      "bodySnippet": "!ping",
+      "hasAttachments": false,
+      "attachmentTypes": []
+    },
+    {
+      "id": "evt_1788610844824_ox5i",
+      "timestamp": "2026-09-05T12:20:44.824Z",
+      "type": "message",
+      "threadID": "10001",
+      "senderID": "9999",
+      "isGroup": true,
+      "bodySnippet": "!ping",
+      "hasAttachments": false,
+      "attachmentTypes": []
+    },
+    {
+      "id": "evt_1788610876043_92k8",
+      "timestamp": "2026-09-05T12:21:16.043Z",
+      "type": "message",
+      "threadID": "10001",
+      "senderID": "9999",
+      "isGroup": true,
+      "bodySnippet": "!ping",
+      "hasAttachments": false,
+      "attachmentTypes": []
+    },
+    {
+      "id": "evt_1788610908891_dd2j",
+      "timestamp": "2026-09-05T12:21:48.891Z",
+      "type": "message",
+      "threadID": "10001",
+      "senderID": "9999",
+      "isGroup": true,
+      "bodySnippet": "!ping",
+      "hasAttachments": false,
+      "attachmentTypes": []
+    },
+    {
+      "id": "evt_1788610984529_7yqc",
+      "timestamp": "2026-09-05T12:23:04.529Z",
+      "type": "message",
+      "threadID": "10001",
+      "senderID": "9999",
+      "isGroup": true,
+      "bodySnippet": "!ping",
+      "hasAttachments": false,
+      "attachmentTypes": []
     }
   ],
   "errors": [
@@ -203,6 +580,136 @@
       "source": "TEST_SUITE",
       "message": "Diagnostic non-fatal self-test error",
       "stack": "Error: Diagnostic non-fatal self-test error\n    at runDiagnostics (/home/ffjisan804/Floppa-Chatbot/scripts/test_cli_runner.js:556:37)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+      "context": {
+        "context": "unit_test"
+      }
+    },
+    {
+      "id": "err_1788605844025_775i",
+      "timestamp": "2026-09-05T10:57:24.025Z",
+      "source": "TEST_SUITE",
+      "message": "Diagnostic non-fatal self-test error",
+      "stack": "Error: Diagnostic non-fatal self-test error\n    at runDiagnostics (/home/ffjisan804/Floppa-Chatbot/scripts/test_cli_runner.js:559:37)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+      "context": {
+        "context": "unit_test"
+      }
+    },
+    {
+      "id": "err_1788605907422_rp6y",
+      "timestamp": "2026-09-05T10:58:27.423Z",
+      "source": "TEST_SUITE",
+      "message": "Diagnostic non-fatal self-test error",
+      "stack": "Error: Diagnostic non-fatal self-test error\n    at runDiagnostics (/home/ffjisan804/Floppa-Chatbot/scripts/test_cli_runner.js:556:37)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+      "context": {
+        "context": "unit_test"
+      }
+    },
+    {
+      "id": "err_1788607774848_2a1v",
+      "timestamp": "2026-09-05T11:29:34.848Z",
+      "source": "TEST_SUITE",
+      "message": "Diagnostic non-fatal self-test error",
+      "stack": "Error: Diagnostic non-fatal self-test error\n    at runDiagnostics (/home/ffjisan804/Floppa-Chatbot/scripts/test_cli_runner.js:556:37)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+      "context": {
+        "context": "unit_test"
+      }
+    },
+    {
+      "id": "err_1788607881694_6fcm",
+      "timestamp": "2026-09-05T11:31:21.694Z",
+      "source": "TEST_SUITE",
+      "message": "Diagnostic non-fatal self-test error",
+      "stack": "Error: Diagnostic non-fatal self-test error\n    at runDiagnostics (/home/ffjisan804/Floppa-Chatbot/scripts/test_cli_runner.js:617:37)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+      "context": {
+        "context": "unit_test"
+      }
+    },
+    {
+      "id": "err_1788610245027_q4fi",
+      "timestamp": "2026-09-05T12:10:45.027Z",
+      "source": "TEST_SUITE",
+      "message": "Diagnostic non-fatal self-test error",
+      "stack": "Error: Diagnostic non-fatal self-test error\n    at runDiagnostics (/home/ffjisan804/Floppa-Chatbot/scripts/test_cli_runner.js:617:37)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+      "context": {
+        "context": "unit_test"
+      }
+    },
+    {
+      "id": "err_1788610274968_nynx",
+      "timestamp": "2026-09-05T12:11:14.968Z",
+      "source": "TEST_SUITE",
+      "message": "Diagnostic non-fatal self-test error",
+      "stack": "Error: Diagnostic non-fatal self-test error\n    at runDiagnostics (/home/ffjisan804/Floppa-Chatbot/scripts/test_cli_runner.js:617:37)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+      "context": {
+        "context": "unit_test"
+      }
+    },
+    {
+      "id": "err_1788610305032_z54s",
+      "timestamp": "2026-09-05T12:11:45.032Z",
+      "source": "TEST_SUITE",
+      "message": "Diagnostic non-fatal self-test error",
+      "stack": "Error: Diagnostic non-fatal self-test error\n    at runDiagnostics (/home/ffjisan804/Floppa-Chatbot/scripts/test_cli_runner.js:668:37)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+      "context": {
+        "context": "unit_test"
+      }
+    },
+    {
+      "id": "err_1788610370850_w04o",
+      "timestamp": "2026-09-05T12:12:50.850Z",
+      "source": "TEST_SUITE",
+      "message": "Diagnostic non-fatal self-test error",
+      "stack": "Error: Diagnostic non-fatal self-test error\n    at runDiagnostics (/home/ffjisan804/Floppa-Chatbot/scripts/test_cli_runner.js:671:37)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+      "context": {
+        "context": "unit_test"
+      }
+    },
+    {
+      "id": "err_1788610506331_61bt",
+      "timestamp": "2026-09-05T12:15:06.331Z",
+      "source": "TEST_SUITE",
+      "message": "Diagnostic non-fatal self-test error",
+      "stack": "Error: Diagnostic non-fatal self-test error\n    at runDiagnostics (/home/ffjisan804/Floppa-Chatbot/scripts/test_cli_runner.js:671:37)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+      "context": {
+        "context": "unit_test"
+      }
+    },
+    {
+      "id": "err_1788610844824_6noz",
+      "timestamp": "2026-09-05T12:20:44.824Z",
+      "source": "TEST_SUITE",
+      "message": "Diagnostic non-fatal self-test error",
+      "stack": "Error: Diagnostic non-fatal self-test error\n    at runDiagnostics (/home/ffjisan804/Floppa-Chatbot/scripts/test_cli_runner.js:671:37)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+      "context": {
+        "context": "unit_test"
+      }
+    },
+    {
+      "id": "err_1788610876044_vnps",
+      "timestamp": "2026-09-05T12:21:16.044Z",
+      "source": "TEST_SUITE",
+      "message": "Diagnostic non-fatal self-test error",
+      "stack": "Error: Diagnostic non-fatal self-test error\n    at runDiagnostics (/home/ffjisan804/Floppa-Chatbot/scripts/test_cli_runner.js:797:37)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+      "context": {
+        "context": "unit_test"
+      }
+    },
+    {
+      "id": "err_1788610908892_uiwd",
+      "timestamp": "2026-09-05T12:21:48.892Z",
+      "source": "TEST_SUITE",
+      "message": "Diagnostic non-fatal self-test error",
+      "stack": "Error: Diagnostic non-fatal self-test error\n    at runDiagnostics (/home/ffjisan804/Floppa-Chatbot/scripts/test_cli_runner.js:797:37)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+      "context": {
+        "context": "unit_test"
+      }
+    },
+    {
+      "id": "err_1788610984529_649s",
+      "timestamp": "2026-09-05T12:23:04.529Z",
+      "source": "TEST_SUITE",
+      "message": "Diagnostic non-fatal self-test error",
+      "stack": "Error: Diagnostic non-fatal self-test error\n    at runDiagnostics (/home/ffjisan804/Floppa-Chatbot/scripts/test_cli_runner.js:799:37)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
       "context": {
         "context": "unit_test"
       }
