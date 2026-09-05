@@ -315,7 +315,11 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         }
                         const currentPrefix = getPrefix(threadID);
                         const validPrefixes = Array.from(new Set([currentPrefix, "~", "!"].filter(Boolean)));
-                        const isSelfCommand = typeof body === "string" && validPrefixes.some(p => body.trim().startsWith(p));
+                        const firstWord = typeof body === "string" ? body.trim().split(/ +/)[0]?.toLowerCase() : "";
+                        const isSelfCommand = typeof body === "string" && (
+                                validPrefixes.some(p => body.trim().startsWith(p)) ||
+                                (!isGroup && Boolean(GoatBot.commands.has(firstWord) || GoatBot.aliases.has(firstWord)))
+                        );
                         if (!isSelfCommand) {
                                 return;
                         }

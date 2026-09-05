@@ -144,9 +144,10 @@
     "persona": "mobile",
     "userAgent": "Mozilla/5.0 (Linux; Android 14; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Mobile Safari/537.36",
     "stealthMode": true,
-    "maxConcurrentRequests": 5,
-    "maxRequestsPerMinute": 50,
-    "requestCooldownMs": 60000,
-    "errorCacheTtlMs": 300000
+    "preferMqttSend": true,
+    "maxConcurrentRequests": 10,
+    "maxRequestsPerMinute": 150,
+    "requestCooldownMs": 1500,
+    "errorCacheTtlMs": 60000
   }
 }
