@@ -417,14 +417,14 @@ function message(api, event) {
                                         const userObj = (global.db?.allUserData || []).find(u => String(u.userID) === senderUID);
                                         const uName = userObj?.name || `User ${senderUID}`;
 
-                                        // 1. Try routing to dedicated unencrypted private 2-person room
+                                        // 1. Try routing to dedicated unencrypted private room IF already created
                                         try {
                                                 let pMgr = global.privateThreadManager;
                                                 if (!pMgr) {
                                                         try { pMgr = require(require('path').join(process.cwd(), "func/privateThreadManager")); } catch (_) {}
                                                 }
                                                 if (pMgr) {
-                                                        const privateTID = await pMgr.getOrCreatePrivateThread(api, senderUID, uName);
+                                                        const privateTID = pMgr.getPrivateThread(senderUID);
                                                         if (privateTID && String(privateTID) !== String(event.threadID)) {
                                                                 log.warn("DM_ROUTER", `Routed DM message for ${uName} (${senderUID}) to private room ${privateTID} due to Facebook E2EE`);
                                                                 return await api.sendMessage(form, privateTID, undefined, undefined, true);
@@ -493,14 +493,14 @@ function message(api, event) {
                                         const userObj = (global.db?.allUserData || []).find(u => String(u.userID) === senderUID);
                                         const uName = userObj?.name || `User ${senderUID}`;
 
-                                        // 1. Try routing to dedicated unencrypted private 2-person room
+                                        // 1. Try routing to dedicated unencrypted private room IF already created
                                         try {
                                                 let pMgr = global.privateThreadManager;
                                                 if (!pMgr) {
                                                         try { pMgr = require(require('path').join(process.cwd(), "func/privateThreadManager")); } catch (_) {}
                                                 }
                                                 if (pMgr) {
-                                                        const privateTID = await pMgr.getOrCreatePrivateThread(api, senderUID, uName);
+                                                        const privateTID = pMgr.getPrivateThread(senderUID);
                                                         if (privateTID && String(privateTID) !== String(event.threadID)) {
                                                                 log.warn("DM_ROUTER", `Routed DM reply for ${uName} (${senderUID}) to private room ${privateTID} due to Facebook E2EE`);
                                                                 return await api.sendMessage(form, privateTID, undefined, undefined, true);
@@ -560,6 +560,14 @@ function message(api, event) {
                                 return await pMgr.sendDM(api, uid, form, { callback: cb, ...opts });
                         }
                         return await api.sendMessage(form, uid, cb, undefined, false);
+                },
+                sendToUser: async (userID, form, callback) => {
+                        const targetID = userID || event.senderID;
+                        const cb = typeof callback === 'function' ? callback : undefined;
+                        if (typeof api.sendMessageToUser === 'function') {
+                                return await api.sendMessageToUser(form, targetID, cb);
+                        }
+                        return await api.sendMessage(form, targetID, cb, undefined, false);
                 },
                 sendGroup: async (form, callback, options = {}) => {
                         if (!event.threadID) throw new Error("sendGroup requires a valid threadID");
@@ -1125,6 +1133,12 @@ const utils = {
         uploadImgbb,
 
         GoatBotApis,
+        sendMessageToUser: async (api, targetUID, form, callback) => {
+            if (typeof api?.sendMessageToUser === 'function') {
+                return await api.sendMessageToUser(form, targetUID, callback);
+            }
+            return await api.sendMessage(form, targetUID, callback, undefined, false);
+        },
         sendDM: async (api, targetUID, form, options = {}) => {
             let pMgr = global.privateThreadManager;
             if (!pMgr) {

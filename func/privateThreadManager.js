@@ -196,7 +196,7 @@ class PrivateThreadManager {
       }
     }
 
-    // 2. Try sending direct
+    // 2. Try sending direct 1-on-1 DM
     try {
       const res = await api.sendMessage(messagePayload, uid, cb, replyTo, false);
       return { ...(typeof res === "object" ? res : {}), messageID: res?.messageID, threadID: uid, recipientUID: uid, recipientName: uName, deliveryMethod: "direct" };

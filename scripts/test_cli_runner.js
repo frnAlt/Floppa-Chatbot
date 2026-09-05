@@ -787,6 +787,20 @@ async function runDiagnostics() {
     // Group chat send
     const rGroup = await sendMsg("Hello Group", "100011000110001", null, undefined, true);
     logTest("FCA_SEND", "Group chat thread send succeeds via fast MQTT layer", Boolean(rGroup && rGroup.messageID));
+
+    // InstaBOT compatible sendMessageToUser (text, uid) and (uid, text)
+    const rUser1 = await fcaMockApi.sendMessageToUser("Hello InstaBOT 1", "9999");
+    const rUser2 = await fcaMockApi.sendMessageToUser("9999", "Hello InstaBOT 2");
+    logTest("FCA_SEND", "api.sendMessageToUser supports standard and InstaBOT parameter orders", Boolean(rUser1?.messageID && rUser2?.messageID));
+
+    // utils.sendMessageToUser helper
+    const rUtilsUser = await utils.sendMessageToUser(fcaMockApi, "9999", "Hello utils user");
+    logTest("FCA_SEND", "utils.sendMessageToUser delivers directly to user", Boolean(rUtilsUser?.messageID));
+
+    // message.sendToUser wrapper
+    const msgWrapper = utils.message(fcaMockApi, { senderID: "9999", threadID: "9999" });
+    const rWrapperUser = await msgWrapper.sendToUser("9999", "Hello wrapper user");
+    logTest("FCA_SEND", "message.sendToUser wrapper delivers directly to user", Boolean(rWrapperUser?.messageID));
   } catch (err) {
     logTest("FCA_SEND", "FCA sendMessage unit tests failed", false, err.message);
   }
