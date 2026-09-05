@@ -420,9 +420,13 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
 									.otherUserFbId).toString(),
 							messageID: delta.deltaMessageReply.repliedToMessage.messageMetadata.messageId,
 							senderID: delta.deltaMessageReply.repliedToMessage.messageMetadata.actorFbId.toString(),
-							attachments: delta.deltaMessageReply.repliedToMessage.attachments.map(function (att) {
-								const mercury = JSON.parse(att.mercuryJSON);
-								Object.assign(att, mercury);
+							attachments: (delta.deltaMessageReply.repliedToMessage.attachments || []).map(function (att) {
+								if (att && att.mercuryJSON && typeof att.mercuryJSON === "string") {
+									try {
+										const mercury = JSON.parse(att.mercuryJSON);
+										Object.assign(att, mercury);
+									} catch (_) {}
+								}
 								return att;
 							}).map(att => {
 								let x;
@@ -432,6 +436,9 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
 									x = att;
 									x.error = ex;
 									x.type = "unknown";
+								}
+								if (!x.url && (att.url || att.largePreviewUrl || att.previewUrl)) {
+									x.url = att.url || att.largePreviewUrl || att.previewUrl;
 								}
 								return x;
 							}),

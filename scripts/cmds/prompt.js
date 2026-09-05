@@ -15,10 +15,12 @@ module.exports = {
 
   onStart: async function ({ message, args, event, api }) {
     let imageUrl = args[0];
-    const { type, messageReply } = event;
-
-    if (type === "message_reply" && messageReply.attachments?.[0]?.type === "photo") {
-      imageUrl = messageReply.attachments[0].url;
+    if (global.utils?.extractImageUrl) {
+      const extracted = global.utils.extractImageUrl(event, { allowAvatar: false });
+      if (extracted) imageUrl = extracted;
+    } else if (event.type === "message_reply" && event.messageReply?.attachments?.length > 0) {
+      const att = event.messageReply.attachments[0];
+      imageUrl = att.url || att.previewUrl || att.largePreviewUrl;
     }
 
     if (!imageUrl) return message.reply("Please provide an image URL or reply to an image.");

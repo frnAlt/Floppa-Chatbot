@@ -43,8 +43,18 @@ module.exports = {
 
         if (!prompt) return message.reply("Please provide a prompt.");
 
-        const isEdit = event.type === "message_reply" && event.messageReply.attachments && event.messageReply.attachments[0].type === "photo";
+        let repliedImgUrl = null;
+        if (global.utils && typeof global.utils.extractImageUrl === "function") {
+            repliedImgUrl = global.utils.extractImageUrl(event, [], { allowAvatar: false });
+        }
+        if (!repliedImgUrl && event.messageReply?.attachments?.length > 0) {
+            for (const a of event.messageReply.attachments) {
+                const u = a.url || a.largePreviewUrl || a.large_preview_url || a.previewUrl || a.preview_url || a.thumbnailUrl || a.thumbnail_url || a.image || a.photoUrl;
+                if (u) { repliedImgUrl = u; break; }
+            }
+        }
         
+        const isEdit = !!repliedImgUrl;
         const endpoint = isEdit ? `${BASE_API}/edit` : `${BASE_API}/generate`;
         const params = {
             prompt: prompt,
@@ -53,7 +63,7 @@ module.exports = {
         };
 
         if (isEdit) {
-            params.img_url = event.messageReply.attachments[0].url;
+            params.img_url = repliedImgUrl;
         }
 
         message.reaction("⏳", event.messageID);

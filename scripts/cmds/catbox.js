@@ -24,9 +24,24 @@ module.exports.config = {
 
 module.exports.onStart = async ({ api, event }) => {
 	try {
-		const allUrl = event.messageReply?.attachments[0]?.url;
+		let allUrl = null;
+		if (global.utils && typeof global.utils.extractImageUrl === "function") {
+			allUrl = global.utils.extractImageUrl(event, [], { allowAvatar: false });
+		}
 		if (!allUrl) {
-			return api.sendMessage("❌ Please reply to an attachment to upload.", event.threadID, event.messageID);
+			const sources = [event.messageReply?.attachments, event.attachments];
+			for (const list of sources) {
+				if (Array.isArray(list)) {
+					for (const a of list) {
+						const u = a.url || a.largePreviewUrl || a.large_preview_url || a.previewUrl || a.preview_url || a.thumbnailUrl || a.thumbnail_url || a.image || a.photoUrl || a.image_data?.url || a.media?.image?.uri;
+						if (u) { allUrl = u; break; }
+					}
+				}
+				if (allUrl) break;
+			}
+		}
+		if (!allUrl) {
+			return api.sendMessage("❌ Please reply to an attachment or image to upload.", event.threadID, event.messageID);
 		}
 		const msg = await api.sendMessage("✨ Uploading your attachment... Please wait", event.threadID);
 

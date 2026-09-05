@@ -321,7 +321,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                 return;
                         }
                         const currentPrefix = getPrefix(threadID);
-                        const validPrefixes = Array.from(new Set([currentPrefix, "/", "~", "!"].filter(Boolean)));
+                        const validPrefixes = Array.from(new Set([currentPrefix, "!"].filter(Boolean)));
                         const firstWord = typeof body === "string" ? body.trim().split(/ +/)[0]?.toLowerCase() : "";
                         const isSelfCommand = typeof body === "string" && (
                                 validPrefixes.some(p => body.trim().startsWith(p)) ||
@@ -497,9 +497,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                 return;
                         }
 
-                        const noPrefixEnabled = config.noPrefix === true;
-                        const userCanSkipPrefix = (role === 2 || role === 4) && noPrefixEnabled;
-                        const validPrefixes = Array.from(new Set([prefix, "/", "~", "!"].filter(Boolean)));
+                        const validPrefixes = Array.from(new Set([prefix, "!"].filter(Boolean)));
                         const matchedPrefix = validPrefixes.find(p => body.startsWith(p));
                         hasPrefix = Boolean(matchedPrefix);
                         let hasNoPrefix = false;
@@ -514,57 +512,11 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                         potentialCmd?.meta?.noPrefix === "both"
                                 );
 
-                                if (potentialCmd && (noPrefixEnabled || userCanSkipPrefix || cmdAllowsNoPrefix || !isGroup || isTwoPersonThread)) {
+                                // Commands without prefix ONLY run if explicitly configured with noPrefix: true or "both"
+                                if (potentialCmd && cmdAllowsNoPrefix) {
                                         hasNoPrefix = true;
-                                } else if (!isGroup || isTwoPersonThread) {
-                                        if (global.GoatBot.botOff && role !== 2 && role !== 4) {
-                                                return await message.reply("⚠️ Bot is currently turned OFF by the administrator. Only administrators can use commands.");
-                                        }
-                                        const cleanText = body.trim().toLowerCase();
-                                        if (/^(hi|hello|hey|test|testing|hola|alo|salam|assalamu alaikum|sup|yo|bot)\b/i.test(cleanText)) {
-                                                const botName = config.nickNameBot || "Floppa Bot 🐱";
-                                                return await message.reply(
-                                                        `👋 Hello! I'm ${botName}.\n\n` +
-                                                        `You are in Direct Messages (DM)! All features and commands work right here in DM as well as group chats.\n\n` +
-                                                        `💡 Quick commands to test:\n` +
-                                                        `• ${prefix}help - View full command catalog\n` +
-                                                        `• ${prefix}ai <prompt> - Chat with AI\n` +
-                                                        `• ${prefix}gemini <prompt> - Google Gemini AI\n` +
-                                                        `• ${prefix}ping - Check bot response speed\n` +
-                                                        `• ${prefix}sing <song name> - Listen & stream music\n` +
-                                                        `• ${prefix}alldl <url> - Download video/audio\n\n` +
-                                                        `Type ${prefix}help to explore everything!`
-                                                );
-                                        }
-
-                                        // Auto conversational AI in DM: If someone chats in DM with a question or comment, answer with AI!
-                                        try {
-                                                const aiCorePath = require('path').join(process.cwd(), "system/ai-core.js");
-                                                const aiCore = require(aiCorePath);
-                                                const contextId = `${threadID}_${senderID}`;
-                                                const aiResponse = await aiCore.generateCompletion({
-                                                        prompt: body.trim(),
-                                                        contextId
-                                                });
-                                                if (aiResponse) {
-							return await message.reply(`🤖 [Floppa AI]\n\n${aiResponse}`, (err, info) => {
-								if (!err && info?.messageID) {
-									if (!global.GoatBot) global.GoatBot = {};
-									if (!global.GoatBot.onReply) global.GoatBot.onReply = new Map();
-									global.GoatBot.onReply.set(info.messageID, {
-										commandName: "chat",
-										author: senderID,
-										contextId,
-										messageID: info.messageID
-									});
-								}
-							});
-						}
-					} catch (aiErr) {
-						return await message.reply(`👋 I'm Floppa Bot! Type ${prefix}help to see commands, or ${prefix}chat ${body.trim()} to ask me anything!`);
-					}
-                                        return;
                                 } else {
+                                        // Regular conversation message without prefix: DO NOT reply, remain silent
                                         return;
                                 }
                         }
@@ -1102,6 +1054,30 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         const { onReaction } = GoatBot;
                         const Reaction = onReaction.get(messageID);
                         const reaction = event.reaction;
+
+                        // Hand emoji reaction unsend: Only works for admins
+                        const handEmojis = ["✋", "🖐️", "🖐", "🤚", "👋", "👌", "👍", "👎", "✍️", "🤝", "🖕", "👊", "🤛", "🤜", "🤞", "🫰", "🤟", "🤘", "🤙", "👈", "👉", "👆", "👇", "☝️", "👏", "🙌", "👐", "🤲", "🙏"];
+                        if (reaction && handEmojis.some(h => reaction.includes(h) || reaction === h)) {
+                                const isBotMsg = Boolean(
+                                        (messageID && global.botSentMessages?.get(String(threadID))?.includes(messageID)) ||
+                                        Array.from(global.botSentMessages?.values() || []).some(list => list.includes(messageID))
+                                );
+                                const isAdmin = role >= 1 || (config.adminBot && config.adminBot.includes(String(senderID)));
+                                if (isAdmin && (isBotMsg || !Reaction)) {
+                                        try {
+                                                await api.unsendMessage(messageID, threadID);
+                                                const threadList = global.botSentMessages?.get(String(threadID));
+                                                if (threadList) {
+                                                        const idx = threadList.indexOf(messageID);
+                                                        if (idx !== -1) threadList.splice(idx, 1);
+                                                }
+                                                log.info("onReaction", `Admin ${senderID} unsent bot message ${messageID} with hand emoji reaction: ${reaction}`);
+                                                return;
+                                        } catch (err) {
+                                                // Message might not be unsendable or already gone
+                                        }
+                                }
+                        }
                         
                         if (!Reaction)
                                 return;

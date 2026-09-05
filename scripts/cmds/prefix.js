@@ -8,6 +8,7 @@ module.exports = {
 								author: "frnAlt",
 								countDown: 5,
 								role: 0,
+								noPrefix: "both",
 								description: "Thay đổi dấu lệnh của bot trong box chat của bạn hoặc cả hệ thống bot (chỉ admin bot)",
 								category: "config",
 								guide: {
@@ -95,14 +96,5 @@ module.exports = {
 												await threadsData.set(event.threadID, newPrefix, "data.prefix");
 												return message.reply(getLang("successThisThread", newPrefix));
 								}
-				},
-
-				onChat: async function ({ event, message, getLang, usersData }) {
-								if (event.body && event.body.toLowerCase() === "prefix")
-												return async () => {
-																const userName = await usersData.getName(event.senderID);
-																const botName = global.GoatBot.config.nickNameBot || "Bot";
-																return message.reply(getLang("myPrefix", userName, global.GoatBot.config.prefix, utils.getPrefix(event.threadID), botName));
-												};
 				}
 };

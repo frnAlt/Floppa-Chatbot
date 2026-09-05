@@ -12,7 +12,7 @@ const aiCore = require("../../system/ai-core.js");
 module.exports = {
   config: {
     name: "chat",
-    aliases: ["talk", "bot", "c", "floppa"],
+    aliases: ["talk", "floppa"],
     version: "2.5.0",
     author: "frnAlt & Gtajisan",
     countDown: 2,

@@ -21,9 +21,13 @@ module.exports = {
     let prompt = args.join(" ");
     let imageUrl = null;
 
-    if (type === "message_reply" && messageReply.attachments?.length > 0) {
-      if (messageReply.attachments[0].type === "photo") {
-        imageUrl = messageReply.attachments[0].url;
+    if (global.utils && typeof global.utils.extractImageUrl === "function") {
+      imageUrl = global.utils.extractImageUrl(event, args, { allowAvatar: false });
+    }
+    if (!imageUrl && messageReply?.attachments?.length > 0) {
+      for (const a of messageReply.attachments) {
+        const u = a.url || a.largePreviewUrl || a.large_preview_url || a.previewUrl || a.preview_url || a.thumbnailUrl || a.thumbnail_url || a.image || a.photoUrl;
+        if (u) { imageUrl = u; break; }
       }
     }
 

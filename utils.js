@@ -1098,9 +1098,110 @@ class GoatBotApis {
         }
 }
 
+function extractImageUrlFromAttachment(att) {
+        if (!att || typeof att !== "object") return null;
+        return (
+                att.url ||
+                att.largePreviewUrl ||
+                att.large_preview_url ||
+                att.previewUrl ||
+                att.preview_url ||
+                att.thumbnailUrl ||
+                att.thumbnail_url ||
+                att.image ||
+                att.photoUrl ||
+                att.image_data?.url ||
+                att.media?.image?.uri ||
+                att.story_attachment?.media?.image?.uri ||
+                att.facebookUrl ||
+                null
+        );
+}
+
+function extractImageUrl(event, args = [], options = {}) {
+        const { allowAvatar = false, fallbackSender = false } = (typeof options === "boolean" ? { allowAvatar: options } : options);
+        
+        // 1. Direct URL in args
+        if (Array.isArray(args) && args.length > 0) {
+                const urlArg = args.find(a => typeof a === "string" && /^https?:\/\//i.test(a.trim()));
+                if (urlArg) return urlArg.trim();
+        }
+
+        // 2. Replied message attachments (highest priority when replying to any image in chat)
+        if (event?.messageReply?.attachments?.length > 0) {
+                for (const att of event.messageReply.attachments) {
+                        const u = extractImageUrlFromAttachment(att);
+                        if (u) return u;
+                }
+        }
+
+        // 3. Current message attachments
+        if (event?.attachments?.length > 0) {
+                for (const att of event.attachments) {
+                        const u = extractImageUrlFromAttachment(att);
+                        if (u) return u;
+                }
+        }
+
+        // 4. URL inside replied message body (e.g. user replied to a link or imgur URL)
+        if (event?.messageReply?.body) {
+                const match = event.messageReply.body.match(/https?:\/\/[^\s]+/i);
+                if (match && /\.(jpe?g|png|webp|gif|bmp)(\?.*)?$/i.test(match[0])) {
+                        return match[0];
+                }
+        }
+
+        // 5. Mentioned user or sender avatar (ONLY when explicitly allowed)
+        if (allowAvatar) {
+                const token = "6628568379%7Cc1e620fa708a1d5696fb991c1bde5662";
+                if (event?.mentions && Object.keys(event.mentions).length > 0) {
+                        const uid = Object.keys(event.mentions)[0];
+                        return `https://graph.facebook.com/${uid}/picture?width=720&height=720&access_token=${token}`;
+                }
+                if (event?.messageReply?.senderID) {
+                        return `https://graph.facebook.com/${event.messageReply.senderID}/picture?width=720&height=720&access_token=${token}`;
+                }
+                if (fallbackSender && event?.senderID) {
+                        return `https://graph.facebook.com/${event.senderID}/picture?width=720&height=720&access_token=${token}`;
+                }
+        }
+
+        return null;
+}
+
+async function extractImageUrlAsync(event, args = [], api = null, options = {}) {
+        let url = extractImageUrl(event, args, options);
+        if (url) return url;
+
+        if (api && typeof api.resolvePhotoUrl === "function") {
+                const sources = [event?.messageReply?.attachments, event?.attachments];
+                for (const list of sources) {
+                        if (Array.isArray(list)) {
+                                for (const att of list) {
+                                        const photoId = att.ID || att.fbid || att.id;
+                                        if (photoId) {
+                                                try {
+                                                        const resolved = await api.resolvePhotoUrl(photoId);
+                                                        if (resolved && typeof resolved === "string" && /^https?:\/\//i.test(resolved)) {
+                                                                return resolved;
+                                                        }
+                                                } catch (_) {}
+                                        }
+                                }
+                        }
+                }
+        }
+
+        return null;
+}
+
 const utils = {
         CustomError,
         TaskQueue,
+        extractImageUrl,
+        extractImageUrlAsync,
+        extractImageUrlFromAttachment,
+        extractImageUrlFromEvent: extractImageUrl,
 
         colors,
         convertTime,

@@ -4,7 +4,7 @@ const FormData = require("form-data");
 module.exports = {
   config: {
     name: "imgbb",
-    aliases: ["i"],
+    aliases: ["imgb", "imgupload"],
     version: "1.0",
     author: "frnAlt",
     countDown: 5,
@@ -20,20 +20,24 @@ module.exports = {
 
   onStart: async function ({ api, event }) {
     const imgbbApiKey = "1b4d99fa0c3195efe42ceb62670f2a25";
-    const attachments = event.messageReply?.attachments?.filter(att =>
-      ["photo", "sticker", "animated_image"].includes(att.type)
-    );
+    const rawList = event.messageReply?.attachments || event.attachments || [];
+    const targetUrls = [];
 
-    if (!attachments || attachments.length === 0) {
-      return api.sendMessage("Please reply to one or more image attachments.", event.threadID, event.messageID);
+    for (const att of rawList) {
+      const u = att.url || att.largePreviewUrl || att.large_preview_url || att.previewUrl || att.preview_url || att.thumbnailUrl || att.thumbnail_url || att.image || att.photoUrl || att.image_data?.url;
+      if (u) targetUrls.push(u);
+    }
+
+    if (targetUrls.length === 0) {
+      return api.sendMessage("Please reply to one or more image attachments or attach images.", event.threadID, event.messageID);
     }
 
     try {
       const uploadedLinks = await Promise.all(
-        attachments.map(async (attachment, index) => {
-          const response = await axios.get(attachment.url, { responseType: "arraybuffer" });
+        targetUrls.map(async (imgUrl, index) => {
+          const response = await axios.get(imgUrl, { responseType: "arraybuffer", timeout: 30000 });
           const formData = new FormData();
-          formData.append("image", Buffer.from(response.data, "binary"), { filename: `image${index}.jpg` });
+          formData.append("image", Buffer.from(response.data), { filename: `image${index}.jpg` });
 
           const res = await axios.post("https://api.imgbb.com/1/upload", formData, {
             headers: formData.getHeaders(),

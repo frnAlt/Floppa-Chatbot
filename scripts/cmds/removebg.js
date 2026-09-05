@@ -3,29 +3,38 @@ const fs = require("fs-extra");
 const path = require("path");
 
 async function extractImageUrl(args, event, api) {
+  if (global.utils && typeof global.utils.extractImageUrl === "function") {
+    const u = global.utils.extractImageUrl(event, args, { allowAvatar: false });
+    if (u) return u;
+  }
+
   let imageUrl = args.find(arg => typeof arg === "string" && arg.startsWith("http"));
 
   if (!imageUrl && event.messageReply?.attachments?.length > 0) {
-    const att = event.messageReply.attachments[0];
-    let u = att.url || att.previewUrl || att.largePreviewUrl;
-    if (!u && att.ID && api?.resolvePhotoUrl) {
-      try { u = await api.resolvePhotoUrl(att.ID); } catch (_) {}
+    for (const att of event.messageReply.attachments) {
+      let u = att.url || att.largePreviewUrl || att.large_preview_url || att.previewUrl || att.preview_url || att.thumbnailUrl || att.thumbnail_url || att.image || att.photoUrl || att.image_data?.url || att.media?.image?.uri;
+      if (!u && att.ID && api?.resolvePhotoUrl) {
+        try { u = await api.resolvePhotoUrl(att.ID); } catch (_) {}
+      }
+      if (u) { imageUrl = u; break; }
     }
-    if (u) imageUrl = u;
-  } else if (!imageUrl && event.attachments?.length > 0) {
-    const att = event.attachments[0];
-    let u = att.url || att.previewUrl || att.largePreviewUrl;
-    if (!u && att.ID && api?.resolvePhotoUrl) {
-      try { u = await api.resolvePhotoUrl(att.ID); } catch (_) {}
+  }
+
+  if (!imageUrl && event.attachments?.length > 0) {
+    for (const att of event.attachments) {
+      let u = att.url || att.largePreviewUrl || att.large_preview_url || att.previewUrl || att.preview_url || att.thumbnailUrl || att.thumbnail_url || att.image || att.photoUrl || att.image_data?.url || att.media?.image?.uri;
+      if (!u && att.ID && api?.resolvePhotoUrl) {
+        try { u = await api.resolvePhotoUrl(att.ID); } catch (_) {}
+      }
+      if (u) { imageUrl = u; break; }
     }
-    if (u) imageUrl = u;
-  } else if (!imageUrl && event.mentions && Object.keys(event.mentions).length > 0) {
-    const targetUID = Object.keys(event.mentions)[0];
-    const token = "6628568379%7Cc1e620fa708a1d5696fb991c1bde5662";
-    imageUrl = `https://graph.facebook.com/${targetUID}/picture?width=720&height=720&access_token=${token}`;
-  } else if (!imageUrl && event.messageReply?.senderID) {
-    const token = "6628568379%7Cc1e620fa708a1d5696fb991c1bde5662";
-    imageUrl = `https://graph.facebook.com/${event.messageReply.senderID}/picture?width=720&height=720&access_token=${token}`;
+  }
+
+  if (!imageUrl && event.messageReply?.body) {
+    const match = event.messageReply.body.match(/https?:\/\/[^\s]+/i);
+    if (match && /\.(jpe?g|png|webp|gif|bmp)(\?.*)?$/i.test(match[0])) {
+      imageUrl = match[0];
+    }
   }
 
   return imageUrl;

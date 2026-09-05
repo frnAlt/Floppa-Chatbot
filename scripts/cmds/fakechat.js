@@ -10,7 +10,7 @@ const mahmhd = async () => {
 module.exports = {
   config: {
     name: "fakechat",
-    aliases: ["fc", "F", "fake"],
+    aliases: ["fc", "fake"],
     version: "2.4.70",
     author: "frnAlt",
     role: 0,

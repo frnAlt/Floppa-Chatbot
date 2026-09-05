@@ -1,7 +1,7 @@
 module.exports = {
 	config: {
 		name: "unsend",
-		aliases: ["u", "usend", "r", "uns"],
+		aliases: ["usend", "uns"],
 		version: "1.2",
 		author: "frnAlt",
 		countDown: 5,
@@ -12,8 +12,8 @@ module.exports = {
 		},
 		category: "box chat",
 		guide: {
-			vi: "reply tin nhắn của bot hoặc nhập {pn} [số lượng] (vd: {pn} 2)",
-			en: "reply bot's message or use {pn} [number] (e.g.: {pn} 2)"
+			vi: "reply tin nhắn bot, hoặc nhập {pn} [số lượng], hoặc admin thả cảm xúc bàn tay (✋) vào tin nhắn bot để gỡ",
+			en: "reply bot's message, use {pn} [number], or admin reacts with a hand emoji (✋) to unsend"
 		}
 	},
 
@@ -116,5 +116,26 @@ module.exports = {
 		}
 
 		return message.reply("❌ No bot message to unsend. Reply to any bot message with {p}unsend or specify a count: {p}unsend <number>");
+	},
+
+	onReaction: async function ({ api, event, role, message }) {
+		const { reaction, messageID, threadID, userID, senderID } = event;
+		const uid = String(userID || senderID);
+		const handEmojis = ["✋", "🖐️", "🖐", "🤚", "👋", "👌", "👍", "👎", "✍️", "🤝", "🖕", "👊", "🤛", "🤜", "🤞", "🫰", "🤟", "🤘", "🤙", "👈", "👉", "👆", "👇", "☝️", "👏", "🙌", "👐", "🤲", "🙏"];
+		if (!reaction || !handEmojis.some(h => reaction.includes(h) || reaction === h)) return;
+
+		const isAdmin = (role != null && role >= 1) || (global.GoatBot?.config?.adminBot && global.GoatBot.config.adminBot.includes(uid));
+		if (!isAdmin) return;
+
+		try {
+			await api.unsendMessage(messageID, threadID);
+			const threadBotMsgs = global.botSentMessages?.get(String(threadID));
+			if (threadBotMsgs) {
+				const idx = threadBotMsgs.indexOf(messageID);
+				if (idx !== -1) threadBotMsgs.splice(idx, 1);
+			}
+		} catch (err) {
+			// Failed to unsend
+		}
 	}
 };

@@ -415,23 +415,23 @@ class AxeraEmojiAPI {
   }
 }
 
-// ─── 4. Photo URL Resolver ───────────────────────────────────────────────────
 async function resolvePhotoUrl(api, fbid, callback) {
   const cb = typeof callback === "function" ? callback : () => {};
   try {
     if (typeof api.httpGet === "function") {
-      const res = await api.httpGet(`https://graph.facebook.com/${fbid}/picture?type=large&redirect=false`);
-      const url = res.data?.data?.url || `https://graph.facebook.com/${fbid}/picture?type=large`;
-      cb(null, url);
-      return url;
+      const res = await api.httpGet(`https://www.facebook.com/mercury/attachments/photo?photo_id=${fbid}`);
+      const resData = typeof res.data === "string" ? JSON.parse(res.data) : res.data;
+      const photoUrl = resData?.jsmods?.require?.[0]?.[3]?.[0] || null;
+      if (photoUrl) {
+        cb(null, photoUrl);
+        return photoUrl;
+      }
     }
-    const defaultUrl = `https://graph.facebook.com/${fbid}/picture?type=large`;
-    cb(null, defaultUrl);
-    return defaultUrl;
+    cb(null, null);
+    return null;
   } catch (err) {
-    const fallbackUrl = `https://graph.facebook.com/${fbid}/picture?type=large`;
-    cb(null, fallbackUrl);
-    return fallbackUrl;
+    cb(null, null);
+    return null;
   }
 }
 

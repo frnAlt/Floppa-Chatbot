@@ -63,12 +63,14 @@ module.exports = {
 
     // 📷 Get reply image (optional)
     let imageURL = null;
-    if (
-      messageReply &&
-      messageReply.attachments &&
-      messageReply.attachments[0]?.type === "photo"
-    ) {
-      imageURL = messageReply.attachments[0].url;
+    if (global.utils && typeof global.utils.extractImageUrl === "function") {
+      imageURL = global.utils.extractImageUrl(event, [], { allowAvatar: false });
+    }
+    if (!imageURL && messageReply?.attachments?.length > 0) {
+      for (const a of messageReply.attachments) {
+        const u = a.url || a.largePreviewUrl || a.large_preview_url || a.previewUrl || a.preview_url || a.thumbnailUrl || a.thumbnail_url || a.image || a.photoUrl || a.image_data?.url;
+        if (u) { imageURL = u; break; }
+      }
     }
 
     const apiUrl = imageURL

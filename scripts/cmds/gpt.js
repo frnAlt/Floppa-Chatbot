@@ -7,7 +7,7 @@ const API_URL = "https://images2gpt-api.onrender.com/api";
 module.exports = {
   config: {
     name: "gpt2",
-    aliases: ["gpt", "gptimg"],
+    aliases: ["gpt", "gptedit"],
     version: "1.2.0",
     author: "frnAlt",
     countDown: 10,
@@ -29,9 +29,12 @@ module.exports = {
       prompt = prompt.replace(arMatch[0], "").trim();
     }
 
-    if (event.type === "message_reply" && event.messageReply.attachments?.length > 0) {
+    if (global.utils?.extractImageUrl) {
+      const extracted = global.utils.extractImageUrl(event, { allowAvatar: false });
+      if (extracted) imageUrl = extracted;
+    } else if (event.type === "message_reply" && event.messageReply?.attachments?.length > 0) {
       const attachment = event.messageReply.attachments[0];
-      if (attachment.type === "photo") imageUrl = attachment.url;
+      imageUrl = attachment.url || attachment.previewUrl || attachment.largePreviewUrl;
     }
 
     if (!prompt && !imageUrl) return message.reply("Please provide a prompt or reply to an image.");

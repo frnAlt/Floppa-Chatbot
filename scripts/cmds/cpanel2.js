@@ -23,15 +23,7 @@ module.exports = {
     category: "info",
   },
 
-  ST: async function (ctx) {
-    await module.exports.sendUptime(ctx);
-  },
-
-  onChat: async function (ctx) {
-    const input = ctx.event.body?.toLowerCase().trim();
-    const { config } = module.exports;
-    const triggers = [config.name, ...(config.aliases || [])];
-    if (!triggers.includes(input)) return;
+  onStart: async function (ctx) {
     await module.exports.sendUptime(ctx);
   },
 
