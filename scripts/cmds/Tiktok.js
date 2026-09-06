@@ -6,7 +6,7 @@ module.exports = {
   config: {
     name: "tiktok",
     aliases: ["tt", "tiksearch", "tiktoksearch", "tik"],
-    version: "2.0.0",
+    version: "2.1.0",
     author: "frnAlt",
     countDown: 5,
     role: 0,
@@ -45,7 +45,7 @@ module.exports = {
       return message.reply("❌ Please provide a search keyword or TikTok URL.");
     }
 
-    if (api.setMessageReaction) {
+    if (api && api.setMessageReaction) {
       api.setMessageReaction("⏳", event.messageID, () => {}, true);
     }
 
@@ -55,6 +55,7 @@ module.exports = {
 
     try {
       let mediaUrl = "";
+      let musicUrl = "";
       let title = "TikTok Media";
       let author = "Unknown";
       let duration = 0;
@@ -71,6 +72,7 @@ module.exports = {
             const r = dlRes.data.result;
             title = r.title || title;
             author = r.author || author;
+            musicUrl = r.music || r.audio || "";
             mediaUrl = isAudio ? (r.music || r.audio || r.video) : (r.video || r.music);
           }
         } catch (_) {}
@@ -84,6 +86,7 @@ module.exports = {
               title = d.title || title;
               author = d.author?.unique_id || d.author?.nickname || author;
               duration = d.duration || 0;
+              musicUrl = d.music || "";
               mediaUrl = isAudio ? (d.music || d.play) : (d.play || d.music);
             }
           } catch (_) {}
@@ -100,6 +103,7 @@ module.exports = {
             title = r.title || title;
             author = r.author || author;
             duration = r.duration || 0;
+            musicUrl = r.music || "";
             mediaUrl = isAudio ? (r.music || r.video) : (r.video || r.preview || r.music);
           }
         } catch (err) {
@@ -109,12 +113,16 @@ module.exports = {
         // Secondary fallback: tikwm search
         if (!mediaUrl) {
           try {
-            const tikwmSearch = await axios.get(`https://www.tikwm.com/api/feed/search?keywords=${encodeURIComponent(query)}&count=1`, { timeout: 15000 });
+            const tikwmSearch = await axios.get(`https://www.tikwm.com/api/feed/search?keywords=${encodeURIComponent(query)}&count=1`, {
+              headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
+              timeout: 15000
+            });
             if (tikwmSearch.data?.data?.videos?.[0]) {
               const v = tikwmSearch.data.data.videos[0];
               title = v.title || title;
               author = v.author?.unique_id || v.author?.nickname || author;
               duration = v.duration || 0;
+              musicUrl = v.music || "";
               mediaUrl = isAudio ? (v.music || v.play) : (v.play || v.music);
             }
           } catch (_) {}
@@ -122,35 +130,67 @@ module.exports = {
       }
 
       if (!mediaUrl) {
-        if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+        if (api && api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
         return message.reply(`❌ Could not find TikTok video for "${query}". Please try another keyword.`);
       }
 
-      // Download media buffer and save to cache to ensure reliable MP4 delivery
-      const ext = isAudio ? "mp3" : "mp4";
+      // Download media buffer with Range header to prevent 504 Gateway Timeouts
+      let ext = isAudio ? "mp3" : "mp4";
       tmpFile = path.join(cacheDir, `tiktok_${Date.now()}.${ext}`);
 
       const downloadRes = await axios.get(mediaUrl, {
         responseType: "arraybuffer",
-        timeout: 45000,
+        timeout: 25000,
         headers: {
+          "Range": "bytes=0-",
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
           "Referer": "https://www.tiktok.com/"
         }
       });
 
-      await fs.writeFile(tmpFile, Buffer.from(downloadRes.data));
+      let fileBuffer = Buffer.from(downloadRes.data);
 
-      const bodyText = isAudio
-        ? `🎵 TikTok Audio\n\n📌 Title: ${title || "N/A"}\n👤 Creator: @${author || "Unknown"}\n⏱️ Duration: ${duration || 0}s`
-        : `🎬 TikTok Video\n\n📌 Title: ${title || "N/A"}\n👤 Creator: @${author || "Unknown"}\n⏱️ Duration: ${duration || 0}s`;
+      // Check Facebook Messenger 25MB attachment limit
+      const maxUploadSize = 25 * 1024 * 1024;
+      let usedAudioFallback = false;
+
+      if (!isAudio && fileBuffer.length > maxUploadSize && musicUrl) {
+        try {
+          const audioDl = await axios.get(musicUrl, {
+            responseType: "arraybuffer",
+            timeout: 20000,
+            headers: {
+              "Range": "bytes=0-",
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+              "Referer": "https://www.tiktok.com/"
+            }
+          });
+          if (audioDl.data && audioDl.data.length < maxUploadSize) {
+            fileBuffer = Buffer.from(audioDl.data);
+            ext = "mp3";
+            tmpFile = path.join(cacheDir, `tiktok_${Date.now()}.mp3`);
+            usedAudioFallback = true;
+          }
+        } catch (_) {}
+      }
+
+      await fs.writeFile(tmpFile, fileBuffer);
+
+      let bodyText;
+      if (usedAudioFallback) {
+        bodyText = `⚠️ Video exceeded Facebook's 25MB attachment limit. Sent audio instead!\n\n🎵 Title: ${title || "N/A"}\n👤 Creator: @${author || "Unknown"}\n🔗 Watch Video: ${mediaUrl}`;
+      } else if (isAudio || ext === "mp3") {
+        bodyText = `🎵 TikTok Audio\n\n📌 Title: ${title || "N/A"}\n👤 Creator: @${author || "Unknown"}\n⏱️ Duration: ${duration || 0}s`;
+      } else {
+        bodyText = `🎬 TikTok Video\n\n📌 Title: ${title || "N/A"}\n👤 Creator: @${author || "Unknown"}\n⏱️ Duration: ${duration || 0}s`;
+      }
 
       await message.reply({
         body: bodyText,
         attachment: fs.createReadStream(tmpFile)
       });
 
-      if (api.setMessageReaction) {
+      if (api && api.setMessageReaction) {
         api.setMessageReaction("✅", event.messageID, () => {}, true);
       }
 
@@ -158,10 +198,10 @@ module.exports = {
     } catch (error) {
       console.error("[TIKTOK COMMAND ERROR]:", error);
       if (tmpFile) fs.remove(tmpFile).catch(() => {});
-      if (api.setMessageReaction) {
+      if (api && api.setMessageReaction) {
         api.setMessageReaction("❌", event.messageID, () => {}, true);
       }
-      return message.reply(`❌ Failed to send TikTok video: ${error.message || error}`);
+      return message.reply(`❌ Failed to send TikTok: ${error.message || error}`);
     }
   }
 };

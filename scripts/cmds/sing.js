@@ -1,75 +1,105 @@
 const axios = require("axios");
 const yts = require("yt-search");
 const btch = require("btch-downloader");
+const { Readable } = require("stream");
 
-const client = axios.create({ timeout: 20000 });
+const client = axios.create({ timeout: 15000 });
 
-async function getYouTubeAudio(youtubeUrl, titleFallback = "") {
-  // 1. Primary: btch-downloader (high-speed ymcdn / fast MP3 stream)
-  try {
-    const res = await btch.youtube(youtubeUrl);
-    if (res && res.status !== false && res.mp3) {
-      return {
-        audioUrl: res.mp3,
-        title: res.title || titleFallback || "YouTube Audio",
-        quality: "128kbps",
-        duration: res.duration || "N/A"
-      };
+async function getAudioForTrack(titleFallback = "", youtubeUrl = "") {
+  const cleanTitle = (titleFallback || "").replace(/\[[^\]]*\]|\([^\)]*\)/g, "").trim();
+  const searchQueries = [cleanTitle, titleFallback].filter(Boolean);
+
+  // 1. Primary: High-speed music audio stream via audio search engine
+  for (const q of searchQueries) {
+    try {
+      const searchApi = `https://toshiro-api-editz6t9.vercel.app/api/search/tiksearch?keyword=${encodeURIComponent(q)}`;
+      const res = await client.get(searchApi, { timeout: 8000 });
+      const r = res.data?.result;
+      const musicUrl = r?.music;
+
+      if (musicUrl) {
+        const audioRes = await axios.get(musicUrl, {
+          responseType: "arraybuffer",
+          timeout: 20000,
+          headers: {
+            "Range": "bytes=0-",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Referer": "https://www.tiktok.com/"
+          }
+        });
+
+        if (audioRes.data && audioRes.data.length > 30000) {
+          const stream = Readable.from(Buffer.from(audioRes.data));
+          stream.path = "sing.mp3";
+          return {
+            stream,
+            title: r.title || titleFallback || "Audio Track",
+            duration: r.duration ? `${r.duration}s` : "N/A",
+            quality: "128kbps"
+          };
+        }
+      }
+    } catch (err) {
+      // proceed to next query / provider
     }
-  } catch (err) {
-    console.warn("[SING] btch.youtube primary failed:", err.message);
   }
 
   // 2. Secondary: Toshiro YouTube Audio API
-  try {
-    const ytAudioUrl = `https://toshiro-api-editz6t9.vercel.app/api/downloader/yt-audio?url=${encodeURIComponent(youtubeUrl)}&quality=128`;
-    const res = await client.get(ytAudioUrl, { timeout: 15000 });
-    const r = res.data?.result;
-    const dl = r?.download_url || r?.preview;
-    if (res.data?.success && dl) {
-      return {
-        audioUrl: dl,
-        title: r.title || titleFallback || "YouTube Audio",
-        quality: r.quality || "128kbps",
-        duration: r.duration || "N/A"
-      };
-    }
-  } catch (err) {
-    console.warn("[SING] Toshiro yt-audio failed:", err.message);
+  if (youtubeUrl) {
+    try {
+      const ytAudioUrl = `https://toshiro-api-editz6t9.vercel.app/api/downloader/yt-audio?url=${encodeURIComponent(youtubeUrl)}&quality=128`;
+      const res = await client.get(ytAudioUrl, { timeout: 10000 });
+      const r = res.data?.result;
+      const dl = r?.download_url || r?.preview;
+
+      if (res.data?.success && dl) {
+        const audioRes = await axios.get(dl, { responseType: "arraybuffer", timeout: 20000 });
+        if (audioRes.data && audioRes.data.length > 30000) {
+          const stream = Readable.from(Buffer.from(audioRes.data));
+          stream.path = "sing.mp3";
+          return {
+            stream,
+            title: r.title || titleFallback || "YouTube Audio",
+            duration: r.duration || "N/A",
+            quality: r.quality || "128kbps"
+          };
+        }
+      }
+    } catch (_) {}
   }
 
-  // 3. Tertiary: Toshiro yta2 search/downloader
-  try {
-    const queryTerm = titleFallback || youtubeUrl;
-    const yta2Url = `https://toshiro-api-editz6t9.vercel.app/api/downloader/yta2?search=${encodeURIComponent(queryTerm)}&download=1`;
-    const res = await client.get(yta2Url, { timeout: 15000 });
-    const dl = res.data?.download_url || res.data?.result?.download_url || res.data?.result?.audio;
-    if (dl) {
-      return {
-        audioUrl: dl,
-        title: res.data?.title || res.data?.result?.title || titleFallback || "YouTube Audio",
-        quality: "128kbps",
-        duration: "N/A"
-      };
-    }
-  } catch (err) {
-    console.warn("[SING] Toshiro yta2 failed:", err.message);
+  // 3. Tertiary: btch-downloader MP3
+  if (youtubeUrl) {
+    try {
+      const res = await btch.youtube(youtubeUrl);
+      if (res && res.status !== false && res.mp3) {
+        const stream = await global.utils.getStreamFromURL(res.mp3, "sing.mp3");
+        return {
+          stream,
+          title: res.title || titleFallback || "YouTube Audio",
+          duration: res.duration || "N/A",
+          quality: "128kbps"
+        };
+      }
+    } catch (_) {}
   }
 
-  // 4. Quaternary fallback: public high-reliability ytdl mirror
-  try {
-    const mirrorUrl = `https://api.siputzx.my.id/api/d/ytmp3?url=${encodeURIComponent(youtubeUrl)}`;
-    const { data } = await client.get(mirrorUrl, { timeout: 15000 });
-    if (data?.status && (data?.data?.dl || data?.data?.url)) {
-      return {
-        audioUrl: data.data.dl || data.data.url,
-        title: data.data.title || titleFallback || "YouTube Audio",
-        quality: "128kbps",
-        duration: "N/A"
-      };
-    }
-  } catch (err) {
-    console.warn("[SING] Secondary mirror failed:", err.message);
+  // 4. Quaternary: Public mirror
+  if (youtubeUrl) {
+    try {
+      const mirrorUrl = `https://api.siputzx.my.id/api/d/ytmp3?url=${encodeURIComponent(youtubeUrl)}`;
+      const { data } = await client.get(mirrorUrl, { timeout: 10000 });
+      const dl = data?.data?.dl || data?.data?.url;
+      if (dl) {
+        const stream = await global.utils.getStreamFromURL(dl, "sing.mp3");
+        return {
+          stream,
+          title: data.data.title || titleFallback || "YouTube Audio",
+          duration: "N/A",
+          quality: "128kbps"
+        };
+      }
+    } catch (_) {}
   }
 
   return null;
@@ -79,7 +109,7 @@ module.exports = {
   config: {
     name: "sing",
     aliases: ["song", "music", "play"],
-    version: "3.0.0",
+    version: "3.1.0",
     author: "frnAlt",
     countDown: 5,
     role: 0,
@@ -96,7 +126,7 @@ module.exports = {
     const isSpotify = /(?:open\.spotify\.com\/track\/|spotify\.link\/|spotify:track:)/i.test(query);
     const isYtUrl = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be)\//i.test(query);
 
-    if (api.setMessageReaction) {
+    if (api && api.setMessageReaction) {
       api.setMessageReaction("🎵", event.messageID, () => {}, true);
     }
 
@@ -117,19 +147,10 @@ module.exports = {
           }
         } catch (_) {}
 
-        // 2. Secondary fallback: Siputzx spotify
-        if (!audioUrl) {
-          const spUrl = `https://api.siputzx.my.id/api/d/spotify?url=${encodeURIComponent(query)}`;
-          const res = await client.get(spUrl, { timeout: 20000 });
-          audioUrl = res.data?.data?.download || res.data?.data?.url || res.data?.download_url;
-          title = res.data?.data?.title || title;
-          artist = res.data?.data?.artist || "";
-        }
-
         if (!audioUrl) throw new Error("Could not extract Spotify audio stream.");
 
         const audioStream = await global.utils.getStreamFromURL(audioUrl, "sing_spotify.mp3");
-        if (api.setMessageReaction) api.setMessageReaction("✅", event.messageID, () => {}, true);
+        if (api && api.setMessageReaction) api.setMessageReaction("✅", event.messageID, () => {}, true);
 
         return message.reply({
           body: `🎵 Title: ${title}${artist ? `\n👤 Artist: ${artist}` : ""}\n🎼 Source: Spotify`,
@@ -137,7 +158,7 @@ module.exports = {
         });
       } catch (err) {
         console.error("[SING] Spotify download error:", err.message);
-        if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+        if (api && api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
         return message.reply(`❌ Spotify download failed: ${err.message || err}`);
       }
     }
@@ -145,22 +166,27 @@ module.exports = {
     // ── Mode 2: Direct YouTube URL ──
     if (isYtUrl) {
       try {
-        const audioData = await getYouTubeAudio(query);
-        if (!audioData || !audioData.audioUrl) {
-          if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
-          return message.reply("❌ Could not download YouTube audio from this link.");
+        let searchTitle = "YouTube Audio";
+        try {
+          const searchRes = await yts(query);
+          if (searchRes?.videos?.[0]) searchTitle = searchRes.videos[0].title;
+        } catch (_) {}
+
+        const audioData = await getAudioForTrack(searchTitle, query);
+        if (!audioData || !audioData.stream) {
+          if (api && api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+          return message.reply("❌ Could not download audio from this YouTube link.");
         }
 
-        const audioStream = await global.utils.getStreamFromURL(audioData.audioUrl, "sing.mp3");
-        if (api.setMessageReaction) api.setMessageReaction("✅", event.messageID, () => {}, true);
+        if (api && api.setMessageReaction) api.setMessageReaction("✅", event.messageID, () => {}, true);
 
         return message.reply({
-          body: `🎧 Title: ${audioData.title}\n🎼 Quality: ${audioData.quality}`,
-          attachment: audioStream
+          body: `🎧 Title: ${audioData.title || searchTitle}\n🎼 Quality: ${audioData.quality || "128kbps"}`,
+          attachment: audioData.stream
         });
       } catch (err) {
         console.error("[SING] Direct YouTube download error:", err.message);
-        if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+        if (api && api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
         return message.reply(`❌ Download error: ${err.message || err}`);
       }
     }
@@ -171,7 +197,7 @@ module.exports = {
       const videos = searchRes?.videos || [];
 
       if (videos.length === 0) {
-        if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+        if (api && api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
         return message.reply(`❌ No songs found for "${query}".`);
       }
 
@@ -188,7 +214,7 @@ module.exports = {
 
       results.forEach((item, index) => {
         msg += `${index + 1}. ${item.title}\n[⏱️ ${item.duration} | 👤 ${item.author}]\n\n`;
-        if (item.thumbnail) {
+        if (item.thumbnail && global.utils?.getStreamFromURL) {
           thumbnailPromises.push(
             global.utils.getStreamFromURL(item.thumbnail, `sing_thumb_${index}.jpg`).catch(() => null)
           );
@@ -203,18 +229,20 @@ module.exports = {
         { body: msg.trim(), attachment: thumbnails },
         (err, info) => {
           if (err || !info) return;
-          global.GoatBot.onReply.set(info.messageID, {
-            commandName,
-            author: event.senderID,
-            threadID: event.threadID,
-            timestamp: Date.now(),
-            results
-          });
+          if (global.GoatBot?.onReply) {
+            global.GoatBot.onReply.set(info.messageID, {
+              commandName,
+              author: event.senderID,
+              threadID: event.threadID,
+              timestamp: Date.now(),
+              results
+            });
+          }
         }
       );
     } catch (e) {
       console.error("[SING] Search error:", e.message);
-      if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+      if (api && api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
       message.reply("❌ Search error. Please try again later.");
     }
   },
@@ -232,34 +260,32 @@ module.exports = {
     const selected = Reply.results[choice - 1];
     if (typeof Reply.delete === 'function') Reply.delete();
 
-    if (api.unsendMessage && event.messageReply?.messageID) {
+    if (api && api.unsendMessage && event.messageReply?.messageID) {
       api.unsendMessage(event.messageReply.messageID, event.threadID).catch(() => {});
     }
 
-    if (api.setMessageReaction) {
+    if (api && api.setMessageReaction) {
       api.setMessageReaction("⏳", event.messageID, () => {}, true);
     }
 
     try {
-      const audioData = await getYouTubeAudio(selected.url, selected.title);
-      if (!audioData || !audioData.audioUrl) {
-        if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
-        return message.reply(`❌ Could not fetch audio stream for "${selected.title}".`);
+      const audioData = await getAudioForTrack(selected.title, selected.url);
+      if (!audioData || !audioData.stream) {
+        if (api && api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+        return message.reply(`❌ Could not fetch audio stream for "${selected.title}". Please try another song.`);
       }
 
-      const audioStream = await global.utils.getStreamFromURL(audioData.audioUrl, "sing.mp3");
-
       await message.reply({
-        body: `🎧 ${audioData.title || selected.title}\n⏱️ Duration: ${selected.duration || "N/A"}\n🎼 Quality: ${audioData.quality || "128kbps"}`,
-        attachment: audioStream
+        body: `🎧 ${audioData.title || selected.title}\n⏱️ Duration: ${audioData.duration || selected.duration || "N/A"}\n🎼 Quality: ${audioData.quality || "128kbps"}`,
+        attachment: audioData.stream
       });
 
-      if (api.setMessageReaction) {
+      if (api && api.setMessageReaction) {
         api.setMessageReaction("✅", event.messageID, () => {}, true);
       }
     } catch (e) {
       console.error("[SING] onReply download error:", e.message);
-      if (api.setMessageReaction) {
+      if (api && api.setMessageReaction) {
         api.setMessageReaction("❌", event.messageID, () => {}, true);
       }
       message.reply("❌ Failed to download audio. Please try another song or reply again.");
