@@ -1,6 +1,7 @@
 const axios = require("axios");
 const { Jimp } = require("jimp");
 const { Readable } = require("stream");
+const { renderJailEffect, isCanvasAvailable } = require("../../func/canvasHelper.js");
 
 async function extractImageUrl(args, event, api) {
   if (global.utils && typeof global.utils.extractImageUrl === "function") {
@@ -43,14 +44,14 @@ async function extractImageUrl(args, event, api) {
 const AVAILABLE_ACTIONS = [
   "circle", "rounded", "resize", "crop", "rotate", "flip",
   "blur", "sharpen", "grayscale", "greyscale", "sepia", "invert",
-  "brightness", "contrast"
+  "brightness", "contrast", "jail", "prison"
 ];
 
 module.exports = {
   config: {
     name: "canvas",
     aliases: ["imgcanvas", "canvasfx", "filterimg"],
-    version: "2.1.0",
+    version: "2.2.0",
     author: "frnAlt",
     countDown: 5,
     role: 0,
@@ -58,11 +59,11 @@ module.exports = {
       en: "Apply image manipulations and filters using Canvas API"
     },
     longDescription: {
-      en: "Apply various canvas actions and filters: circle, rounded, blur, sharpen, grayscale, sepia, invert, brightness, contrast, saturation, hue, rotate, flip, resize"
+      en: "Apply various canvas actions and filters: circle, rounded, blur, sharpen, grayscale, sepia, invert, brightness, contrast, rotate, flip, resize, jail"
     },
     category: "image",
     guide: {
-      en: "{pn} <action> [value] | Reply to an image\n\nActions:\ncircle, rounded, blur, sharpen, grayscale, sepia, invert, brightness, contrast, rotate, flip\n\nExample:\n• {pn} grayscale\n• {pn} blur 10\n• {pn} circle"
+      en: "{pn} <action> [value] | Reply to an image\n\nActions:\ncircle, rounded, blur, sharpen, grayscale, sepia, invert, brightness, contrast, rotate, flip, jail\n\nExample:\n• {pn} jail\n• {pn} grayscale\n• {pn} blur 10\n• {pn} circle"
     }
   },
 
@@ -73,11 +74,12 @@ module.exports = {
     if (!action || !AVAILABLE_ACTIONS.includes(action)) {
       return message.reply(
         `🎨 Available Canvas Actions:\n\n` +
+        `• Effects: jail (iron bars), circle, rounded\n` +
         `• Filters: grayscale, sepia, invert, blur [val]\n` +
         `• Adjustments: brightness [val], contrast [val]\n` +
-        `• Shapes & Transforms: circle, rounded, rotate [deg], flip [h/v], resize [w] [h]\n\n` +
+        `• Transforms: rotate [deg], flip [h/v], resize [w] [h]\n\n` +
         `💡 Usage: Reply to an image (or mention a user) with:\n${prefix}${commandName} <action> [value]\n` +
-        `Example: ${prefix}${commandName} circle`
+        `Example: ${prefix}${commandName} jail`
       );
     }
 
@@ -93,6 +95,38 @@ module.exports = {
     }
 
     try {
+      if (action === "jail" || action === "prison") {
+        let stream;
+        if (isCanvasAvailable && typeof renderJailEffect === "function") {
+          try {
+            const buf = await renderJailEffect(imageUrl);
+            stream = Readable.from(buf);
+            stream.path = "canvas_jail.png";
+          } catch (cErr) {
+            console.warn("[CANVAS] Native jail render failed:", cErr.message);
+          }
+        }
+        if (!stream) {
+          const toshiroUrl = `https://toshiro-api-editz6t9.vercel.app/api/canvas/jail?image=${encodeURIComponent(imageUrl)}`;
+          if (global.utils && typeof global.utils.getStreamFromURL === "function") {
+            stream = await global.utils.getStreamFromURL(toshiroUrl, "canvas_jail.png");
+          } else {
+            const res = await axios.get(toshiroUrl, { responseType: "stream", timeout: 15000 });
+            stream = res.data;
+            stream.path = "canvas_jail.png";
+          }
+        }
+
+        if (api?.setMessageReaction) {
+          api.setMessageReaction("✅", event.messageID, () => {}, true);
+        }
+
+        return message.reply({
+          body: `⛓️ Canvas Action: JAIL applied! Behind bars! 🚓`,
+          attachment: stream
+        });
+      }
+
       const jimg = await Jimp.read(imageUrl);
       if (action === "circle" || action === "rounded") {
         jimg.circle();

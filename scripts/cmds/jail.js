@@ -1,10 +1,12 @@
 const axios = require("axios");
+const { Readable } = require("stream");
+const { renderJailEffect, isCanvasAvailable } = require("../../func/canvasHelper.js");
 
 module.exports = {
   config: {
     name: "jail",
-    aliases: ["prison", "inmate"],
-    version: "1.1.0",
+    aliases: ["prison", "inmate", "jailcanvas"],
+    version: "2.0.0",
     author: "frnAlt",
     countDown: 5,
     role: 0,
@@ -12,11 +14,11 @@ module.exports = {
       en: "Apply jail canvas effect"
     },
     longDescription: {
-      en: "Generate a jail effect image for yourself, a mentioned user, or a replied photo/user avatar"
+      en: "Generate a realistic jail iron bars effect image for yourself, a mentioned user, or a replied photo/avatar"
     },
     category: "canvas",
     guide: {
-      en: "{pn} (self avatar)\n{pn} @mention\n{pn} (reply to user or image)"
+      en: "{pn} (self avatar)\n{pn} @mention\n{pn} (reply to user or image)\n{pn} <image-url | UID>"
     }
   },
 
@@ -62,25 +64,47 @@ module.exports = {
       imageUrl = `https://graph.facebook.com/${event.senderID}/picture?width=720&height=720&access_token=${token}`;
     }
 
-    if (api.setMessageReaction) {
+    if (api && api.setMessageReaction) {
       api.setMessageReaction("⛓️", event.messageID, () => {}, true);
     }
 
     try {
-      const apiUrl = `https://toshiro-api-editz6t9.vercel.app/api/canvas/jail?image=${encodeURIComponent(imageUrl)}`;
-      const stream = await global.utils.getStreamFromURL(apiUrl, "jail.png");
+      let attachmentStream;
+
+      // 1. Try local Canvas rendering first (fastest, offline, high fidelity)
+      if (isCanvasAvailable && typeof renderJailEffect === "function") {
+        try {
+          const buffer = await renderJailEffect(imageUrl);
+          attachmentStream = Readable.from(buffer);
+          attachmentStream.path = "jail_canvas.png";
+        } catch (canvasErr) {
+          console.warn("[JAIL] Canvas rendering failed, trying API fallback:", canvasErr.message);
+        }
+      }
+
+      // 2. Try remote API fallback if canvas stream was not created
+      if (!attachmentStream) {
+        const apiUrl = `https://toshiro-api-editz6t9.vercel.app/api/canvas/jail?image=${encodeURIComponent(imageUrl)}`;
+        if (global.utils && typeof global.utils.getStreamFromURL === "function") {
+          attachmentStream = await global.utils.getStreamFromURL(apiUrl, "jail.png");
+        } else {
+          const res = await axios.get(apiUrl, { responseType: "stream", timeout: 15000 });
+          attachmentStream = res.data;
+          attachmentStream.path = "jail.png";
+        }
+      }
 
       await message.reply({
         body: "⛓️ Behind bars! You've been put in jail! 🚓",
-        attachment: stream
+        attachment: attachmentStream
       });
 
-      if (api.setMessageReaction) {
+      if (api && api.setMessageReaction) {
         api.setMessageReaction("✅", event.messageID, () => {}, true);
       }
     } catch (error) {
       console.error("Jail command error:", error);
-      if (api.setMessageReaction) {
+      if (api && api.setMessageReaction) {
         api.setMessageReaction("❌", event.messageID, () => {}, true);
       }
       return message.reply(`❌ Failed to generate jail image: ${error.message || error}`);
