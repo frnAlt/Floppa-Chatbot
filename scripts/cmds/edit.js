@@ -260,7 +260,7 @@ module.exports = {
       }
 
       await message.reply({
-        body: `✨ ${appliedType} Applied!\n📝 Prompt: "${prompt}"`,
+        body: "✅ Image edited successfully",
         attachment: finalStream
       });
     } catch (err) {
@@ -268,7 +268,7 @@ module.exports = {
       if (api?.setMessageReaction) {
         api.setMessageReaction("❌", event.messageID, () => {}, true);
       }
-      return message.reply(`❌ Failed to edit image: ${err.message || err}`);
+      return message.reply(`Failed to edit image: ${err.message || err}`);
     }
   }
 };

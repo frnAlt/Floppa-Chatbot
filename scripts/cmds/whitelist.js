@@ -107,6 +107,9 @@ module.exports = {
 
 					return message.reply(getLang("threadList", threads.length, list.join("\n")));
 				}
+
+				default:
+					return message.SyntaxError();
 			}
 		}
 

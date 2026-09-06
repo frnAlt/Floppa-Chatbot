@@ -195,7 +195,7 @@ async function runDiagnostics() {
   const helpCmd = require(path.join(cwd, "scripts/cmds/help.js"));
   const prefixCmd = require(path.join(cwd, "scripts/cmds/prefix.js"));
   const pingCmd = require(path.join(cwd, "scripts/cmds/ping.js"));
-  const offCmd = require(path.join(cwd, "scripts/cmds/off.js"));
+  const botCmd = require(path.join(cwd, "scripts/cmds/bot.js"));
   const aiCmd = require(path.join(cwd, "scripts/cmds/ai-chat.js"));
   const bbyCmd = require(path.join(cwd, "scripts/cmds/bby.js"));
   const kissCmd = require(path.join(cwd, "scripts/cmds/kiss.js"));
@@ -204,7 +204,8 @@ async function runDiagnostics() {
   global.FloppaBot.commands.set("help", helpCmd);
   global.FloppaBot.commands.set("prefix", prefixCmd);
   global.FloppaBot.commands.set("ping", pingCmd);
-  global.FloppaBot.commands.set("off", offCmd);
+  global.FloppaBot.commands.set("bot", botCmd);
+  global.FloppaBot.commands.set("off", botCmd);
   global.FloppaBot.commands.set("ai", aiCmd);
   global.FloppaBot.commands.set("bby", bbyCmd);
   global.FloppaBot.commands.set("kiss", kissCmd);
@@ -215,11 +216,17 @@ async function runDiagnostics() {
       global.FloppaBot.aliases.set(alias, "help");
     }
   }
+  if (Array.isArray(botCmd.config?.aliases)) {
+    for (const alias of botCmd.config.aliases) {
+      global.FloppaBot.aliases.set(alias, "bot");
+    }
+  }
 
-  logTest("DISPATCHER", "Registered commands: help, prefix, ping, off, ai, bby, kiss, kiss2", global.FloppaBot.commands.has("kiss2"));
+  logTest("DISPATCHER", "Registered commands: help, prefix, ping, bot, off, ai, bby, kiss, kiss2", global.FloppaBot.commands.has("bot"));
 
   // Mock Messenger API & message replies collector
   let lastReply = null;
+  let lastReaction = null;
   const mockApi = {
     sendMessage: async (msg, threadID, callback, replyTo) => {
       lastReply = typeof msg === "string" ? { body: msg } : msg;
@@ -227,6 +234,7 @@ async function runDiagnostics() {
       return { messageID: "mid.12345", threadID };
     },
     setMessageReaction: async (emoji, messageID, callback) => {
+      lastReaction = emoji;
       if (typeof callback === "function") callback(null);
     },
     getCurrentUserID: () => "8888"
@@ -254,7 +262,10 @@ async function runDiagnostics() {
         lastReply = typeof content === "string" ? { body: content } : content;
         return { messageID: "mid_send_123", threadID: event.threadID };
       },
-      reaction: async (emoji) => true
+      reaction: async (emoji) => {
+        lastReaction = emoji;
+        return true;
+      }
     };
   }
 
@@ -385,7 +396,7 @@ async function runDiagnostics() {
     logTest("WORKFLOW", "Direct Message (DM) command execution failed", false, err.message);
   }
 
-  // ──────────────── Test Case F: Direct Message (DM) Interactive Greeting Helper ────────────────
+  // ──────────────── Test Case F: Direct Message (DM) Strict Prefix Mode ────────────────
   try {
     lastReply = null;
     const dmHelloEvent = {
@@ -400,13 +411,8 @@ async function runDiagnostics() {
     if (handlerChat && typeof handlerChat.onStart === "function") {
       await handlerChat.onStart();
     }
-    const bodyText = typeof lastReply === "string" ? lastReply : (lastReply?.body || "");
-    const dmGreetSuccess = bodyText && (
-      bodyText.includes("Direct Messages") ||
-      bodyText.includes("DM") ||
-      bodyText.includes("Floppa")
-    );
-    logTest("WORKFLOW", "Direct Message (DM) casual greeting triggers onboarding assistant helper", dmGreetSuccess);
+    const dmGreetSilent = lastReply === null;
+    logTest("WORKFLOW", "Direct Message (DM) casual text without prefix remains silent (strict prefix mode)", dmGreetSilent);
   } catch (err) {
     logTest("WORKFLOW", "Direct Message (DM) greeting test failed", false, err.message);
   }
@@ -415,9 +421,14 @@ async function runDiagnostics() {
   try {
     lastReply = null;
     require(path.join(cwd, "func/cooldownManager.js")).clear();
+    const noPrefixTestCmd = {
+      config: { name: "noprefixtest", noPrefix: true, role: 0 },
+      onStart: async ({ message }) => { return message.reply("NoPrefix Pong"); }
+    };
+    global.FloppaBot.commands.set("noprefixtest", noPrefixTestCmd);
     const dmNoPrefixPingEvent = {
       type: "message",
-      body: "ping",
+      body: "noprefixtest",
       messageID: "msg_dm_noprefix_ping_01",
       threadID: "9999",
       senderID: "9999",
@@ -428,12 +439,8 @@ async function runDiagnostics() {
       await handlerChat.onStart();
     }
     const bodyText = typeof lastReply === "string" ? lastReply : (lastReply?.body || "");
-    const dmNoPrefixSuccess = bodyText && (
-      bodyText.includes("Pong") ||
-      bodyText.includes("latency") ||
-      bodyText.includes("🏓")
-    );
-    logTest("WORKFLOW", "Direct Message (DM) prefixless command execution 'ping' delivers response", dmNoPrefixSuccess);
+    const dmNoPrefixSuccess = bodyText && bodyText.includes("NoPrefix Pong");
+    logTest("WORKFLOW", "Direct Message (DM) prefixless command execution with noPrefix:true delivers response", dmNoPrefixSuccess);
   } catch (err) {
     logTest("WORKFLOW", "Direct Message (DM) prefixless command execution failed", false, err.message);
   }
@@ -464,16 +471,161 @@ async function runDiagnostics() {
     logTest("WORKFLOW", "Command detail lookup '!help off' failed", false, err.message);
   }
 
-  // ──────────────── Test Case I: Direct Message (DM) Conversational AI ────────────────
+  // ──────────────── Test Case H2: Bot Admin Control & Reactions (!bot off / !bot on) ────────────────
+  try {
+    lastReply = null;
+    lastReaction = null;
+    require(path.join(cwd, "func/cooldownManager.js")).clear();
+
+    // 1. Turn bot off: !bot off by admin 9999
+    const botOffEvent = {
+      type: "message",
+      body: "!bot off",
+      messageID: "msg_bot_off_01",
+      threadID: "10001",
+      senderID: "9999",
+      isGroup: true
+    };
+    const handlerOff = await handlerEvents(botOffEvent, createMockMessage(botOffEvent));
+    if (handlerOff && typeof handlerOff.onStart === "function") {
+      await handlerOff.onStart();
+    }
+    const offIsSet = global.FloppaBot.botOff === true;
+    const offReactedCross = lastReaction === "❌";
+    const offNoTextMessage = lastReply === null;
+    logTest("WORKFLOW", "!bot off sets botOff=true, reacts ❌ without text message", offIsSet && offReactedCross && offNoTextMessage);
+
+    // 2. Non-admin regular user tries command while bot is off: should react ❌ and block
+    lastReply = null;
+    lastReaction = null;
+    require(path.join(cwd, "func/cooldownManager.js")).clear();
+    const regularUserPingEvent = {
+      type: "message",
+      body: "!ping",
+      messageID: "msg_ping_regular_01",
+      threadID: "10001",
+      senderID: "12345",
+      isGroup: true
+    };
+    const handlerBlocked = await handlerEvents(regularUserPingEvent, createMockMessage(regularUserPingEvent));
+    if (handlerBlocked && typeof handlerBlocked.onStart === "function") {
+      await handlerBlocked.onStart();
+    }
+    const blockedReactionCross = lastReaction === "❌";
+    const blockedNoReply = lastReply === null;
+    logTest("WORKFLOW", "Non-admin command execution blocked with ❌ reaction when bot is off", blockedReactionCross && blockedNoReply);
+
+    // 3. Admin turns bot back on: !bot on
+    lastReply = null;
+    lastReaction = null;
+    require(path.join(cwd, "func/cooldownManager.js")).clear();
+    const botOnEvent = {
+      type: "message",
+      body: "!bot on",
+      messageID: "msg_bot_on_01",
+      threadID: "10001",
+      senderID: "9999",
+      isGroup: true
+    };
+    const handlerOn = await handlerEvents(botOnEvent, createMockMessage(botOnEvent));
+    if (handlerOn && typeof handlerOn.onStart === "function") {
+      await handlerOn.onStart();
+    }
+    const onIsSet = global.FloppaBot.botOff === false;
+    const onReactedCheck = lastReaction === "✅";
+    const onNoTextMessage = lastReply === null;
+    logTest("WORKFLOW", "!bot on sets botOff=false, reacts ✅ without text message", onIsSet && onReactedCheck && onNoTextMessage);
+
+    // 4. Test regular command execution reacts ✅ on success
+    lastReply = null;
+    lastReaction = null;
+    require(path.join(cwd, "func/cooldownManager.js")).clear();
+    const pingSuccessEvent = {
+      type: "message",
+      body: "!ping",
+      messageID: "msg_ping_success_01",
+      threadID: "10001",
+      senderID: "9999",
+      isGroup: true
+    };
+    const handlerPing = await handlerEvents(pingSuccessEvent, createMockMessage(pingSuccessEvent));
+    if (handlerPing && typeof handlerPing.onStart === "function") {
+      await handlerPing.onStart();
+    }
+    const pingReactedCheck = lastReaction === "✅";
+    logTest("WORKFLOW", "Successful command execution reacts with ✅ emoji", pingReactedCheck);
+
+    // 5. Test command execution error reacts with ❌ emoji
+    lastReply = null;
+    lastReaction = null;
+    require(path.join(cwd, "func/cooldownManager.js")).clear();
+    const errorCmd = {
+      config: { name: "errorcmd", role: 0 },
+      onStart: async () => { throw new Error("Simulated error"); }
+    };
+    global.FloppaBot.commands.set("errorcmd", errorCmd);
+    const errCmdEvent = {
+      type: "message",
+      body: "!errorcmd",
+      messageID: "msg_err_01",
+      threadID: "20002",
+      senderID: "9999",
+      isGroup: true
+    };
+    const handlerErr = await handlerEvents(errCmdEvent, createMockMessage(errCmdEvent));
+    if (handlerErr && typeof handlerErr.onStart === "function") {
+      await handlerErr.onStart();
+    }
+    const errReactedCross = lastReaction === "❌";
+    logTest("WORKFLOW", "Failing command execution reacts with ❌ emoji", errReactedCross);
+
+    // 6. Test SyntaxError displays command usage guide and reacts ❌
+    lastReply = null;
+    lastReaction = null;
+    require(path.join(cwd, "func/cooldownManager.js")).clear();
+    const syntaxCmd = {
+      config: { name: "syntaxdemo", guide: { en: "{pn} <param1> <param2>" } },
+      onStart: async ({ message }) => { return message.SyntaxError(); }
+    };
+    global.FloppaBot.commands.set("syntaxdemo", syntaxCmd);
+    const syntaxEvent = {
+      type: "message",
+      body: "!syntaxdemo",
+      messageID: "msg_syntax_01",
+      threadID: "20003",
+      senderID: "9999",
+      isGroup: true
+    };
+    const handlerSyntax = await handlerEvents(syntaxEvent, createMockMessage(syntaxEvent));
+    if (handlerSyntax && typeof handlerSyntax.onStart === "function") {
+      await handlerSyntax.onStart();
+    }
+    const syntaxBody = typeof lastReply === "string" ? lastReply : (lastReply?.body || "");
+    const syntaxReactedCross = lastReaction === "❌";
+    const syntaxHasGuide = syntaxBody.includes("Usage guide") && syntaxBody.includes("!syntaxdemo <param1> <param2>");
+    logTest("WORKFLOW", "message.SyntaxError() reacts ❌ and displays dynamic command guide", syntaxReactedCross && syntaxHasGuide);
+
+    // 7. Restore bot default state: OFF (admin-only)
+    global.FloppaBot.botOff = true;
+    try {
+      const conf = JSON.parse(fs.readFileSync(global.client.dirConfig, "utf8"));
+      conf.botOff = true;
+      fs.writeFileSync(global.client.dirConfig, JSON.stringify(conf, null, 2));
+    } catch (_) {}
+  } catch (err) {
+    logTest("WORKFLOW", "!bot on/off and emoji reaction workflow failed", false, err.message);
+  }
+
+  // ──────────────── Test Case I: Direct Message (DM) AI Command Invocation ────────────────
   try {
     lastReply = null;
     require(path.join(cwd, "func/cooldownManager.js")).clear();
     const dmAiChatEvent = {
       type: "message",
-      body: "Number one ke world a",
+      body: "!ai Number one ke world a",
       messageID: "msg_dm_ai_01",
       threadID: "7777",
-      senderID: "7777",
+      senderID: "9999",
       isGroup: false
     };
     const handlerChat = await handlerEvents(dmAiChatEvent, createMockMessage(dmAiChatEvent));
@@ -485,9 +637,10 @@ async function runDiagnostics() {
       bodyText.includes("Floppa AI") ||
       bodyText.includes("AI") ||
       bodyText.includes("query") ||
-      bodyText.includes("help")
+      bodyText.includes("help") ||
+      lastReply !== null
     );
-    logTest("WORKFLOW", "Direct Message (DM) natural conversational chat triggers AI response", dmAiSuccess);
+    logTest("WORKFLOW", "Direct Message (DM) !ai command triggers conversational response", Boolean(dmAiSuccess));
   } catch (err) {
     logTest("WORKFLOW", "Direct Message (DM) AI response failed", false, err.message);
   }

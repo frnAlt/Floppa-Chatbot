@@ -1,14 +1,173 @@
 /**
  * @author frnAlt
  * ! Floppa-Chatbot Help & Command Navigation Engine
- * ! Paginated, categorized, and interactive command menu
+ * ! Paginated, categorized, and interactive command menu with full guide extraction
  */
+
+function extractCommandDetails(cmd, name, prefix) {
+  const cfg = cmd.config || cmd.meta || {};
+  const cmdName = cfg.name || name;
+  const category = (cfg.category || "utility").toLowerCase();
+
+  // 1. Resolve short description
+  let description = "No description available";
+  if (typeof cfg.shortDescription === "string" && cfg.shortDescription.trim()) {
+    description = cfg.shortDescription.trim();
+  } else if (typeof cfg.shortDescription?.en === "string" && cfg.shortDescription.en.trim()) {
+    description = cfg.shortDescription.en.trim();
+  } else if (typeof cfg.description === "string" && cfg.description.trim()) {
+    description = cfg.description.trim();
+  } else if (typeof cfg.description?.en === "string" && cfg.description.en.trim()) {
+    description = cfg.description.en.trim();
+  } else if (typeof cfg.description?.vi === "string" && cfg.description.vi.trim()) {
+    description = cfg.description.vi.trim();
+  } else if (typeof cfg.description === "object" && cfg.description !== null) {
+    const val = Object.values(cfg.description).find(v => typeof v === "string" && v.trim());
+    if (val) description = val.trim();
+  }
+
+  // 2. Resolve detailed long description
+  let longDesc = null;
+  if (typeof cfg.longDescription === "string" && cfg.longDescription.trim()) {
+    longDesc = cfg.longDescription.trim();
+  } else if (typeof cfg.longDescription?.en === "string" && cfg.longDescription.en.trim()) {
+    longDesc = cfg.longDescription.en.trim();
+  } else if (typeof cfg.longDescription?.vi === "string" && cfg.longDescription.vi.trim()) {
+    longDesc = cfg.longDescription.vi.trim();
+  } else if (typeof cfg.longDescription === "object" && cfg.longDescription !== null) {
+    const val = Object.values(cfg.longDescription).find(v => typeof v === "string" && v.trim());
+    if (val) longDesc = val.trim();
+  }
+  if (longDesc === description) longDesc = null;
+
+  const replacePlaceholders = (text) => {
+    if (!text) return text;
+    return text
+      .replace(/{pn}/g, `${prefix}${cmdName}`)
+      .replace(/{p}{n}/g, `${prefix}${cmdName}`)
+      .replace(/{prefix}{name}/g, `${prefix}${cmdName}`)
+      .replace(/{p}/g, prefix)
+      .replace(/{prefix}/g, prefix)
+      .replace(/{n}/g, cmdName)
+      .replace(/{name}/g, cmdName);
+  };
+
+  description = replacePlaceholders(description);
+  if (longDesc) longDesc = replacePlaceholders(longDesc);
+
+  // 3. Resolve usage & guide across all schemas
+  let rawGuide = "";
+  if (typeof cfg.guide === "string" && cfg.guide.trim()) {
+    rawGuide = cfg.guide.trim();
+  } else if (typeof cfg.guide?.en === "string" && cfg.guide.en.trim()) {
+    rawGuide = cfg.guide.en.trim();
+  } else if (typeof cfg.guide?.vi === "string" && cfg.guide.vi.trim()) {
+    rawGuide = cfg.guide.vi.trim();
+  } else if (typeof cfg.guide === "object" && cfg.guide !== null) {
+    const val = Object.values(cfg.guide).find(v => typeof v === "string" && v.trim());
+    if (val) rawGuide = val.trim();
+  } else if (typeof cfg.usage === "string" && cfg.usage.trim()) {
+    rawGuide = cfg.usage.trim();
+  } else if (typeof cfg.usage?.en === "string" && cfg.usage.en.trim()) {
+    rawGuide = cfg.usage.en.trim();
+  } else if (typeof cfg.usage === "object" && cfg.usage !== null) {
+    const val = Object.values(cfg.usage).find(v => typeof v === "string" && v.trim());
+    if (val) rawGuide = val.trim();
+  } else if (typeof cfg.use === "string" && cfg.use.trim()) {
+    rawGuide = cfg.use.trim();
+  } else if (typeof cfg.syntax === "string" && cfg.syntax.trim()) {
+    rawGuide = cfg.syntax.trim();
+  }
+
+  if (!rawGuide || rawGuide === `${prefix}${cmdName}`) {
+    if (longDesc) {
+      rawGuide = `${prefix}${cmdName}\n${longDesc}`;
+    } else if (description && description !== "No description available") {
+      rawGuide = `${prefix}${cmdName}\n💡 ${description}`;
+    } else {
+      rawGuide = `${prefix}${cmdName}`;
+    }
+  }
+
+  // Replace all template placeholders accurately
+  const formattedUsage = rawGuide
+    .replace(/{pn}/g, `${prefix}${cmdName}`)
+    .replace(/{p}{n}/g, `${prefix}${cmdName}`)
+    .replace(/{prefix}{name}/g, `${prefix}${cmdName}`)
+    .replace(/{p}/g, prefix)
+    .replace(/{prefix}/g, prefix)
+    .replace(/{n}/g, cmdName)
+    .replace(/{name}/g, cmdName);
+
+  const role = cfg.role !== undefined ? cfg.role : (cfg.hasPermission || 0);
+  const countDown = cfg.countDown !== undefined ? cfg.countDown : (cfg.cooldowns || 1);
+
+  return {
+    name: cmdName,
+    category,
+    description,
+    longDescription: longDesc,
+    role,
+    countDown,
+    aliases: cfg.aliases || cfg.otherNames || [],
+    usage: formattedUsage,
+    author: cfg.author || "frnAlt",
+    version: cfg.version || "1.0.0"
+  };
+}
+
+function formatCommandDetail(found) {
+  const roleStr = found.role === 2
+    ? "Bot Admin (Role 2)"
+    : found.role === 1
+    ? "Group Admin (Role 1)"
+    : "All Users (Role 0)";
+
+  let card =
+`╭─── [ 🐱 FLOPPA COMMAND INFO ] ───╮
+│ 📌 Name        : ${found.name}
+│ 📁 Category    : ${found.category.toUpperCase()}
+│ 📝 Description : ${found.description}\n`;
+
+  if (found.longDescription) {
+    card += `│ ℹ️ Details     : ${found.longDescription}\n`;
+  }
+
+  card +=
+`│ 🔀 Aliases     : ${found.aliases.length > 0 ? found.aliases.join(", ") : "None"}
+│ ⏱️ Cooldown    : ${found.countDown}s
+│ 🔰 Permission  : ${roleStr}
+│ 👤 Author      : ${found.author}
+│ 🏷️ Version     : ${found.version}
+╰───────────────────────────────╯
+
+📖 Usage & Guide:
+${found.usage}`;
+
+  return card;
+}
+
+function buildCommandList(prefix) {
+  const allCommands = global.FloppaBot?.commands || global.GoatBot?.commands || new Map();
+  const cmdList = [];
+  const categories = {};
+
+  for (const [name, cmd] of allCommands) {
+    const info = extractCommandDetails(cmd, name, prefix);
+    cmdList.push(info);
+    if (!categories[info.category]) categories[info.category] = [];
+    categories[info.category].push(info);
+  }
+
+  cmdList.sort((a, b) => a.name.localeCompare(b.name));
+  return { cmdList, categories };
+}
 
 module.exports = {
   config: {
     name: "help",
     aliases: ["menu", "commands", "cmds", "allcmds", "guide"],
-    version: "7.0.0",
+    version: "7.1.0",
     author: "frnAlt",
     countDown: 2,
     role: 0,
@@ -21,82 +180,35 @@ module.exports = {
     category: "system",
     guide: {
       en: "   {pn} [page number]: View specific page (e.g. {pn} 2)\n" +
-        "   {pn} [command name]: View specific command details\n" +
+        "   {pn} [command name]: View specific command details & usage\n" +
         "   {pn} cat [category]: Filter commands by category\n" +
         "   {pn} all: View category summary overview"
     }
   },
 
-  onStart: async function ({ message, args, prefix, event }) {
-    const allCommands = global.FloppaBot?.commands || global.GoatBot?.commands || new Map();
-    const isDM = !event.isGroup || event.threadID === event.senderID;
+  onStart: async function ({ message, args, prefix }) {
+    const { cmdList, categories } = buildCommandList(prefix);
 
-    // Convert map to sorted command array
-    const cmdList = [];
-    const categories = {};
-
-    for (const [name, cmd] of allCommands) {
-      const cfg = cmd.config || cmd.meta || {};
-      const cmdName = cfg.name || name;
-      const category = (cfg.category || "Utility").toLowerCase();
-      const desc = typeof cfg.description === "string" 
-        ? cfg.description 
-        : (cfg.description?.en || cfg.shortDescription?.en || cfg.shortDescription || "No description");
-      const role = cfg.role !== undefined ? cfg.role : (cfg.hasPermission || 0);
-
-      const cmdInfo = {
-        name: cmdName,
-        category,
-        description: desc,
-        role,
-        aliases: cfg.aliases || cfg.otherNames || [],
-        usage: cfg.guide?.en || cfg.usage || `${prefix}${cmdName}`,
-        author: cfg.author || "frnAlt",
-        version: cfg.version || "1.0.0"
-      };
-
-      cmdList.push(cmdInfo);
-      if (!categories[category]) categories[category] = [];
-      categories[category].push(cmdInfo);
-    }
-
-    cmdList.sort((a, b) => a.name.localeCompare(b.name));
-
-    // Case 1: Specific Command Lookup (if not number or keyword)
+    // Case 1: Specific Command Lookup
     if (args[0] && isNaN(args[0]) && !["all", "cat", "category", "categories"].includes(args[0].toLowerCase())) {
       const query = args[0].toLowerCase();
 
-      // Check if user is searching for category
       if (categories[query]) {
         return renderCategory(categories[query], query, prefix, message);
       }
 
-      // Find command by name or alias
       const found = cmdList.find(c => c.name.toLowerCase() === query || c.aliases.map(a => a.toLowerCase()).includes(query));
       if (!found) {
-        return message.reply(`❌ Command or category "${query}" not found. Type ${prefix}help to see available pages.`);
+        return message.reply(`❌ Command or category "${query}" not found. Type ${prefix}help to see available commands.`);
       }
 
-      const roleStr = found.role === 2 ? "Admin Only (Role 2)" : found.role === 1 ? "Group Admin (Role 1)" : "All Users (Role 0)";
-
-      return message.reply(
-        `╭─── [ 🐱 𝗙𝗟𝗢𝗣𝗣𝗔 𝗖𝗢𝗠𝗠𝗔𝗡𝗗 𝗜𝗡𝗙𝗢 ] ───╮\n` +
-        `│ 📌 Name        : ${found.name}\n` +
-        `│ 📁 Category    : ${found.category.toUpperCase()}\n` +
-        `│ 📝 Description : ${found.description}\n` +
-        `│ 🔀 Aliases     : ${found.aliases.length > 0 ? found.aliases.join(", ") : "None"}\n` +
-        `│ 🔰 Permission  : ${roleStr}\n` +
-        `│ 👤 Author      : ${found.author}\n` +
-        `│ 🏷️ Version     : ${found.version}\n` +
-        `╰───────────────────────────────╯\n\n` +
-        `📖 Usage:\n${found.usage.replace(/{pn}|{prefix}/g, prefix)}`
-      );
+      return message.reply(formatCommandDetail(found));
     }
 
     // Case 2: Category Summary Overview
     if (args[0]?.toLowerCase() === "all" || args[0]?.toLowerCase() === "categories") {
       const sortedCatNames = Object.keys(categories).sort();
-      let summary = `╭─── [ 🐱 𝗙𝗟𝗢𝗣𝗣𝗔 𝗖𝗔𝗧𝗘𝗚𝗢𝗥𝗜𝗘𝗦 ] ───╮\n`;
+      let summary = `╭─── [ 🐱 FLOPPA CATEGORIES ] ───╮\n`;
       summary += `│ 👤 Author   : frnAlt\n`;
       summary += `│ 📦 Total    : ${cmdList.length} Commands across ${sortedCatNames.length} Categories\n`;
       summary += `╰───────────────────────────────╯\n\n`;
@@ -105,7 +217,7 @@ module.exports = {
         summary += `• ${cat.toUpperCase()} (${categories[cat].length} cmds)\n`;
       }
       summary += `\n💡 Type ${prefix}help cat <category> to view commands in a specific category.\n`;
-      summary += `💡 Type ${prefix}help <page> to browse page by page.`;
+      summary += `💡 Type ${prefix}help <command> to view detailed usage guide.`;
       return message.reply(summary);
     }
 
@@ -125,7 +237,7 @@ module.exports = {
     if (page < 1) page = 1;
     if (page > totalPages) page = totalPages;
 
-    return sendHelpPage(page, totalPages, cmdList, perPage, prefix, message, event.senderID);
+    return sendHelpPage(page, totalPages, cmdList, perPage, prefix, message);
   },
 
   onReply: async function ({ message, event, Reply, prefix }) {
@@ -134,69 +246,31 @@ module.exports = {
     const input = (event.body || "").trim();
     if (!input) return;
 
-    // Never intercept messages starting with common bot command prefixes
     if (/^[!#$%\&*+\-./:<=>?@\\^_`~]/.test(input)) return;
 
-    const allCommands = global.FloppaBot?.commands || global.GoatBot?.commands || new Map();
-
-    // Convert map to sorted command array
-    const cmdList = [];
-    for (const [name, cmd] of allCommands) {
-      const cfg = cmd.config || cmd.meta || {};
-      const cmdName = cfg.name || name;
-      const category = (cfg.category || "Utility").toLowerCase();
-      const desc = typeof cfg.description === "string" 
-        ? cfg.description 
-        : (cfg.description?.en || cfg.shortDescription?.en || cfg.shortDescription || "No description");
-      const role = cfg.role !== undefined ? cfg.role : (cfg.hasPermission || 0);
-
-      cmdList.push({
-        name: cmdName,
-        category,
-        description: desc,
-        role,
-        aliases: cfg.aliases || cfg.otherNames || [],
-        usage: cfg.guide?.en || cfg.usage || `${prefix}${cmdName}`,
-        author: cfg.author || "frnAlt",
-        version: cfg.version || "1.0.0"
-      });
-    }
-    cmdList.sort((a, b) => a.name.localeCompare(b.name));
+    const { cmdList } = buildCommandList(prefix);
 
     const perPage = 15;
     const totalPages = Math.ceil(cmdList.length / perPage) || 1;
 
-    // Check if reply is a page number (e.g. "2" or "page 2")
+    // Page navigation reply
     const pageMatch = input.match(/^(?:page\s*)?(\d+)$/i);
     if (pageMatch) {
       let page = parseInt(pageMatch[1], 10);
       if (page < 1) page = 1;
       if (page > totalPages) page = totalPages;
       if (typeof Reply.delete === "function") Reply.delete();
-      return sendHelpPage(page, totalPages, cmdList, perPage, prefix, message, event.senderID);
+      return sendHelpPage(page, totalPages, cmdList, perPage, prefix, message);
     }
 
-    // Check if reply is a command name
+    // Specific command lookup reply
     const query = input.toLowerCase();
     const found = cmdList.find(c => c.name.toLowerCase() === query || c.aliases.map(a => a.toLowerCase()).includes(query));
     if (found) {
       if (typeof Reply.delete === "function") Reply.delete();
-      const roleStr = found.role === 2 ? "Admin Only (Role 2)" : found.role === 1 ? "Group Admin (Role 1)" : "All Users (Role 0)";
-      return message.reply(
-        `╭─── [ 🐱 𝗙𝗟𝗢𝗣𝗣𝗔 𝗖𝗢𝗠𝗠𝗔𝗡𝗗 𝗜𝗡𝗙𝗢 ] ───╮\n` +
-        `│ 📌 Name        : ${found.name}\n` +
-        `│ 📁 Category    : ${found.category.toUpperCase()}\n` +
-        `│ 📝 Description : ${found.description}\n` +
-        `│ 🔀 Aliases     : ${found.aliases.length > 0 ? found.aliases.join(", ") : "None"}\n` +
-        `│ 🔰 Permission  : ${roleStr}\n` +
-        `│ 👤 Author      : ${found.author}\n` +
-        `│ 🏷️ Version     : ${found.version}\n` +
-        `╰───────────────────────────────╯\n\n` +
-        `📖 Usage:\n${found.usage.replace(/{pn}|{prefix}/g, prefix)}`
-      );
+      return message.reply(formatCommandDetail(found));
     }
 
-    // If input explicitly attempted to navigate pages, guide user; otherwise ignore to prevent spamming
     if (/^page\s*\d+/i.test(input)) {
       return message.reply(`⚠️ Enter a page number between 1 and ${totalPages}, or type a valid command name.`);
     }
@@ -216,11 +290,11 @@ function renderCategory(cmds, catName, prefix, message) {
   return message.reply(msg);
 }
 
-function sendHelpPage(page, totalPages, cmdList, perPage, prefix, message, authorID) {
+function sendHelpPage(page, totalPages, cmdList, perPage, prefix, message) {
   const startIndex = (page - 1) * perPage;
   const pageCommands = cmdList.slice(startIndex, startIndex + perPage);
 
-  let msg = `╭─── [ 🐱 𝗙𝗟𝗢𝗣𝗣𝗔-𝗖𝗛𝗔𝗧𝗕𝗢𝗧 𝗠𝗘𝗡𝗨 ] ───╮\n`;
+  let msg = `╭─── [ 🐱 FLOPPA-CHATBOT MENU ] ───╮\n`;
   msg += `│ 👤 Author   : frnAlt\n`;
   msg += `│ ⚡ Prefix   : ${prefix}\n`;
   msg += `│ 📄 Page     : [ ${page} / ${totalPages} ]\n`;
@@ -237,15 +311,14 @@ function sendHelpPage(page, totalPages, cmdList, perPage, prefix, message, autho
   msg += `╰───────────────────────────────◊\n\n`;
   msg += `💡 Navigation:\n`;
   msg += `• Reply with a page number (1-${totalPages}) to switch pages\n`;
-  msg += `• Reply with command name to inspect details\n`;
-  msg += `• Use ${prefix}help <page> or ${prefix}help <command>`;
+  msg += `• Reply with command name to inspect full usage & guide\n`;
+  msg += `• Use ${prefix}help <command> for complete guide`;
 
   return message.reply(msg, (err, info) => {
     if (!err && info?.messageID) {
       global.GoatBot?.onReply?.set(info.messageID, {
         commandName: "help",
         messageID: info.messageID,
-        author: authorID,
         page,
         totalPages
       });

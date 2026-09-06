@@ -297,7 +297,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                 const { autoRefreshThreadInfoFirstTime } = config.database;
                 let { hideNotiMessage = {} } = config;
                 if (typeof GoatBot.botOff === "undefined")
-                        GoatBot.botOff = Boolean(config.botOff);
+                        GoatBot.botOff = typeof config.botOff !== "undefined" ? Boolean(config.botOff) : true;
 
                 const { body, messageID, threadID, isGroup } = event;
 
@@ -460,14 +460,56 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                 const langCode = threadData?.data?.lang || config.language || "en";
 
                 function createMessageSyntaxError(commandName) {
-                        message.SyntaxError = async function () {
-                                return await message.reply(
-                                        utils.getText({ lang: langCode, head: "handlerEvents" }, "commandSyntaxError", prefix, commandName),
-                                        (err, info) => {
-                                                if (!err && info?.messageID) {
-                                                        setTimeout(() => message.unsend(info.messageID), 8000);
-                                                }
+                        message.SyntaxError = async function (customGuide) {
+                                message._syntaxErrorCalled = true;
+                                try {
+                                        if (typeof message?.reaction === "function") {
+                                                await message.reaction("❌", event.messageID);
+                                        } else if (typeof api?.setMessageReaction === "function" && event?.messageID) {
+                                                api.setMessageReaction("❌", event.messageID, () => {}, true);
                                         }
+                                } catch (_) {}
+
+                                const cmd = GoatBot.commands.get(commandName) || GoatBot.commands.get(GoatBot.aliases.get(commandName));
+                                let rawGuide = "";
+
+                                if (typeof customGuide === "string" && customGuide.trim()) {
+                                        rawGuide = customGuide.trim();
+                                } else if (cmd?.config?.guide) {
+                                        const g = cmd.config.guide;
+                                        rawGuide = typeof g === "string" ? g : (g[langCode] || g.en || g.vi || Object.values(g).find(v => typeof v === "string") || "");
+                                } else if (cmd?.config?.usage) {
+                                        const u = cmd.config.usage;
+                                        rawGuide = typeof u === "string" ? u : (u[langCode] || u.en || u.vi || Object.values(u).find(v => typeof v === "string") || "");
+                                } else if (cmd?.config?.use) {
+                                        const u = cmd.config.use;
+                                        rawGuide = typeof u === "string" ? u : (u[langCode] || u.en || u.vi || Object.values(u).find(v => typeof v === "string") || "");
+                                } else if (cmd?.config?.syntax) {
+                                        const s = cmd.config.syntax;
+                                        rawGuide = typeof s === "string" ? s : (s[langCode] || s.en || s.vi || Object.values(s).find(v => typeof v === "string") || "");
+                                } else if (cmd?.config?.longDescription) {
+                                        const ld = cmd.config.longDescription;
+                                        rawGuide = typeof ld === "string" ? ld : (ld[langCode] || ld.en || ld.vi || "");
+                                } else if (cmd?.config?.description) {
+                                        const d = cmd.config.description;
+                                        rawGuide = typeof d === "string" ? d : (d[langCode] || d.en || d.vi || "");
+                                }
+
+                                if (rawGuide && typeof rawGuide === "string") {
+                                        const formattedUsage = rawGuide
+                                                .replace(/{pn}/g, `${prefix}${commandName}`)
+                                                .replace(/{p}{n}/g, `${prefix}${commandName}`)
+                                                .replace(/{prefix}{name}/g, `${prefix}${commandName}`)
+                                                .replace(/{p}/g, prefix)
+                                                .replace(/{prefix}/g, prefix)
+                                                .replace(/{n}/g, commandName)
+                                                .replace(/{name}/g, commandName);
+
+                                        return await message.reply(`❌ Incorrect syntax!\n\n📖 Usage guide:\n${formattedUsage}\n\n💡 Type ${prefix}help ${commandName} for complete command details.`);
+                                }
+
+                                return await message.reply(
+                                        utils.getText({ lang: langCode, head: "handlerEvents" }, "commandSyntaxError", prefix, commandName)
                                 );
                         };
                 }
@@ -523,9 +565,13 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 
                         // Check bot maintenance / off state: only admin (role 2 or 4) can use bot
                         if (global.GoatBot.botOff && role !== 2 && role !== 4) {
-                                if (!isGroup) {
-                                        return await message.reply("⚠️ Bot is currently turned OFF by the administrator. Only administrators can use commands at this time.");
-                                }
+                                try {
+                                        if (typeof message?.reaction === "function") {
+                                                await message.reaction("❌", event.messageID);
+                                        } else if (typeof api?.setMessageReaction === "function" && event?.messageID) {
+                                                api.setMessageReaction("❌", event.messageID, () => {}, true);
+                                        }
+                                } catch (_) {}
                                 return;
                         }
 
@@ -682,6 +728,13 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         const needRole = roleConfig.onStart;
 
                         if (!canUseCommand(role, needRole)) {
+                                try {
+                                        if (typeof message?.reaction === "function") {
+                                                await message.reaction("❌", event.messageID);
+                                        } else if (typeof api?.setMessageReaction === "function" && event?.messageID) {
+                                                api.setMessageReaction("❌", event.messageID, () => {}, true);
+                                        }
+                                } catch (_) {}
                                 if (!hideNotiMessage.needRoleToUseCmd) {
                                         if (needRole == 1)
                                                 return await message.reply(!isGroup ? "❌ This command is only available in group chats." : utils.getText({ lang: langCode, head: "handlerEvents" }, "onlyAdmin", commandName));
@@ -748,15 +801,33 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                         }
                                 }
                                 
-				log.info("CALL COMMAND", `${commandName} | ${userData?.name || "User"} | ${senderID} | ${threadID} | ${args.join(" ")} (${Date.now() - dateNow}ms)`);
+                                log.info("CALL COMMAND", `${commandName} | ${userData?.name || "User"} | ${senderID} | ${threadID} | ${args.join(" ")} (${Date.now() - dateNow}ms)`);
                                 if (global.systemMemoryDB) {
                                         global.systemMemoryDB.recordCommand(commandName, event, Date.now() - dateNow);
+                                }
+
+                                // React checkmark emoji on successful execution for better handling (skip bot command and commands that encountered syntax error)
+                                if (commandName !== "bot" && command?.config?.name !== "bot" && !message?._syntaxErrorCalled) {
+                                        try {
+                                                if (typeof message?.reaction === "function") {
+                                                        await message.reaction("✅", event.messageID);
+                                                } else if (typeof api?.setMessageReaction === "function" && event?.messageID) {
+                                                        api.setMessageReaction("✅", event.messageID, () => {}, true);
+                                                }
+                                        } catch (_) {}
                                 }
                         }
                         catch (err) {
                                 if (global.systemMemoryDB) {
                                         global.systemMemoryDB.recordCommand(commandName, event, Date.now() - dateNow, err);
                                 }
+                                try {
+                                        if (typeof message?.reaction === "function") {
+                                                await message.reaction("❌", event.messageID);
+                                        } else if (typeof api?.setMessageReaction === "function" && event?.messageID) {
+                                                api.setMessageReaction("❌", event.messageID, () => {}, true);
+                                        }
+                                } catch (_) {}
                                 return await message.reply(
                                         utils.getText({ lang: langCode, head: "handlerEvents" }, "errorOccurred", time, commandName, removeHomeDir(err.stack ? err.stack.split("\n").slice(0, 5).join("\n") : JSON.stringify(err, null, 2))),
                                         (e, info) => {
@@ -1033,6 +1104,13 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         }
                         catch (err) {
                                 log.err("onReply", `An error occurred when calling the command onReply ${commandName}`, err);
+                                try {
+                                        if (typeof message?.reaction === "function") {
+                                                await message.reaction("❌", event.messageID);
+                                        } else if (typeof api?.setMessageReaction === "function" && event?.messageID) {
+                                                api.setMessageReaction("❌", event.messageID, () => {}, true);
+                                        }
+                                } catch (_) {}
                                 await message.reply(
                                         utils.getText({ lang: langCode, head: "handlerEvents" }, "errorOccurred3", time, commandName, removeHomeDir(err.stack ? err.stack.split("\n").slice(0, 5).join("\n") : JSON.stringify(err, null, 2))),
                                         (e, info) => {
@@ -1133,6 +1211,13 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         }
                         catch (err) {
                                 log.err("onReaction", `An error occurred when calling the command onReaction ${commandName}`, err);
+                                try {
+                                        if (typeof message?.reaction === "function") {
+                                                await message.reaction("❌", event.messageID);
+                                        } else if (typeof api?.setMessageReaction === "function" && event?.messageID) {
+                                                api.setMessageReaction("❌", event.messageID, () => {}, true);
+                                        }
+                                } catch (_) {}
                                 await message.reply(
                                         utils.getText({ lang: langCode, head: "handlerEvents" }, "errorOccurred4", time, commandName, removeHomeDir(err.stack ? err.stack.split("\n").slice(0, 5).join("\n") : JSON.stringify(err, null, 2))),
                                         (e, info) => {

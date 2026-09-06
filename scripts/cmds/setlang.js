@@ -41,7 +41,7 @@ module.exports = {
 
 	onStart: async function ({ message, args, getLang, threadsData, role, event }) {
 		if (!args[0])
-			return message.SyntaxError;
+			return message.SyntaxError();
 		let langCode = args[0].toLowerCase();
 		if (langCode == "default" || langCode == "reset")
 			langCode = null;

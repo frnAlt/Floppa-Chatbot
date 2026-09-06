@@ -87,6 +87,7 @@ global.FloppaBot = {
 	onAnyEvent: [],
 	config,
 	configCommands,
+	botOff: typeof config.botOff !== "undefined" ? Boolean(config.botOff) : true,
 	envCommands: {},
 	envEvents: {},
 	envGlobal: {},

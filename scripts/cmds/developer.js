@@ -52,61 +52,67 @@ module.exports = {
                 switch (args[0]) {
                         case "add":
                         case "-a": {
-                                if (args[1]) {
-                                        let uids = [];
-                                        if (Object.keys(event.mentions).length > 0)
-                                                uids = Object.keys(event.mentions);
-                                        else if (event.messageReply)
-                                                uids.push(event.messageReply.senderID);
-                                        else
-                                                uids = args.filter(arg => !isNaN(arg));
-                                        const notDevIds = [];
-                                        const devIds = [];
-                                        for (const uid of uids) {
-                                                if (config.devUsers.includes(uid))
-                                                        devIds.push(uid);
-                                                else
-                                                        notDevIds.push(uid);
-                                        }
+                                let uids = [];
+                                if (Object.keys(event.mentions || {}).length > 0)
+                                        uids = Object.keys(event.mentions);
+                                else if (event.messageReply?.senderID)
+                                        uids.push(String(event.messageReply.senderID));
+                                else if (args.slice(1).length > 0)
+                                        uids = args.slice(1).filter(arg => !isNaN(arg) || /^\d+$/.test(arg));
 
-                                        config.devUsers.push(...notDevIds);
-                                        const getNames = await Promise.all(uids.map(uid => usersData.getName(uid).then(name => ({ uid, name }))));
-                                        writeFileSync(global.client.dirConfig, JSON.stringify(config, null, 2));
-                                        return message.reply(
-                                                (notDevIds.length > 0 ? getLang("added", notDevIds.length, getNames.map(({ uid, name }) => `• ${name} (${uid})`).join("\n")) : "")
-                                                + (devIds.length > 0 ? getLang("alreadyDev", devIds.length, devIds.map(uid => `• ${uid}`).join("\n")) : "")
-                                        );
-                                }
-                                else
+                                if (uids.length === 0)
                                         return message.reply(getLang("missingIdAdd"));
+
+                                const notDevIds = [];
+                                const devIds = [];
+                                for (const uid of uids) {
+                                        const sUid = String(uid);
+                                        if (config.devUsers.map(String).includes(sUid))
+                                                devIds.push(sUid);
+                                        else
+                                                notDevIds.push(sUid);
+                                }
+
+                                config.devUsers.push(...notDevIds);
+                                const getNames = await Promise.all(uids.map(uid => usersData.getName(uid).then(name => ({ uid, name }))));
+                                writeFileSync(global.client.dirConfig, JSON.stringify(config, null, 2));
+                                return message.reply(
+                                        (notDevIds.length > 0 ? getLang("added", notDevIds.length, getNames.map(({ uid, name }) => `• ${name} (${uid})`).join("\n")) : "")
+                                        + (devIds.length > 0 ? getLang("alreadyDev", devIds.length, devIds.map(uid => `• ${uid}`).join("\n")) : "")
+                                );
                         }
                         case "remove":
                         case "-r": {
-                                if (args[1]) {
-                                        let uids = [];
-                                        if (Object.keys(event.mentions).length > 0)
-                                                uids = Object.keys(event.mentions);
-                                        else
-                                                uids = args.filter(arg => !isNaN(arg));
-                                        const notDevIds = [];
-                                        const devIds = [];
-                                        for (const uid of uids) {
-                                                if (config.devUsers.includes(uid))
-                                                        devIds.push(uid);
-                                                else
-                                                        notDevIds.push(uid);
-                                        }
-                                        for (const uid of devIds)
-                                                config.devUsers.splice(config.devUsers.indexOf(uid), 1);
-                                        const getNames = await Promise.all(devIds.map(uid => usersData.getName(uid).then(name => ({ uid, name }))));
-                                        writeFileSync(global.client.dirConfig, JSON.stringify(config, null, 2));
-                                        return message.reply(
-                                                (devIds.length > 0 ? getLang("removed", devIds.length, getNames.map(({ uid, name }) => `• ${name} (${uid})`).join("\n")) : "")
-                                                + (notDevIds.length > 0 ? getLang("notDev", notDevIds.length, notDevIds.map(uid => `• ${uid}`).join("\n")) : "")
-                                        );
-                                }
-                                else
+                                let uids = [];
+                                if (Object.keys(event.mentions || {}).length > 0)
+                                        uids = Object.keys(event.mentions);
+                                else if (event.messageReply?.senderID)
+                                        uids.push(String(event.messageReply.senderID));
+                                else if (args.slice(1).length > 0)
+                                        uids = args.slice(1).filter(arg => !isNaN(arg) || /^\d+$/.test(arg));
+
+                                if (uids.length === 0)
                                         return message.reply(getLang("missingIdRemove"));
+
+                                const notDevIds = [];
+                                const devIds = [];
+                                for (const uid of uids) {
+                                        const sUid = String(uid);
+                                        if (config.devUsers.map(String).includes(sUid))
+                                                devIds.push(sUid);
+                                        else
+                                                notDevIds.push(sUid);
+                                }
+                                for (const uid of devIds) {
+                                        const idx = config.devUsers.findIndex(id => String(id) === String(uid));
+                                        if (idx !== -1) config.devUsers.splice(idx, 1);
+                                }
+                                const getNames = await Promise.all(devIds.map(uid => usersData.getName(uid).then(name => ({ uid, name }))));
+                                writeFileSync(global.client.dirConfig, JSON.stringify(config, null, 2));
+                                return message.reply(
+                                        (devIds.length > 0 ? getLang("removed", devIds.length, getNames.map(({ uid, name }) => `• ${name} (${uid})`).join("\n")) : "")
+                                        + (notDevIds.length > 0 ? getLang("notDev", notDevIds.length, notDevIds.map(uid => `• ${uid}`).join("\n")) : "")
+                                );
                         }
                         case "list":
                         case "-l": {
