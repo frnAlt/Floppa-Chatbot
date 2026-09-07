@@ -495,7 +495,7 @@ async function runDiagnostics() {
     const offNoTextMessage = lastReply === null;
     logTest("WORKFLOW", "!bot off sets botOff=true, reacts ❌ without text message", offIsSet && offReactedCross && offNoTextMessage);
 
-    // 2. Non-admin regular user tries command while bot is off: should react ❌ and block
+    // 2. Non-admin regular user tries command while bot is off: should be silently ignored (no reaction, no reply)
     lastReply = null;
     lastReaction = null;
     require(path.join(cwd, "func/cooldownManager.js")).clear();
@@ -511,9 +511,9 @@ async function runDiagnostics() {
     if (handlerBlocked && typeof handlerBlocked.onStart === "function") {
       await handlerBlocked.onStart();
     }
-    const blockedReactionCross = lastReaction === "❌";
+    const blockedReactionNone = lastReaction === null;
     const blockedNoReply = lastReply === null;
-    logTest("WORKFLOW", "Non-admin command execution blocked with ❌ reaction when bot is off", blockedReactionCross && blockedNoReply);
+    logTest("WORKFLOW", "Non-admin command execution silently ignored without emoji reaction when bot is off", blockedReactionNone && blockedNoReply);
 
     // 3. Admin turns bot back on: !bot on
     lastReply = null;
@@ -536,7 +536,7 @@ async function runDiagnostics() {
     const onNoTextMessage = lastReply === null;
     logTest("WORKFLOW", "!bot on sets botOff=false, reacts ✅ without text message", onIsSet && onReactedCheck && onNoTextMessage);
 
-    // 4. Test regular command execution reacts ✅ on success
+    // 4. Test regular command execution delivers response without universal ✅ emoji reaction
     lastReply = null;
     lastReaction = null;
     require(path.join(cwd, "func/cooldownManager.js")).clear();
@@ -552,10 +552,12 @@ async function runDiagnostics() {
     if (handlerPing && typeof handlerPing.onStart === "function") {
       await handlerPing.onStart();
     }
-    const pingReactedCheck = lastReaction === "✅";
-    logTest("WORKFLOW", "Successful command execution reacts with ✅ emoji", pingReactedCheck);
+    const pingBody = typeof lastReply === "string" ? lastReply : (lastReply?.body || "");
+    const pingReplied = pingBody.includes("Pong");
+    const pingNoUniversalCheck = lastReaction !== "✅";
+    logTest("WORKFLOW", "Successful command execution delivers response without universal ✅ emoji reaction", pingReplied && pingNoUniversalCheck);
 
-    // 5. Test command execution error reacts with ❌ emoji
+    // 5. Test command execution error delivers error notice without ❌ emoji reaction
     lastReply = null;
     lastReaction = null;
     require(path.join(cwd, "func/cooldownManager.js")).clear();
@@ -576,10 +578,11 @@ async function runDiagnostics() {
     if (handlerErr && typeof handlerErr.onStart === "function") {
       await handlerErr.onStart();
     }
-    const errReactedCross = lastReaction === "❌";
-    logTest("WORKFLOW", "Failing command execution reacts with ❌ emoji", errReactedCross);
+    const errReplied = lastReply !== null;
+    const errNoCross = lastReaction !== "❌";
+    logTest("WORKFLOW", "Failing command execution delivers error notice without ❌ emoji reaction", errReplied && errNoCross);
 
-    // 6. Test SyntaxError displays command usage guide and reacts ❌
+    // 6. Test SyntaxError displays command usage guide without ❌ emoji reaction
     lastReply = null;
     lastReaction = null;
     require(path.join(cwd, "func/cooldownManager.js")).clear();
@@ -601,9 +604,9 @@ async function runDiagnostics() {
       await handlerSyntax.onStart();
     }
     const syntaxBody = typeof lastReply === "string" ? lastReply : (lastReply?.body || "");
-    const syntaxReactedCross = lastReaction === "❌";
+    const syntaxNoCross = lastReaction !== "❌";
     const syntaxHasGuide = syntaxBody.includes("Usage guide") && syntaxBody.includes("!syntaxdemo <param1> <param2>");
-    logTest("WORKFLOW", "message.SyntaxError() reacts ❌ and displays dynamic command guide", syntaxReactedCross && syntaxHasGuide);
+    logTest("WORKFLOW", "message.SyntaxError() displays dynamic command guide without ❌ emoji reaction", syntaxNoCross && syntaxHasGuide);
 
     // 7. Restore bot default state: OFF (admin-only)
     global.FloppaBot.botOff = true;
