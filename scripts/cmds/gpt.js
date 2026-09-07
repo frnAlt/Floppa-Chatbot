@@ -7,7 +7,7 @@ const API_URL = "https://images2gpt-api.onrender.com/api";
 module.exports = {
   config: {
     name: "gpt2",
-    aliases: ["gpt", "gptedit"],
+    aliases: ["gpt1", "gptedit"],
     version: "1.2.0",
     author: "frnAlt",
     countDown: 10,
