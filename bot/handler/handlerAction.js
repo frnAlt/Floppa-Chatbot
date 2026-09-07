@@ -96,10 +96,16 @@ module.exports = (api, threadModel, userModel, dashBoardModel, globalModel, user
                                         safeCall(onStart, 'onStart');
                                         safeCall(onReply, 'onReply');
                                         break;
-                                case "event":
+                                case "event": {
+                                        const isEventsOff = global.GoatBot?.eventsOff ?? (global.GoatBot?.config?.eventsOff ?? true);
+                                        const isBotOff = global.GoatBot?.botOff === true;
+                                        if (isEventsOff || isBotOff) {
+                                                break;
+                                        }
                                         safeCall(handlerEvent, 'handlerEvent');
                                         safeCall(onEvent, 'onEvent');
                                         break;
+                                }
                                 case "message_reaction":
                                         safeCall(onReaction, 'onReaction');
                                         break;

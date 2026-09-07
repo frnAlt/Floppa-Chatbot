@@ -62,6 +62,40 @@ function extractImageUrlFromEvent(event, args = []) {
   return null;
 }
 
+const FB_CLIENT_TOKEN = "6628568379%7Cc1e620fa708a1d5696fb991c1bde5662";
+
+async function getUserAvatarUrl(uid, api, usersData) {
+  const candidateUrls = [
+    `https://graph.facebook.com/${uid}/picture?width=1500&height=1500&access_token=${FB_CLIENT_TOKEN}`,
+    `https://graph.facebook.com/${uid}/picture?width=720&height=720&access_token=${FB_CLIENT_TOKEN}`,
+    `https://graph.facebook.com/${uid}/picture?type=large`
+  ];
+
+  for (const url of candidateUrls) {
+    try {
+      const res = await axios.head(url, { timeout: 6000, validateStatus: s => s === 200 || s === 302 });
+      if (res.status === 200 || res.status === 302) return url;
+    } catch (_) {}
+  }
+
+  if (usersData && typeof usersData.getAvatarUrl === "function") {
+    try {
+      const dbUrl = await usersData.getAvatarUrl(uid);
+      if (dbUrl) return dbUrl;
+    } catch (_) {}
+  }
+
+  if (api && typeof api.getUserInfo === "function") {
+    try {
+      const info = await api.getUserInfo(uid);
+      const pic = info?.[uid]?.profilePicUrl || info?.[uid]?.thumbSrc;
+      if (pic) return pic;
+    } catch (_) {}
+  }
+
+  return `https://graph.facebook.com/${uid}/picture?width=720&height=720&access_token=${FB_CLIENT_TOKEN}`;
+}
+
 async function downloadToBuffer(fileUrl) {
   const res = await axios.get(fileUrl, {
     responseType: "arraybuffer",
@@ -79,7 +113,7 @@ module.exports = {
   config: {
     name: "edit",
     aliases: ["filter", "imagedit", "ai-edit", "transform", "editimg"],
-    version: "4.0.0",
+    version: "4.1.0",
     author: "frnAlt",
     countDown: 5,
     role: 0,
@@ -87,34 +121,76 @@ module.exports = {
       en: "AI image editing & transformation"
     },
     longDescription: {
-      en: "Reply to an image with an edit instruction/prompt to transform it using AI image engines or local Canvas effects"
+      en: "Reply to an image with an edit prompt, or use -pfp to edit any user's profile picture using AI image engines or local Canvas effects"
     },
     category: "ai-image",
     guide: {
-      en: "Reply to an image with: {pn} <edit prompt>\n\nExamples:\n• Reply to photo: {pn} make it cyberpunk anime style\n• Reply to photo: {pn} 3D Pixar cartoon version\n• Reply to photo: {pn} blur 10\n• Reply to photo: {pn} circle"
+      en: "Reply to an image: {pn} <edit prompt>\n• Custom PFP edit: (reply to user or tag) {pn} -pfp <prompt>\n\nExamples:\n• (reply to user): {pn} -pfp make 4k\n• (reply to user): {pn} -pfp anime style\n• (reply to photo): {pn} make it cyberpunk anime style\n• (reply to photo): {pn} 3D Pixar cartoon version\n• (reply to photo): {pn} blur 10\n• (reply to photo): {pn} circle"
     }
   },
 
-  onStart: async function ({ message, event, args, api, commandName }) {
+  onStart: async function ({ message, event, args, api, commandName, usersData }) {
     const prefix = global.GoatBot?.config?.prefix || global.FloppaBot?.config?.prefix || "";
-    let prompt = args.join(" ").trim();
-    let imageUrl = extractImageUrlFromEvent(event, args);
+    const isPfpMode = args.some(a => ["-pfp", "--pfp", "-avatar", "--avatar", "-profile"].includes(a.toLowerCase()));
 
-    if (imageUrl && args.length > 0 && args[0].startsWith("http")) {
-      prompt = args.slice(1).join(" ").trim();
+    let prompt = "";
+    let imageUrl = null;
+    let targetName = null;
+
+    if (isPfpMode) {
+      let targetUID = null;
+
+      // 1. Reply to user
+      if (event.messageReply) {
+        targetUID = event.messageReply.senderID || event.messageReply.actorFbId || event.messageReply.userID || event.messageReply.author;
+      }
+      // 2. Mention user
+      else if (event.mentions && Object.keys(event.mentions).length > 0) {
+        targetUID = Object.keys(event.mentions)[0];
+        targetName = event.mentions[targetUID]?.replace(/^@/, "").trim();
+      }
+      // 3. Explicit numeric UID in arguments
+      else {
+        const uidIndex = args.findIndex(a => /^\d{5,}$/.test(a) && !["-pfp", "--pfp", "-avatar", "--avatar"].includes(a.toLowerCase()));
+        if (uidIndex !== -1) {
+          targetUID = args[uidIndex];
+          args.splice(uidIndex, 1);
+        } else {
+          targetUID = event.senderID;
+        }
+      }
+
+      // Filter out -pfp flags from prompt
+      prompt = args.filter(a => !["-pfp", "--pfp", "-avatar", "--avatar", "-profile"].includes(a.toLowerCase())).join(" ").trim();
+      if (!prompt) {
+        prompt = "enhance photo, high quality 4k portrait";
+      }
+
+      if (targetUID) {
+        imageUrl = await getUserAvatarUrl(targetUID, api, usersData);
+        if (!targetName && usersData?.getName) {
+          targetName = await usersData.getName(targetUID).catch(() => null);
+        }
+      }
+    } else {
+      prompt = args.join(" ").trim();
+      imageUrl = extractImageUrlFromEvent(event, args);
+      if (imageUrl && args.length > 0 && args[0].startsWith("http")) {
+        prompt = args.slice(1).join(" ").trim();
+      }
     }
 
-    // Must have a chat image to edit
+    // Must have a valid image or avatar to edit
     if (!imageUrl) {
       return message.reply(
-        `📸 Please reply to an image message or attach an image to edit it.\n\n💡 Example: Reply to an image with: ${prefix}${commandName} turn into cyberpunk anime`
+        `📸 Please reply to an image message or use: ${prefix}${commandName} -pfp <prompt>\n\n💡 Example: Reply to a user with: ${prefix}${commandName} -pfp make 4k`
       );
     }
 
     // Must provide prompt / instruction
     if (!prompt) {
       return message.reply(
-        `⚠️ Please provide an edit prompt or effect instruction.\n\n💡 Usage: (reply to image) ${prefix}${commandName} <edit prompt>\n💡 Example: ${prefix}${commandName} make it 3D Pixar cartoon style\n💡 Canvas actions: circle, rounded, blur, sharpen, grayscale, sepia, invert, rotate, flip, resize`
+        `⚠️ Please provide an edit prompt or effect instruction.\n\n💡 Usage: (reply to image) ${prefix}${commandName} <edit prompt>\n💡 Example: ${prefix}${commandName} -pfp make 4k\n💡 Canvas actions: circle, rounded, blur, sharpen, grayscale, sepia, invert, rotate, flip, resize`
       );
     }
 
@@ -259,8 +335,12 @@ module.exports = {
         api.setMessageReaction("✅", event.messageID, () => {}, true);
       }
 
+      const successText = isPfpMode
+        ? `✅ Edited ${targetName || "user"}'s profile picture with prompt: "${prompt}"`
+        : `✅ Image edited successfully (${appliedType})`;
+
       await message.reply({
-        body: "✅ Image edited successfully",
+        body: successText,
         attachment: finalStream
       });
     } catch (err) {

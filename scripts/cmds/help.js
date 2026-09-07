@@ -5,6 +5,7 @@
  */
 
 function extractCommandDetails(cmd, name, prefix) {
+  prefix = prefix || global.GoatBot?.config?.prefix || global.FloppaBot?.config?.prefix || "!";
   const cfg = cmd.config || cmd.meta || {};
   const cmdName = cfg.name || name;
   const category = (cfg.category || "utility").toLowerCase();

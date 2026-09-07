@@ -1233,6 +1233,11 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                  +------------------------------------------------+
                 */
                 async function handlerEvent() {
+                        const isEventsOff = global.GoatBot?.eventsOff ?? (global.GoatBot?.config?.eventsOff ?? true);
+                        const isBotOff = global.GoatBot?.botOff === true;
+                        if (isEventsOff || isBotOff) {
+                                return;
+                        }
                         const { author } = event;
                         const allEventCommand = GoatBot.eventCommands.entries();
                         for (const [key] of allEventCommand) {
@@ -1267,6 +1272,11 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                  +------------------------------------------------+
                 */
                 async function onEvent() {
+                        const isEventsOff = global.GoatBot?.eventsOff ?? (global.GoatBot?.config?.eventsOff ?? true);
+                        const isBotOff = global.GoatBot?.botOff === true;
+                        if (isEventsOff || isBotOff) {
+                                return;
+                        }
                         const allOnEvent = GoatBot.onEvent || [];
                         const args = [];
                         const { author } = event;

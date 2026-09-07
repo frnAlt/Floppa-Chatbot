@@ -60,16 +60,44 @@ function extractMediaUrlFromEvent(args, event) {
   return null;
 }
 
+const withTimeout = (promise, ms = 6000) =>
+  Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error("Engine timed out")), ms))
+  ]);
+
+async function downloadMediaBuffer(downloadUrl, referer) {
+  const defaultHeaders = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Accept": "*/*"
+  };
+
+  try {
+    return await axios.get(downloadUrl, {
+      responseType: "arraybuffer",
+      timeout: 45000,
+      headers: referer ? { ...defaultHeaders, Referer: referer } : defaultHeaders
+    });
+  } catch (err) {
+    // Retry without Referer (often fixes hotlink protection)
+    return await axios.get(downloadUrl, {
+      responseType: "arraybuffer",
+      timeout: 45000,
+      headers: defaultHeaders
+    });
+  }
+}
+
 module.exports = {
   config: {
     name: "alldl",
     aliases: ["fbdl", "igdl", "ttdl", "dl", "autodl"],
-    version: "3.2.0",
+    version: "3.3.0",
     author: "frnAlt",
     countDown: 5,
     role: 0,
     shortDescription: { en: "Multi-platform video/audio downloader" },
-    longDescription: { en: "Download videos or audio from FB, IG, TikTok, YT via link, tap-to-reply, or auto-detection. Use --a for audio." },
+    longDescription: { en: "Download videos or audio from FB, IG, TikTok, YouTube via link or tap-to-reply. Use --a for audio." },
     category: "media",
     guide: { en: "{pn} <url> [--a] or tap-to-reply to any video/link. Use '{pn} auto' to toggle auto-download in this chat." }
   },
@@ -120,17 +148,64 @@ module.exports = {
       let title = "Downloaded Media";
 
       // 0. Direct media stream
-      if (/fbcdn\.net|fbsbx\.com|\.mp4|\.mov|\.webm|\.mp3|\.m4a|\.wav/i.test(url)) {
+      if (/\.(mp4|mov|webm|mp3|m4a|wav)(\?|$)/i.test(url) || /fbcdn\.net|fbsbx\.com/i.test(url)) {
         downloadUrl = url;
         title = "Direct Media Stream";
       }
 
-      // 1. TikTok URL prioritized handler (TikWM is specialized and fastest for TikTok)
+      // 1. Primary Engine: Toshiro AllDL API (Explicitly configured)
+      if (!downloadUrl) {
+        try {
+          const toshiroUrl = `https://toshiro-api-editz6t9.vercel.app/api/downloader/alldl?url=${encodeURIComponent(url)}`;
+          const { data } = await axios.get(toshiroUrl, {
+            timeout: 20000,
+            headers: {
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            }
+          });
+          if (data && (data.success || data.status)) {
+            const r = data.result || data.data || data;
+            if (r && r.status !== false) {
+              title = r.title || title;
+              musicUrl = r.audio || r.music || "";
+              downloadUrl = isAudio
+                ? (r.audio || r.music || r.video || r.high_quality || r.url || r.low_quality)
+                : (r.video || r.high_quality || r.url || r.low_quality || r.audio || r.music);
+            }
+          }
+        } catch (_) {}
+      }
+
+      // 2. Secondary Engine: Toshiro AllDL V2 Fallback
+      if (!downloadUrl) {
+        try {
+          const v2Res = await axios.get(
+            `https://toshiro-api-editz6t9.vercel.app/api/downloader/alldlv2?url=${encodeURIComponent(url)}`,
+            {
+              timeout: 15000,
+              headers: {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+              }
+            }
+          );
+          const d = v2Res.data;
+          if (d?.success) {
+            const resObj = d.result || d;
+            title = resObj.title || d.title || title;
+            const streamCandidate = d.preview || resObj.video_url || resObj.video || resObj.url || resObj.download || (Array.isArray(resObj.downloads) && resObj.downloads[0]?.url);
+            if (streamCandidate) {
+              downloadUrl = streamCandidate;
+            }
+          }
+        } catch (_) {}
+      }
+
+      // 3. Tertiary Engine: TikWM for TikTok
       if (!downloadUrl && /tiktok\.com/i.test(url)) {
         try {
           const tikwm = await axios.get(`https://www.tikwm.com/api/?url=${encodeURIComponent(url)}`, {
             headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
-            timeout: 15000
+            timeout: 8000
           });
           if (tikwm.data?.code === 0 && tikwm.data?.data) {
             const d = tikwm.data.data;
@@ -144,99 +219,62 @@ module.exports = {
         } catch (_) {}
       }
 
-      // 2. Primary multi-platform engine: Toshiro AllDL API
-      if (!downloadUrl) {
-        try {
-          const toshiroUrl = `https://toshiro-api-editz6t9.vercel.app/api/downloader/alldl?url=${encodeURIComponent(url)}`;
-          const { data } = await axios.get(toshiroUrl, { timeout: 20000 });
-          if (data?.success && data?.result) {
-            const r = data.result;
-            title = r.title || title;
-            musicUrl = r.audio || r.music || "";
-            downloadUrl = isAudio ? (r.audio || r.music || r.video || r.url || r.high_quality) : (r.video || r.high_quality || r.url || r.low_quality);
-          }
-        } catch (_) {}
-      }
-
-      // 3. Secondary multi-platform engine: btch-downloader
+      // 4. Quaternary Engine: btch-downloader with strict 6s timeout
       if (!downloadUrl) {
         try {
           if (/tiktok\.com/i.test(url)) {
-            const res = await btch.ttdl(url);
+            const res = await withTimeout(btch.ttdl(url), 6000);
             if (res && res.status !== false) {
-              title = res.title || "TikTok Media";
+              title = res.title || title;
               musicUrl = res.audio || "";
               downloadUrl = isAudio ? (res.audio || res.video) : (res.video || res.audio);
             }
           } else if (/youtube\.com|youtu\.be/i.test(url)) {
-            const res = await btch.youtube(url);
+            const res = await withTimeout(btch.youtube(url), 6000);
             if (res && res.status !== false) {
-              title = res.title || "YouTube Media";
+              title = res.title || title;
               musicUrl = res.mp3 || "";
               downloadUrl = isAudio ? res.mp3 : (res.mp4 || res.mp3);
             }
           } else if (/facebook\.com|fb\.watch/i.test(url)) {
-            const res = await btch.fbdown(url);
+            const res = await withTimeout(btch.fbdown(url), 6000);
             if (res && res.status !== false) {
-              title = res.title || "Facebook Video";
+              title = res.title || title;
               musicUrl = res.audio || "";
               downloadUrl = res.Normal_video || res.HD || res.audio;
             }
           } else if (/instagram\.com/i.test(url)) {
-            const res = await btch.igdl(url);
-            if (res && res.status !== false && res.result && res.result.length > 0) {
+            const res = await withTimeout(btch.igdl(url), 6000);
+            if (res && res.status !== false && Array.isArray(res.result) && res.result.length > 0) {
               title = "Instagram Media";
               downloadUrl = res.result[0].url;
             }
           } else if (/twitter\.com|x\.com/i.test(url)) {
-            const res = await btch.twitter(url);
+            const res = await withTimeout(btch.twitter(url), 6000);
             if (res && res.status !== false) {
-              title = res.title || "Twitter Media";
+              title = res.title || title;
               downloadUrl = res.url ? (res.url[0]?.hd || res.url[0]?.sd) : "";
             }
           }
         } catch (e) {
-          console.warn("[ALLDL] btch engine error:", e.message);
+          console.warn("[ALLDL] btch fallback skipped:", e.message);
         }
       }
 
-      // 4. Tertiary fallback: public mirror
       if (!downloadUrl) {
-        try {
-          const mirror = `https://api.siputzx.my.id/api/d/alldl?url=${encodeURIComponent(url)}`;
-          const { data } = await axios.get(mirror, { timeout: 15000 });
-          if (data?.status && data?.data) {
-            const r = data.data;
-            title = r.title || title;
-            musicUrl = r.audio || "";
-            downloadUrl = isAudio ? (r.audio || r.video || r.url) : (r.video || r.url);
-          }
-        } catch (_) {}
-      }
-
-      if (!downloadUrl) {
-        throw new Error("Could not extract a downloadable stream for this link. The service may be temporarily unavailable.");
+        throw new Error("Could not extract a downloadable stream for this link. The service may be temporarily unavailable or the content is private.");
       }
 
       let ext = isAudio ? "mp3" : "mp4";
       tmpFile = path.join(cacheDir, `alldl_${Date.now()}.${ext}`);
 
-      // Set proper headers including Range and Referer to avoid 504 gateway timeouts
+      // Set proper headers
       let referer = "https://www.google.com/";
       if (/tiktok\.com/i.test(downloadUrl) || /tiktok\.com/i.test(url)) referer = "https://www.tiktok.com/";
       else if (/instagram\.com/i.test(downloadUrl) || /instagram\.com/i.test(url)) referer = "https://www.instagram.com/";
       else if (/facebook\.com|fb\.watch/i.test(downloadUrl) || /facebook\.com|fb\.watch/i.test(url)) referer = "https://www.facebook.com/";
 
-      const downloadRes = await axios.get(downloadUrl, {
-        responseType: "arraybuffer",
-        timeout: 40000,
-        headers: {
-          "Range": "bytes=0-",
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-          "Referer": referer
-        }
-      });
-
+      const downloadRes = await downloadMediaBuffer(downloadUrl, referer);
       let fileBuffer = Buffer.from(downloadRes.data);
       const maxUploadSize = 25 * 1024 * 1024; // 25MB Facebook Messenger limit
       let usedAudioFallback = false;
@@ -245,15 +283,7 @@ module.exports = {
       if (!isAudio && fileBuffer.length > maxUploadSize) {
         if (musicUrl) {
           try {
-            const audioRes = await axios.get(musicUrl, {
-              responseType: "arraybuffer",
-              timeout: 20000,
-              headers: {
-                "Range": "bytes=0-",
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-                "Referer": referer
-              }
-            });
+            const audioRes = await downloadMediaBuffer(musicUrl, referer);
             if (audioRes.data && audioRes.data.length < maxUploadSize) {
               fileBuffer = Buffer.from(audioRes.data);
               ext = "mp3";
@@ -273,7 +303,7 @@ module.exports = {
 
       let bodyText;
       if (usedAudioFallback) {
-        bodyText = `⚠️ Video exceeded Messenger's 25MB attachment limit. Sent audio instead!\n\n📥 Title: ${title}\n🔗 Watch/Download Video: ${downloadUrl}`;
+        bodyText = `⚠️ Video exceeded Messenger's 25MB limit. Sent audio instead!\n\n📥 Title: ${title}\n🔗 Watch/Download Video: ${downloadUrl}`;
       } else {
         bodyText = `📥 ${title}`;
       }
