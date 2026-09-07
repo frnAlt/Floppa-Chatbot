@@ -210,12 +210,29 @@ function getRoleConfig(utils, command, isGroup, threadData, commandName) {
         }
 
         return roleConfig;
-        // {
-        //      onChat,
-        //      onStart,
-        //      onReaction,
-        //      onReply
-        // }
+}
+
+function isMediaCommand(cmd, name) {
+        if (!cmd && !name) return false;
+        const cat = String(cmd?.config?.category || cmd?.meta?.category || "").toLowerCase();
+        const mediaCategories = [
+                "image", "ai-image", "media", "video", "ai-video",
+                "photo", "canvas", "music", "audio", "image generator", "ai-generated", "uploader"
+        ];
+        if (mediaCategories.some(c => cat === c || cat.includes(c))) return true;
+
+        const mediaNames = new Set([
+                "sing", "play", "music", "song", "yta", "ytb", "ytdl", "video",
+                "tiktok", "tt", "alldl", "midjourney", "mj", "mj2", "midjourneyai", "mjai",
+                "imagen4", "geminigen", "art", "aiphoto", "genx", "edit", "removebg",
+                "photoleap", "upscale", "pin", "pinterest", "burn", "jail",
+                "circle", "wanted", "rip", "trash", "gay", "trigger",
+                "screenshot", "ss", "meme", "draw", "avatar", "pfp", "cat", "dog", "wallpaper",
+                "album", "ig", "fb", "fbvideo", "capcut", "threads"
+        ]);
+        if (mediaNames.has(String(name).toLowerCase())) return true;
+
+        return false;
 }
 
 function isBannedOrOnlyAdmin(userData, threadData, senderID, threadID, isGroup, commandName, message, lang) {
@@ -761,8 +778,28 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 
                                 createMessageSyntaxError(commandName);
                                 const getText2 = createGetText2(langCode, `${process.cwd()}/languages/cmds/${langCode}.js`, prefix, command);
+
+                                let outputtedMedia = false;
+                                const originalReply = message.reply;
+                                message.reply = async function (form, ...rest) {
+                                        if (form && typeof form === "object" && form.attachment) {
+                                                outputtedMedia = true;
+                                        }
+                                        return await originalReply.call(this, form, ...rest);
+                                };
+                                const originalSend = message.send;
+                                if (typeof originalSend === "function") {
+                                        message.send = async function (form, ...rest) {
+                                                if (form && typeof form === "object" && form.attachment) {
+                                                        outputtedMedia = true;
+                                                }
+                                                return await originalSend.call(this, form, ...rest);
+                                        };
+                                }
+
                                 await command.onStart({
                                         ...parameters,
+                                        message,
                                         args,
                                         commandName,
                                         getLang: getText2,
@@ -784,6 +821,18 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                 log.info("CALL COMMAND", `${commandName} | ${userData?.name || "User"} | ${senderID} | ${threadID} | ${args.join(" ")} (${Date.now() - dateNow}ms)`);
                                 if (global.systemMemoryDB) {
                                         global.systemMemoryDB.recordCommand(commandName, event, Date.now() - dateNow);
+                                }
+
+                                // React ✅ emoji ONLY on image and media-type commands / medialike output commands
+                                const isMedia = outputtedMedia || isMediaCommand(command, commandName);
+                                if (isMedia && !message?._syntaxErrorCalled) {
+                                        try {
+                                                if (typeof message?.reaction === "function") {
+                                                        await message.reaction("✅", event.messageID);
+                                                } else if (typeof api?.setMessageReaction === "function" && event?.messageID) {
+                                                        api.setMessageReaction("✅", event.messageID, () => {}, true);
+                                                }
+                                        } catch (_) {}
                                 }
                         }
                         catch (err) {

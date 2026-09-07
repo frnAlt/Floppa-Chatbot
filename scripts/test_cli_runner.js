@@ -557,6 +557,33 @@ async function runDiagnostics() {
     const pingNoUniversalCheck = lastReaction !== "✅";
     logTest("WORKFLOW", "Successful command execution delivers response without universal ✅ emoji reaction", pingReplied && pingNoUniversalCheck);
 
+    // 4b. Test media/image command execution reacts with ✅ emoji
+    lastReply = null;
+    lastReaction = null;
+    require(path.join(cwd, "func/cooldownManager.js")).clear();
+    const mediaCmd = {
+      config: { name: "testmedia", category: "image", role: 0 },
+      onStart: async ({ message }) => {
+        return message.reply({ body: "Test Image", attachment: "mock_stream" });
+      }
+    };
+    global.FloppaBot.commands.set("testmedia", mediaCmd);
+    const mediaEvent = {
+      type: "message",
+      body: "!testmedia",
+      messageID: "msg_media_success_01",
+      threadID: "20004",
+      senderID: "9999",
+      isGroup: true
+    };
+    const handlerMedia = await handlerEvents(mediaEvent, createMockMessage(mediaEvent));
+    if (handlerMedia && typeof handlerMedia.onStart === "function") {
+      await handlerMedia.onStart();
+    }
+    const mediaReplied = lastReply !== null;
+    const mediaReactedCheck = lastReaction === "✅";
+    logTest("WORKFLOW", "Media/image command execution reacts with ✅ emoji", mediaReplied && mediaReactedCheck);
+
     // 5. Test command execution error delivers error notice without ❌ emoji reaction
     lastReply = null;
     lastReaction = null;
