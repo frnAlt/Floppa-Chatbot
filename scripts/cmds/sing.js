@@ -181,7 +181,6 @@ module.exports = {
         if (api && api.setMessageReaction) api.setMessageReaction("✅", event.messageID, () => {}, true);
 
         return message.reply({
-          body: `🎧 Title: ${audioData.title || searchTitle}\n🎼 Quality: ${audioData.quality || "128kbps"}`,
           attachment: audioData.stream
         });
       } catch (err) {
@@ -191,7 +190,7 @@ module.exports = {
       }
     }
 
-    // ── Mode 3: YouTube Search & Interactive Reply ──
+    // ── Mode 3: YouTube Search & Direct MP3 Output ──
     try {
       const searchRes = await yts(query);
       const videos = searchRes?.videos || [];
@@ -201,45 +200,19 @@ module.exports = {
         return message.reply(`❌ No songs found for "${query}".`);
       }
 
-      const results = videos.slice(0, 6).map(v => ({
-        title: v.title,
-        url: v.url,
-        duration: v.timestamp || (v.seconds ? `${Math.floor(v.seconds / 60)}:${v.seconds % 60}` : "N/A"),
-        thumbnail: v.thumbnail,
-        author: v.author?.name || "Unknown"
-      }));
+      const topVideo = videos[0];
+      const audioData = await getAudioForTrack(topVideo.title, topVideo.url);
 
-      let msg = `🎶 Search results for "${query}":\n\n`;
-      const thumbnailPromises = [];
+      if (!audioData || !audioData.stream) {
+        if (api && api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+        return message.reply(`❌ Could not download audio for "${topVideo.title}". Please try again.`);
+      }
 
-      results.forEach((item, index) => {
-        msg += `${index + 1}. ${item.title}\n[⏱️ ${item.duration} | 👤 ${item.author}]\n\n`;
-        if (item.thumbnail && global.utils?.getStreamFromURL) {
-          thumbnailPromises.push(
-            global.utils.getStreamFromURL(item.thumbnail, `sing_thumb_${index}.jpg`).catch(() => null)
-          );
-        }
+      if (api && api.setMessageReaction) api.setMessageReaction("✅", event.messageID, () => {}, true);
+
+      return message.reply({
+        attachment: audioData.stream
       });
-
-      msg += `👉 Reply with the song number (1-${results.length}) to get the MP3 audio.`;
-
-      const thumbnails = (await Promise.all(thumbnailPromises)).filter(Boolean);
-
-      message.reply(
-        { body: msg.trim(), attachment: thumbnails },
-        (err, info) => {
-          if (err || !info) return;
-          if (global.GoatBot?.onReply) {
-            global.GoatBot.onReply.set(info.messageID, {
-              commandName,
-              author: event.senderID,
-              threadID: event.threadID,
-              timestamp: Date.now(),
-              results
-            });
-          }
-        }
-      );
     } catch (e) {
       console.error("[SING] Search error:", e.message);
       if (api && api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
@@ -248,7 +221,7 @@ module.exports = {
   },
 
   onReply: async function ({ message, event, Reply, api }) {
-    if (String(event.senderID) !== String(Reply.author)) return;
+    if (!Reply || !Reply.results || String(event.senderID) !== String(Reply.author)) return;
 
     const match = String(event.body || "").trim().match(/\d+/);
     const choice = match ? parseInt(match[0], 10) : NaN;
@@ -276,7 +249,6 @@ module.exports = {
       }
 
       await message.reply({
-        body: `🎧 ${audioData.title || selected.title}\n⏱️ Duration: ${audioData.duration || selected.duration || "N/A"}\n🎼 Quality: ${audioData.quality || "128kbps"}`,
         attachment: audioData.stream
       });
 

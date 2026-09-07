@@ -404,7 +404,7 @@ function message(api, event) {
                                         if (options.autoUnsend || text.startsWith("❌") || text.toLowerCase().startsWith("error:")) {
                                                 const delayMs = options.autoUnsendDelay || 8000;
                                                 setTimeout(() => {
-                                                        api.unsendMessage(res.messageID).catch(() => {});
+                                                        api.unsendMessage(res.messageID, event.threadID).catch(() => {});
                                                 }, delayMs);
                                         }
                                 }
@@ -480,7 +480,7 @@ function message(api, event) {
                                         if (options.autoUnsend || text.startsWith("❌") || text.toLowerCase().startsWith("error:")) {
                                                 const delayMs = options.autoUnsendDelay || 8000;
                                                 setTimeout(() => {
-                                                        api.unsendMessage(res.messageID).catch(() => {});
+                                                        api.unsendMessage(res.messageID, event.threadID).catch(() => {});
                                                 }, delayMs);
                                         }
                                 }

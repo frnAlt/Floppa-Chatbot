@@ -150,7 +150,18 @@ Can you guess which country this flag belongs to?
 
               // Send timeout announcement
               await message.reply(
-                `⏰ Time's up! No one guessed the country in time.\n\n🏳️ The correct country was: ${country.name}\n🏛️ Capital: ${country.capital || "N/A"}`
+                `⏰ Time's up! No one guessed the country in time.\n\n🏳️ The correct country was: ${country.name}\n🏛️ Capital: ${country.capital || "N/A"}`,
+                (err2, info2) => {
+                  if (!err2 && info2?.messageID) {
+                    setTimeout(() => {
+                      if (typeof message.unsend === "function") {
+                        message.unsend(info2.messageID).catch(() => {});
+                      } else if (api && api.unsendMessage) {
+                        api.unsendMessage(info2.messageID, event.threadID).catch(() => {});
+                      }
+                    }, 10000);
+                  }
+                }
               );
             }
           }, 45000);
@@ -216,12 +227,39 @@ Can you guess which country this flag belongs to?
       } catch (_) {}
 
       return message.reply(
-        `🎉 Congratulations ${userName}! You guessed correctly!\n\n🏳️ Country: ${country.name}\n🏛️ Capital: ${country.capital || "N/A"}\n💰 Reward: +${rewardCoin} coins & +${rewardExp} EXP!`
+        `🎉 Congratulations ${userName}! You guessed correctly!\n\n🏳️ Country: ${country.name}\n🏛️ Capital: ${country.capital || "N/A"}\n💰 Reward: +${rewardCoin} coins & +${rewardExp} EXP!`,
+        (err, info) => {
+          if (!err && info?.messageID) {
+            setTimeout(() => {
+              if (typeof message.unsend === "function") {
+                message.unsend(info.messageID).catch(() => {});
+              } else if (api && api.unsendMessage) {
+                api.unsendMessage(info.messageID, event.threadID).catch(() => {});
+              }
+            }, 8000);
+          }
+        }
       );
     } else {
-      // Incorrect answer feedback
+      // React ❌ on wrong guess
+      if (api && api.setMessageReaction) {
+        api.setMessageReaction("❌", event.messageID, () => {}, true);
+      }
+
+      // Incorrect answer feedback: shows, and automatically unsends after user sees it (5 seconds)
       return message.reply(
-        `❌ "${userGuess}" is not correct! Keep trying... (Reply to the flag image)`
+        `❌ "${userGuess}" is not correct! Keep trying... (Reply to the flag image)`,
+        (err, info) => {
+          if (!err && info?.messageID) {
+            setTimeout(() => {
+              if (typeof message.unsend === "function") {
+                message.unsend(info.messageID).catch(() => {});
+              } else if (api && api.unsendMessage) {
+                api.unsendMessage(info.messageID, event.threadID).catch(() => {});
+              }
+            }, 5000);
+          }
+        }
       );
     }
   }

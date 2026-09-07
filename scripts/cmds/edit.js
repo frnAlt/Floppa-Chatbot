@@ -336,7 +336,7 @@ module.exports = {
       }
 
       const successText = isPfpMode
-        ? `✅ Edited ${targetName || "user"}'s profile picture with prompt: "${prompt}"`
+        ? `✅ Edited ${targetName || "user"}'s profile picture`
         : `✅ Image edited successfully (${appliedType})`;
 
       await message.reply({
