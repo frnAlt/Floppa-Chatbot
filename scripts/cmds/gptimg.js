@@ -4,7 +4,7 @@ const path = require("path");
 
 module.exports = {
   config: {
-    name: "gptimg",
+    name: "gpt",
     aliases: ["gptimage", "gpt4img", "gptart", "dalle", "aiimg"],
     version: "2.0.0",
     author: "frnAlt",
