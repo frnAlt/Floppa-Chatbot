@@ -14,7 +14,7 @@
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D20.x-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
 [![Developers](https://img.shields.io/badge/Developers-frnAlt%20%26%20Gtajisan-ff69b4?style=for-the-badge)](https://github.com/frnAlt)
-[![FCA](https://img.shields.io/badge/FCA%20Engine-Metachat%20Native%20V5-00f2fe?style=for-the-badge)](https://github.com/frnAlt/Floppa-Chatbot)
+[![FCA](https://img.shields.io/badge/FCA%20Engine-Floppa%20Native%20V5-00f2fe?style=for-the-badge)](fca/)
 [![Commands](https://img.shields.io/badge/Commands-280%2B%20Loaded-brightgreen?style=for-the-badge)](#-featured-commands)
 [![Tests](https://img.shields.io/badge/Self--Test-54%2F54%20Passed-success?style=for-the-badge)](scripts/test_cli_runner.js)
 
