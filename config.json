@@ -117,11 +117,16 @@
     "needRoleToUseCmdOnReaction": false
   },
   "logEvents": {
+    "mode": "standard",
     "disableAll": false,
+    "showRole": true,
+    "showDirectMessage": true,
+    "maxBodyLength": 250,
     "message": true,
+    "command": true,
+    "message_reply": true,
     "message_reaction": true,
     "message_unsend": true,
-    "message_reply": true,
     "event": true,
     "read_receipt": false,
     "typ": false,

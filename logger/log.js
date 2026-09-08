@@ -1,7 +1,14 @@
 const { colors } = require('../func/colors.js');
 const moment = require("moment-timezone");
 const characters = '';
-const getCurrentTime = () => colors.gray(moment().tz("Asia/Ho_Chi_Minh").format("HH:mm:ss DD/MM/YYYY"));
+const getCurrentTime = () => {
+	const tz = global.GoatBot?.config?.timeZone || global.FloppaBot?.config?.timeZone || "Asia/Dhaka";
+	try {
+		return colors.gray(moment().tz(tz).format("HH:mm:ss DD/MM/YYYY"));
+	} catch (_) {
+		return colors.gray(moment().format("HH:mm:ss DD/MM/YYYY"));
+	}
+};
 
 function logError(prefix, message) {
 	if (message === undefined) {

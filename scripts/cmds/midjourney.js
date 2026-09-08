@@ -5,76 +5,6 @@ const { createCanvas, loadImage, isCanvasAvailable } = require("../../func/canva
 
 const AZAD_API = "https://azadx69x-all-apis-top.vercel.app/api/mj";
 
-async function getNoobCoreMjApi() {
-  try {
-    const res = await axios.get(
-      "https://raw.githubusercontent.com/noobcore404/NC-STORE/refs/heads/main/NCApiUrl.json",
-      { timeout: 5000 }
-    );
-    return res.data?.mj || null;
-  } catch (_) {
-    return null;
-  }
-}
-
-async function splitGridInto4Images(buffer, cacheDir, basePrefix = "mj_quad") {
-  const filePaths = [];
-
-  // 1. Try Canvas
-  try {
-    if (isCanvasAvailable && typeof createCanvas === "function" && typeof loadImage === "function") {
-      const img = await loadImage(buffer);
-      const halfW = Math.floor(img.width / 2);
-      const halfH = Math.floor(img.height / 2);
-      const coords = [
-        { x: 0, y: 0 },
-        { x: halfW, y: 0 },
-        { x: 0, y: halfH },
-        { x: halfW, y: halfH }
-      ];
-
-      for (let i = 0; i < 4; i++) {
-        const qCanvas = createCanvas(halfW, halfH);
-        const qCtx = qCanvas.getContext("2d");
-        qCtx.drawImage(img, coords[i].x, coords[i].y, halfW, halfH, 0, 0, halfW, halfH);
-        const qPath = path.join(cacheDir, `${basePrefix}_${Date.now()}_${i}_${Math.random().toString(36).slice(2, 6)}.png`);
-        await fs.writeFile(qPath, qCanvas.toBuffer("image/png"));
-        filePaths.push(qPath);
-      }
-      return filePaths;
-    }
-  } catch (err) {
-    console.warn("[MIDJOURNEY] Canvas quadrant split error:", err.message);
-  }
-
-  // 2. Try Jimp fallback
-  try {
-    const Jimp = require("jimp");
-    const image = await Jimp.read(buffer);
-    const halfW = Math.floor(image.bitmap.width / 2);
-    const halfH = Math.floor(image.bitmap.height / 2);
-    const coords = [
-      { x: 0, y: 0 },
-      { x: halfW, y: 0 },
-      { x: 0, y: halfH },
-      { x: halfW, y: halfH }
-    ];
-
-    for (let i = 0; i < 4; i++) {
-      const cloned = image.clone();
-      cloned.crop(coords[i].x, coords[i].y, halfW, halfH);
-      const qPath = path.join(cacheDir, `${basePrefix}_${Date.now()}_${i}_${Math.random().toString(36).slice(2, 6)}.png`);
-      await cloned.writeAsync(qPath);
-      filePaths.push(qPath);
-    }
-    return filePaths;
-  } catch (err) {
-    console.warn("[MIDJOURNEY] Jimp quadrant split error:", err.message);
-  }
-
-  return filePaths;
-}
-
 async function createVariationsFromSingleImage(buffer, cacheDir, basePrefix = "mj_var") {
   const filePaths = [];
   try {
@@ -148,8 +78,8 @@ async function generateCanvasFallbacks(prompt, cacheDir) {
       ];
 
       for (let i = 0; i < 4; i++) {
-        const width = 600;
-        const height = 600;
+        const width = 800;
+        const height = 800;
         const canvas = createCanvas(width, height);
         const ctx = canvas.getContext("2d");
 
@@ -163,27 +93,27 @@ async function generateCanvasFallbacks(prompt, cacheDir) {
         ctx.lineWidth = 2;
         for (let j = 0; j < 5; j++) {
           ctx.beginPath();
-          ctx.arc(width / 2, height / 2, 80 + j * 45, 0, Math.PI * 2);
+          ctx.arc(width / 2, height / 2, 100 + j * 50, 0, Math.PI * 2);
           ctx.stroke();
         }
 
         ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
-        ctx.font = "bold 28px sans-serif";
+        ctx.font = "bold 32px sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText("MIDJOURNEY v6", width / 2, 120);
+        ctx.fillText("MIDJOURNEY v6", width / 2, 160);
 
-        ctx.font = "italic 20px sans-serif";
+        ctx.font = "italic 24px sans-serif";
         ctx.fillStyle = "#f8c291";
-        ctx.fillText(styles[i].label, width / 2, 160);
+        ctx.fillText(styles[i].label, width / 2, 210);
 
-        ctx.font = "18px sans-serif";
+        ctx.font = "20px sans-serif";
         ctx.fillStyle = "#ffffff";
         const shortPrompt = prompt.length > 70 ? prompt.slice(0, 67) + "..." : prompt;
-        ctx.fillText(`"${shortPrompt}"`, width / 2, 450);
+        ctx.fillText(`"${shortPrompt}"`, width / 2, 580);
 
         ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
-        ctx.font = "14px sans-serif";
-        ctx.fillText(`Variation U${i + 1} • Floppa MidJourney AI`, width / 2, 520);
+        ctx.font = "16px sans-serif";
+        ctx.fillText(`Variation U${i + 1} • Floppa MidJourney AI`, width / 2, 660);
 
         const qPath = path.join(cacheDir, `mj_synth_${Date.now()}_${i}.png`);
         await fs.writeFile(qPath, canvas.toBuffer("image/png"));
@@ -200,7 +130,7 @@ module.exports = {
   config: {
     name: "midjourney",
     aliases: ["mj", "mj2", "midjourneyai", "mjai"],
-    version: "2.2.0",
+    version: "2.3.0",
     role: 0,
     author: "frnAlt",
     countDown: 5,
@@ -221,7 +151,7 @@ module.exports = {
 
     if (!prompt) {
       const prefix = global.GoatBot?.config?.prefix || "";
-      return message.reply(`Please provide an image prompt.\n\nExample: ${prefix}${commandName} futuristic cyber samurai in Tokyo neon rain`);
+      return message.reply(`Please provide an image prompt.\n\nExample: ${prefix}${commandName} black adam from dc`);
     }
 
     if (api && api.setMessageReaction) {
@@ -232,108 +162,54 @@ module.exports = {
     await fs.ensureDir(cacheDir);
 
     let filePaths = [];
+    let imageUrls = [];
+    let ratio = "1:1";
 
     try {
-      // 1. Check NoobCore Dynamic API (short 5s timeout)
+      // 1. Primary: Official Azadx69x MidJourney API (returns 4 distinct high-res ImaginePro images)
       try {
-        const noobCoreBase = await getNoobCoreMjApi();
-        if (noobCoreBase) {
-          const res = await axios.get(
-            `${noobCoreBase}/imagine?prompt=${encodeURIComponent(prompt)}`,
-            { timeout: 5000 }
-          );
+        const apiUrl = `${AZAD_API}?prompt=${encodeURIComponent(prompt)}`;
+        const response = await axios.get(apiUrl, {
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "application/json"
+          },
+          timeout: 60000
+        });
 
-          if (res.data?.success) {
-            const { murl, urls } = res.data;
-            if (Array.isArray(urls) && urls.length >= 4) {
-              const downloadPromises = urls.slice(0, 4).map(async (item, i) => {
-                const imgUrl = typeof item === "string" ? item : (item.url || item.image);
-                const dl = await axios.get(imgUrl, { responseType: "arraybuffer", timeout: 15000 });
-                const qPath = path.join(cacheDir, `mj_nc_${Date.now()}_${i}.png`);
-                await fs.writeFile(qPath, Buffer.from(dl.data));
-                return qPath;
+        const result = response.data;
+        if (result?.success && (result.data?.images || result.images)) {
+          const imgs = result.data?.images || result.images || [];
+          ratio = result.data?.ratio || ratio;
+          if (Array.isArray(imgs) && imgs.length >= 4) {
+            imageUrls = imgs.slice(0, 4);
+            const downloadPromises = imageUrls.map(async (url, i) => {
+              const res = await axios.get(url, {
+                responseType: "arraybuffer",
+                timeout: 30000,
+                headers: {
+                  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                }
               });
-              filePaths = await Promise.all(downloadPromises);
-            } else if (murl) {
-              const dl = await axios.get(murl, { responseType: "arraybuffer", timeout: 15000 });
-              filePaths = await splitGridInto4Images(Buffer.from(dl.data), cacheDir, "mj_nc_grid");
-            }
-          }
-        }
-      } catch (_) {}
-
-      // 2. Check Azadx69x API (short 5s timeout)
-      if (filePaths.length < 4) {
-        try {
-          const apiUrl = `${AZAD_API}?prompt=${encodeURIComponent(prompt)}`;
-          const response = await axios.get(apiUrl, {
-            headers: {
-              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-              "Accept": "application/json"
-            },
-            timeout: 5000
-          });
-
-          const result = response.data;
-          if (result?.success && Array.isArray(result.data?.images) && result.data.images.length >= 4) {
-            const downloadPromises = result.data.images.slice(0, 4).map(async (url, i) => {
-              const res = await axios.get(url, { responseType: "arraybuffer", timeout: 15000 });
-              const imgPath = path.join(cacheDir, `mj_azad_${Date.now()}_${i}.png`);
+              const imgPath = path.join(cacheDir, `mj_hd_${Date.now()}_${i}.png`);
               await fs.writeFile(imgPath, Buffer.from(res.data));
               return imgPath;
             });
             filePaths = await Promise.all(downloadPromises);
           }
-        } catch (_) {}
+        }
+      } catch (azadErr) {
+        console.warn("[MIDJOURNEY] Azad API attempt error:", azadErr.message);
       }
 
-      // 3. Primary Fallback: Single 2x2 Grid Request + Quadrant Split (ZERO 429 concurrency risk)
+      // 2. High-Quality Fallback: Single high-res image + 4 artistic style variations
       if (filePaths.length < 4) {
         try {
           const seed = Math.floor(Math.random() * 1000000);
-          const gridPrompt = `${prompt}, 2x2 grid 4 different variations, midjourney style, 4 panels, high resolution`;
-          const gridUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(gridPrompt)}?width=768&height=768&nologo=true&seed=${seed}&model=turbo`;
-
-          let res;
-          try {
-            res = await axios.get(gridUrl, {
-              responseType: "arraybuffer",
-              timeout: 25000,
-              headers: {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-              }
-            });
-          } catch (gridErr) {
-            // If rate limited (429), back off 1.5s and retry with simple prompt
-            if (gridErr.response?.status === 429) {
-              await new Promise(r => setTimeout(r, 1500));
-              const retryUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt + " 2x2 grid 4 variations")}?width=768&height=768&nologo=true&seed=${Date.now()}&model=turbo`;
-              res = await axios.get(retryUrl, {
-                responseType: "arraybuffer",
-                timeout: 25000,
-                headers: {
-                  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-                }
-              });
-            } else {
-              throw gridErr;
-            }
-          }
-
-          if (res?.data && res.data.length > 500) {
-            filePaths = await splitGridInto4Images(Buffer.from(res.data), cacheDir, "mj_quad");
-          }
-        } catch (_) {}
-      }
-
-      // 4. Secondary Fallback: Single high-res image + Canvas 4-variation generator
-      if (filePaths.length < 4) {
-        try {
-          const seed = Math.floor(Math.random() * 1000000);
-          const singleUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt + " masterpiece midjourney v6 style 8k octane render")}?width=768&height=768&nologo=true&seed=${seed}&model=turbo`;
+          const singleUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt + ", masterpiece midjourney v6 style 8k octane render")}?width=1024&height=1024&nologo=true&seed=${seed}`;
           const res = await axios.get(singleUrl, {
             responseType: "arraybuffer",
-            timeout: 25000,
+            timeout: 35000,
             headers: {
               "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
             }
@@ -342,10 +218,12 @@ module.exports = {
           if (res?.data && res.data.length > 500) {
             filePaths = await createVariationsFromSingleImage(Buffer.from(res.data), cacheDir, "mj_single_var");
           }
-        } catch (_) {}
+        } catch (fbErr) {
+          console.warn("[MIDJOURNEY] Fallback attempt error:", fbErr.message);
+        }
       }
 
-      // 5. Ultimate Fallback: Local Canvas 4-card generator (never fail, never 429)
+      // 3. Ultimate Fallback: Local Canvas 4-card generator (never fail)
       if (filePaths.length < 4) {
         filePaths = await generateCanvasFallbacks(prompt, cacheDir);
       }
@@ -382,11 +260,13 @@ Generated 4 variations. Reply with U1, U2, U3, or U4 to upscale a specific image
               messageID: info.messageID,
               author: event.senderID,
               filePaths: filePaths,
+              imageUrls: imageUrls,
               prompt: prompt,
+              ratio: ratio,
               createdAt: Date.now()
             });
 
-            // Automatic cleanup after 10 minutes to prevent storage buildup
+            // Automatic cleanup after 15 minutes to prevent storage buildup
             setTimeout(() => {
               filePaths.forEach(fp => {
                 try { if (fs.existsSync(fp)) fs.unlinkSync(fp); } catch (_) {}
@@ -394,7 +274,7 @@ Generated 4 variations. Reply with U1, U2, U3, or U4 to upscale a specific image
               if (global.GoatBot?.onReply?.has(info.messageID)) {
                 global.GoatBot.onReply.delete(info.messageID);
               }
-            }, 10 * 60 * 1000);
+            }, 15 * 60 * 1000);
           }
         }
       );
@@ -421,8 +301,24 @@ Generated 4 variations. Reply with U1, U2, U3, or U4 to upscale a specific image
 
     const index = parseInt(match[1], 10) - 1;
     const filePath = Reply.filePaths?.[index];
+    const directUrl = Reply.imageUrls?.[index];
 
     if (!filePath || !fs.existsSync(filePath)) {
+      if (directUrl) {
+        try {
+          const cacheDir = path.join(__dirname, "cache");
+          await fs.ensureDir(cacheDir);
+          const recoveredPath = path.join(cacheDir, `mj_upscale_${Date.now()}_${index}.png`);
+          const dl = await axios.get(directUrl, { responseType: "arraybuffer", timeout: 30000 });
+          await fs.writeFile(recoveredPath, Buffer.from(dl.data));
+          const stream = fs.createReadStream(recoveredPath);
+          stream.on("close", () => { try { fs.unlinkSync(recoveredPath); } catch (_) {} });
+          return await message.reply({
+            body: `MidJourney Upscaled Image • U${index + 1}\n\nPrompt: ${Reply.prompt}\nQuality: Full Resolution (ImaginePro MidJourney)`,
+            attachment: stream
+          });
+        } catch (_) {}
+      }
       return message.reply("That image is no longer available.");
     }
 
@@ -430,7 +326,7 @@ Generated 4 variations. Reply with U1, U2, U3, or U4 to upscale a specific image
       if (api && api.setMessageReaction) api.setMessageReaction("🔍", messageID, () => {}, true);
       const attachmentStream = fs.createReadStream(filePath);
       await message.reply({
-        body: `Upscaled Variation U${index + 1}\n\nPrompt: ${Reply.prompt}`,
+        body: `MidJourney Upscaled Image • U${index + 1}\n\nPrompt: ${Reply.prompt}\nQuality: Full Resolution (ImaginePro MidJourney)`,
         attachment: attachmentStream
       });
       if (api && api.setMessageReaction) api.setMessageReaction("✅", messageID, () => {}, true);

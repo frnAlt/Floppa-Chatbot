@@ -60,6 +60,7 @@ jobs:
         if: ${{ inputs.run_syntax_checks != false }}
         run: |
           node --check index.js Floppa.js Goat.js utils.js
+          node --check logger/eventLogger.js logger/log.js logger/loading.js
           node --check bot/login/login.js bot/login/checkLiveCookie.js
           node --check bot/handler/handlerAction.js bot/handler/handlerEvents.js
           node --check dashboard/app.js dashboard/routes/api.js

@@ -1,6 +1,7 @@
 const createFuncMessage = global.utils.message;
 const handlerCheckDB = require("./handlerCheckData.js");
 const { log } = global.utils;
+const eventLogger = require("../../logger/eventLogger.js");
 
 function safeCall(fn, label) {
         try {
@@ -42,8 +43,6 @@ module.exports = (api, threadModel, userModel, dashBoardModel, globalModel, user
                         if (event.messageReply && event.type === "message") {
                                 event.type = "message_reply";
                         }
-                        log.info("EVENT", `[${(event.type || 'unknown').toUpperCase()}] Thread: ${event.threadID || 'N/A'} | Sender: ${event.senderID || event.author || event.userID || 'N/A'} | Body: "${event.body || ''}"`);
-
                         if (global.systemMemoryDB) {
                                 global.systemMemoryDB.recordEvent(event);
                         }
@@ -55,6 +54,9 @@ module.exports = (api, threadModel, userModel, dashBoardModel, globalModel, user
                                 (event.senderID || event.userID || event.isGroup == false)
                         )
                                 return;
+
+                        // Unified, colorized event logger (standard / advanced / compact mode with group & sender names)
+                        const loggedInfo = eventLogger.logEvent(event, { usersData, threadsData });
 
                         const message = createFuncMessage(api, event);
 
@@ -79,15 +81,18 @@ module.exports = (api, threadModel, userModel, dashBoardModel, globalModel, user
                                 case "message_reply":
                                 case "message_unsend":
                                         if (event.body || event.attachments?.length > 0) {
-                                                log.info("MESSAGE", `${event.type.toUpperCase()}: [${event.threadID}] ${event.senderID} -> "${event.body || '[Attachment]'}"`);
                                                 if (!global.chatLogs) global.chatLogs = [];
                                                 global.chatLogs.unshift({
                                                         id: event.messageID || Date.now(),
-                                                        senderID: event.senderID,
-                                                        threadID: event.threadID,
+                                                        senderID: loggedInfo?.senderID || event.senderID,
+                                                        senderName: loggedInfo?.senderName || `User ${event.senderID}`,
+                                                        threadID: loggedInfo?.threadID || event.threadID,
+                                                        threadName: loggedInfo?.threadName || (event.isGroup ? "Group Chat" : "Direct Message"),
+                                                        isGroup: typeof loggedInfo?.isGroup === "boolean" ? loggedInfo.isGroup : Boolean(event.isGroup),
+                                                        role: loggedInfo?.role?.name || "Member",
                                                         body: event.body || (event.attachments?.length ? `[Attachment: ${event.attachments[0].type}]` : "[Message]"),
                                                         type: event.type,
-                                                        timestamp: new Date().toLocaleTimeString('en-US', { hour12: false })
+                                                        timestamp: loggedInfo?.timeStr || new Date().toLocaleTimeString('en-US', { hour12: false })
                                                 });
                                                 if (global.chatLogs.length > 200) global.chatLogs.pop();
                                         }

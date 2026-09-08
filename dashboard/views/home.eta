@@ -421,7 +421,8 @@ async function updateDashboard() {
 				container.innerHTML = logData.logs.map(log => `
 					<div class="log-entry">
 						<span class="log-time">[${log.timestamp || ''}]</span>
-						<span class="log-sender">${log.senderID}:</span>
+						<span class="log-thread" style="color: #38bdf8; font-weight: 500;">[${log.isGroup === false ? 'DM' : (log.threadName ? `${log.threadName}` : `Group ${log.threadID}`)}]</span>
+						<span class="log-sender" style="color: #fbbf24; font-weight: 600;">${log.senderName || log.senderID}:</span>
 						<span class="log-body">${log.body}</span>
 					</div>
 				`).join('');

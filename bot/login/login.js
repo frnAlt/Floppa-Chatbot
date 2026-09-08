@@ -1311,15 +1311,17 @@ async function startBot(loginWithEmail) {
                                 }
 
                                 if (configLog.disableAll === false && configLog[event.type] !== false) {
-                                        // hide participantIDs (it is array too long)
-                                        const participantIDs_ = [...event.participantIDs || []];
-                                        if (event.participantIDs)
-                                                event.participantIDs = 'Array(' + event.participantIDs.length + ')';
+                                        if (configLog.mode === "raw" || configLog.debugRaw === true) {
+                                                // hide participantIDs (it is array too long)
+                                                const participantIDs_ = [...event.participantIDs || []];
+                                                if (event.participantIDs)
+                                                        event.participantIDs = 'Array(' + event.participantIDs.length + ')';
 
-                                        console.log(colors.green((event.type || "").toUpperCase() + ":"), jsonStringifyColor(event, null, 2));
+                                                console.log(colors.green((event.type || "").toUpperCase() + ":"), jsonStringifyColor(event, null, 2));
 
-                                        if (event.participantIDs)
-                                                event.participantIDs = participantIDs_;
+                                                if (event.participantIDs)
+                                                        event.participantIDs = participantIDs_;
+                                        }
                                 }
 
                                 if ((event.senderID && dataGban[event.senderID] || event.userID && dataGban[event.userID])) {

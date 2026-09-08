@@ -1223,6 +1223,7 @@ const utils = {
         loading: require("./logger/loading.js"),
         log,
         logColor: require("./logger/logColor.js"),
+        eventLogger: require("./logger/eventLogger.js"),
         message,
         randomString,
         randomNumber,

@@ -4,6 +4,7 @@ const CooldownManager = require("../../func/cooldownManager.js");
 const analyticsBatcher = require("../../func/analyticsBatcher.js");
 const InputClass = require("../../func/inputClass.js");
 const OutputClass = require("../../func/outputClass.js");
+const eventLogger = require("../../logger/eventLogger.js");
 const nullAndUndefined = [undefined, null];
 
 // Initialize optimized spam tracker on module load
@@ -573,7 +574,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                 }
                         }
 
-                        // Check bot maintenance / off state: only admin (role 2 or 4) can use bot
+                        // Check bot maintenance / off state: only admin (role 2 or 4) can use bot. Silently ignore non-admins without emoji reactions
                         if (global.GoatBot.botOff && role !== 2 && role !== 4) {
                                 // Silently ignore non-admin command attempts when bot is off (no emoji reaction, no response)
                                 return;
@@ -818,7 +819,17 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                         }
                                 }
                                 
-                                log.info("CALL COMMAND", `${commandName} | ${userData?.name || "User"} | ${senderID} | ${threadID} | ${args.join(" ")} (${Date.now() - dateNow}ms)`);
+                                eventLogger.logCommand({
+                                        commandName,
+                                        userName: userData?.name,
+                                        senderID,
+                                        threadID,
+                                        threadName: threadData?.threadName,
+                                        isGroup: Boolean(isGroup),
+                                        args,
+                                        duration: Date.now() - dateNow,
+                                        role
+                                });
                                 if (global.systemMemoryDB) {
                                         global.systemMemoryDB.recordCommand(commandName, event, Date.now() - dateNow);
                                 }
@@ -836,6 +847,17 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                 }
                         }
                         catch (err) {
+                                eventLogger.logCommandError({
+                                        commandName,
+                                        userName: userData?.name,
+                                        senderID,
+                                        threadID,
+                                        threadName: threadData?.threadName,
+                                        isGroup: Boolean(isGroup),
+                                        error: err,
+                                        duration: Date.now() - dateNow,
+                                        role
+                                });
                                 if (global.systemMemoryDB) {
                                         global.systemMemoryDB.recordCommand(commandName, event, Date.now() - dateNow, err);
                                 }
@@ -898,7 +920,16 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                                                 return;
                                                         try {
                                                                 await handler();
-                                                                log.info("onChat", `${commandName} | ${userData?.name || "User"} | ${senderID} | ${threadID} | ${args.join(" ")}`);
+                                                                eventLogger.logOnChat({
+                                                                        commandName,
+                                                                        userName: userData?.name,
+                                                                        senderID,
+                                                                        threadID,
+                                                                        threadName: threadData?.threadName,
+                                                                        isGroup: Boolean(isGroup),
+                                                                        args,
+                                                                        role
+                                                                });
                                                         }
                                                         catch (err) {
                                                                 await message.reply(
@@ -1111,7 +1142,16 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                         commandName,
                                         getLang: getText2
                                 });
-                                log.info("onReply", `${commandName} | ${userData?.name || "User"} | ${senderID} | ${threadID} | ${args.join(" ")}`);
+                                eventLogger.logOnReply({
+                                        commandName,
+                                        userName: userData?.name,
+                                        senderID,
+                                        threadID,
+                                        threadName: threadData?.threadName,
+                                        isGroup: Boolean(isGroup),
+                                        args,
+                                        role
+                                });
                         }
                         catch (err) {
                                 log.err("onReply", `An error occurred when calling the command onReply ${commandName}`, err);
@@ -1160,7 +1200,10 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                         }
                                 }
                         }
-                        
+
+                        if (global.GoatBot.botOff && role !== 2 && role !== 4)
+                                return;
+
                         if (!Reaction)
                                 return;
                         Reaction.delete = () => onReaction.delete(messageID);
@@ -1211,7 +1254,16 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                         commandName,
                                         getLang: getText2
                                 });
-                                log.info("onReaction", `${commandName} | ${userData?.name || "User"} | ${senderID} | ${threadID} | ${event.reaction}`);
+                                eventLogger.logOnReaction({
+                                        commandName,
+                                        userName: userData?.name,
+                                        senderID,
+                                        threadID,
+                                        threadName: threadData?.threadName,
+                                        isGroup: Boolean(isGroup),
+                                        reaction: event.reaction,
+                                        role
+                                });
                         }
                         catch (err) {
                                 log.err("onReaction", `An error occurred when calling the command onReaction ${commandName}`, err);
@@ -1255,7 +1307,15 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                         });
                                         if (typeof handler == "function") {
                                                 await handler();
-                                                log.info("EVENT COMMAND", `Event: ${commandName} | ${author} | ${userData?.name || "User"} | ${threadID}`);
+                                                eventLogger.logEventCommand({
+                                                        commandName,
+                                                        userName: userData?.name,
+                                                        senderID: author,
+                                                        threadID,
+                                                        threadName: threadData?.threadName,
+                                                        isGroup: Boolean(isGroup),
+                                                        role
+                                                });
                                         }
                                 }
                                 catch (err) {
@@ -1310,7 +1370,15 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                                 if (typeof handler == "function") {
                                                         try {
                                                                 await handler();
-                                                                log.info("onEvent", `${commandName} | ${author} | ${userData?.name || "User"} | ${threadID}`);
+                                                                eventLogger.logEventCommand({
+                                                                        commandName,
+                                                                        userName: userData?.name,
+                                                                        senderID: author,
+                                                                        threadID,
+                                                                        threadName: threadData?.threadName,
+                                                                        isGroup: Boolean(isGroup),
+                                                                        role
+                                                                });
                                                         }
                                                         catch (err) {
                                                                 message.reply(utils.getText({ lang: langCode, head: "handlerEvents" }, "errorOccurred6", time, commandName, removeHomeDir(err.stack ? err.stack.split("\n").slice(0, 5).join("\n") : JSON.stringify(err, null, 2))));
