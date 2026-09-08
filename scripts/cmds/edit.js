@@ -277,7 +277,7 @@ module.exports = {
             const buffer = await downloadToBuffer(editRes.data.url);
             finalStream = Readable.from(buffer);
             finalStream.path = "edited.png";
-            appliedType = `AI Edit (${editRes.data.operator || "Toshiro Editz"})`;
+            appliedType = "AI Edit";
           }
         } catch (editApiErr) {
           console.warn("[EDIT] Toshiro edit API error:", editApiErr.message);
@@ -337,7 +337,7 @@ module.exports = {
 
       const successText = isPfpMode
         ? `✅ Edited ${targetName || "user"}'s profile picture`
-        : `✅ Image edited successfully (${appliedType})`;
+        : "✅ Image edited successfully";
 
       await message.reply({
         body: successText,
