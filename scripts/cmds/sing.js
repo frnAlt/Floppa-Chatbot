@@ -1,127 +1,298 @@
 const axios = require("axios");
 const yts = require("yt-search");
 const btch = require("btch-downloader");
-const { Readable } = require("stream");
+const fs = require("fs-extra");
+const path = require("path");
+let ffmpeg = require("fluent-ffmpeg");
 
-const client = axios.create({ timeout: 15000 });
+// Configure ffmpeg path
+let ffmpegPath = null;
+try {
+  ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
+} catch (_) {}
 
-async function getAudioForTrack(titleFallback = "", youtubeUrl = "") {
-  const cleanTitle = (titleFallback || "").replace(/\[[^\]]*\]|\([^\)]*\)/g, "").trim();
-  const searchQueries = [cleanTitle, titleFallback].filter(Boolean);
+if (ffmpegPath) {
+  ffmpeg.setFfmpegPath(ffmpegPath);
+}
 
-  // 1. Primary: High-speed music audio stream via audio search engine
-  for (const q of searchQueries) {
-    try {
-      const searchApi = `https://toshiro-api-editz6t9.vercel.app/api/search/tiksearch?keyword=${encodeURIComponent(q)}`;
-      const res = await client.get(searchApi, { timeout: 8000 });
-      const r = res.data?.result;
-      const musicUrl = r?.music;
+const client = axios.create({ timeout: 20000 });
+const CACHE_DIR = path.join(__dirname, "cache");
+const MAX_ATTACHMENT_SIZE = 24 * 1024 * 1024; // 24 MB safe Messenger limit
 
-      if (musicUrl) {
-        const audioRes = await axios.get(musicUrl, {
-          responseType: "arraybuffer",
-          timeout: 20000,
-          headers: {
-            "Range": "bytes=0-",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Referer": "https://www.tiktok.com/"
-          }
-        });
+function sanitizeFilename(name) {
+  return (name || "sing")
+    .replace(/[^a-zA-Z0-9_\-\s]/g, "")
+    .trim()
+    .replace(/\s+/g, "_")
+    .slice(0, 50) || "sing";
+}
 
-        if (audioRes.data && audioRes.data.length > 30000) {
-          const stream = Readable.from(Buffer.from(audioRes.data));
-          stream.path = "sing.mp3";
-          return {
-            stream,
-            title: r.title || titleFallback || "Audio Track",
-            duration: r.duration ? `${r.duration}s` : "N/A",
-            quality: "128kbps"
-          };
-        }
-      }
-    } catch (err) {
-      // proceed to next query / provider
-    }
-  }
+function isMp3File(filePath) {
+  try {
+    const fd = fs.openSync(filePath, "r");
+    const buf = Buffer.alloc(4);
+    fs.readSync(fd, buf, 0, 4, 0);
+    fs.closeSync(fd);
+    // ID3 header
+    if (buf[0] === 0x49 && buf[1] === 0x44 && buf[2] === 0x33) return true;
+    // MPEG Audio frame sync
+    if (buf[0] === 0xFF && (buf[1] & 0xE0) === 0xE0) return true;
+  } catch (_) {}
+  return false;
+}
 
-  // 2. Secondary: Toshiro YouTube Audio API
-  if (youtubeUrl) {
-    try {
-      const ytAudioUrl = `https://toshiro-api-editz6t9.vercel.app/api/downloader/yt-audio?url=${encodeURIComponent(youtubeUrl)}&quality=128`;
-      const res = await client.get(ytAudioUrl, { timeout: 10000 });
-      const r = res.data?.result;
-      const dl = r?.download_url || r?.preview;
+/**
+ * Collect prioritized audio stream candidates for a YouTube track
+ */
+async function getAudioCandidates(youtubeUrl, titleFallback = "") {
+  const candidates = [];
 
-      if (res.data?.success && dl) {
-        const audioRes = await axios.get(dl, { responseType: "arraybuffer", timeout: 20000 });
-        if (audioRes.data && audioRes.data.length > 30000) {
-          const stream = Readable.from(Buffer.from(audioRes.data));
-          stream.path = "sing.mp3";
-          return {
-            stream,
-            title: r.title || titleFallback || "YouTube Audio",
-            duration: r.duration || "N/A",
-            quality: r.quality || "128kbps"
-          };
-        }
-      }
-    } catch (_) {}
-  }
-
-  // 3. Tertiary: btch-downloader MP3
+  // Provider 1: btch-downloader MP3 (high availability ymcdn direct stream)
   if (youtubeUrl) {
     try {
       const res = await btch.youtube(youtubeUrl);
       if (res && res.status !== false && res.mp3) {
-        const stream = await global.utils.getStreamFromURL(res.mp3, "sing.mp3");
-        return {
-          stream,
-          title: res.title || titleFallback || "YouTube Audio",
-          duration: res.duration || "N/A",
-          quality: "128kbps"
-        };
+        if (!res.mp3.includes("onrender.com")) {
+          candidates.push({
+            url: res.mp3,
+            source: "btch",
+            title: res.title || titleFallback,
+            author: res.author || ""
+          });
+        }
       }
     } catch (_) {}
   }
 
-  // 4. Quaternary: Public mirror
+  // Provider 2: Toshiro yta2 direct
   if (youtubeUrl) {
     try {
-      const mirrorUrl = `https://api.siputzx.my.id/api/d/ytmp3?url=${encodeURIComponent(youtubeUrl)}`;
-      const { data } = await client.get(mirrorUrl, { timeout: 10000 });
-      const dl = data?.data?.dl || data?.data?.url;
-      if (dl) {
-        const stream = await global.utils.getStreamFromURL(dl, "sing.mp3");
-        return {
-          stream,
-          title: data.data.title || titleFallback || "YouTube Audio",
-          duration: "N/A",
-          quality: "128kbps"
-        };
+      const yta2Api = `https://toshiro-api-editz6t9.vercel.app/api/downloader/yta2?url=${encodeURIComponent(youtubeUrl)}`;
+      const res = await client.get(yta2Api, { timeout: 15000 });
+      const r = res.data?.result;
+      const dl = r?.download_url || r?.preview;
+      if (res.data?.success && dl && !dl.includes("onrender.com")) {
+        candidates.push({
+          url: dl,
+          source: "yta2",
+          title: r?.title || titleFallback,
+          author: r?.author || ""
+        });
       }
     } catch (_) {}
   }
 
-  return null;
+  // Provider 3: Toshiro yta2 search fallback
+  if (titleFallback) {
+    try {
+      const searchApi = `https://toshiro-api-editz6t9.vercel.app/api/downloader/yta2?search=${encodeURIComponent(titleFallback)}`;
+      const res = await client.get(searchApi, { timeout: 15000 });
+      const first = res.data?.results?.[0];
+      if (first?.url) {
+        const yta2Api = `https://toshiro-api-editz6t9.vercel.app/api/downloader/yta2?url=${encodeURIComponent(first.url)}`;
+        const res2 = await client.get(yta2Api, { timeout: 15000 });
+        const r2 = res2.data?.result;
+        const dl2 = r2?.download_url || r2?.preview;
+        if (res2.data?.success && dl2 && !dl2.includes("onrender.com")) {
+          candidates.push({
+            url: dl2,
+            source: "yta2-search",
+            title: r2?.title || first.title || titleFallback,
+            author: r2?.author || ""
+          });
+        }
+      }
+    } catch (_) {}
+  }
+
+  return candidates;
+}
+
+/**
+ * Resilient multi-source downloader and MP3 compressor
+ */
+async function downloadAndProcessAudio({ youtubeUrl = null, title = "song", durationSeconds = 0, directAudioUrl = null }) {
+  await fs.ensureDir(CACHE_DIR);
+  const safeBaseName = sanitizeFilename(title);
+  const rand = Math.random().toString(36).slice(2, 7);
+  const rawPath = path.join(CACHE_DIR, `raw_${Date.now()}_${rand}.tmp`);
+  const mp3Path = path.join(CACHE_DIR, `${safeBaseName}_${Date.now()}_${rand}.mp3`);
+
+  let candidateList = [];
+  if (directAudioUrl) {
+    candidateList.push({ url: directAudioUrl, source: "direct" });
+  }
+
+  if (youtubeUrl) {
+    const fetched = await getAudioCandidates(youtubeUrl, title);
+    candidateList.push(...fetched);
+  }
+
+  if (candidateList.length === 0) {
+    throw new Error("No download sources could be resolved for this track.");
+  }
+
+  let downloaded = false;
+  let lastError = null;
+
+  for (const candidate of candidateList) {
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const dlRes = await axios({
+          url: candidate.url,
+          method: "GET",
+          responseType: "stream",
+          timeout: 45000,
+          headers: {
+            "Referer": "https://www.youtube.com/",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+          }
+        });
+
+        const writer = fs.createWriteStream(rawPath);
+        dlRes.data.pipe(writer);
+        await new Promise((resolve, reject) => {
+          writer.on("finish", resolve);
+          writer.on("error", reject);
+        });
+
+        const rawSize = (await fs.stat(rawPath)).size;
+        if (rawSize > 1000) {
+          downloaded = true;
+          break;
+        } else {
+          await fs.remove(rawPath).catch(() => {});
+        }
+      } catch (err) {
+        lastError = err;
+        await fs.remove(rawPath).catch(() => {});
+        if (attempt < 2 && (err.response?.status === 403 || err.response?.status === 429)) {
+          await new Promise(r => setTimeout(r, 1200));
+        }
+      }
+    }
+    if (downloaded) break;
+  }
+
+  if (!downloaded) {
+    throw new Error(lastError?.message || "Failed to download audio from all available providers.");
+  }
+
+  const rawSize = (await fs.stat(rawPath)).size;
+  const isBig = rawSize > MAX_ATTACHMENT_SIZE;
+  const isAlreadyMp3 = isMp3File(rawPath);
+
+  // Fast path: Already valid MP3 and within Messenger limit
+  if (!isBig && isAlreadyMp3) {
+    await fs.move(rawPath, mp3Path, { overwrite: true });
+    return {
+      filePath: mp3Path,
+      rawSize,
+      finalSize: rawSize,
+      wasCompressed: false
+    };
+  }
+
+  // Calculate compression bitrate dynamically if large
+  let targetBitrate = "128k";
+  if (isBig) {
+    const safeDuration = durationSeconds > 0 ? durationSeconds : 300;
+    let kbps = Math.floor((22 * 1024 * 8) / safeDuration) - 8;
+    kbps = Math.max(32, Math.min(128, kbps));
+    targetBitrate = `${kbps}k`;
+  }
+
+  let converted = false;
+  if (ffmpegPath) {
+    try {
+      await new Promise((resolve, reject) => {
+        ffmpeg(rawPath)
+          .audioCodec("libmp3lame")
+          .audioBitrate(targetBitrate)
+          .audioChannels(2)
+          .audioFrequency(44100)
+          .format("mp3")
+          .save(mp3Path)
+          .on("end", resolve)
+          .on("error", reject);
+      });
+      converted = true;
+    } catch (ffmpegErr) {
+      console.warn("[SING] ffmpeg conversion warning:", ffmpegErr.message);
+    }
+  }
+
+  if (converted && (await fs.pathExists(mp3Path))) {
+    let finalSize = (await fs.stat(mp3Path)).size;
+
+    // Secondary aggressive compression pass if still > MAX_ATTACHMENT_SIZE
+    if (finalSize > MAX_ATTACHMENT_SIZE) {
+      const recompressedPath = path.join(CACHE_DIR, `sing_recompressed_${Date.now()}_${rand}.mp3`);
+      try {
+        await new Promise((resolve, reject) => {
+          ffmpeg(rawPath)
+            .audioCodec("libmp3lame")
+            .audioBitrate("32k")
+            .audioChannels(1)
+            .audioFrequency(22050)
+            .format("mp3")
+            .save(recompressedPath)
+            .on("end", resolve)
+            .on("error", reject);
+        });
+        await fs.remove(mp3Path).catch(() => {});
+        await fs.move(recompressedPath, mp3Path, { overwrite: true });
+        finalSize = (await fs.stat(mp3Path)).size;
+      } catch (_) {}
+    }
+
+    await fs.remove(rawPath).catch(() => {});
+
+    if (finalSize > MAX_ATTACHMENT_SIZE) {
+      await fs.remove(mp3Path).catch(() => {});
+      throw new Error("Song exceeds Messenger 25MB limit even after maximum compression.");
+    }
+
+    return {
+      filePath: mp3Path,
+      rawSize,
+      finalSize,
+      wasCompressed: isBig || finalSize < rawSize
+    };
+  }
+
+  // Graceful fallback if ffmpeg is unavailable or failed but raw fits in Messenger
+  if (!isBig) {
+    await fs.move(rawPath, mp3Path, { overwrite: true });
+    return {
+      filePath: mp3Path,
+      rawSize,
+      finalSize: rawSize,
+      wasCompressed: false
+    };
+  }
+
+  await fs.remove(rawPath).catch(() => {});
+  throw new Error("Audio exceeds Messenger 25MB limit and compression could not be completed.");
 }
 
 module.exports = {
   config: {
     name: "sing",
     aliases: ["song", "music", "play"],
-    version: "3.1.0",
+    version: "3.3.0",
     author: "frnAlt",
     countDown: 5,
     role: 0,
-    shortDescription: { en: "Search and download YouTube audio" },
-    longDescription: { en: "Search YouTube songs and download audio directly or via interactive reply selection" },
+    shortDescription: { en: "Search, compress and download YouTube audio as MP3" },
+    longDescription: { en: "Search YouTube or Spotify songs and download high-quality MP3 audio with automatic compression for large files to fit Facebook Messenger limits" },
     category: "media",
-    guide: { en: "{pn} <song name or YouTube URL>" }
+    guide: { en: "{pn} <song name or YouTube URL or Spotify URL>" }
   },
 
-  onStart: async function ({ message, args, event, api, commandName }) {
+  onStart: async function ({ message, args, event, api }) {
     const query = args.join(" ").trim();
-    if (!query) return message.reply("❌ Please provide a song name or YouTube link.");
+    if (!query) return message.reply("❌ Please provide a song name or YouTube/Spotify link.");
 
     const isSpotify = /(?:open\.spotify\.com\/track\/|spotify\.link\/|spotify:track:)/i.test(query);
     const isYtUrl = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be)\//i.test(query);
@@ -132,29 +303,77 @@ module.exports = {
 
     // ── Mode 1: Spotify URL ──
     if (isSpotify) {
+      let songTitle = "Spotify Track";
+      let artistName = "";
+      let directAudioUrl = null;
+
       try {
-        let audioUrl = null;
-        let title = "Spotify Track";
-        let artist = "";
+        const spRes = await client.get(`https://toshiro-api-editz6t9.vercel.app/api/downloader/spdl?url=${encodeURIComponent(query)}`, { timeout: 15000 });
+        if (spRes.data?.success && spRes.data?.result) {
+          songTitle = spRes.data.result.title || songTitle;
+          artistName = spRes.data.result.artist || "";
+          directAudioUrl = spRes.data.result.download_url || spRes.data.result.audio;
+        }
+      } catch (_) {}
 
-        // 1. Primary: Toshiro spdl
+      // Fallback metadata via Spotify oEmbed
+      if (!songTitle || songTitle === "Spotify Track") {
         try {
-          const spRes = await client.get(`https://toshiro-api-editz6t9.vercel.app/api/downloader/spdl?url=${encodeURIComponent(query)}`, { timeout: 15000 });
-          if (spRes.data?.success && (spRes.data?.result?.download_url || spRes.data?.result?.audio)) {
-            audioUrl = spRes.data.result.download_url || spRes.data.result.audio;
-            title = spRes.data.result.title || title;
-            artist = spRes.data.result.artist || "";
-          }
+          const oemb = await client.get(`https://open.spotify.com/oembed?url=${encodeURIComponent(query)}`, { timeout: 8000 });
+          if (oemb.data?.title) songTitle = oemb.data.title;
         } catch (_) {}
+      }
 
-        if (!audioUrl) throw new Error("Could not extract Spotify audio stream.");
+      // If direct Spotify audio URL is available, try processing it
+      if (directAudioUrl) {
+        try {
+          const result = await downloadAndProcessAudio({ title: songTitle, directAudioUrl });
+          const stream = fs.createReadStream(result.filePath);
 
-        const audioStream = await global.utils.getStreamFromURL(audioUrl, "sing_spotify.mp3");
+          const bodyText = [
+            `🎵 Title: ${songTitle}`,
+            artistName ? `👤 Artist: ${artistName}` : null,
+            `🎼 Source: Spotify (MP3)`,
+            result.wasCompressed ? `📦 Compressed: ${(result.rawSize / (1024 * 1024)).toFixed(1)}MB ➔ ${(result.finalSize / (1024 * 1024)).toFixed(1)}MB` : null
+          ].filter(Boolean).join("\n");
+
+          if (api && api.setMessageReaction) api.setMessageReaction("✅", event.messageID, () => {}, true);
+
+          return message.reply({ body: bodyText, attachment: stream }, () => {
+            fs.remove(result.filePath).catch(() => {});
+          });
+        } catch (err) {
+          console.warn("[SING] Direct Spotify stream failed, falling back to YouTube match:", err.message);
+        }
+      }
+
+      // Spotify resolution fallback: Search YouTube with "${songTitle} ${artistName}"
+      const ytSearchQuery = `${songTitle} ${artistName}`.trim();
+      try {
+        const searchRes = await yts(ytSearchQuery);
+        const video = searchRes?.videos?.[0];
+        if (!video) throw new Error(`Could not find track on YouTube for "${ytSearchQuery}"`);
+
+        const result = await downloadAndProcessAudio({
+          youtubeUrl: video.url,
+          title: songTitle,
+          durationSeconds: video.seconds
+        });
+
+        const stream = fs.createReadStream(result.filePath);
+
+        const bodyText = [
+          `🎵 Title: ${songTitle}`,
+          artistName ? `👤 Artist: ${artistName}` : (video.author?.name ? `👤 Artist: ${video.author.name}` : null),
+          video.timestamp ? `⏱️ Duration: ${video.timestamp}` : null,
+          `🎼 Source: Spotify via YouTube (MP3)`,
+          result.wasCompressed ? `📦 Compressed: ${(result.rawSize / (1024 * 1024)).toFixed(1)}MB ➔ ${(result.finalSize / (1024 * 1024)).toFixed(1)}MB` : null
+        ].filter(Boolean).join("\n");
+
         if (api && api.setMessageReaction) api.setMessageReaction("✅", event.messageID, () => {}, true);
 
-        return message.reply({
-          body: `🎵 Title: ${title}${artist ? `\n👤 Artist: ${artist}` : ""}\n🎼 Source: Spotify`,
-          attachment: audioStream
+        return message.reply({ body: bodyText, attachment: stream }, () => {
+          fs.remove(result.filePath).catch(() => {});
         });
       } catch (err) {
         console.error("[SING] Spotify download error:", err.message);
@@ -166,22 +385,42 @@ module.exports = {
     // ── Mode 2: Direct YouTube URL ──
     if (isYtUrl) {
       try {
-        let searchTitle = "YouTube Audio";
+        let videoTitle = "YouTube Audio";
+        let durationSeconds = 0;
+        let durationText = "N/A";
+        let channelName = "";
+
         try {
           const searchRes = await yts(query);
-          if (searchRes?.videos?.[0]) searchTitle = searchRes.videos[0].title;
+          const v = searchRes?.videos?.[0];
+          if (v) {
+            videoTitle = v.title || videoTitle;
+            durationSeconds = v.seconds || 0;
+            durationText = v.timestamp || durationText;
+            channelName = v.author?.name || "";
+          }
         } catch (_) {}
 
-        const audioData = await getAudioForTrack(searchTitle, query);
-        if (!audioData || !audioData.stream) {
-          if (api && api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
-          return message.reply("❌ Could not download audio from this YouTube link.");
-        }
+        const result = await downloadAndProcessAudio({
+          youtubeUrl: query,
+          title: videoTitle,
+          durationSeconds
+        });
+
+        const stream = fs.createReadStream(result.filePath);
+
+        const bodyText = [
+          `🎵 Title: ${videoTitle}`,
+          channelName ? `👤 Channel: ${channelName}` : null,
+          durationText !== "N/A" ? `⏱️ Duration: ${durationText}` : null,
+          `🎼 Format: MP3`,
+          result.wasCompressed ? `📦 Compressed: ${(result.rawSize / (1024 * 1024)).toFixed(1)}MB ➔ ${(result.finalSize / (1024 * 1024)).toFixed(1)}MB` : null
+        ].filter(Boolean).join("\n");
 
         if (api && api.setMessageReaction) api.setMessageReaction("✅", event.messageID, () => {}, true);
 
-        return message.reply({
-          attachment: audioData.stream
+        return message.reply({ body: bodyText, attachment: stream }, () => {
+          fs.remove(result.filePath).catch(() => {});
         });
       } catch (err) {
         console.error("[SING] Direct YouTube download error:", err.message);
@@ -190,7 +429,7 @@ module.exports = {
       }
     }
 
-    // ── Mode 3: YouTube Search & Direct MP3 Output ──
+    // ── Mode 3: YouTube Search & Accurate MP3 Download ──
     try {
       const searchRes = await yts(query);
       const videos = searchRes?.videos || [];
@@ -200,23 +439,34 @@ module.exports = {
         return message.reply(`❌ No songs found for "${query}".`);
       }
 
-      const topVideo = videos[0];
-      const audioData = await getAudioForTrack(topVideo.title, topVideo.url);
+      // Accurate video selection: Prefer non-live videos under 2 hours
+      const selectedVideo = videos.find(v => v.seconds > 0 && v.seconds <= 7200) || videos[0];
 
-      if (!audioData || !audioData.stream) {
-        if (api && api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
-        return message.reply(`❌ Could not download audio for "${topVideo.title}". Please try again.`);
-      }
+      const result = await downloadAndProcessAudio({
+        youtubeUrl: selectedVideo.url,
+        title: selectedVideo.title,
+        durationSeconds: selectedVideo.seconds
+      });
+
+      const stream = fs.createReadStream(result.filePath);
+
+      const bodyText = [
+        `🎵 Title: ${selectedVideo.title}`,
+        selectedVideo.author?.name ? `👤 Artist: ${selectedVideo.author.name}` : null,
+        selectedVideo.timestamp ? `⏱️ Duration: ${selectedVideo.timestamp}` : null,
+        `🎼 Format: MP3`,
+        result.wasCompressed ? `📦 Compressed: ${(result.rawSize / (1024 * 1024)).toFixed(1)}MB ➔ ${(result.finalSize / (1024 * 1024)).toFixed(1)}MB (fit Messenger limit)` : null
+      ].filter(Boolean).join("\n");
 
       if (api && api.setMessageReaction) api.setMessageReaction("✅", event.messageID, () => {}, true);
 
-      return message.reply({
-        attachment: audioData.stream
+      return message.reply({ body: bodyText, attachment: stream }, () => {
+        fs.remove(result.filePath).catch(() => {});
       });
     } catch (e) {
-      console.error("[SING] Search error:", e.message);
+      console.error("[SING] Search/Download error:", e.message);
       if (api && api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
-      message.reply("❌ Search error. Please try again later.");
+      message.reply(`❌ Failed to download song: ${e.message || "Please try again later."}`);
     }
   },
 
@@ -231,7 +481,7 @@ module.exports = {
     }
 
     const selected = Reply.results[choice - 1];
-    if (typeof Reply.delete === 'function') Reply.delete();
+    if (typeof Reply.delete === "function") Reply.delete();
 
     if (api && api.unsendMessage && event.messageReply?.messageID) {
       api.unsendMessage(event.messageReply.messageID, event.threadID).catch(() => {});
@@ -242,24 +492,30 @@ module.exports = {
     }
 
     try {
-      const audioData = await getAudioForTrack(selected.title, selected.url);
-      if (!audioData || !audioData.stream) {
-        if (api && api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
-        return message.reply(`❌ Could not fetch audio stream for "${selected.title}". Please try another song.`);
-      }
-
-      await message.reply({
-        attachment: audioData.stream
+      const result = await downloadAndProcessAudio({
+        youtubeUrl: selected.url,
+        title: selected.title,
+        durationSeconds: selected.seconds || 0
       });
 
-      if (api && api.setMessageReaction) {
-        api.setMessageReaction("✅", event.messageID, () => {}, true);
-      }
+      const stream = fs.createReadStream(result.filePath);
+
+      const bodyText = [
+        `🎵 Title: ${selected.title}`,
+        selected.author?.name ? `👤 Artist: ${selected.author.name}` : null,
+        selected.duration ? `⏱️ Duration: ${selected.duration}` : null,
+        `🎼 Format: MP3`,
+        result.wasCompressed ? `📦 Compressed: ${(result.rawSize / (1024 * 1024)).toFixed(1)}MB ➔ ${(result.finalSize / (1024 * 1024)).toFixed(1)}MB` : null
+      ].filter(Boolean).join("\n");
+
+      if (api && api.setMessageReaction) api.setMessageReaction("✅", event.messageID, () => {}, true);
+
+      return message.reply({ body: bodyText, attachment: stream }, () => {
+        fs.remove(result.filePath).catch(() => {});
+      });
     } catch (e) {
       console.error("[SING] onReply download error:", e.message);
-      if (api && api.setMessageReaction) {
-        api.setMessageReaction("❌", event.messageID, () => {}, true);
-      }
+      if (api && api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
       message.reply("❌ Failed to download audio. Please try another song or reply again.");
     }
   }
