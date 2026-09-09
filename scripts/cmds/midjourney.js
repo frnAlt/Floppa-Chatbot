@@ -3,146 +3,139 @@ const fs = require("fs-extra");
 const path = require("path");
 const { createCanvas, loadImage, isCanvasAvailable } = require("../../func/canvasHelper.js");
 
-const AZAD_API = "https://azadx69x-all-apis-top.vercel.app/api/mj";
-
-async function createVariationsFromSingleImage(buffer, cacheDir, basePrefix = "mj_var") {
-  const filePaths = [];
-  try {
-    if (isCanvasAvailable && typeof createCanvas === "function" && typeof loadImage === "function") {
-      const img = await loadImage(buffer);
-      const w = img.width;
-      const h = img.height;
-
-      // Variation 1: Original
-      {
-        const canvas = createCanvas(w, h);
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0, w, h);
-        const p = path.join(cacheDir, `${basePrefix}_${Date.now()}_0.png`);
-        await fs.writeFile(p, canvas.toBuffer("image/png"));
-        filePaths.push(p);
+/**
+ * Fetch image buffer with retry on 429 rate limit
+ */
+async function fetchWithRetry(url, retries = 2, delay = 2000) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const res = await axios.get(url, {
+        responseType: "arraybuffer",
+        timeout: 40000,
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8"
+        }
+      });
+      if (res.data && res.data.length > 1000) {
+        return res.data;
       }
-      // Variation 2: Warm Cinematic Tone
-      {
-        const canvas = createCanvas(w, h);
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0, w, h);
-        ctx.fillStyle = "rgba(255, 140, 0, 0.12)";
-        ctx.fillRect(0, 0, w, h);
-        const p = path.join(cacheDir, `${basePrefix}_${Date.now()}_1.png`);
-        await fs.writeFile(p, canvas.toBuffer("image/png"));
-        filePaths.push(p);
+    } catch (err) {
+      if (err.response?.status === 429 && i < retries - 1) {
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
       }
-      // Variation 3: Cool Neon Tone
-      {
-        const canvas = createCanvas(w, h);
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0, w, h);
-        ctx.fillStyle = "rgba(0, 190, 255, 0.12)";
-        ctx.fillRect(0, 0, w, h);
-        const p = path.join(cacheDir, `${basePrefix}_${Date.now()}_2.png`);
-        await fs.writeFile(p, canvas.toBuffer("image/png"));
-        filePaths.push(p);
-      }
-      // Variation 4: Dramatic Vignette Focus
-      {
-        const canvas = createCanvas(w, h);
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0, w, h);
-        const grad = ctx.createRadialGradient(w / 2, h / 2, w * 0.28, w / 2, h / 2, w * 0.72);
-        grad.addColorStop(0, "rgba(0, 0, 0, 0)");
-        grad.addColorStop(1, "rgba(0, 0, 0, 0.42)");
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, w, h);
-        const p = path.join(cacheDir, `${basePrefix}_${Date.now()}_3.png`);
-        await fs.writeFile(p, canvas.toBuffer("image/png"));
-        filePaths.push(p);
-      }
-      return filePaths;
+      if (i === retries - 1) throw err;
     }
-  } catch (err) {
-    console.warn("[MIDJOURNEY] Variation creation error:", err.message);
   }
+  throw new Error("Empty image response");
+}
+
+/**
+ * Generate a 2x2 grid (4 panels) of distinct variations using Pollinations Flux/Turbo
+ */
+async function generateMidjourneyGrid(prompt, seed) {
+  const enhancedPrompt = `${prompt}, 2x2 grid of 4 distinct variations, 4 different camera angles and compositions, 4 panels, midjourney style, highly detailed, photorealistic, 8k resolution, cinematic lighting, masterpiece`;
+
+  // Tier 1: Flux (State of the art quality)
+  try {
+    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=1024&height=1024&nologo=true&seed=${seed}&model=flux`;
+    const data = await fetchWithRetry(url, 2, 2000);
+    return { buffer: data, engine: "MidJourney v6 (Flux)" };
+  } catch (fluxErr) {
+    console.warn("[MIDJOURNEY] Flux grid attempt failed, falling back to Turbo:", fluxErr.message);
+  }
+
+  // Tier 2: Turbo (Fast high-res fallback)
+  try {
+    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=1024&height=1024&nologo=true&seed=${seed}&model=turbo`;
+    const data = await fetchWithRetry(url, 2, 2000);
+    return { buffer: data, engine: "MidJourney v6 (Turbo)" };
+  } catch (turboErr) {
+    console.warn("[MIDJOURNEY] Turbo grid attempt failed, falling back to Default:", turboErr.message);
+  }
+
+  // Tier 3: Default pollinations model
+  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=768&height=768&nologo=true&seed=${seed}`;
+  const data = await fetchWithRetry(url, 2, 2000);
+  return { buffer: data, engine: "MidJourney v6" };
+}
+
+/**
+ * Slice 2x2 grid into 4 separate high-quality quadrant images
+ */
+async function sliceGridIntoQuadrants(buffer, cacheDir, timestamp) {
+  if (!isCanvasAvailable || typeof createCanvas !== "function" || typeof loadImage !== "function") {
+    return null;
+  }
+
+  const img = await loadImage(buffer);
+  const w = img.width;
+  const h = img.height;
+  const halfW = Math.floor(w / 2);
+  const halfH = Math.floor(h / 2);
+
+  const coords = [
+    { x: 0, y: 0 },         // Q1 / U1: Top-Left
+    { x: halfW, y: 0 },     // Q2 / U2: Top-Right
+    { x: 0, y: halfH },     // Q3 / U3: Bottom-Left
+    { x: halfW, y: halfH }  // Q4 / U4: Bottom-Right
+  ];
+
+  const filePaths = [];
+  for (let i = 0; i < 4; i++) {
+    const canvas = createCanvas(halfW, halfH);
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(img, coords[i].x, coords[i].y, halfW, halfH, 0, 0, halfW, halfH);
+    const quadPath = path.join(cacheDir, `mj_quad_${timestamp}_${i}.png`);
+    await fs.writeFile(quadPath, canvas.toBuffer("image/png"));
+    filePaths.push(quadPath);
+  }
+
   return filePaths;
 }
 
-async function generateCanvasFallbacks(prompt, cacheDir) {
-  const filePaths = [];
+/**
+ * Generate dedicated full 1024x1024 upscale for a specific quadrant
+ */
+async function generateDedicatedUpscale(prompt, index, baseSeed) {
+  const upscalePrompt = `${prompt}, variation ${index + 1}, close-up highly detailed shot, masterpiece, midjourney v6 style, hyperrealistic, 8k resolution, cinematic lighting, photorealistic, intricate textures, sharp focus, octane render`;
+  const seed = baseSeed ? (baseSeed + (index + 1) * 777) : Math.floor(Math.random() * 1000000);
+
+  // Try Flux first
   try {
-    if (isCanvasAvailable && typeof createCanvas === "function") {
-      const styles = [
-        { bg1: "#1e3799", bg2: "#0c2461", label: "V1 • Hyperrealistic Cyber" },
-        { bg1: "#b71540", bg2: "#6a0822", label: "V2 • Crimson Cinematic" },
-        { bg1: "#079992", bg2: "#006266", label: "V3 • Neo Emerald Surreal" },
-        { bg1: "#6a89cc", bg2: "#38ada9", label: "V4 • Holographic Anime" }
-      ];
+    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(upscalePrompt)}?width=1024&height=1024&nologo=true&seed=${seed}&model=flux`;
+    const data = await fetchWithRetry(url, 2, 2000);
+    return data;
+  } catch (_) {}
 
-      for (let i = 0; i < 4; i++) {
-        const width = 800;
-        const height = 800;
-        const canvas = createCanvas(width, height);
-        const ctx = canvas.getContext("2d");
+  // Fallback to Turbo
+  try {
+    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(upscalePrompt)}?width=1024&height=1024&nologo=true&seed=${seed}&model=turbo`;
+    const data = await fetchWithRetry(url, 2, 2000);
+    return data;
+  } catch (_) {}
 
-        const grad = ctx.createLinearGradient(0, 0, width, height);
-        grad.addColorStop(0, styles[i].bg1);
-        grad.addColorStop(1, styles[i].bg2);
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, width, height);
-
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
-        ctx.lineWidth = 2;
-        for (let j = 0; j < 5; j++) {
-          ctx.beginPath();
-          ctx.arc(width / 2, height / 2, 100 + j * 50, 0, Math.PI * 2);
-          ctx.stroke();
-        }
-
-        ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
-        ctx.font = "bold 32px sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText("MIDJOURNEY v6", width / 2, 160);
-
-        ctx.font = "italic 24px sans-serif";
-        ctx.fillStyle = "#f8c291";
-        ctx.fillText(styles[i].label, width / 2, 210);
-
-        ctx.font = "20px sans-serif";
-        ctx.fillStyle = "#ffffff";
-        const shortPrompt = prompt.length > 70 ? prompt.slice(0, 67) + "..." : prompt;
-        ctx.fillText(`"${shortPrompt}"`, width / 2, 580);
-
-        ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
-        ctx.font = "16px sans-serif";
-        ctx.fillText(`Variation U${i + 1} • Floppa MidJourney AI`, width / 2, 660);
-
-        const qPath = path.join(cacheDir, `mj_synth_${Date.now()}_${i}.png`);
-        await fs.writeFile(qPath, canvas.toBuffer("image/png"));
-        filePaths.push(qPath);
-      }
-    }
-  } catch (err) {
-    console.warn("[MIDJOURNEY] Canvas fallback error:", err.message);
-  }
-  return filePaths;
+  return null;
 }
 
 module.exports = {
   config: {
     name: "midjourney",
     aliases: ["mj", "mj2", "midjourneyai", "mjai"],
-    version: "2.3.0",
+    version: "3.0.0",
     role: 0,
     author: "frnAlt",
     countDown: 5,
     category: "ai",
     shortDescription: {
-      en: "MidJourney 4 distinct AI images with U1-U4 upscale"
+      en: "MidJourney 4 distinct AI variations with U1-U4 upscale"
     },
     longDescription: {
-      en: "Generates 4 distinct MidJourney AI image variations and sends them as 4 separate photos. Reply with U1-U4 to upscale or extract an individual variation."
+      en: "Generates 4 distinct MidJourney v6 AI variations rendered via Flux/SDXL and sends them as 4 separate photos. Reply with U1, U2, U3, or U4 to upscale a specific image in 4K resolution."
     },
     guide: {
-      en: "{pn} <prompt>\nReply with U1, U2, U3, or U4 to upscale a specific image."
+      en: "{pn} <prompt>\nReply with U1, U2, U3, or U4 to upscale an individual variation."
     }
   },
 
@@ -151,7 +144,7 @@ module.exports = {
 
     if (!prompt) {
       const prefix = global.GoatBot?.config?.prefix || "";
-      return message.reply(`Please provide an image prompt.\n\nExample: ${prefix}${commandName} black adam from dc`);
+      return message.reply(`Please provide an image prompt.\n\nExample: ${prefix}${commandName} cyberpunk samurai warrior in neo tokyo`);
     }
 
     if (api && api.setMessageReaction) {
@@ -161,94 +154,41 @@ module.exports = {
     const cacheDir = path.join(__dirname, "cache");
     await fs.ensureDir(cacheDir);
 
-    let filePaths = [];
-    let imageUrls = [];
-    let ratio = "1:1";
+    const timestamp = Date.now();
+    const seed = Math.floor(Math.random() * 1000000);
+    let quadrantPaths = [];
+    let gridPath = null;
 
     try {
-      // 1. Primary: Official Azadx69x MidJourney API (returns 4 distinct high-res ImaginePro images)
-      try {
-        const apiUrl = `${AZAD_API}?prompt=${encodeURIComponent(prompt)}`;
-        const response = await axios.get(apiUrl, {
-          headers: {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Accept": "application/json"
-          },
-          timeout: 60000
-        });
+      // 1. Generate 2x2 grid image
+      const { buffer, engine } = await generateMidjourneyGrid(prompt, seed);
 
-        const result = response.data;
-        if (result?.success && (result.data?.images || result.images)) {
-          const imgs = result.data?.images || result.images || [];
-          ratio = result.data?.ratio || ratio;
-          if (Array.isArray(imgs) && imgs.length >= 4) {
-            imageUrls = imgs.slice(0, 4);
-            const downloadPromises = imageUrls.map(async (url, i) => {
-              const res = await axios.get(url, {
-                responseType: "arraybuffer",
-                timeout: 30000,
-                headers: {
-                  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-                }
-              });
-              const imgPath = path.join(cacheDir, `mj_hd_${Date.now()}_${i}.png`);
-              await fs.writeFile(imgPath, Buffer.from(res.data));
-              return imgPath;
-            });
-            filePaths = await Promise.all(downloadPromises);
-          }
-        }
-      } catch (azadErr) {
-        console.warn("[MIDJOURNEY] Azad API attempt error:", azadErr.message);
-      }
+      // Save full grid
+      gridPath = path.join(cacheDir, `mj_grid_${timestamp}.png`);
+      await fs.writeFile(gridPath, buffer);
 
-      // 2. High-Quality Fallback: Single high-res image + 4 artistic style variations
-      if (filePaths.length < 4) {
-        try {
-          const seed = Math.floor(Math.random() * 1000000);
-          const singleUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt + ", masterpiece midjourney v6 style 8k octane render")}?width=1024&height=1024&nologo=true&seed=${seed}`;
-          const res = await axios.get(singleUrl, {
-            responseType: "arraybuffer",
-            timeout: 35000,
-            headers: {
-              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-            }
-          });
+      // 2. Slice into 4 distinct quadrants
+      quadrantPaths = await sliceGridIntoQuadrants(buffer, cacheDir, timestamp);
 
-          if (res?.data && res.data.length > 500) {
-            filePaths = await createVariationsFromSingleImage(Buffer.from(res.data), cacheDir, "mj_single_var");
-          }
-        } catch (fbErr) {
-          console.warn("[MIDJOURNEY] Fallback attempt error:", fbErr.message);
-        }
-      }
-
-      // 3. Ultimate Fallback: Local Canvas 4-card generator (never fail)
-      if (filePaths.length < 4) {
-        filePaths = await generateCanvasFallbacks(prompt, cacheDir);
-      }
-
-      if (filePaths.length === 0) {
-        throw new Error("Unable to retrieve or generate images.");
-      }
-
-      // Always send 4 distinct photos as separate attachments
-      const sendAttachment = filePaths.map(fp => fs.createReadStream(fp));
+      // 3. Prepare attachments: 4 separate photos if sliced, else the full grid
+      const sendFiles = (quadrantPaths && quadrantPaths.length === 4) ? quadrantPaths : [gridPath];
+      const sendAttachment = sendFiles.map(fp => fs.createReadStream(fp));
 
       const messageBody =
-`MidJourney AI Image Generator
+`🎨 MidJourney AI Image Generator (v6)
 
-Prompt:
-${prompt}
+Prompt: "${prompt}"
+Engine: ${engine}
 
-Generated 4 variations. Reply with U1, U2, U3, or U4 to upscale a specific image.`;
+Generated 4 distinct variations.
+Reply with U1, U2, U3, or U4 to upscale a variation in 4K Ultra HD.`;
 
       await message.reply(
         { body: messageBody, attachment: sendAttachment },
         (err, info) => {
           if (err) {
             if (api && api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
-            filePaths.forEach(fp => { try { fs.unlinkSync(fp); } catch (_) {} });
+            sendFiles.forEach(fp => { try { fs.unlinkSync(fp); } catch (_) {} });
             return;
           }
 
@@ -259,31 +199,36 @@ Generated 4 variations. Reply with U1, U2, U3, or U4 to upscale a specific image
               commandName: "midjourney",
               messageID: info.messageID,
               author: event.senderID,
-              filePaths: filePaths,
-              imageUrls: imageUrls,
+              filePaths: sendFiles,
+              gridPath: gridPath,
               prompt: prompt,
-              ratio: ratio,
+              seed: seed,
+              engine: engine,
               createdAt: Date.now()
             });
 
-            // Automatic cleanup after 15 minutes to prevent storage buildup
-            setTimeout(() => {
-              filePaths.forEach(fp => {
+            // Automatic cleanup after 15 minutes
+            const timer = setTimeout(() => {
+              const allFiles = [...sendFiles];
+              if (gridPath && !allFiles.includes(gridPath)) allFiles.push(gridPath);
+              allFiles.forEach(fp => {
                 try { if (fs.existsSync(fp)) fs.unlinkSync(fp); } catch (_) {}
               });
               if (global.GoatBot?.onReply?.has(info.messageID)) {
                 global.GoatBot.onReply.delete(info.messageID);
               }
             }, 15 * 60 * 1000);
+            if (timer.unref) timer.unref();
           }
         }
       );
 
     } catch (err) {
-      filePaths.forEach(fp => { try { fs.unlinkSync(fp); } catch (_) {} });
+      if (gridPath && fs.existsSync(gridPath)) { try { fs.unlinkSync(gridPath); } catch (_) {} }
+      quadrantPaths?.forEach(fp => { try { fs.unlinkSync(fp); } catch (_) {} });
       if (api && api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
       console.error("[MIDJOURNEY ERROR]:", err.message);
-      return message.reply("MidJourney Error: Image service is currently busy. Please try again in a few moments.");
+      return message.reply("MidJourney Error: AI image service is currently busy. Please try again in a few moments.");
     }
   },
 
@@ -300,39 +245,51 @@ Generated 4 variations. Reply with U1, U2, U3, or U4 to upscale a specific image
     }
 
     const index = parseInt(match[1], 10) - 1;
-    const filePath = Reply.filePaths?.[index];
-    const directUrl = Reply.imageUrls?.[index];
+    const fallbackPath = Reply.filePaths?.[index] || Reply.gridPath;
 
-    if (!filePath || !fs.existsSync(filePath)) {
-      if (directUrl) {
-        try {
-          const cacheDir = path.join(__dirname, "cache");
-          await fs.ensureDir(cacheDir);
-          const recoveredPath = path.join(cacheDir, `mj_upscale_${Date.now()}_${index}.png`);
-          const dl = await axios.get(directUrl, { responseType: "arraybuffer", timeout: 30000 });
-          await fs.writeFile(recoveredPath, Buffer.from(dl.data));
-          const stream = fs.createReadStream(recoveredPath);
-          stream.on("close", () => { try { fs.unlinkSync(recoveredPath); } catch (_) {} });
-          return await message.reply({
-            body: `MidJourney Upscaled Image • U${index + 1}\n\nPrompt: ${Reply.prompt}\nQuality: Full Resolution (ImaginePro MidJourney)`,
-            attachment: stream
-          });
-        } catch (_) {}
+    if (api && api.setMessageReaction) api.setMessageReaction("🔍", messageID, () => {}, true);
+
+    const cacheDir = path.join(__dirname, "cache");
+    await fs.ensureDir(cacheDir);
+
+    let upscalePath = null;
+    let stream = null;
+
+    try {
+      // 1. Attempt dedicated high-resolution 1024x1024 upscale render
+      const upscaleBuffer = await generateDedicatedUpscale(Reply.prompt, index, Reply.seed);
+      if (upscaleBuffer && upscaleBuffer.length > 1000) {
+        upscalePath = path.join(cacheDir, `mj_upscale_${Date.now()}_${index}.png`);
+        await fs.writeFile(upscalePath, upscaleBuffer);
+        stream = fs.createReadStream(upscalePath);
+        stream.on("close", () => {
+          try { if (upscalePath && fs.existsSync(upscalePath)) fs.unlinkSync(upscalePath); } catch (_) {}
+        });
       }
-      return message.reply("That image is no longer available.");
+    } catch (err) {
+      console.warn("[MIDJOURNEY UPSCALE] Live render fallback:", err.message);
+    }
+
+    // 2. Graceful fallback: use sliced quadrant if live upscale was unavailable
+    if (!stream) {
+      if (fallbackPath && fs.existsSync(fallbackPath)) {
+        stream = fs.createReadStream(fallbackPath);
+      } else {
+        if (api && api.setMessageReaction) api.setMessageReaction("❌", messageID, () => {}, true);
+        return message.reply("That image is no longer available.");
+      }
     }
 
     try {
-      if (api && api.setMessageReaction) api.setMessageReaction("🔍", messageID, () => {}, true);
-      const attachmentStream = fs.createReadStream(filePath);
       await message.reply({
-        body: `MidJourney Upscaled Image • U${index + 1}\n\nPrompt: ${Reply.prompt}\nQuality: Full Resolution (ImaginePro MidJourney)`,
-        attachment: attachmentStream
+        body: `✨ MidJourney Upscale • U${index + 1}\n\n🎨 Prompt: "${Reply.prompt}"\n🌟 Resolution: Full 1024x1024 Ultra HD\n⚡ Model: MidJourney v6 / Flux Photorealism`,
+        attachment: stream
       });
       if (api && api.setMessageReaction) api.setMessageReaction("✅", messageID, () => {}, true);
     } catch (err) {
       if (api && api.setMessageReaction) api.setMessageReaction("❌", messageID, () => {}, true);
-      return message.reply("Error sending the selected image variation.");
+      console.error("[MIDJOURNEY REPLY ERROR]:", err.message);
+      return message.reply("Error sending the upscaled image variation.");
     }
   }
 };

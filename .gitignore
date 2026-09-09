@@ -16,3 +16,4 @@ temp/*
 scratch/
 scripts/cmds/cache/
 appstate.json
+Horizon_Database/
