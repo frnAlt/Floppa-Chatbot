@@ -647,6 +647,83 @@ async function runDiagnostics() {
     const handler6 = await handlerEvents(nonAdminNextLine, createMockMessage(nonAdminNextLine));
     if (handler6 && typeof handler6.onStart === "function") await handler6.onStart();
     logTest("WORKFLOW", "Non-admin user non-prefix multiline attempt 'help\\nping' is rejected and remains silent", lastReply === null);
+
+    // 10. Admin inline non-prefix command with argument: "help ping"
+    lastReply = null;
+    require(path.join(cwd, "func/cooldownManager.js")).clear();
+    const adminInlineHelp = {
+      type: "message",
+      body: "help ping",
+      messageID: "msg_admin_inline_help",
+      threadID: "10006",
+      senderID: "9999",
+      isGroup: true
+    };
+    const handlerAdminInlineHelp = await handlerEvents(adminInlineHelp, createMockMessage(adminInlineHelp));
+    if (handlerAdminInlineHelp && typeof handlerAdminInlineHelp.onStart === "function") await handlerAdminInlineHelp.onStart();
+    const adminInlineHelpResp = typeof lastReply === "string" ? lastReply : (lastReply?.body || "");
+    const adminInlineHelpOk = adminInlineHelpResp && (adminInlineHelpResp.includes("ping") || adminInlineHelpResp.includes("FLOPPA COMMAND INFO"));
+    logTest("WORKFLOW", "Admin can execute inline non-prefix command with argument 'help ping'", adminInlineHelpOk);
+
+    // 11. Admin conversation with command word in middle of sentence: "Can someone help me with this?"
+    lastReply = null;
+    require(path.join(cwd, "func/cooldownManager.js")).clear();
+    const adminMidSentenceHelp = {
+      type: "message",
+      body: "Can someone help me with this?",
+      messageID: "msg_admin_mid_help",
+      threadID: "10006",
+      senderID: "9999",
+      isGroup: true
+    };
+    const handlerMidHelp = await handlerEvents(adminMidSentenceHelp, createMockMessage(adminMidSentenceHelp));
+    if (handlerMidHelp && typeof handlerMidHelp.onStart === "function") await handlerMidHelp.onStart();
+    logTest("WORKFLOW", "Admin chat with command in middle of sentence 'Can someone help me with this?' remains silent", lastReply === null);
+
+    // 12. Admin conversation with command word in middle of sentence: "I want to sing a nice song"
+    lastReply = null;
+    require(path.join(cwd, "func/cooldownManager.js")).clear();
+    const adminMidSentenceSing = {
+      type: "message",
+      body: "I want to sing a nice song",
+      messageID: "msg_admin_mid_sing",
+      threadID: "10006",
+      senderID: "9999",
+      isGroup: true
+    };
+    const handlerMidSing = await handlerEvents(adminMidSentenceSing, createMockMessage(adminMidSentenceSing));
+    if (handlerMidSing && typeof handlerMidSing.onStart === "function") await handlerMidSing.onStart();
+    logTest("WORKFLOW", "Admin chat with command in middle of sentence 'I want to sing a nice song' remains silent", lastReply === null);
+
+    // 13. Admin conversation with command word in middle of sentence: "What is your ping right now?"
+    lastReply = null;
+    require(path.join(cwd, "func/cooldownManager.js")).clear();
+    const adminMidSentencePing = {
+      type: "message",
+      body: "What is your ping right now?",
+      messageID: "msg_admin_mid_ping",
+      threadID: "10006",
+      senderID: "9999",
+      isGroup: true
+    };
+    const handlerMidPing = await handlerEvents(adminMidSentencePing, createMockMessage(adminMidSentencePing));
+    if (handlerMidPing && typeof handlerMidPing.onStart === "function") await handlerMidPing.onStart();
+    logTest("WORKFLOW", "Admin chat with command in middle of sentence 'What is your ping right now?' remains silent", lastReply === null);
+
+    // 14. Non-admin user attempting inline non-prefix with argument: "help ping"
+    lastReply = null;
+    require(path.join(cwd, "func/cooldownManager.js")).clear();
+    const nonAdminInlineHelp = {
+      type: "message",
+      body: "help ping",
+      messageID: "msg_nonadmin_inline_help",
+      threadID: "10006",
+      senderID: "12345",
+      isGroup: true
+    };
+    const handlerNonAdminInline = await handlerEvents(nonAdminInlineHelp, createMockMessage(nonAdminInlineHelp));
+    if (handlerNonAdminInline && typeof handlerNonAdminInline.onStart === "function") await handlerNonAdminInline.onStart();
+    logTest("WORKFLOW", "Non-admin user non-prefix inline attempt 'help ping' is rejected and remains silent", lastReply === null);
   } catch (err) {
     logTest("WORKFLOW", "Dual-mode prefix & non-prefix validation suite failed", false, err.message);
   }

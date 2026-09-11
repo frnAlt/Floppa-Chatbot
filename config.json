@@ -15,7 +15,7 @@
   "nickNameBot": "Floppa Bot 🐱",
   "prefix": "!",
   "noPrefix": true,
-  "noPrefixNotes": "When true, Bot Admins (role 2) and Developers (role 4) can run commands without the prefix. Casual conversation starting with command words is ignored; multi-argument non-prefix commands must place arguments on the next line.",
+  "noPrefixNotes": "When true, Bot Admins (role 2) and Developers (role 4) can run commands without the prefix (inline with arguments or multiline). Casual conversation containing command words or starting with casual phrases is ignored.",
   "adminOnly": {
     "enable": false,
     "ignoreCommand": []

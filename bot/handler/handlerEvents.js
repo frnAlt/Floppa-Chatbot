@@ -565,10 +565,9 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                         (global.GoatBot.config.devUsers && global.GoatBot.config.devUsers.includes(String(senderID)));
                                 const noPrefixConfig = global.GoatBot.config.noPrefix !== false;
 
-                                const lines = trimmedBody.split(/\r?\n/);
-                                const firstLine = lines[0].trim();
-                                const firstLineTokens = firstLine.split(/\s+/).filter(Boolean);
-                                const firstWord = firstLineTokens[0]?.toLowerCase();
+                                // Extract all tokens with strict boundary matching at the very start of the message
+                                const allTokens = trimmedBody.split(/\s+/).filter(Boolean);
+                                const firstWord = allTokens[0]?.toLowerCase();
                                 const potentialCmd = firstWord ? (GoatBot.commands.get(firstWord) || GoatBot.commands.get(GoatBot.aliases.get(firstWord))) : null;
                                 const cmdAllowsNoPrefix = Boolean(
                                         potentialCmd?.config?.noPrefix === true ||
@@ -578,21 +577,57 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                 );
 
                                 if (potentialCmd && cmdAllowsNoPrefix) {
-                                        // Commands that explicitly allow noPrefix in their config (for all users)
+                                        // Commands that explicitly allow noPrefix in their config (for all users, e.g. prefix)
                                         hasNoPrefix = true;
                                 } else if (isBotAdmin && noPrefixConfig && potentialCmd) {
-                                        // Admin-only non-prefix execution:
-                                        // To prevent accidental command triggers when conversing with other users
-                                        // (e.g. "help me", "ping John", "music is loud", "rules are simple", "ban him"),
-                                        // non-prefix commands must have the command name alone on the first line.
-                                        // Arguments/prompt must be on the next line (separated by newline).
-                                        // For commands with no arguments (e.g. "ping", "help"), the entire message is strictly the command name.
-                                        if (firstLineTokens.length === 1) {
-                                                hasNoPrefix = true;
-                                        } else {
-                                                // Casual conversation containing command word on the same line: silently ignore
+                                        // Bot Admin & Developer non-prefix execution:
+                                        // Commands can be executed without prefix either standalone, with arguments on the same line, or multiline.
+                                        // To prevent accidental triggers during casual conversation starting with a command word:
+                                        const cmdName = (potentialCmd.config?.name || potentialCmd.meta?.name || firstWord).toLowerCase();
+                                        const restTokens = allTokens.slice(1);
+
+                                        // 1. Strict zero-argument commands (e.g. ping, uptime, stats, perf, daily)
+                                        // If a zero-argument command has trailing tokens on the same line (e.g. "ping John please"),
+                                        // it is natural conversation, so remain silent.
+                                        const zeroArgCommands = ["ping", "uptime", "stats", "perf", "daily", "balancec"];
+                                        if (zeroArgCommands.includes(cmdName) && restTokens.length > 0) {
                                                 return;
                                         }
+
+                                        // 2. Navigation/help menu commands (e.g. help, menu, cmds)
+                                        // If arguments are provided (e.g. "help ping", "help 2", "help all", "help media"),
+                                        // verify that the first argument is a valid command, alias, category, number, or keyword.
+                                        // If it's natural chat (e.g. "help me with this project", "help please"), remain silent.
+                                        if (["help", "menu", "commands", "cmds", "allcmds", "guide"].includes(cmdName) && restTokens.length > 0) {
+                                                const target = restTokens[0].toLowerCase();
+                                                const isValidPage = !isNaN(target);
+                                                const isKnownCmd = GoatBot.commands.has(target) || GoatBot.aliases.has(target);
+                                                const isCategory = ["all", "cat", "category", "categories"].includes(target) ||
+                                                        Array.from(GoatBot.commands.values()).some(c =>
+                                                                (c.config?.category && c.config.category.toLowerCase() === target) ||
+                                                                (c.meta?.category && c.meta.category.toLowerCase() === target)
+                                                        );
+
+                                                if (!isValidPage && !isKnownCmd && !isCategory) {
+                                                        // Casual conversation starting with "help" (e.g. "help me ...")
+                                                        return;
+                                                }
+                                        }
+
+                                        // 3. Rules command
+                                        // If arguments are provided (e.g. "rules add ...", "rules -e 1 ...", "rules 2"),
+                                        // verify that it matches a valid subcommand or rule number.
+                                        // If casual chat (e.g. "rules are made to be broken"), remain silent.
+                                        if (cmdName === "rules" && restTokens.length > 0) {
+                                                const sub = restTokens[0].toLowerCase();
+                                                const validSubs = ["add", "-a", "edit", "-e", "move", "-m", "delete", "del", "-d", "remove", "-r"];
+                                                if (!validSubs.includes(sub) && isNaN(sub)) {
+                                                        return;
+                                                }
+                                        }
+
+                                        // Valid prefixless command invocation for admin
+                                        hasNoPrefix = true;
                                 } else {
                                         // Check ResponseDB for taught responses / auto-replies
                                         let responseDB = global.db?.responseDB || global.responseDB;
@@ -634,7 +669,8 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                 args = trimmedBody.split(/\s+/);
                         }
                         // ————————————  CHECK HAS COMMAND ——————————— //
-                        let commandName = (args.shift() || "").toLowerCase();
+                        const rawCommandName = (args.shift() || "").toLowerCase();
+                        let commandName = rawCommandName;
                         let command = GoatBot.commands.get(commandName) || GoatBot.commands.get(GoatBot.aliases.get(commandName));
                         // ———————— CHECK ALIASES SET BY GROUP ———————— //
                         const aliasesData = threadData?.data?.aliases || {};
@@ -669,10 +705,14 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                 }
                                 else {
                                         const pfx = hasPrefix ? (matchedPrefix || prefix) : "";
+                                        const escapedRaw = (rawCommandName || "").replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                                         const escapedCmd = (commandName || "").replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                                        const cmdPattern = (escapedRaw && escapedRaw !== escapedCmd)
+                                                ? `(?:${escapedRaw}|${escapedCmd})`
+                                                : escapedCmd;
                                         const regex = pfx
-                                                ? new RegExp(`^(\\s+|)?${pfx.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\s+|)${escapedCmd}`, "i")
-                                                : new RegExp(`^(\\s+|)?${escapedCmd}`, "i");
+                                                ? new RegExp(`^(\\s+|)?${pfx.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\s+|)${cmdPattern}`, "i")
+                                                : new RegExp(`^(\\s+|)?${cmdPattern}`, "i");
                                         return body.replace(regex, "").trim();
                                 }
                         }
