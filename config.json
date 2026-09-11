@@ -14,8 +14,8 @@
   "notesLanguage": "change to your language with ISO 639-1 code, available languages: vi (Vietnamese), en (English)",
   "nickNameBot": "Floppa Bot 🐱",
   "prefix": "!",
-  "noPrefix": false,
-  "noPrefixNotes": "When true, Bot Admins (role 2) and Developers (role 4) can run commands without the prefix",
+  "noPrefix": true,
+  "noPrefixNotes": "When true, Bot Admins (role 2) and Developers (role 4) can run commands without the prefix. Casual conversation starting with command words is ignored; multi-argument non-prefix commands must place arguments on the next line.",
   "adminOnly": {
     "enable": false,
     "ignoreCommand": []

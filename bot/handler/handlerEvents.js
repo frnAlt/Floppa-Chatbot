@@ -556,7 +556,16 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         let hasNoPrefix = false;
 
                         if (!hasPrefix) {
-                                const firstWord = body.trim().split(/ +/)[0]?.toLowerCase();
+                                const isBotAdmin = role === 2 || role === 4 ||
+                                        (global.GoatBot.config.adminBot && global.GoatBot.config.adminBot.includes(String(senderID))) ||
+                                        (global.GoatBot.config.devUsers && global.GoatBot.config.devUsers.includes(String(senderID)));
+                                const noPrefixConfig = global.GoatBot.config.noPrefix !== false;
+
+                                const trimmedBody = body.trim();
+                                const lines = trimmedBody.split(/\r?\n/);
+                                const firstLine = lines[0].trim();
+                                const firstLineTokens = firstLine.split(/\s+/).filter(Boolean);
+                                const firstWord = firstLineTokens[0]?.toLowerCase();
                                 const potentialCmd = firstWord ? (GoatBot.commands.get(firstWord) || GoatBot.commands.get(GoatBot.aliases.get(firstWord))) : null;
                                 const cmdAllowsNoPrefix = Boolean(
                                         potentialCmd?.config?.noPrefix === true ||
@@ -565,11 +574,24 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                         potentialCmd?.meta?.noPrefix === "both"
                                 );
 
-                                // Commands without prefix ONLY run if explicitly configured with noPrefix: true or "both"
                                 if (potentialCmd && cmdAllowsNoPrefix) {
+                                        // Commands that explicitly allow noPrefix in their config (for all users)
                                         hasNoPrefix = true;
+                                } else if (isBotAdmin && noPrefixConfig && potentialCmd) {
+                                        // Admin-only non-prefix execution:
+                                        // To prevent accidental command triggers when conversing with other users
+                                        // (e.g. "help me", "ping John", "music is loud", "rules are simple", "ban him"),
+                                        // non-prefix commands must have the command name alone on the first line.
+                                        // Arguments/prompt must be on the next line (separated by newline).
+                                        // For commands with no arguments (e.g. "ping", "help"), the entire message is strictly the command name.
+                                        if (firstLineTokens.length === 1) {
+                                                hasNoPrefix = true;
+                                        } else {
+                                                // Casual conversation containing command word on the same line: silently ignore
+                                                return;
+                                        }
                                 } else {
-                                        // Regular conversation message without prefix: DO NOT reply, remain silent
+                                        // Non-admin or regular conversation message without prefix: DO NOT reply, remain silent
                                         return;
                                 }
                         }
@@ -590,11 +612,15 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                 }
                         }
                         const dateNow = Date.now();
-                        const args = hasPrefix
-                                ? body.slice(matchedPrefix.length).trim().split(/ +/)
-                                : body.trim().split(/ +/);
+                        let args;
+                        if (hasPrefix) {
+                                const bodyAfterPrefix = body.slice(matchedPrefix.length).trim();
+                                args = bodyAfterPrefix.length > 0 ? bodyAfterPrefix.split(/\s+/) : [];
+                        } else {
+                                args = body.trim().split(/\s+/);
+                        }
                         // ————————————  CHECK HAS COMMAND ——————————— //
-                        let commandName = args.shift().toLowerCase();
+                        let commandName = (args.shift() || "").toLowerCase();
                         let command = GoatBot.commands.get(commandName) || GoatBot.commands.get(GoatBot.aliases.get(commandName));
                         // ———————— CHECK ALIASES SET BY GROUP ———————— //
                         const aliasesData = threadData?.data?.aliases || {};
@@ -620,13 +646,19 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                         if (typeof commandName_ != "string")
                                                 throw new Error(`The third argument (commandName) must be a string, but got "${getType(commandName_)}"`);
 
-                                        return body_.replace(new RegExp(`^${prefix_}(\\s+|)${commandName_}`, "i"), "").trim();
+                                        const escapedPrefix = prefix_.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                                        const escapedCmd = commandName_.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                                        const regex = escapedPrefix
+                                                ? new RegExp(`^${escapedPrefix}(\\s+|)${escapedCmd}`, "i")
+                                                : new RegExp(`^(\\s+|)?${escapedCmd}`, "i");
+                                        return body_.replace(regex, "").trim();
                                 }
                                 else {
                                         const pfx = hasPrefix ? (matchedPrefix || prefix) : "";
+                                        const escapedCmd = (commandName || "").replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                                         const regex = pfx
-                                                ? new RegExp(`^${pfx.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\s+|)${commandName}`, "i")
-                                                : new RegExp(`^(\\s+|)?${commandName}`, "i");
+                                                ? new RegExp(`^${pfx.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\s+|)${escapedCmd}`, "i")
+                                                : new RegExp(`^(\\s+|)?${escapedCmd}`, "i");
                                         return body.replace(regex, "").trim();
                                 }
                         }

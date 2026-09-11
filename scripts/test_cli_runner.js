@@ -445,6 +445,156 @@ async function runDiagnostics() {
     logTest("WORKFLOW", "Direct Message (DM) prefixless command execution failed", false, err.message);
   }
 
+  // ──────────────── Test Case G2: Dual-Mode System (Prefix & Non-Prefix) Validation ────────────────
+  try {
+    // 1. Normal user with prefix: "!ping"
+    lastReply = null;
+    require(path.join(cwd, "func/cooldownManager.js")).clear();
+    const normalUserPrefixPing = {
+      type: "message",
+      body: "!ping",
+      messageID: "msg_normal_prefix_ping",
+      threadID: "10006",
+      senderID: "12345",
+      isGroup: true
+    };
+    const handlerNormalPrefix = await handlerEvents(normalUserPrefixPing, createMockMessage(normalUserPrefixPing));
+    if (handlerNormalPrefix && typeof handlerNormalPrefix.onStart === "function") await handlerNormalPrefix.onStart();
+    const normalPingResp = typeof lastReply === "string" ? lastReply : (lastReply?.body || "");
+    const normalUserPrefixOk = normalPingResp && normalPingResp.includes("Pong");
+    logTest("WORKFLOW", "Normal user can use standard prefix command '!ping'", normalUserPrefixOk);
+
+    // 2. Normal user with prefix arguments: "!help ping"
+    lastReply = null;
+    require(path.join(cwd, "func/cooldownManager.js")).clear();
+    const normalUserPrefixHelp = {
+      type: "message",
+      body: "!help ping",
+      messageID: "msg_normal_prefix_help",
+      threadID: "10006",
+      senderID: "12345",
+      isGroup: true
+    };
+    const handlerNormalHelp = await handlerEvents(normalUserPrefixHelp, createMockMessage(normalUserPrefixHelp));
+    if (handlerNormalHelp && typeof handlerNormalHelp.onStart === "function") await handlerNormalHelp.onStart();
+    const normalHelpResp = typeof lastReply === "string" ? lastReply : (lastReply?.body || "");
+    const normalUserPrefixHelpOk = normalHelpResp && (normalHelpResp.includes("ping") || normalHelpResp.includes("FLOPPA COMMAND INFO"));
+    logTest("WORKFLOW", "Normal user can use standard prefix command with arguments '!help ping'", normalUserPrefixHelpOk);
+
+    // 3. Admin can use standard prefix: "!ping"
+    lastReply = null;
+    require(path.join(cwd, "func/cooldownManager.js")).clear();
+    const adminPrefixPing = {
+      type: "message",
+      body: "!ping",
+      messageID: "msg_admin_prefix_ping",
+      threadID: "10006",
+      senderID: "9999",
+      isGroup: true
+    };
+    const handlerAdminPrefix = await handlerEvents(adminPrefixPing, createMockMessage(adminPrefixPing));
+    if (handlerAdminPrefix && typeof handlerAdminPrefix.onStart === "function") await handlerAdminPrefix.onStart();
+    const adminPrefixResp = typeof lastReply === "string" ? lastReply : (lastReply?.body || "");
+    const adminPrefixOk = adminPrefixResp && adminPrefixResp.includes("Pong");
+    logTest("WORKFLOW", "Admin can execute standard prefix command '!ping' (dual-system support)", adminPrefixOk);
+
+    // 4. Admin standalone non-prefix command: "ping"
+    lastReply = null;
+    require(path.join(cwd, "func/cooldownManager.js")).clear();
+    const adminNoPrefixPing = {
+      type: "message",
+      body: "ping",
+      messageID: "msg_admin_noprefix_ping",
+      threadID: "10006",
+      senderID: "9999",
+      isGroup: true
+    };
+    const handler1 = await handlerEvents(adminNoPrefixPing, createMockMessage(adminNoPrefixPing));
+    if (handler1 && typeof handler1.onStart === "function") await handler1.onStart();
+    const pingResp = typeof lastReply === "string" ? lastReply : (lastReply?.body || "");
+    const adminPingOk = pingResp && pingResp.includes("Pong");
+    logTest("WORKFLOW", "Admin can execute non-prefix standalone command 'ping' (dual-system support)", adminPingOk);
+
+    // 5. Admin non-prefix command with next-line arguments: "help\nping"
+    lastReply = null;
+    require(path.join(cwd, "func/cooldownManager.js")).clear();
+    const adminNoPrefixNextLine = {
+      type: "message",
+      body: "help\nping",
+      messageID: "msg_admin_noprefix_nextline",
+      threadID: "10006",
+      senderID: "9999",
+      isGroup: true
+    };
+    const handler2 = await handlerEvents(adminNoPrefixNextLine, createMockMessage(adminNoPrefixNextLine));
+    if (handler2 && typeof handler2.onStart === "function") await handler2.onStart();
+    const helpResp = typeof lastReply === "string" ? lastReply : (lastReply?.body || "");
+    const adminHelpNextLineOk = helpResp && (helpResp.includes("ping") || helpResp.includes("FLOPPA COMMAND INFO"));
+    logTest("WORKFLOW", "Admin can execute non-prefix command with next-line argument 'help\\nping'", adminHelpNextLineOk);
+
+    // 6. Admin casual conversation starting with command word on same line: "help me with this project"
+    lastReply = null;
+    require(path.join(cwd, "func/cooldownManager.js")).clear();
+    const adminCasualChat1 = {
+      type: "message",
+      body: "help me with this project",
+      messageID: "msg_admin_casual_help",
+      threadID: "10006",
+      senderID: "9999",
+      isGroup: true
+    };
+    const handler3 = await handlerEvents(adminCasualChat1, createMockMessage(adminCasualChat1));
+    if (handler3 && typeof handler3.onStart === "function") await handler3.onStart();
+    logTest("WORKFLOW", "Admin casual chat starting with command word 'help me with this project' remains silent", lastReply === null);
+
+    // 7. Admin casual conversation starting with another command word: "ping John please"
+    lastReply = null;
+    require(path.join(cwd, "func/cooldownManager.js")).clear();
+    const adminCasualChat2 = {
+      type: "message",
+      body: "ping John please",
+      messageID: "msg_admin_casual_ping",
+      threadID: "10006",
+      senderID: "9999",
+      isGroup: true
+    };
+    const handler4 = await handlerEvents(adminCasualChat2, createMockMessage(adminCasualChat2));
+    if (handler4 && typeof handler4.onStart === "function") await handler4.onStart();
+    logTest("WORKFLOW", "Admin casual chat starting with command word 'ping John please' remains silent", lastReply === null);
+
+    // 8. Non-admin user attempting non-prefix command: "ping"
+    lastReply = null;
+    require(path.join(cwd, "func/cooldownManager.js")).clear();
+    const nonAdminPing = {
+      type: "message",
+      body: "ping",
+      messageID: "msg_nonadmin_ping",
+      threadID: "10006",
+      senderID: "12345",
+      isGroup: true
+    };
+    const handler5 = await handlerEvents(nonAdminPing, createMockMessage(nonAdminPing));
+    if (handler5 && typeof handler5.onStart === "function") await handler5.onStart();
+    logTest("WORKFLOW", "Non-admin user non-prefix attempt 'ping' is rejected and remains silent", lastReply === null);
+
+    // 9. Non-admin user attempting non-prefix multiline command: "help\nping"
+    lastReply = null;
+    require(path.join(cwd, "func/cooldownManager.js")).clear();
+    const nonAdminNextLine = {
+      type: "message",
+      body: "help\nping",
+      messageID: "msg_nonadmin_nextline",
+      threadID: "10006",
+      senderID: "12345",
+      isGroup: true
+    };
+    const handler6 = await handlerEvents(nonAdminNextLine, createMockMessage(nonAdminNextLine));
+    if (handler6 && typeof handler6.onStart === "function") await handler6.onStart();
+    logTest("WORKFLOW", "Non-admin user non-prefix multiline attempt 'help\\nping' is rejected and remains silent", lastReply === null);
+  } catch (err) {
+    logTest("WORKFLOW", "Dual-mode prefix & non-prefix validation suite failed", false, err.message);
+  }
+
   // ──────────────── Test Case H: Specific Command Lookup '!help off' ────────────────
   try {
     lastReply = null;
