@@ -550,8 +550,12 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                 return;
                         }
 
-                        const validPrefixes = Array.from(new Set([prefix, "!"].filter(Boolean)));
-                        const matchedPrefix = validPrefixes.find(p => body.startsWith(p));
+                        const trimmedBody = (body || "").trim();
+                        const threadPrefix = prefix || getPrefix(threadID);
+                        const globalPrefix = global.GoatBot?.config?.prefix;
+                        const validPrefixes = Array.from(new Set([threadPrefix, globalPrefix, "!"].filter(Boolean)))
+                                .sort((a, b) => b.length - a.length);
+                        const matchedPrefix = validPrefixes.find(p => trimmedBody.startsWith(p));
                         hasPrefix = Boolean(matchedPrefix);
                         let hasNoPrefix = false;
 
@@ -561,7 +565,6 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                         (global.GoatBot.config.devUsers && global.GoatBot.config.devUsers.includes(String(senderID)));
                                 const noPrefixConfig = global.GoatBot.config.noPrefix !== false;
 
-                                const trimmedBody = body.trim();
                                 const lines = trimmedBody.split(/\r?\n/);
                                 const firstLine = lines[0].trim();
                                 const firstLineTokens = firstLine.split(/\s+/).filter(Boolean);
@@ -614,10 +617,10 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         const dateNow = Date.now();
                         let args;
                         if (hasPrefix) {
-                                const bodyAfterPrefix = body.slice(matchedPrefix.length).trim();
+                                const bodyAfterPrefix = trimmedBody.slice(matchedPrefix.length).trim();
                                 args = bodyAfterPrefix.length > 0 ? bodyAfterPrefix.split(/\s+/) : [];
                         } else {
-                                args = body.trim().split(/\s+/);
+                                args = trimmedBody.split(/\s+/);
                         }
                         // ————————————  CHECK HAS COMMAND ——————————— //
                         let commandName = (args.shift() || "").toLowerCase();
@@ -649,7 +652,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                         const escapedPrefix = prefix_.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                                         const escapedCmd = commandName_.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                                         const regex = escapedPrefix
-                                                ? new RegExp(`^${escapedPrefix}(\\s+|)${escapedCmd}`, "i")
+                                                ? new RegExp(`^(\\s+|)?${escapedPrefix}(\\s+|)${escapedCmd}`, "i")
                                                 : new RegExp(`^(\\s+|)?${escapedCmd}`, "i");
                                         return body_.replace(regex, "").trim();
                                 }
@@ -657,7 +660,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                         const pfx = hasPrefix ? (matchedPrefix || prefix) : "";
                                         const escapedCmd = (commandName || "").replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                                         const regex = pfx
-                                                ? new RegExp(`^${pfx.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\s+|)${escapedCmd}`, "i")
+                                                ? new RegExp(`^(\\s+|)?${pfx.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\s+|)${escapedCmd}`, "i")
                                                 : new RegExp(`^(\\s+|)?${escapedCmd}`, "i");
                                         return body.replace(regex, "").trim();
                                 }

@@ -343,6 +343,62 @@ async function runDiagnostics() {
     logTest("WORKFLOW", "Command execution '!prefix' failed", false, err.message);
   }
 
+  // ──────────────── Test Case C2: Robust Prefix Parsing & Standalone 'prefix' ────────────────
+  try {
+    // 1. Non-prefix 'prefix' command
+    lastReply = null;
+    require(path.join(cwd, "func/cooldownManager.js")).clear();
+    const noPrefixPrefEvent = {
+      type: "message",
+      body: "prefix",
+      messageID: "msg_nopref_pref_01",
+      threadID: "10007",
+      senderID: "12345",
+      isGroup: true
+    };
+    const handlerNoPref = await handlerEvents(noPrefixPrefEvent, createMockMessage(noPrefixPrefEvent));
+    if (handlerNoPref && typeof handlerNoPref.onStart === "function") await handlerNoPref.onStart();
+    const prefBodyText = typeof lastReply === "string" ? lastReply : (lastReply?.body || "");
+    const noPrefixPrefSuccess = prefBodyText && prefBodyText.includes("prefix");
+    logTest("WORKFLOW", "Non-prefix command 'prefix' execution returns active prefix", noPrefixPrefSuccess);
+
+    // 2. Only prefix entered '!'
+    lastReply = null;
+    require(path.join(cwd, "func/cooldownManager.js")).clear();
+    const onlyPrefixEvent = {
+      type: "message",
+      body: "!",
+      messageID: "msg_only_pref_01",
+      threadID: "10007",
+      senderID: "12345",
+      isGroup: true
+    };
+    const handlerOnlyPref = await handlerEvents(onlyPrefixEvent, createMockMessage(onlyPrefixEvent));
+    if (handlerOnlyPref && typeof handlerOnlyPref.onStart === "function") await handlerOnlyPref.onStart();
+    const onlyPrefText = typeof lastReply === "string" ? lastReply : (lastReply?.body || "");
+    const onlyPrefSuccess = onlyPrefText && onlyPrefText.includes("That's only the prefix");
+    logTest("WORKFLOW", "Entering only prefix '!' returns guidance notice", onlyPrefSuccess);
+
+    // 3. Prefix with leading/trailing whitespace '  !ping'
+    lastReply = null;
+    require(path.join(cwd, "func/cooldownManager.js")).clear();
+    const wsPrefixEvent = {
+      type: "message",
+      body: "  !ping",
+      messageID: "msg_ws_pref_01",
+      threadID: "10007",
+      senderID: "12345",
+      isGroup: true
+    };
+    const handlerWsPref = await handlerEvents(wsPrefixEvent, createMockMessage(wsPrefixEvent));
+    if (handlerWsPref && typeof handlerWsPref.onStart === "function") await handlerWsPref.onStart();
+    const wsPrefText = typeof lastReply === "string" ? lastReply : (lastReply?.body || "");
+    const wsPrefSuccess = wsPrefText && wsPrefText.includes("Pong");
+    logTest("WORKFLOW", "Prefix command with leading whitespace '  !ping' executes correctly", wsPrefSuccess);
+  } catch (err) {
+    logTest("WORKFLOW", "Prefix robust parsing tests failed", false, err.message);
+  }
+
   // ──────────────── Test Case D: Command Execution with !ping ────────────────
   try {
     lastReply = null;

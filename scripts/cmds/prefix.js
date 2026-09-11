@@ -52,7 +52,14 @@ module.exports = {
 
 				onStart: async function ({ message, role, args, commandName, event, threadsData, getLang, usersData }) {
 								if (!args[0]) {
-												const userName = await usersData.getName(event.senderID).catch(() => "there");
+												let userName = "there";
+												if (usersData && typeof usersData.getName === "function") {
+																try {
+																				userName = (await usersData.getName(event.senderID)) || "there";
+																} catch (_) {
+																				userName = "there";
+																}
+												}
 												const botName = global.GoatBot.config.nickNameBot || "Floppa Bot 🐱";
 												return message.reply(getLang("myPrefix", userName, global.GoatBot.config.prefix, utils.getPrefix(event.threadID), botName));
 								}
