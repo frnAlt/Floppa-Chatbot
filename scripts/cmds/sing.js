@@ -3,6 +3,7 @@ const yts = require("yt-search");
 const btch = require("btch-downloader");
 const fs = require("fs-extra");
 const path = require("path");
+const { createDecipheriv } = require("crypto");
 let ffmpeg = require("fluent-ffmpeg");
 
 // Configure ffmpeg path
@@ -42,12 +43,83 @@ function isMp3File(filePath) {
 }
 
 /**
+ * Open-source Savetube AES decryptor
+ */
+function decodeSavetube(enc) {
+  const secretKey = "C5D58EF67A7584E4A29F6C35BBC4EB12";
+  const data = Buffer.from(enc, "base64");
+  const iv = data.slice(0, 16);
+  const content = data.slice(16);
+  const key = Buffer.from(secretKey, "hex");
+  const decipher = createDecipheriv("aes-128-cbc", key, iv);
+  const decrypted = Buffer.concat([decipher.update(content), decipher.final()]);
+  return JSON.parse(decrypted.toString());
+}
+
+/**
+ * Savetube Open-Source MP3 Engine
+ */
+async function getSavetubeAudio(youtubeUrl, titleFallback = "") {
+  try {
+    const cdnRes = await axios.get("https://media.savetube.vip/api/random-cdn", { timeout: 8000 });
+    const cdn = cdnRes.data?.cdn;
+    if (!cdn) return null;
+
+    const infoRes = await axios.post(`https://${cdn}/v2/info`, { url: youtubeUrl }, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Mobile Safari/537.36",
+        "Referer": "https://save-tube.com/"
+      },
+      timeout: 10000
+    });
+
+    const info = decodeSavetube(infoRes.data.data);
+    if (!info?.key) return null;
+
+    const dlRes = await axios.post(`https://${cdn}/download`, {
+      downloadType: "audio",
+      quality: "128",
+      key: info.key
+    }, {
+      headers: {
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Mobile Safari/537.36",
+        "Referer": "https://save-tube.com/"
+      },
+      timeout: 15000
+    });
+
+    const downloadUrl = dlRes.data?.data?.downloadUrl;
+    if (downloadUrl) {
+      return {
+        url: downloadUrl,
+        source: "savetube",
+        title: info.title || titleFallback,
+        author: info.author || "",
+        headers: { "Referer": "https://save-tube.com/" }
+      };
+    }
+  } catch (err) {
+    console.warn("[SING] Savetube engine failed:", err.message);
+  }
+  return null;
+}
+
+/**
  * Collect prioritized audio stream candidates for a YouTube track
  */
 async function getAudioCandidates(youtubeUrl, titleFallback = "") {
   const candidates = [];
 
-  // Provider 1: btch-downloader MP3 (high availability ymcdn direct stream)
+  // Provider 1: Open-source Savetube VIP CDN (Direct, fast MP3)
+  if (youtubeUrl) {
+    const savetube = await getSavetubeAudio(youtubeUrl, titleFallback);
+    if (savetube) {
+      candidates.push(savetube);
+    }
+  }
+
+  // Provider 2: btch-downloader MP3
   if (youtubeUrl) {
     try {
       const res = await btch.youtube(youtubeUrl);
@@ -64,7 +136,7 @@ async function getAudioCandidates(youtubeUrl, titleFallback = "") {
     } catch (_) {}
   }
 
-  // Provider 2: Toshiro yta2 direct
+  // Provider 3: Toshiro yta2 direct
   if (youtubeUrl) {
     try {
       const yta2Api = `https://toshiro-api-editz6t9.vercel.app/api/downloader/yta2?url=${encodeURIComponent(youtubeUrl)}`;
@@ -82,7 +154,25 @@ async function getAudioCandidates(youtubeUrl, titleFallback = "") {
     } catch (_) {}
   }
 
-  // Provider 3: Toshiro yta2 search fallback
+  // Provider 4: Toshiro alldl direct
+  if (youtubeUrl) {
+    try {
+      const alldlApi = `https://toshiro-api-editz6t9.vercel.app/api/downloader/alldl?url=${encodeURIComponent(youtubeUrl)}`;
+      const res = await client.get(alldlApi, { timeout: 15000 });
+      const r = res.data?.result;
+      const dl = r?.video || r?.audio || r?.url;
+      if (res.data?.success && dl && !dl.includes("onrender.com")) {
+        candidates.push({
+          url: dl,
+          source: "alldl",
+          title: r?.title || titleFallback,
+          author: r?.author || ""
+        });
+      }
+    } catch (_) {}
+  }
+
+  // Provider 5: Toshiro yta2 search fallback
   if (titleFallback) {
     try {
       const searchApi = `https://toshiro-api-editz6t9.vercel.app/api/downloader/yta2?search=${encodeURIComponent(titleFallback)}`;
@@ -138,15 +228,17 @@ async function downloadAndProcessAudio({ youtubeUrl = null, title = "song", dura
   for (const candidate of candidateList) {
     for (let attempt = 1; attempt <= 2; attempt++) {
       try {
+        const headers = {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          ...(candidate.headers || { "Referer": "https://www.youtube.com/" })
+        };
+
         const dlRes = await axios({
           url: candidate.url,
           method: "GET",
           responseType: "stream",
           timeout: 45000,
-          headers: {
-            "Referer": "https://www.youtube.com/",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-          }
+          headers
         });
 
         const writer = fs.createWriteStream(rawPath);
@@ -280,12 +372,12 @@ module.exports = {
   config: {
     name: "sing",
     aliases: ["song", "music", "play"],
-    version: "3.3.0",
+    version: "3.4.0",
     author: "frnAlt",
     countDown: 5,
     role: 0,
     shortDescription: { en: "Search, compress and download YouTube audio as MP3" },
-    longDescription: { en: "Search YouTube or Spotify songs and download high-quality MP3 audio with automatic compression for large files to fit Facebook Messenger limits" },
+    longDescription: { en: "Search YouTube or Spotify songs and download high-quality MP3 audio with automatic compression for large files to fit Facebook Messenger limits. Media-only output." },
     category: "media",
     guide: { en: "{pn} <song name or YouTube URL or Spotify URL>" }
   },
@@ -330,16 +422,9 @@ module.exports = {
           const result = await downloadAndProcessAudio({ title: songTitle, directAudioUrl });
           const stream = fs.createReadStream(result.filePath);
 
-          const bodyText = [
-            `🎵 Title: ${songTitle}`,
-            artistName ? `👤 Artist: ${artistName}` : null,
-            `🎼 Source: Spotify (MP3)`,
-            result.wasCompressed ? `📦 Compressed: ${(result.rawSize / (1024 * 1024)).toFixed(1)}MB ➔ ${(result.finalSize / (1024 * 1024)).toFixed(1)}MB` : null
-          ].filter(Boolean).join("\n");
-
           if (api && api.setMessageReaction) api.setMessageReaction("✅", event.messageID, () => {}, true);
 
-          return message.reply({ body: bodyText, attachment: stream }, () => {
+          return message.reply({ attachment: stream }, () => {
             fs.remove(result.filePath).catch(() => {});
           });
         } catch (err) {
@@ -362,17 +447,9 @@ module.exports = {
 
         const stream = fs.createReadStream(result.filePath);
 
-        const bodyText = [
-          `🎵 Title: ${songTitle}`,
-          artistName ? `👤 Artist: ${artistName}` : (video.author?.name ? `👤 Artist: ${video.author.name}` : null),
-          video.timestamp ? `⏱️ Duration: ${video.timestamp}` : null,
-          `🎼 Source: Spotify via YouTube (MP3)`,
-          result.wasCompressed ? `📦 Compressed: ${(result.rawSize / (1024 * 1024)).toFixed(1)}MB ➔ ${(result.finalSize / (1024 * 1024)).toFixed(1)}MB` : null
-        ].filter(Boolean).join("\n");
-
         if (api && api.setMessageReaction) api.setMessageReaction("✅", event.messageID, () => {}, true);
 
-        return message.reply({ body: bodyText, attachment: stream }, () => {
+        return message.reply({ attachment: stream }, () => {
           fs.remove(result.filePath).catch(() => {});
         });
       } catch (err) {
@@ -387,8 +464,6 @@ module.exports = {
       try {
         let videoTitle = "YouTube Audio";
         let durationSeconds = 0;
-        let durationText = "N/A";
-        let channelName = "";
 
         try {
           const searchRes = await yts(query);
@@ -396,8 +471,6 @@ module.exports = {
           if (v) {
             videoTitle = v.title || videoTitle;
             durationSeconds = v.seconds || 0;
-            durationText = v.timestamp || durationText;
-            channelName = v.author?.name || "";
           }
         } catch (_) {}
 
@@ -409,17 +482,9 @@ module.exports = {
 
         const stream = fs.createReadStream(result.filePath);
 
-        const bodyText = [
-          `🎵 Title: ${videoTitle}`,
-          channelName ? `👤 Channel: ${channelName}` : null,
-          durationText !== "N/A" ? `⏱️ Duration: ${durationText}` : null,
-          `🎼 Format: MP3`,
-          result.wasCompressed ? `📦 Compressed: ${(result.rawSize / (1024 * 1024)).toFixed(1)}MB ➔ ${(result.finalSize / (1024 * 1024)).toFixed(1)}MB` : null
-        ].filter(Boolean).join("\n");
-
         if (api && api.setMessageReaction) api.setMessageReaction("✅", event.messageID, () => {}, true);
 
-        return message.reply({ body: bodyText, attachment: stream }, () => {
+        return message.reply({ attachment: stream }, () => {
           fs.remove(result.filePath).catch(() => {});
         });
       } catch (err) {
@@ -436,7 +501,7 @@ module.exports = {
 
       if (videos.length === 0) {
         if (api && api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
-        return message.reply(`❌ No songs found for "${query}".`);
+        return message.reply(`❌ No songs found for "${query}". Please check the title and try again.`);
       }
 
       // Accurate video selection: Prefer non-live videos under 2 hours
@@ -450,17 +515,9 @@ module.exports = {
 
       const stream = fs.createReadStream(result.filePath);
 
-      const bodyText = [
-        `🎵 Title: ${selectedVideo.title}`,
-        selectedVideo.author?.name ? `👤 Artist: ${selectedVideo.author.name}` : null,
-        selectedVideo.timestamp ? `⏱️ Duration: ${selectedVideo.timestamp}` : null,
-        `🎼 Format: MP3`,
-        result.wasCompressed ? `📦 Compressed: ${(result.rawSize / (1024 * 1024)).toFixed(1)}MB ➔ ${(result.finalSize / (1024 * 1024)).toFixed(1)}MB (fit Messenger limit)` : null
-      ].filter(Boolean).join("\n");
-
       if (api && api.setMessageReaction) api.setMessageReaction("✅", event.messageID, () => {}, true);
 
-      return message.reply({ body: bodyText, attachment: stream }, () => {
+      return message.reply({ attachment: stream }, () => {
         fs.remove(result.filePath).catch(() => {});
       });
     } catch (e) {
@@ -500,23 +557,15 @@ module.exports = {
 
       const stream = fs.createReadStream(result.filePath);
 
-      const bodyText = [
-        `🎵 Title: ${selected.title}`,
-        selected.author?.name ? `👤 Artist: ${selected.author.name}` : null,
-        selected.duration ? `⏱️ Duration: ${selected.duration}` : null,
-        `🎼 Format: MP3`,
-        result.wasCompressed ? `📦 Compressed: ${(result.rawSize / (1024 * 1024)).toFixed(1)}MB ➔ ${(result.finalSize / (1024 * 1024)).toFixed(1)}MB` : null
-      ].filter(Boolean).join("\n");
-
       if (api && api.setMessageReaction) api.setMessageReaction("✅", event.messageID, () => {}, true);
 
-      return message.reply({ body: bodyText, attachment: stream }, () => {
+      return message.reply({ attachment: stream }, () => {
         fs.remove(result.filePath).catch(() => {});
       });
     } catch (e) {
       console.error("[SING] onReply download error:", e.message);
       if (api && api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
-      message.reply("❌ Failed to download audio. Please try another song or reply again.");
+      message.reply(`❌ Failed to download audio: ${e.message || "Please try another song or reply again."}`);
     }
   }
 };

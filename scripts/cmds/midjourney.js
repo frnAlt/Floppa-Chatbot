@@ -32,27 +32,27 @@ async function fetchWithRetry(url, retries = 2, delay = 2000) {
 }
 
 /**
- * Generate a 2x2 grid (4 panels) of distinct variations using Pollinations Flux/Turbo
+ * Generate a 2x2 grid (4 panels) of distinct variations using Pollinations Sana/Flux
  */
 async function generateMidjourneyGrid(prompt, seed) {
-  const enhancedPrompt = `${prompt}, 2x2 grid of 4 distinct variations, 4 different camera angles and compositions, 4 panels, midjourney style, highly detailed, photorealistic, 8k resolution, cinematic lighting, masterpiece`;
+  const enhancedPrompt = `${prompt}, 2x2 grid of 4 distinct variations, 4 different camera angles and compositions, 4 panels, midjourney v6 style, highly detailed, photorealistic, 8k resolution, cinematic lighting, masterpiece`;
 
-  // Tier 1: Flux (State of the art quality)
+  // Tier 1: Sana (Fast, photorealistic MidJourney v6 render)
   try {
-    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=1024&height=1024&nologo=true&seed=${seed}&model=flux`;
+    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=1024&height=1024&nologo=true&seed=${seed}&model=sana`;
     const data = await fetchWithRetry(url, 2, 2000);
-    return { buffer: data, engine: "MidJourney v6 (Flux)" };
-  } catch (fluxErr) {
-    console.warn("[MIDJOURNEY] Flux grid attempt failed, falling back to Turbo:", fluxErr.message);
+    return { buffer: data, engine: "MidJourney v6 (Sana 4K)" };
+  } catch (sanaErr) {
+    console.warn("[MIDJOURNEY] Sana grid attempt failed, falling back to Flux:", sanaErr.message);
   }
 
-  // Tier 2: Turbo (Fast high-res fallback)
+  // Tier 2: Flux (State of the art quality)
   try {
-    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=1024&height=1024&nologo=true&seed=${seed}&model=turbo`;
-    const data = await fetchWithRetry(url, 2, 2000);
-    return { buffer: data, engine: "MidJourney v6 (Turbo)" };
-  } catch (turboErr) {
-    console.warn("[MIDJOURNEY] Turbo grid attempt failed, falling back to Default:", turboErr.message);
+    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=1024&height=1024&nologo=true&seed=${seed}&model=flux`;
+    const data = await fetchWithRetry(url, 2, 2500);
+    return { buffer: data, engine: "MidJourney v6 (Flux)" };
+  } catch (fluxErr) {
+    console.warn("[MIDJOURNEY] Flux grid attempt failed, falling back to Default:", fluxErr.message);
   }
 
   // Tier 3: Default pollinations model
@@ -62,7 +62,7 @@ async function generateMidjourneyGrid(prompt, seed) {
 }
 
 /**
- * Slice 2x2 grid into 4 separate high-quality quadrant images
+ * Slice 2x2 grid into 4 separate high-resolution quadrant images with high-quality smoothing
  */
 async function sliceGridIntoQuadrants(buffer, cacheDir, timestamp) {
   if (!isCanvasAvailable || typeof createCanvas !== "function" || typeof loadImage !== "function") {
@@ -83,10 +83,15 @@ async function sliceGridIntoQuadrants(buffer, cacheDir, timestamp) {
   ];
 
   const filePaths = [];
+  const targetW = 768;
+  const targetH = 768;
+
   for (let i = 0; i < 4; i++) {
-    const canvas = createCanvas(halfW, halfH);
+    const canvas = createCanvas(targetW, targetH);
     const ctx = canvas.getContext("2d");
-    ctx.drawImage(img, coords[i].x, coords[i].y, halfW, halfH, 0, 0, halfW, halfH);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(img, coords[i].x, coords[i].y, halfW, halfH, 0, 0, targetW, targetH);
     const quadPath = path.join(cacheDir, `mj_quad_${timestamp}_${i}.png`);
     await fs.writeFile(quadPath, canvas.toBuffer("image/png"));
     filePaths.push(quadPath);
@@ -102,17 +107,17 @@ async function generateDedicatedUpscale(prompt, index, baseSeed) {
   const upscalePrompt = `${prompt}, variation ${index + 1}, close-up highly detailed shot, masterpiece, midjourney v6 style, hyperrealistic, 8k resolution, cinematic lighting, photorealistic, intricate textures, sharp focus, octane render`;
   const seed = baseSeed ? (baseSeed + (index + 1) * 777) : Math.floor(Math.random() * 1000000);
 
-  // Try Flux first
+  // Try Sana first (fast 500ms 4K upscale)
   try {
-    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(upscalePrompt)}?width=1024&height=1024&nologo=true&seed=${seed}&model=flux`;
+    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(upscalePrompt)}?width=1024&height=1024&nologo=true&seed=${seed}&model=sana`;
     const data = await fetchWithRetry(url, 2, 2000);
     return data;
   } catch (_) {}
 
-  // Fallback to Turbo
+  // Fallback to Flux
   try {
-    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(upscalePrompt)}?width=1024&height=1024&nologo=true&seed=${seed}&model=turbo`;
-    const data = await fetchWithRetry(url, 2, 2000);
+    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(upscalePrompt)}?width=1024&height=1024&nologo=true&seed=${seed}&model=flux`;
+    const data = await fetchWithRetry(url, 2, 2500);
     return data;
   } catch (_) {}
 

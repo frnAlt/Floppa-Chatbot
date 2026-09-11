@@ -301,15 +301,7 @@ module.exports = {
 
       await fs.writeFile(tmpFile, fileBuffer);
 
-      let bodyText;
-      if (usedAudioFallback) {
-        bodyText = `⚠️ Video exceeded Messenger's 25MB limit. Sent audio instead!\n\n📥 Title: ${title}\n🔗 Watch/Download Video: ${downloadUrl}`;
-      } else {
-        bodyText = `📥 ${title}`;
-      }
-
       await message.reply({
-        body: bodyText,
         attachment: fs.createReadStream(tmpFile)
       });
 

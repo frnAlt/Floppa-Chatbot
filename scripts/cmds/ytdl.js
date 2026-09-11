@@ -92,7 +92,6 @@ module.exports = {
         if (api.setMessageReaction) api.setMessageReaction("✅", event.messageID, () => {}, true);
 
         return message.reply({
-          body: `🎬 ${media.title}\n⏱️ Duration: ${media.duration || "N/A"}`,
           attachment: stream
         });
       } catch (err) {
@@ -192,7 +191,6 @@ module.exports = {
       const stream = await global.utils.getStreamFromURL(downloadUrl, `ytdl_${Date.now()}.${ext}`);
 
       await message.reply({
-        body: `🎬 ${media.title || selected.title}\n⏱️ Duration: ${selected.duration || "N/A"}\n📦 Format: ${ext.toUpperCase()}`,
         attachment: stream
       });
 

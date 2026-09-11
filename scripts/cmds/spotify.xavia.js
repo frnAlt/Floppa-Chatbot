@@ -71,7 +71,6 @@ async function downloadAndSend(message, track, getLang) {
     });
 
     await message.reply({
-      body: `🎵 ${trackData.name} - ${trackData.artists}`,
       attachment: fs.createReadStream(filePath),
     });
 

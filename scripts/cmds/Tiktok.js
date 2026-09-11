@@ -176,17 +176,7 @@ module.exports = {
 
       await fs.writeFile(tmpFile, fileBuffer);
 
-      let bodyText;
-      if (usedAudioFallback) {
-        bodyText = `⚠️ Video exceeded Facebook's 25MB attachment limit. Sent audio instead!\n\n🎵 Title: ${title || "N/A"}\n👤 Creator: @${author || "Unknown"}\n🔗 Watch Video: ${mediaUrl}`;
-      } else if (isAudio || ext === "mp3") {
-        bodyText = `🎵 TikTok Audio\n\n📌 Title: ${title || "N/A"}\n👤 Creator: @${author || "Unknown"}\n⏱️ Duration: ${duration || 0}s`;
-      } else {
-        bodyText = `🎬 TikTok Video\n\n📌 Title: ${title || "N/A"}\n👤 Creator: @${author || "Unknown"}\n⏱️ Duration: ${duration || 0}s`;
-      }
-
       await message.reply({
-        body: bodyText,
         attachment: fs.createReadStream(tmpFile)
       });
 

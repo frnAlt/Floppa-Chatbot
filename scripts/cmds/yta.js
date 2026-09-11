@@ -57,7 +57,6 @@ module.exports = {
         const audioStream = await global.utils.getStreamFromURL(audioUrl, "audio.mp3");
 
         await message.reply({
-          body: `🎧 Title: ${title || "YouTube Audio"}\n🎼 Quality: ${quality || "128kbps"}`,
           attachment: audioStream
         });
 
@@ -157,7 +156,6 @@ module.exports = {
       const audioStream = await global.utils.getStreamFromURL(audioUrl, "audio.mp3");
 
       await message.reply({
-        body: `🎧 Title: ${title || selected.title}\n⏱️ Duration: ${selected.duration || "N/A"}\n🎼 Quality: ${quality || "128kbps"}`,
         attachment: audioStream
       });
 

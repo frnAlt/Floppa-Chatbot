@@ -87,7 +87,6 @@ module.exports = {
       await fs.writeFile(filePath, Buffer.from(fileRes.data));
 
       await message.reply({
-        body: selected.title,
         attachment: fs.createReadStream(filePath)
       });
 
