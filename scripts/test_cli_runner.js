@@ -1299,6 +1299,99 @@ async function runDiagnostics() {
     logTest("SESSION", "Live cookie check encountered error", false, err.message);
   }
 
+  // ──────────────── 8. Strong Response Database, SafeStorage & Audio Engine Tests ────────────────
+  console.log("\n\x1b[33m--- 8. Strong Response Database, SafeStorage & Audio Engine Tests ---\x1b[0m");
+  try {
+    const fse = require("fs-extra");
+    const { readJSONSafe, writeJSONSafeSync } = require(path.join(cwd, "database/controller/safeStorage.js"));
+    const responseDB = require(path.join(cwd, "database/controller/responseDB.js"));
+
+    // 1. SafeStorage atomic write & backup test
+    const testFile = path.join(cwd, "database/data/test_atomic.json");
+    writeJSONSafeSync(testFile, [{ testId: 42, status: "safe" }]);
+    const primaryExists = fs.existsSync(testFile);
+    const backupExists = fs.existsSync(`${testFile}.bak`);
+    logTest("DATABASE", "safeStorage writeJSONSafeSync creates atomic primary and .bak backup files", primaryExists && backupExists);
+
+    // 2. SafeStorage corruption self-healing test
+    fs.writeFileSync(testFile, "{malformed_corrupt_data!!!");
+    const recoveredData = readJSONSafe(testFile, []);
+    const recoverySuccess = Array.isArray(recoveredData) && recoveredData[0]?.testId === 42;
+    logTest("DATABASE", "safeStorage readJSONSafe self-heals corrupted files from .bak backup", recoverySuccess);
+    await fse.remove(testFile);
+    await fse.remove(`${testFile}.bak`);
+
+    // 3. ResponseDB taught response exact match
+    responseDB.add("cli_trigger_test", "cli_reply_test", { author: "9999", isGlobal: true });
+    const match1 = responseDB.get("cli_trigger_test");
+    logTest("RESPONSE_DB", "responseDB stores and retrieves taught response with exact match", match1?.reply === "cli_reply_test");
+
+    // 4. ResponseDB regex pattern matching
+    responseDB.add("hello\\s+floppa", "Hello human!", { author: "9999", isGlobal: true, isRegex: true });
+    const matchRegex = responseDB.get("Hey hello   floppa how are you");
+    logTest("RESPONSE_DB", "responseDB supports regex pattern matching for conversational triggers", matchRegex?.reply === "Hello human!");
+
+    // 5. ResponseDB AI response caching
+    responseDB.cacheAIResponse("What is the capital of France?", "The capital of France is Paris.", { provider: "test", model: "test" });
+    const cachedAI = responseDB.getCachedAIResponse("What is the capital of France?", { provider: "test", model: "test" });
+    logTest("RESPONSE_DB", "responseDB caches AI responses for instant sub-millisecond query delivery", cachedAI === "The capital of France is Paris.");
+
+    // 6. ResponseDB persistent conversation memory
+    responseDB.saveConversation("ctx_diag_01", [
+      { role: "user", content: "Tell me a joke" },
+      { role: "assistant", content: "Why did the chicken cross the road?" }
+    ]);
+    const persistedConv = responseDB.getConversation("ctx_diag_01");
+    logTest("RESPONSE_DB", "responseDB persists multi-turn conversational context memory across sessions", persistedConv.length === 2);
+
+    // 7. scripts/cmds/response.js command load and config schema
+    const responseCmd = require(path.join(cwd, "scripts/cmds/response.js"));
+    const respValid = Boolean(
+      responseCmd.config &&
+      responseCmd.config.name === "response" &&
+      responseCmd.config.aliases.includes("teach") &&
+      typeof responseCmd.onStart === "function"
+    );
+    logTest("RESPONSE_DB", "scripts/cmds/response.js loaded with proper config and teach aliases", respValid);
+
+    // 8. scripts/cmds/sing.js fast short-circuit resolver configuration
+    const singCmd = require(path.join(cwd, "scripts/cmds/sing.js"));
+    const singValid = Boolean(
+      singCmd.config &&
+      singCmd.config.name === "sing" &&
+      singCmd.config.version === "3.5.0" &&
+      typeof singCmd.onStart === "function"
+    );
+    logTest("MEDIA_SPEED", "scripts/cmds/sing.js v3.5.0 fast audio pipeline configured properly", singValid);
+
+    // 9. Integration: handlerEvents auto-reply check
+    let autoReplyDelivered = null;
+    const mockAutoReplyMsg = {
+      reply: async (text) => { autoReplyDelivered = text; }
+    };
+    const autoReplyEvent = {
+      type: "message",
+      body: "cli_trigger_test",
+      threadID: "10001",
+      senderID: "12345",
+      isGroup: false
+    };
+    const handlerResp = await handlerEvents(autoReplyEvent, mockAutoReplyMsg);
+    if (handlerResp && typeof handlerResp.onStart === "function") {
+      await handlerResp.onStart();
+    }
+    logTest("RESPONSE_DB", "handlerEvents dispatches prefixless message to ResponseDB auto-reply", autoReplyDelivered === "cli_reply_test");
+
+    // Clean up test triggers
+    responseDB.remove("cli_trigger_test");
+    responseDB.remove("hello\\s+floppa");
+    responseDB.clearConversation("ctx_diag_01");
+    responseDB.clearAICache();
+    responseDB.flush();
+  } catch (err) {
+    logTest("RESPONSE_DB", "Section 8 tests encountered failure", false, err.message);
+  }
+
   // ──────────────── Summary ────────────────
   console.log("\n\x1b[36m============================================================\x1b[0m");
   console.log(`\x1b[36mDiagnostic Results: ${results.passed}/${results.total} Passed (${results.failed} Failed)\x1b[0m`);

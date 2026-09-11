@@ -1,4 +1,5 @@
-const { existsSync, writeJsonSync, readJSONSync } = require("fs-extra");
+const { existsSync } = require("fs-extra");
+const { readJSONSafe, writeJSONSafeSync } = require("./safeStorage.js");
 const moment = require("moment-timezone");
 const path = require("path");
 const _ = require("lodash");
@@ -41,9 +42,7 @@ module.exports = async function (databaseType, globalModel, fakeGraphql) {
 			GlobalData = (await globalModel.findAll()).map(item => item.get({ plain: true }));
 			break;
 		case "json":
-			if (!existsSync(pathGlobalData))
-				writeJsonSync(pathGlobalData, [], optionsWriteJSON);
-			GlobalData = readJSONSync(pathGlobalData);
+			GlobalData = readJSONSafe(pathGlobalData, []);
 			break;
 	}
 	global.db.allGlobalData = GlobalData;
@@ -75,7 +74,7 @@ module.exports = async function (databaseType, globalModel, fakeGraphql) {
 							data.createdAt = timeCreate;
 							data.updatedAt = timeCreate;
 							global.db.allGlobalData.push(data);
-							writeJsonSync(pathGlobalData, global.db.allGlobalData, optionsWriteJSON);
+							writeJSONSafeSync(pathGlobalData, global.db.allGlobalData, optionsWriteJSON);
 							return _.cloneDeep(data);
 						}
 					}
@@ -121,7 +120,7 @@ module.exports = async function (databaseType, globalModel, fakeGraphql) {
 								...oldGlobalData,
 								...dataWillChange
 							};
-							writeJsonSync(pathGlobalData, global.db.allGlobalData, optionsWriteJSON);
+							writeJSONSafeSync(pathGlobalData, global.db.allGlobalData, optionsWriteJSON);
 							return _.cloneDeep(global.db.allGlobalData[index]);
 						}
 					}
@@ -135,7 +134,7 @@ module.exports = async function (databaseType, globalModel, fakeGraphql) {
 						else if (databaseType == "sqlite")
 							await globalModel.destroy({ where: { key } });
 						else
-							writeJsonSync(pathGlobalData, global.db.allGlobalData, optionsWriteJSON);
+							writeJSONSafeSync(pathGlobalData, global.db.allGlobalData, optionsWriteJSON);
 					}
 					break;
 				}

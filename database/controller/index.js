@@ -238,6 +238,7 @@ module.exports = async function (api) {
 	const usersData = await require("./usersData.js")(databaseType, userModel, api, fakeGraphql);
 	const dashBoardData = await require("./dashBoardData.js")(databaseType, dashBoardModel, fakeGraphql);
 	const globalData = await require("./globalData.js")(databaseType, globalModel, fakeGraphql);
+	const responseDB = require("./responseDB.js");
 
 	global.db = {
 		...global.db,
@@ -249,8 +250,10 @@ module.exports = async function (api) {
 		usersData,
 		dashBoardData,
 		globalData,
+		responseDB,
 		sequelize
 	};
+	global.responseDB = responseDB;
 
 	return {
 		threadModel,
@@ -261,6 +264,7 @@ module.exports = async function (api) {
 		usersData,
 		dashBoardData,
 		globalData,
+		responseDB,
 		sequelize,
 		databaseType
 	};

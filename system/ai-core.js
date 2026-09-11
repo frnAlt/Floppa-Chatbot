@@ -22,6 +22,7 @@ const axios = require("axios");
 const fs = require("fs-extra");
 const path = require("path");
 const log = require("../logger/log.js");
+const responseDB = require("../database/controller/responseDB.js");
 
 const conversationMemory = new Map();
 const userPersonas = new Map();
@@ -180,18 +181,33 @@ class AICore {
 
   getConversationHistory(contextId) {
     if (!conversationMemory.has(contextId)) {
-      conversationMemory.set(contextId, []);
+      const persisted = responseDB.getConversation(contextId);
+      conversationMemory.set(contextId, persisted || []);
     }
     return conversationMemory.get(contextId);
   }
 
   clearConversationHistory(contextId) {
     conversationMemory.delete(contextId);
+    responseDB.clearConversation(contextId);
   }
 
   async generateCompletion({ prompt, contextId = "default", image = null, voiceUrl = null }) {
     const history = this.getConversationHistory(contextId);
     const customPersona = userPersonas.get(contextId) || this.state.systemPrompt;
+
+    // Fast Path: Check persistent AI response cache for instant sub-millisecond response
+    const cachedResponse = responseDB.getCachedAIResponse(prompt, {
+      provider: this.state.provider,
+      model: this.state.model
+    });
+    if (cachedResponse) {
+      history.push({ role: "user", content: prompt });
+      history.push({ role: "assistant", content: cachedResponse });
+      if (history.length > 10) history.splice(0, history.length - 10);
+      responseDB.saveConversation(contextId, history);
+      return cachedResponse;
+    }
 
     const ragContext = searchKnowledgeBase(prompt);
     const fullPrompt = ragContext ? `${ragContext}\n\nUser Question: ${prompt}` : prompt;
@@ -228,11 +244,20 @@ class AICore {
       }
 
       history.push({ role: "assistant", content: responseText });
+      responseDB.saveConversation(contextId, history);
+      responseDB.cacheAIResponse(prompt, responseText, {
+        provider: this.state.provider,
+        model: this.state.model
+      });
+
       return responseText;
 
     } catch (err) {
       if (log && log.error) log.error("AI_CORE_ERROR", `Failed generating completion: ${err.message}`);
-      return await this._fallbackPublicApi(prompt, customPersona);
+      const fallback = await this._fallbackPublicApi(prompt, customPersona);
+      history.push({ role: "assistant", content: fallback });
+      responseDB.saveConversation(contextId, history);
+      return fallback;
     }
   }
 

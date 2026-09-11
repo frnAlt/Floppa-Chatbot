@@ -1,4 +1,5 @@
-const { existsSync, writeJsonSync, readJSONSync } = require("fs-extra");
+const { existsSync } = require("fs-extra");
+const { readJSONSafe, writeJSONSafeSync } = require("./safeStorage.js");
 const moment = require("moment-timezone");
 const path = require("path");
 const axios = require("axios");
@@ -44,9 +45,7 @@ module.exports = async function (databaseType, userModel, api, fakeGraphql) {
                         break;
                 }
                 case "json": {
-                        if (!existsSync(pathUsersData))
-                                writeJsonSync(pathUsersData, [], optionsWriteJSON);
-                        Users = readJSONSync(pathUsersData);
+                        Users = readJSONSafe(pathUsersData, []);
                         break;
                 }
         }
@@ -86,7 +85,7 @@ module.exports = async function (databaseType, userModel, api, fakeGraphql) {
                                                         userData.createdAt = timeCreate;
                                                         userData.updatedAt = timeCreate;
                                                         global.db.allUserData.push(userData);
-                                                        writeJsonSync(pathUsersData, global.db.allUserData, optionsWriteJSON);
+                                                        writeJSONSafeSync(pathUsersData, global.db.allUserData, optionsWriteJSON);
                                                         return _.cloneDeep(userData);
                                                 }
                                                 default: {
@@ -135,7 +134,7 @@ module.exports = async function (databaseType, userModel, api, fakeGraphql) {
                                                                 ...oldUserData,
                                                                 ...dataWillChange
                                                         };
-                                                        writeJsonSync(pathUsersData, global.db.allUserData, optionsWriteJSON);
+                                                        writeJSONSafeSync(pathUsersData, global.db.allUserData, optionsWriteJSON);
                                                         return _.cloneDeep(global.db.allUserData[index]);
                                                 }
                                         }
@@ -152,7 +151,7 @@ module.exports = async function (databaseType, userModel, api, fakeGraphql) {
                                                                 await userModel.destroy({ where: { userID } });
                                                                 break;
                                                         case "json":
-                                                                writeJsonSync(pathUsersData, global.db.allUserData, optionsWriteJSON);
+                                                                writeJSONSafeSync(pathUsersData, global.db.allUserData, optionsWriteJSON);
                                                                 break;
                                                 }
                                         }

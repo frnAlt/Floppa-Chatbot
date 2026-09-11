@@ -1,4 +1,5 @@
-const { existsSync, writeJsonSync, readJSONSync } = require("fs-extra");
+const { existsSync } = require("fs-extra");
+const { readJSONSafe, writeJSONSafeSync } = require("./safeStorage.js");
 const moment = require("moment-timezone");
 const path = require("path");
 const _ = require("lodash");
@@ -43,9 +44,7 @@ module.exports = async function (databaseType, threadModel, api, fakeGraphql) {
                         break;
                 }
                 case "json": {
-                        if (!existsSync(pathThreadsData))
-                                writeJsonSync(pathThreadsData, [], optionsWriteJSON);
-                        Threads = readJSONSync(pathThreadsData);
+                        Threads = readJSONSafe(pathThreadsData, []);
                         break;
                 }
         }
@@ -85,7 +84,7 @@ module.exports = async function (databaseType, threadModel, api, fakeGraphql) {
                                                         threadData.createdAt = timeCreate;
                                                         threadData.updatedAt = timeCreate;
                                                         global.db.allThreadData.push(threadData);
-                                                        writeJsonSync(pathThreadsData, global.db.allThreadData, optionsWriteJSON);
+                                                        writeJSONSafeSync(pathThreadsData, global.db.allThreadData, optionsWriteJSON);
                                                         return _.cloneDeep(threadData);
                                                 }
                                                 default: {
@@ -134,7 +133,7 @@ module.exports = async function (databaseType, threadModel, api, fakeGraphql) {
                                                                 ...oldThreadData,
                                                                 ...dataWillChange
                                                         };
-                                                        writeJsonSync(pathThreadsData, global.db.allThreadData, optionsWriteJSON);
+                                                        writeJSONSafeSync(pathThreadsData, global.db.allThreadData, optionsWriteJSON);
                                                         return _.cloneDeep(global.db.allThreadData[index]);
                                                 }
                                                 default:
@@ -153,7 +152,7 @@ module.exports = async function (databaseType, threadModel, api, fakeGraphql) {
                                                                 await threadModel.destroy({ where: { threadID } });
                                                                 break;
                                                         case "json":
-                                                                writeJsonSync(pathThreadsData, global.db.allThreadData, optionsWriteJSON);
+                                                                writeJSONSafeSync(pathThreadsData, global.db.allThreadData, optionsWriteJSON);
                                                                 break;
                                                         default:
                                                                 break;

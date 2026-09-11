@@ -1,4 +1,5 @@
-const { existsSync, writeJsonSync, readJSONSync } = require("fs-extra");
+const { existsSync } = require("fs-extra");
+const { readJSONSafe, writeJSONSafeSync } = require("./safeStorage.js");
 const moment = require("moment-timezone");
 const path = require("path");
 const _ = require("lodash");
@@ -41,9 +42,7 @@ module.exports = async function (databaseType, dashBoardModel, fakeGraphql) {
 			Dashboard = (await dashBoardModel.findAll()).map(item => item.get({ plain: true }));
 			break;
 		case "json":
-			if (!existsSync(pathDashBoardData))
-				writeJsonSync(pathDashBoardData, [], optionsWriteJSON);
-			Dashboard = readJSONSync(pathDashBoardData);
+			Dashboard = readJSONSafe(pathDashBoardData, []);
 			break;
 	}
 	global.db.allDashBoardData = Dashboard;
@@ -75,7 +74,7 @@ module.exports = async function (databaseType, dashBoardModel, fakeGraphql) {
 							userData.createdAt = timeCreation;
 							userData.updatedAt = timeCreation;
 							global.db.allDashBoardData.push(userData);
-							writeJsonSync(pathDashBoardData, global.db.allDashBoardData, optionsWriteJSON);
+							writeJSONSafeSync(pathDashBoardData, global.db.allDashBoardData, optionsWriteJSON);
 							return _.cloneDeep(userData);
 						}
 					}
@@ -121,7 +120,7 @@ module.exports = async function (databaseType, dashBoardModel, fakeGraphql) {
 								...oldUserData,
 								...dataWillChange
 							};
-							writeJsonSync(pathDashBoardData, global.db.allDashBoardData, optionsWriteJSON);
+							writeJSONSafeSync(pathDashBoardData, global.db.allDashBoardData, optionsWriteJSON);
 							return _.cloneDeep(global.db.allDashBoardData[index]);
 						}
 					}
@@ -135,7 +134,7 @@ module.exports = async function (databaseType, dashBoardModel, fakeGraphql) {
 						else if (databaseType == "sqlite")
 							await dashBoardModel.destroy({ where: { email } });
 						else
-							writeJsonSync(pathDashBoardData, global.db.allDashBoardData, optionsWriteJSON);
+							writeJSONSafeSync(pathDashBoardData, global.db.allDashBoardData, optionsWriteJSON);
 					}
 					break;
 				}

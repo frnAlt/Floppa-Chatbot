@@ -594,7 +594,18 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                                 return;
                                         }
                                 } else {
-                                        // Non-admin or regular conversation message without prefix: DO NOT reply, remain silent
+                                        // Check ResponseDB for taught responses / auto-replies
+                                        let responseDB = global.db?.responseDB || global.responseDB;
+                                        if (!responseDB) {
+                                                try { responseDB = require("../../database/controller/responseDB.js"); } catch (_) {}
+                                        }
+                                        if (responseDB && typeof responseDB.get === "function") {
+                                                const matched = responseDB.get(trimmedBody, { threadID });
+                                                if (matched && matched.reply) {
+                                                        return await message.reply(matched.reply);
+                                                }
+                                        }
+                                        // Regular conversation message without prefix or taught response: DO NOT reply, remain silent
                                         return;
                                 }
                         }
@@ -669,10 +680,17 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         if (isBannedOrOnlyAdmin(userData, threadData, senderID, threadID, isGroup, commandName, message, langCode))
                                 return;
                         if (!command) {
-                                // In noPrefix mode, only respond if the user explicitly used the prefix.
-                                // If the message had no prefix, silently ignore unrecognized words.
-                                if (!hasPrefix)
+                                // In noPrefix mode, check response database for taught responses; otherwise remain silent
+                                if (!hasPrefix) {
+                                        const responseDB = global.db?.responseDB || global.responseDB;
+                                        if (responseDB && typeof responseDB.get === "function") {
+                                                const matched = responseDB.get(trimmedBody, { threadID });
+                                                if (matched && matched.reply) {
+                                                        return await message.reply(matched.reply);
+                                                }
+                                        }
                                         return;
+                                }
                                 if (!hideNotiMessage.commandNotFound) {
                                         if (!commandName) {
                                                 return await message.reply(`That's only the prefix. Type ${prefix}help to see commands.`);

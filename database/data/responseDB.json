@@ -1,0 +1,13 @@
+{
+  "version": "1.0.0",
+  "triggers": {},
+  "aiCache": {},
+  "conversations": {},
+  "settings": {},
+  "stats": {
+    "totalAdded": 0,
+    "totalReplied": 0,
+    "cacheHits": 0
+  }
+}
+

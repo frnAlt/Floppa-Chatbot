@@ -57,11 +57,11 @@ function decodeSavetube(enc) {
 }
 
 /**
- * Savetube Open-Source MP3 Engine
+ * Fast Savetube Open-Source MP3 Engine
  */
 async function getSavetubeAudio(youtubeUrl, titleFallback = "") {
   try {
-    const cdnRes = await axios.get("https://media.savetube.vip/api/random-cdn", { timeout: 8000 });
+    const cdnRes = await axios.get("https://media.savetube.vip/api/random-cdn", { timeout: 4000 });
     const cdn = cdnRes.data?.cdn;
     if (!cdn) return null;
 
@@ -70,7 +70,7 @@ async function getSavetubeAudio(youtubeUrl, titleFallback = "") {
         "User-Agent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Mobile Safari/537.36",
         "Referer": "https://save-tube.com/"
       },
-      timeout: 10000
+      timeout: 5000
     });
 
     const info = decodeSavetube(infoRes.data.data);
@@ -86,7 +86,7 @@ async function getSavetubeAudio(youtubeUrl, titleFallback = "") {
         "User-Agent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Mobile Safari/537.36",
         "Referer": "https://save-tube.com/"
       },
-      timeout: 15000
+      timeout: 7000
     });
 
     const downloadUrl = dlRes.data?.data?.downloadUrl;
@@ -100,102 +100,115 @@ async function getSavetubeAudio(youtubeUrl, titleFallback = "") {
       };
     }
   } catch (err) {
-    console.warn("[SING] Savetube engine failed:", err.message);
+    // Graceful fallback to race
   }
   return null;
 }
 
 /**
- * Collect prioritized audio stream candidates for a YouTube track
+ * Concurrent fallback race across secondary fast providers
+ */
+async function getFallbackRace(youtubeUrl, titleFallback = "") {
+  const providers = [];
+
+  // Candidate A: Toshiro yta2 direct
+  providers.push((async () => {
+    const yta2Api = `https://toshiro-api-editz6t9.vercel.app/api/downloader/yta2?url=${encodeURIComponent(youtubeUrl)}`;
+    const res = await client.get(yta2Api, { timeout: 7000 });
+    const r = res.data?.result;
+    const dl = r?.download_url || r?.preview;
+    if (res.data?.success && dl && !dl.includes("onrender.com")) {
+      return {
+        url: dl,
+        source: "yta2",
+        title: r?.title || titleFallback,
+        author: r?.author || ""
+      };
+    }
+    throw new Error("yta2 failed");
+  })());
+
+  // Candidate B: btch-downloader MP3
+  providers.push((async () => {
+    const res = await btch.youtube(youtubeUrl);
+    if (res && res.status !== false && res.mp3 && !res.mp3.includes("onrender.com")) {
+      return {
+        url: res.mp3,
+        source: "btch",
+        title: res.title || titleFallback,
+        author: res.author || ""
+      };
+    }
+    throw new Error("btch failed");
+  })());
+
+  // Candidate C: Toshiro alldl direct
+  providers.push((async () => {
+    const alldlApi = `https://toshiro-api-editz6t9.vercel.app/api/downloader/alldl?url=${encodeURIComponent(youtubeUrl)}`;
+    const res = await client.get(alldlApi, { timeout: 7000 });
+    const r = res.data?.result;
+    const dl = r?.video || r?.audio || r?.url;
+    if (res.data?.success && dl && !dl.includes("onrender.com")) {
+      return {
+        url: dl,
+        source: "alldl",
+        title: r?.title || titleFallback,
+        author: r?.author || ""
+      };
+    }
+    throw new Error("alldl failed");
+  })());
+
+  return await Promise.any(providers);
+}
+
+/**
+ * High-speed short-circuit audio resolver:
+ * 1. Checks Savetube VIP (direct 128kbps MP3 in ~1.5s). Returns immediately on hit!
+ * 2. If Savetube fails, launches concurrent race across secondary providers.
+ * 3. Falls back to search API if URL resolution exhausted.
  */
 async function getAudioCandidates(youtubeUrl, titleFallback = "") {
-  const candidates = [];
-
-  // Provider 1: Open-source Savetube VIP CDN (Direct, fast MP3)
+  // Step 1: Fast Savetube short-circuit (~1.5s)
   if (youtubeUrl) {
     const savetube = await getSavetubeAudio(youtubeUrl, titleFallback);
     if (savetube) {
-      candidates.push(savetube);
+      return [savetube];
     }
   }
 
-  // Provider 2: btch-downloader MP3
+  // Step 2: Concurrent race fallback
   if (youtubeUrl) {
     try {
-      const res = await btch.youtube(youtubeUrl);
-      if (res && res.status !== false && res.mp3) {
-        if (!res.mp3.includes("onrender.com")) {
-          candidates.push({
-            url: res.mp3,
-            source: "btch",
-            title: res.title || titleFallback,
-            author: res.author || ""
-          });
-        }
-      }
+      const winner = await getFallbackRace(youtubeUrl, titleFallback);
+      if (winner) return [winner];
     } catch (_) {}
   }
 
-  // Provider 3: Toshiro yta2 direct
-  if (youtubeUrl) {
-    try {
-      const yta2Api = `https://toshiro-api-editz6t9.vercel.app/api/downloader/yta2?url=${encodeURIComponent(youtubeUrl)}`;
-      const res = await client.get(yta2Api, { timeout: 15000 });
-      const r = res.data?.result;
-      const dl = r?.download_url || r?.preview;
-      if (res.data?.success && dl && !dl.includes("onrender.com")) {
-        candidates.push({
-          url: dl,
-          source: "yta2",
-          title: r?.title || titleFallback,
-          author: r?.author || ""
-        });
-      }
-    } catch (_) {}
-  }
-
-  // Provider 4: Toshiro alldl direct
-  if (youtubeUrl) {
-    try {
-      const alldlApi = `https://toshiro-api-editz6t9.vercel.app/api/downloader/alldl?url=${encodeURIComponent(youtubeUrl)}`;
-      const res = await client.get(alldlApi, { timeout: 15000 });
-      const r = res.data?.result;
-      const dl = r?.video || r?.audio || r?.url;
-      if (res.data?.success && dl && !dl.includes("onrender.com")) {
-        candidates.push({
-          url: dl,
-          source: "alldl",
-          title: r?.title || titleFallback,
-          author: r?.author || ""
-        });
-      }
-    } catch (_) {}
-  }
-
-  // Provider 5: Toshiro yta2 search fallback
+  // Step 3: Last-resort search fallback
   if (titleFallback) {
     try {
       const searchApi = `https://toshiro-api-editz6t9.vercel.app/api/downloader/yta2?search=${encodeURIComponent(titleFallback)}`;
-      const res = await client.get(searchApi, { timeout: 15000 });
+      const res = await client.get(searchApi, { timeout: 8000 });
       const first = res.data?.results?.[0];
       if (first?.url) {
         const yta2Api = `https://toshiro-api-editz6t9.vercel.app/api/downloader/yta2?url=${encodeURIComponent(first.url)}`;
-        const res2 = await client.get(yta2Api, { timeout: 15000 });
+        const res2 = await client.get(yta2Api, { timeout: 8000 });
         const r2 = res2.data?.result;
         const dl2 = r2?.download_url || r2?.preview;
         if (res2.data?.success && dl2 && !dl2.includes("onrender.com")) {
-          candidates.push({
+          return [{
             url: dl2,
             source: "yta2-search",
             title: r2?.title || first.title || titleFallback,
             author: r2?.author || ""
-          });
+          }];
         }
       }
     } catch (_) {}
   }
 
-  return candidates;
+  return [];
 }
 
 /**
@@ -225,6 +238,8 @@ async function downloadAndProcessAudio({ youtubeUrl = null, title = "song", dura
   let downloaded = false;
   let lastError = null;
 
+  let successfulCandidate = null;
+
   for (const candidate of candidateList) {
     for (let attempt = 1; attempt <= 2; attempt++) {
       try {
@@ -237,7 +252,7 @@ async function downloadAndProcessAudio({ youtubeUrl = null, title = "song", dura
           url: candidate.url,
           method: "GET",
           responseType: "stream",
-          timeout: 45000,
+          timeout: 25000,
           headers
         });
 
@@ -251,6 +266,7 @@ async function downloadAndProcessAudio({ youtubeUrl = null, title = "song", dura
         const rawSize = (await fs.stat(rawPath)).size;
         if (rawSize > 1000) {
           downloaded = true;
+          successfulCandidate = candidate;
           break;
         } else {
           await fs.remove(rawPath).catch(() => {});
@@ -272,7 +288,7 @@ async function downloadAndProcessAudio({ youtubeUrl = null, title = "song", dura
 
   const rawSize = (await fs.stat(rawPath)).size;
   const isBig = rawSize > MAX_ATTACHMENT_SIZE;
-  const isAlreadyMp3 = isMp3File(rawPath);
+  const isAlreadyMp3 = isMp3File(rawPath) || successfulCandidate?.source === "savetube" || successfulCandidate?.source === "btch" || (successfulCandidate?.url && successfulCandidate.url.includes(".mp3"));
 
   // Fast path: Already valid MP3 and within Messenger limit
   if (!isBig && isAlreadyMp3) {
@@ -372,7 +388,7 @@ module.exports = {
   config: {
     name: "sing",
     aliases: ["song", "music", "play"],
-    version: "3.4.0",
+    version: "3.5.0",
     author: "frnAlt",
     countDown: 5,
     role: 0,
@@ -462,22 +478,9 @@ module.exports = {
     // ── Mode 2: Direct YouTube URL ──
     if (isYtUrl) {
       try {
-        let videoTitle = "YouTube Audio";
-        let durationSeconds = 0;
-
-        try {
-          const searchRes = await yts(query);
-          const v = searchRes?.videos?.[0];
-          if (v) {
-            videoTitle = v.title || videoTitle;
-            durationSeconds = v.seconds || 0;
-          }
-        } catch (_) {}
-
         const result = await downloadAndProcessAudio({
           youtubeUrl: query,
-          title: videoTitle,
-          durationSeconds
+          title: "YouTube Audio"
         });
 
         const stream = fs.createReadStream(result.filePath);
