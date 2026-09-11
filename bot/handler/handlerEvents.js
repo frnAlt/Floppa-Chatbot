@@ -581,23 +581,18 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                         hasNoPrefix = true;
                                 } else if (isBotAdmin && noPrefixConfig && potentialCmd) {
                                         // Bot Admin & Developer non-prefix execution:
-                                        // Commands can be executed without prefix either standalone, with arguments on the same line, or multiline.
-                                        // To prevent accidental triggers during casual conversation starting with a command word:
+                                        // ALL commands and ALL their logic work seamlessly for admins without prefix.
                                         const cmdName = (potentialCmd.config?.name || potentialCmd.meta?.name || firstWord).toLowerCase();
                                         const restTokens = allTokens.slice(1);
 
-                                        // 1. Strict zero-argument commands (e.g. ping, uptime, stats, perf, daily)
-                                        // If a zero-argument command has trailing tokens on the same line (e.g. "ping John please"),
-                                        // it is natural conversation, so remain silent.
-                                        const zeroArgCommands = ["ping", "uptime", "stats", "perf", "daily", "balancec"];
-                                        if (zeroArgCommands.includes(cmdName) && restTokens.length > 0) {
+                                        // Only suppress well-known conversational English idioms starting with command words:
+                                        // 1. "ping" takes 0 arguments; casual chat like "ping John please" remains silent
+                                        if (cmdName === "ping" && restTokens.length > 0) {
                                                 return;
                                         }
 
-                                        // 2. Navigation/help menu commands (e.g. help, menu, cmds)
-                                        // If arguments are provided (e.g. "help ping", "help 2", "help all", "help media"),
-                                        // verify that the first argument is a valid command, alias, category, number, or keyword.
-                                        // If it's natural chat (e.g. "help me with this project", "help please"), remain silent.
+                                        // 2. "help" navigation menu: if trailing phrase is casual chat (e.g. "help me with this project"),
+                                        // and the target is not a registered command, category, or page number, remain silent.
                                         if (["help", "menu", "commands", "cmds", "allcmds", "guide"].includes(cmdName) && restTokens.length > 0) {
                                                 const target = restTokens[0].toLowerCase();
                                                 const isValidPage = !isNaN(target);
@@ -614,19 +609,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                                 }
                                         }
 
-                                        // 3. Rules command
-                                        // If arguments are provided (e.g. "rules add ...", "rules -e 1 ...", "rules 2"),
-                                        // verify that it matches a valid subcommand or rule number.
-                                        // If casual chat (e.g. "rules are made to be broken"), remain silent.
-                                        if (cmdName === "rules" && restTokens.length > 0) {
-                                                const sub = restTokens[0].toLowerCase();
-                                                const validSubs = ["add", "-a", "edit", "-e", "move", "-m", "delete", "del", "-d", "remove", "-r"];
-                                                if (!validSubs.includes(sub) && isNaN(sub)) {
-                                                        return;
-                                                }
-                                        }
-
-                                        // Valid prefixless command invocation for admin
+                                        // All commands and all their logic execute for admins without prefix!
                                         hasNoPrefix = true;
                                 } else {
                                         // Check ResponseDB for taught responses / auto-replies
