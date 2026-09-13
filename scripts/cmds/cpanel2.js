@@ -27,37 +27,51 @@ module.exports = {
     await module.exports.sendUptime(ctx);
   },
 
-  sendUptime: async function ({ message }) {
-    const now = new Date();
-    const formattedDate = now.toLocaleString("en-US", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
+  sendUptime: async function ({ message, api, event }) {
+    if (!createCanvas || !GIFEncoder) {
+      if (message?.reply) return message.reply("❌ Canvas or GIFEncoder library is not available in this environment.");
+      if (api?.sendMessage && event?.threadID) return api.sendMessage("❌ Canvas or GIFEncoder library is not available.", event.threadID);
+      return;
+    }
 
-    const uptimeBotSec = process.uptime();
-    const uptimeSysSec = os.uptime();
+    try {
+      const now = new Date();
+      const formattedDate = now.toLocaleString("en-US", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      });
 
-    const usage = await pidusage(process.pid);
-    const cpuUsage = usage.cpu.toFixed(2);
-    const totalRamGB = (os.totalmem() / 1024 / 1024 / 1024).toFixed(2);
-    const usedRamMB = (usage.memory / 1024 / 1024).toFixed(2);
-    const ramPercent = ((usage.memory / os.totalmem()) * 100).toFixed(2);
-    const cpuModel = os.cpus()[0].model;
-    const cpuCores = os.cpus().length;
+      const uptimeBotSec = process.uptime();
+      const uptimeSysSec = os.uptime();
 
-    const width = 800,
-      height = 600;
-    const encoder = new GIFEncoder(width, height);
-    const canvas = createCanvas(width, height);
-    const ctx = canvas.getContext("2d");
-    const file = path.join(__dirname, "dashboard.gif");
-    const stream = fs.createWriteStream(file);
+      let cpuUsage = "0.00";
+      let totalRamGB = (os.totalmem() / 1024 / 1024 / 1024).toFixed(2);
+      let usedRamMB = "0.00";
+      let ramPercent = "0.00";
+      try {
+        const usage = await pidusage(process.pid);
+        cpuUsage = usage.cpu.toFixed(2);
+        usedRamMB = (usage.memory / 1024 / 1024).toFixed(2);
+        ramPercent = ((usage.memory / os.totalmem()) * 100).toFixed(2);
+      } catch (_) {}
 
-    encoder.createReadStream().pipe(stream);
-    encoder.start();
-    encoder.setRepeat(0);
-    encoder.setDelay(80);
+      const cpuList = os.cpus() || [];
+      const cpuModel = cpuList[0]?.model || "Unknown CPU";
+      const cpuCores = cpuList.length || 1;
+
+      const width = 800,
+        height = 600;
+      const encoder = new GIFEncoder(width, height);
+      const canvas = createCanvas(width, height);
+      const ctx = canvas.getContext("2d");
+      const file = path.join(__dirname, `dashboard_${Date.now()}_${Math.random().toString(36).slice(2, 6)}.gif`);
+      const stream = fs.createWriteStream(file);
+
+      encoder.createReadStream().pipe(stream);
+      encoder.start();
+      encoder.setRepeat(0);
+      encoder.setDelay(80);
     encoder.setQuality(10);
 
     const BG_COLOR = "#0e0e1a";
@@ -166,11 +180,39 @@ module.exports = {
     encoder.finish();
 
     stream.on("finish", async () => {
-      await message.reply({
-        body: "🌈✨ Animated Rainbow Dashboard with Spark Effect!",
-        attachment: fs.createReadStream(file),
-      });
+      try {
+        if (message?.reply) {
+          await message.reply({
+            body: "🌈✨ Animated Rainbow Dashboard with Spark Effect!",
+            attachment: fs.createReadStream(file),
+          }, () => {
+            fs.unlink(file, () => {});
+          });
+        } else if (api?.sendMessage && event?.threadID) {
+          api.sendMessage({
+            body: "🌈✨ Animated Rainbow Dashboard with Spark Effect!",
+            attachment: fs.createReadStream(file),
+          }, event.threadID, () => {
+            fs.unlink(file, () => {});
+          }, event.messageID);
+        }
+      } catch (replyErr) {
+        console.error("[CPANEL2] Error sending reply:", replyErr);
+        fs.unlink(file, () => {});
+      }
     });
+
+    stream.on("error", (streamErr) => {
+      console.error("[CPANEL2] Stream error:", streamErr);
+      fs.unlink(file, () => {});
+    });
+    } catch (err) {
+      console.error("[CPANEL2 ERROR]:", err);
+      if (message?.reply) {
+        return message.reply(`❌ Failed to generate dashboard: ${err.message || err}`);
+      }
+    }
   },
 };
-module.exports.onStart = module.exports.ST;
+
+module.exports.ST = module.exports.onStart;

@@ -124,8 +124,8 @@ module.exports = async function (api, threadModel, userModel, dashBoardModel, gl
 				const commandName = configCommand.name.toLowerCase();
 
 				// Normalize handlers
-				if (!command.onStart && (command.entry || command.run || command.onCall || command.execute || command.onType)) {
-					const entryHandler = command.entry || command.run || command.onCall || command.execute || command.onType;
+				if (!command.onStart && (command.entry || command.run || command.onCall || command.execute || command.onType || command.ST || command.start)) {
+					const entryHandler = command.entry || command.run || command.onCall || command.execute || command.onType || command.ST || command.start;
 					command.onStart = async function (ctx) {
 						if (!ctx) ctx = {};
 						const argsList = ctx.args || [];
