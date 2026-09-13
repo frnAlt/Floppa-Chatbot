@@ -169,7 +169,7 @@ module.exports = {
                         message.reply({
                                 attachment: await global.utils.getStreamFromURL(url, 'gc.png')
                         });
-                        message.reaction("✅", event.messageID);
+                        message.reaction("👍", event.messageID);
                 } catch (error) {
                         message.send("❌ | " + error.message);
                 }

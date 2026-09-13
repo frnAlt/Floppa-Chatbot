@@ -90,10 +90,10 @@ module.exports = {
         attachment: fs.createReadStream(filePath)
       });
 
-      api.setMessageReaction("✅", event.messageID);
+      api.setMessageReaction("👍", event.messageID);
       fs.remove(filePath).catch(() => {});
     } catch (e) {
-      api.setMessageReaction("❌", event.messageID);
+      api.setMessageReaction("👎", event.messageID);
       message.reply("Download error.");
     }
   }

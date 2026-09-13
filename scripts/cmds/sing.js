@@ -438,7 +438,7 @@ module.exports = {
           const result = await downloadAndProcessAudio({ title: songTitle, directAudioUrl });
           const stream = fs.createReadStream(result.filePath);
 
-          if (api && api.setMessageReaction) api.setMessageReaction("✅", event.messageID, () => {}, true);
+          if (api && api.setMessageReaction) api.setMessageReaction("👍", event.messageID, () => {}, true);
 
           return message.reply({ attachment: stream }, () => {
             fs.remove(result.filePath).catch(() => {});
@@ -463,14 +463,14 @@ module.exports = {
 
         const stream = fs.createReadStream(result.filePath);
 
-        if (api && api.setMessageReaction) api.setMessageReaction("✅", event.messageID, () => {}, true);
+        if (api && api.setMessageReaction) api.setMessageReaction("👍", event.messageID, () => {}, true);
 
         return message.reply({ attachment: stream }, () => {
           fs.remove(result.filePath).catch(() => {});
         });
       } catch (err) {
         console.error("[SING] Spotify download error:", err.message);
-        if (api && api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+        if (api && api.setMessageReaction) api.setMessageReaction("👎", event.messageID, () => {}, true);
         return message.reply(`❌ Spotify download failed: ${err.message || err}`);
       }
     }
@@ -485,14 +485,14 @@ module.exports = {
 
         const stream = fs.createReadStream(result.filePath);
 
-        if (api && api.setMessageReaction) api.setMessageReaction("✅", event.messageID, () => {}, true);
+        if (api && api.setMessageReaction) api.setMessageReaction("👍", event.messageID, () => {}, true);
 
         return message.reply({ attachment: stream }, () => {
           fs.remove(result.filePath).catch(() => {});
         });
       } catch (err) {
         console.error("[SING] Direct YouTube download error:", err.message);
-        if (api && api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+        if (api && api.setMessageReaction) api.setMessageReaction("👎", event.messageID, () => {}, true);
         return message.reply(`❌ Download error: ${err.message || err}`);
       }
     }
@@ -503,7 +503,7 @@ module.exports = {
       const videos = searchRes?.videos || [];
 
       if (videos.length === 0) {
-        if (api && api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+        if (api && api.setMessageReaction) api.setMessageReaction("👎", event.messageID, () => {}, true);
         return message.reply(`❌ No songs found for "${query}". Please check the title and try again.`);
       }
 
@@ -518,14 +518,14 @@ module.exports = {
 
       const stream = fs.createReadStream(result.filePath);
 
-      if (api && api.setMessageReaction) api.setMessageReaction("✅", event.messageID, () => {}, true);
+      if (api && api.setMessageReaction) api.setMessageReaction("👍", event.messageID, () => {}, true);
 
       return message.reply({ attachment: stream }, () => {
         fs.remove(result.filePath).catch(() => {});
       });
     } catch (e) {
       console.error("[SING] Search/Download error:", e.message);
-      if (api && api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+      if (api && api.setMessageReaction) api.setMessageReaction("👎", event.messageID, () => {}, true);
       message.reply(`❌ Failed to download song: ${e.message || "Please try again later."}`);
     }
   },
@@ -560,14 +560,14 @@ module.exports = {
 
       const stream = fs.createReadStream(result.filePath);
 
-      if (api && api.setMessageReaction) api.setMessageReaction("✅", event.messageID, () => {}, true);
+      if (api && api.setMessageReaction) api.setMessageReaction("👍", event.messageID, () => {}, true);
 
       return message.reply({ attachment: stream }, () => {
         fs.remove(result.filePath).catch(() => {});
       });
     } catch (e) {
       console.error("[SING] onReply download error:", e.message);
-      if (api && api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+      if (api && api.setMessageReaction) api.setMessageReaction("👎", event.messageID, () => {}, true);
       message.reply(`❌ Failed to download audio: ${e.message || "Please try another song or reply again."}`);
     }
   }

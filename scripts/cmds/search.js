@@ -95,7 +95,7 @@ module.exports = {
       }
 
       if (results.length === 0) {
-        if (api && api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+        if (api && api.setMessageReaction) api.setMessageReaction("👎", event.messageID, () => {}, true);
         return message.reply(`❌ No web results found for "${query}". Please try different keywords.`);
       }
 
@@ -104,11 +104,11 @@ module.exports = {
         replyText += `[${idx + 1}] ${r.title}\n📝 ${r.snippet}\n🔗 ${r.url}\n\n`;
       });
 
-      if (api && api.setMessageReaction) api.setMessageReaction("✅", event.messageID, () => {}, true);
+      if (api && api.setMessageReaction) api.setMessageReaction("👍", event.messageID, () => {}, true);
       return message.reply(replyText.trim());
     } catch (err) {
       console.error("[SEARCH ERROR]:", err.message);
-      if (api && api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+      if (api && api.setMessageReaction) api.setMessageReaction("👎", event.messageID, () => {}, true);
       return message.reply(`❌ Search failed: ${err.message || "Network timeout."}`);
     }
   }

@@ -80,12 +80,12 @@ module.exports = {
       });
 
       if (api.setMessageReaction) {
-        api.setMessageReaction("✅", messageID, () => {}, true);
+        api.setMessageReaction("👍", messageID, () => {}, true);
       }
     } catch (err) {
       console.error("Pair command error:", err);
       if (api.setMessageReaction) {
-        api.setMessageReaction("❌", messageID, () => {}, true);
+        api.setMessageReaction("👎", messageID, () => {}, true);
       }
       return message.reply(`❌ Failed to generate pair canvas: ${err.message || err}`);
     }

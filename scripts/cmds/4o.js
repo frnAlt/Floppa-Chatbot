@@ -38,11 +38,11 @@ module.exports = {
       const resultUrl = data?.data?.imageResponseVo?.url;
 
       if (!resultUrl) {
-        api.setMessageReaction("❌", event.messageID, () => {}, true);
+        api.setMessageReaction("👎", event.messageID, () => {}, true);
         return message.reply("Failed to generate image.");
       }
 
-      api.setMessageReaction("✅", event.messageID, () => {}, true);
+      api.setMessageReaction("👍", event.messageID, () => {}, true);
 
       await message.reply({
         body: "Image generated 🐦",
@@ -51,7 +51,7 @@ module.exports = {
 
     } catch (err) {
       console.error(err);
-      api.setMessageReaction("❌", event.messageID, () => {}, true);
+      api.setMessageReaction("👎", event.messageID, () => {}, true);
       return message.reply("Error while generating image.");
     }
   }

@@ -587,9 +587,13 @@ function message(api, event) {
                 },
                 reaction: async (emoji, messageID, callback) => {
                         try {
+                                if (global.GoatBot?.reactOff || global.FloppaBot?.reactOff || global.GoatBot?.config?.reactOff) {
+                                        return;
+                                }
                                 global.statusAccountBot = 'good';
                                 const targetMessageID = messageID || event.messageID;
-                                return await api.setMessageReaction(emoji, targetMessageID, callback, true);
+                                const normalizedEmoji = emoji === "✅" ? "👍" : (emoji === "❌" ? "👎" : emoji);
+                                return await api.setMessageReaction(normalizedEmoji, targetMessageID, callback, true);
                         }
                         catch (err) {
                                 if (JSON.stringify(err).includes('spam')) {

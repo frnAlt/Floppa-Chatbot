@@ -42,7 +42,7 @@ module.exports = {
         const res = await axios.get(apiUrl, { timeout: 45000 });
 
         if (!res.data || !res.data.success || !res.data.result) {
-          if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+          if (api.setMessageReaction) api.setMessageReaction("👎", event.messageID, () => {}, true);
           return message.reply("❌ Could not extract audio from this YouTube link.");
         }
 
@@ -50,7 +50,7 @@ module.exports = {
         const audioUrl = download_url || preview;
 
         if (!audioUrl) {
-          if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+          if (api.setMessageReaction) api.setMessageReaction("👎", event.messageID, () => {}, true);
           return message.reply("❌ Download URL not available.");
         }
 
@@ -61,11 +61,11 @@ module.exports = {
         });
 
         if (api.setMessageReaction) {
-          api.setMessageReaction("✅", event.messageID, () => {}, true);
+          api.setMessageReaction("👍", event.messageID, () => {}, true);
         }
       } catch (err) {
         console.error("YTA direct error:", err);
-        if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+        if (api.setMessageReaction) api.setMessageReaction("👎", event.messageID, () => {}, true);
         return message.reply(`❌ Failed to download YouTube audio: ${err.message || err}`);
       }
     } else {
@@ -75,7 +75,7 @@ module.exports = {
         const res = await axios.get(searchApiUrl, { timeout: 30000 });
 
         if (!res.data || !res.data.success || !res.data.results || res.data.results.length === 0) {
-          if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+          if (api.setMessageReaction) api.setMessageReaction("👎", event.messageID, () => {}, true);
           return message.reply(`❌ No results found for "${input}".`);
         }
 
@@ -112,7 +112,7 @@ module.exports = {
         );
       } catch (err) {
         console.error("YTA search error:", err);
-        if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+        if (api.setMessageReaction) api.setMessageReaction("👎", event.messageID, () => {}, true);
         return message.reply(`❌ Failed to search YouTube: ${err.message || err}`);
       }
     }
@@ -141,7 +141,7 @@ module.exports = {
       const res = await axios.get(apiUrl, { timeout: 60000 });
 
       if (!res.data || !res.data.success || !res.data.result) {
-        if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+        if (api.setMessageReaction) api.setMessageReaction("👎", event.messageID, () => {}, true);
         return message.reply(`❌ Failed to download audio for "${selected.title}".`);
       }
 
@@ -149,7 +149,7 @@ module.exports = {
       const audioUrl = download_url || preview;
 
       if (!audioUrl) {
-        if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+        if (api.setMessageReaction) api.setMessageReaction("👎", event.messageID, () => {}, true);
         return message.reply("❌ Download URL not available.");
       }
 
@@ -160,11 +160,11 @@ module.exports = {
       });
 
       if (api.setMessageReaction) {
-        api.setMessageReaction("✅", event.messageID, () => {}, true);
+        api.setMessageReaction("👍", event.messageID, () => {}, true);
       }
     } catch (err) {
       console.error("YTA onReply error:", err);
-      if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+      if (api.setMessageReaction) api.setMessageReaction("👎", event.messageID, () => {}, true);
       return message.reply(`❌ Error downloading audio: ${err.message || err}`);
     }
   }

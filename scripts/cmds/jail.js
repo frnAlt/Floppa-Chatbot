@@ -100,12 +100,12 @@ module.exports = {
       });
 
       if (api && api.setMessageReaction) {
-        api.setMessageReaction("✅", event.messageID, () => {}, true);
+        api.setMessageReaction("👍", event.messageID, () => {}, true);
       }
     } catch (error) {
       console.error("Jail command error:", error);
       if (api && api.setMessageReaction) {
-        api.setMessageReaction("❌", event.messageID, () => {}, true);
+        api.setMessageReaction("👎", event.messageID, () => {}, true);
       }
       return message.reply(`❌ Failed to generate jail image: ${error.message || error}`);
     }

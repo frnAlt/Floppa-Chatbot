@@ -78,14 +78,14 @@ module.exports = {
       }
 
       if (api?.setMessageReaction) {
-        api.setMessageReaction("✅", event.messageID, () => {}, true);
+        api.setMessageReaction("👍", event.messageID, () => {}, true);
       }
 
       return message.reply(`✅ Uploaded Successfully to Imgur!\n\n🔗 Link: ${imgurUrl}`);
     } catch (error) {
       console.error("[IMGUR ERROR]:", error);
       if (api?.setMessageReaction) {
-        api.setMessageReaction("❌", event.messageID, () => {}, true);
+        api.setMessageReaction("👎", event.messageID, () => {}, true);
       }
       return message.reply(`❌ Failed to upload image to Imgur: ${error.message || error}`);
     }

@@ -221,7 +221,7 @@ module.exports = {
 
       if (!data || data.success === false) {
         if (api && api.setMessageReaction) {
-          api.setMessageReaction("❌", event.messageID, () => {}, true);
+          api.setMessageReaction("👎", event.messageID, () => {}, true);
         }
         return message.reply(getLang ? getLang("notFound", query) : `❌ Could not find weather details for "${query}".`);
       }
@@ -267,7 +267,7 @@ module.exports = {
     } catch (err) {
       console.error("[WEATHER] API Error:", err?.response?.data || err.message);
       if (api && api.setMessageReaction) {
-        api.setMessageReaction("❌", event.messageID, () => {}, true);
+        api.setMessageReaction("👎", event.messageID, () => {}, true);
       }
       return message.reply(getLang ? getLang("notFound", query) : `❌ Could not find weather details for "${query}".`);
     }

@@ -58,7 +58,7 @@ export async function entry({ output, input }) {
   });
 
   childProcess.on("close", () => {
-    output.reaction("✅");
+    output.reaction("👍");
     if (foo) {
       output.edit(
         `✅ Command executed successfully:\n\n${result}`,

@@ -113,7 +113,7 @@ module.exports = {
       }
 
       if (api.setMessageReaction) {
-        api.setMessageReaction("✅", event.messageID, () => {}, true);
+        api.setMessageReaction("👍", event.messageID, () => {}, true);
       }
 
       await message.reply(
@@ -129,7 +129,7 @@ module.exports = {
       console.error("RemoveBG error:", error);
       if (tmpPath) fs.remove(tmpPath).catch(() => {});
       if (api.setMessageReaction) {
-        api.setMessageReaction("❌", event.messageID, () => {}, true);
+        api.setMessageReaction("👎", event.messageID, () => {}, true);
       }
       return message.reply(`❌ Failed to remove background: ${error.message || error}`);
     }

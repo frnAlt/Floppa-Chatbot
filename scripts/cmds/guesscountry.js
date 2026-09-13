@@ -207,7 +207,7 @@ Can you guess which country this flag belongs to?
 
       // React ✅
       if (api && api.setMessageReaction) {
-        api.setMessageReaction("✅", event.messageID, () => {}, true);
+        api.setMessageReaction("👍", event.messageID, () => {}, true);
       }
 
       // Award coins and experience if usersData is available
@@ -243,7 +243,7 @@ Can you guess which country this flag belongs to?
     } else {
       // React ❌ on wrong guess
       if (api && api.setMessageReaction) {
-        api.setMessageReaction("❌", event.messageID, () => {}, true);
+        api.setMessageReaction("👎", event.messageID, () => {}, true);
       }
 
       // Incorrect answer feedback: shows, and automatically unsends after user sees it (5 seconds)

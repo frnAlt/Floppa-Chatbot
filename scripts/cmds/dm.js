@@ -467,7 +467,7 @@ module.exports = {
       try {
         const dest = targetUID;
         const sent = await pMgr.sendDM(api, dest, replyPayload);
-        if (message?.reaction) message.reaction("✅");
+        if (message?.reaction) message.reaction("👍");
 
         // Maintain chain: user can reply once again
         if (sent?.messageID && global.GoatBot?.onReply) {

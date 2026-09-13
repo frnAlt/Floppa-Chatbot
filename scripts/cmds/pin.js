@@ -69,7 +69,7 @@ module.exports = {
 
       if (imageUrls.length === 0) {
         if (api && api.setMessageReaction) {
-          api.setMessageReaction("❌", event.messageID, () => {}, true);
+          api.setMessageReaction("👎", event.messageID, () => {}, true);
         }
         return message.reply(`❌ No Pinterest images found for "${query}".`);
       }
@@ -103,13 +103,13 @@ module.exports = {
 
       if (streams.length === 0) {
         if (api && api.setMessageReaction) {
-          api.setMessageReaction("❌", event.messageID, () => {}, true);
+          api.setMessageReaction("👎", event.messageID, () => {}, true);
         }
         return message.reply(`❌ Failed to retrieve image attachments for "${query}".`);
       }
 
       if (api && api.setMessageReaction) {
-        api.setMessageReaction("✅", event.messageID, () => {}, true);
+        api.setMessageReaction("👍", event.messageID, () => {}, true);
       }
 
       const operator = data?.operator || "Toshiro Editz";
@@ -126,7 +126,7 @@ module.exports = {
         if (fs.existsSync(f)) fs.unlink(f, () => {});
       }
       if (api && api.setMessageReaction) {
-        api.setMessageReaction("❌", event.messageID, () => {}, true);
+        api.setMessageReaction("👎", event.messageID, () => {}, true);
       }
       return message.reply(`❌ Failed to search Pinterest: ${err.message || err}`);
     }

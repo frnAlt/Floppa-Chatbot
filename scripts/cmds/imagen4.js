@@ -40,13 +40,13 @@ module.exports = {
         throw new Error("Failed to retrieve generated Imagen 4 image stream.");
       }
 
-      message.reaction("✅", event.messageID);
+      message.reaction("👍", event.messageID);
       await message.reply({
         body: `✨ Imagen 4 generated:\n\nPrompt: "${prompt}"`,
         attachment: stream
       });
     } catch (error) {
-      message.reaction("❌", event.messageID);
+      message.reaction("👎", event.messageID);
       console.error("Imagen4 Error:", error);
       message.reply(`❌ Failed to generate Imagen 4 image: ${error.message || error}`);
     }

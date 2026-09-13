@@ -53,10 +53,10 @@ module.exports = {
       const finalUrl = typeof responseData === 'string' ? responseData : (responseData.url || JSON.stringify(responseData));
 
       message.reply(finalUrl);
-      api.setMessageReaction("✅", event.messageID);
+      api.setMessageReaction("👍", event.messageID);
 
     } catch (error) {
-      api.setMessageReaction("❌", event.messageID);
+      api.setMessageReaction("👎", event.messageID);
       const errorDetail = error.response?.data ? JSON.stringify(error.response.data) : error.message;
       message.reply(`Error: ${errorDetail}`);
     }

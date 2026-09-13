@@ -44,16 +44,16 @@ module.exports = {
           const matchId = result.results.matches[0].id;
           const songData = result.resources['shazam-songs']?.[matchId];
           if (songData) {
-            message.reaction("✅", event.messageID);
+            message.reaction("👍", event.messageID);
             return message.reply(`✅ Song Found!\n\n🎵 Title: ${songData.attributes.title}\n👤 Artist: ${songData.attributes.artist}`);
           }
         }
       }
 
-      message.reaction("✅", event.messageID);
+      message.reaction("👍", event.messageID);
       return message.reply(`🎵 Media Attachment Detected!\nURL: ${mediaAttachment.url}`);
     } catch (err) {
-      message.reaction("❌", event.messageID);
+      message.reaction("👎", event.messageID);
       return message.reply("⚠️ Error during recognition: " + err.message);
     }
   }

@@ -213,7 +213,27 @@ function extendFCA(api) {
     };
   }
 
-  // ─── 13. Post Reaction ─────────────────────────────────────────────────────
+  // ─── 13. Reaction Normalizer & Post Reaction ───────────────────────────────
+  if (typeof api.setMessageReaction === "function" && !api._reactionNormalized) {
+    const originalSetMessageReaction = api.setMessageReaction.bind(api);
+    api.setMessageReaction = function (reaction, messageID, callback, forceCustomReaction) {
+      if (reaction === "✅") reaction = "👍";
+      else if (reaction === "❌") reaction = "👎";
+      return originalSetMessageReaction(reaction, messageID, callback, forceCustomReaction);
+    };
+    api._reactionNormalized = true;
+  }
+
+  if (typeof api.setMessageReactionMqtt === "function" && !api._reactionMqttNormalized) {
+    const originalSetMessageReactionMqtt = api.setMessageReactionMqtt.bind(api);
+    api.setMessageReactionMqtt = function (reaction, messageID, threadID, callback) {
+      if (reaction === "✅") reaction = "👍";
+      else if (reaction === "❌") reaction = "👎";
+      return originalSetMessageReactionMqtt(reaction, messageID, threadID, callback);
+    };
+    api._reactionMqttNormalized = true;
+  }
+
   if (!api.setPostReaction) {
     api.setPostReaction = function (postID, type = "LIKE", callback) {
       callback = callback || defaultCallback;

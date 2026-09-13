@@ -219,8 +219,8 @@ module.exports = {
     try {
       const mergedPath = await mergeAvatars(url1, url2);
       const result = await imgToVideo(prompt, mergedPath);
-      if (sh.react) await sh.react("✅");
-      else if (message?.reaction) await message.reaction("✅");
+      if (sh.react) await sh.react("👍");
+      else if (message?.reaction) await message.reaction("👍");
 
       const name1 = (await usersData?.getName?.(uid1)) || "Someone";
       const name2 = (await usersData?.getName?.(uid2)) || "Someone";

@@ -60,7 +60,7 @@ module.exports = {
           ...(attachmentStream && { attachment: attachmentStream })
         });
 
-        message.reaction("✅", event.messageID);
+        message.reaction("👍", event.messageID);
 
       } else {
          
@@ -70,7 +70,7 @@ module.exports = {
 
     } catch (error) {
       console.error("Numlookup API Error:", error);
-      message.reaction("❌", event.messageID);
+      message.reaction("👎", event.messageID);
 
       if (error.response && error.response.status === 400) {
         message.reply(

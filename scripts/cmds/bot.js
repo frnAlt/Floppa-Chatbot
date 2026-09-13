@@ -4,28 +4,37 @@ const path = require("path");
 module.exports = {
   config: {
     name: "bot",
-    aliases: ["off", "on", "botoff", "boton", "offeve", "oneve", "-offeve", "-oneve", "maintenance"],
-    version: "2.2.0",
+    aliases: [
+      "off", "on", "botoff", "boton",
+      "offeve", "oneve", "-offeve", "-oneve", "offevent", "onevent", "-offevent", "-onevent", "eventoff", "eventon", "eventsoff", "eventson",
+      "offreact", "onreact", "-offreact", "-onreact", "reactoff", "reacton", "botreact",
+      "maintenance"
+    ],
+    version: "2.3.0",
     author: "frnAlt",
     countDown: 2,
     role: 2,
     shortDescription: {
-      en: "Control bot state & group event triggers (ON/OFF/STATE)"
+      en: "Control bot state, group events & reactions (ON/OFF/STATE)"
     },
     longDescription: {
-      en: "Toggle overall bot availability or group event triggers (welcome, leave, join).\n• When Bot is OFF: Only Bot Admins can use commands. Non-admin commands are silently ignored with no reactions.\n• When Events are OFF (-offeve): Group join, welcome, leave, and update event commands remain completely silent with zero output."
+      en: "Toggle overall bot availability, group event triggers (welcome, leave, join), or reaction feedback.\n• When Bot is OFF: Only Bot Admins can use commands. Non-admin commands are silently ignored.\n• When Events are OFF (-offeve): Group join, welcome, leave, and update event commands remain completely silent.\n• When Reactions are OFF (-offreact): The bot will not send reactions (👍/👎) to messages."
     },
     category: "admin",
     guide: {
       en: "• {pn} on : Turn bot ON (Available to all users)\n"
         + "• {pn} off : Turn bot OFF (Admin-only mode; non-admins silently ignored)\n"
-        + "• {pn} -offeve : Turn group events OFF (Mutes welcome, leave & group triggers)\n"
-        + "• {pn} -oneve : Turn group events ON (Enables welcome, leave & group triggers)\n"
-        + "• {pn} state : View live bot status, event status, memory & uptime\n"
+        + "• {pn} -offeve / {pn} event off : Turn group events OFF (Mutes welcome, leave & group triggers)\n"
+        + "• {pn} -oneve / {pn} event on : Turn group events ON (Enables welcome, leave & group triggers)\n"
+        + "• {pn} -offreact / {pn} react off : Turn bot reactions OFF\n"
+        + "• {pn} -onreact / {pn} react on : Turn bot reactions ON\n"
+        + "• {pn} state : View live bot status, event status, reaction status, memory & uptime\n"
         + "\n💡 Shortcut commands:\n"
         + "• !on / !off : Directly toggle bot operational mode\n"
-        + "• !-offeve / !offeve : Directly mute all group events\n"
-        + "• !-oneve / !oneve : Directly enable all group events"
+        + "• !-offeve / !offeve / !eventoff : Mute all group events\n"
+        + "• !-oneve / !oneve / !eventon : Enable all group events\n"
+        + "• !-offreact / !offreact / !reactoff : Turn bot reactions OFF\n"
+        + "• !-onreact / !onreact / !reacton : Turn bot reactions ON"
     }
   },
 
@@ -43,15 +52,19 @@ module.exports = {
       } catch (_) {}
     };
 
-    const targetAction = (
-      commandName === "-offeve" || commandName === "offeve" ? "-offeve" :
-      commandName === "-oneve" || commandName === "oneve" ? "-oneve" :
-      commandName === "on" ? "on" :
-      commandName === "off" ? "off" :
-      (args[0] || "")
-    ).toLowerCase();
+    const cmdLower = (commandName || "").toLowerCase();
+    const isOffEve = ["-offeve", "offeve", "-offevent", "offevent", "eventoff", "eventsoff"].includes(cmdLower);
+    const isOnEve = ["-oneve", "oneve", "-onevent", "onevent", "eventon", "eventson"].includes(cmdLower);
+    const isOffReact = ["-offreact", "offreact", "reactoff", "botreactoff"].includes(cmdLower);
+    const isOnReact = ["-onreact", "onreact", "reacton", "botreacton"].includes(cmdLower);
+    const isOffBot = ["off", "botoff"].includes(cmdLower);
+    const isOnBot = ["on", "boton"].includes(cmdLower);
 
-    if (["status", "state", "info", "details"].includes(targetAction)) {
+    const firstArg = (args[0] || "").toLowerCase();
+    const secondArg = (args[1] || "").toLowerCase();
+
+    // ─── Status / State Report ───────────────────────────────────────────────
+    if (["status", "state", "info", "details"].includes(firstArg) || ["status", "state"].includes(cmdLower)) {
       const os = require("os");
       const config = global.GoatBot?.config || {};
       const commands = global.GoatBot?.commands || new Map();
@@ -73,11 +86,14 @@ module.exports = {
       const uptimeStr = `${d > 0 ? d + "d " : ""}${h > 0 ? h + "h " : ""}${m}m ${s}s`;
 
       const stateStatus = global.GoatBot?.botOff
-        ? "❌ OFF (Admin-Only Control)"
-        : "✅ ON (Available to All Users)";
-      const eventStatus = global.GoatBot?.eventsOff
-        ? "❌ OFF (Disabled by config)"
-        : "✅ ON (Active)";
+        ? "👎 OFF (Admin-Only Control)"
+        : "👍 ON (Available to All Users)";
+      const eventStatus = (global.GoatBot?.eventsOff ?? config.eventsOff)
+        ? "👎 OFF (Disabled by config)"
+        : "👍 ON (Active)";
+      const reactStatus = (global.GoatBot?.reactOff ?? config.reactOff)
+        ? "👎 OFF (Disabled by config)"
+        : "👍 ON (Hand emojis 👍/👎 active)";
 
       const prefix = global.GoatBot?.config?.prefix || "!";
       const report =
@@ -86,6 +102,7 @@ module.exports = {
 Operational State
 • Bot Status: ${stateStatus}
 • Group Events: ${eventStatus}
+• Bot Reactions: ${reactStatus}
 • Active Prefix: ${prefix}
 • Bot Name: ${config.nickNameBot || "Floppa Bot"}
 
@@ -106,72 +123,178 @@ System & Performance
       return message.reply(report);
     }
 
-    if (targetAction === "-offeve" || targetAction === "offeve" || targetAction === "-offevent" || (targetAction === "events" && args[1] === "off") || (targetAction === "event" && args[1] === "off")) {
+    // ─── Bot Reactions Control ───────────────────────────────────────────────
+    if (
+      isOffReact ||
+      (firstArg === "react" && secondArg === "off") ||
+      (firstArg === "reaction" && secondArg === "off") ||
+      (firstArg === "reactions" && secondArg === "off") ||
+      (firstArg === "off" && ["react", "reaction", "reactions"].includes(secondArg))
+    ) {
+      await reactEmoji("👎");
+      global.GoatBot.reactOff = true;
+      if (global.GoatBot.config) global.GoatBot.config.reactOff = true;
+      if (global.FloppaBot) {
+        global.FloppaBot.reactOff = true;
+        if (global.FloppaBot.config) global.FloppaBot.config.reactOff = true;
+      }
+      try {
+        const conf = fs.readJsonSync(configPath);
+        conf.reactOff = true;
+        fs.writeJsonSync(configPath, conf, { spaces: 2 });
+      } catch (_) {}
+      return message.reply("👎 Bot reactions have been turned OFF.");
+    }
+
+    if (
+      isOnReact ||
+      (firstArg === "react" && secondArg === "on") ||
+      (firstArg === "reaction" && secondArg === "on") ||
+      (firstArg === "reactions" && secondArg === "on") ||
+      (firstArg === "on" && ["react", "reaction", "reactions"].includes(secondArg))
+    ) {
+      global.GoatBot.reactOff = false;
+      if (global.GoatBot.config) global.GoatBot.config.reactOff = false;
+      if (global.FloppaBot) {
+        global.FloppaBot.reactOff = false;
+        if (global.FloppaBot.config) global.FloppaBot.config.reactOff = false;
+      }
+      try {
+        const conf = fs.readJsonSync(configPath);
+        conf.reactOff = false;
+        fs.writeJsonSync(configPath, conf, { spaces: 2 });
+      } catch (_) {}
+      await reactEmoji("👍");
+      return message.reply("👍 Bot reactions have been turned ON.");
+    }
+
+    if (["react", "reaction", "reactions", "botreact"].includes(firstArg) && !secondArg) {
+      const currentReactOff = Boolean(global.GoatBot?.reactOff ?? global.GoatBot?.config?.reactOff);
+      const nextReactOff = !currentReactOff;
+      if (nextReactOff) await reactEmoji("👎");
+      global.GoatBot.reactOff = nextReactOff;
+      if (global.GoatBot.config) global.GoatBot.config.reactOff = nextReactOff;
+      if (global.FloppaBot) {
+        global.FloppaBot.reactOff = nextReactOff;
+        if (global.FloppaBot.config) global.FloppaBot.config.reactOff = nextReactOff;
+      }
+      try {
+        const conf = fs.readJsonSync(configPath);
+        conf.reactOff = nextReactOff;
+        fs.writeJsonSync(configPath, conf, { spaces: 2 });
+      } catch (_) {}
+      if (!nextReactOff) await reactEmoji("👍");
+      return message.reply(nextReactOff ? "👎 Bot reactions have been turned OFF." : "👍 Bot reactions have been turned ON.");
+    }
+
+    // ─── Group Events Control ────────────────────────────────────────────────
+    if (
+      isOffEve ||
+      (firstArg === "events" && secondArg === "off") ||
+      (firstArg === "event" && secondArg === "off") ||
+      (firstArg === "eve" && secondArg === "off") ||
+      (firstArg === "off" && ["event", "events", "eve"].includes(secondArg))
+    ) {
       global.GoatBot.eventsOff = true;
+      if (global.GoatBot.config) global.GoatBot.config.eventsOff = true;
+      if (global.FloppaBot) {
+        global.FloppaBot.eventsOff = true;
+        if (global.FloppaBot.config) global.FloppaBot.config.eventsOff = true;
+      }
       try {
         const conf = fs.readJsonSync(configPath);
         conf.eventsOff = true;
         fs.writeJsonSync(configPath, conf, { spaces: 2 });
       } catch (_) {}
-      return await reactEmoji("❌");
+      return await reactEmoji("👎");
     }
 
-    if (targetAction === "-oneve" || targetAction === "oneve" || targetAction === "-onevent" || (targetAction === "events" && args[1] === "on") || (targetAction === "event" && args[1] === "on")) {
+    if (
+      isOnEve ||
+      (firstArg === "events" && secondArg === "on") ||
+      (firstArg === "event" && secondArg === "on") ||
+      (firstArg === "eve" && secondArg === "on") ||
+      (firstArg === "on" && ["event", "events", "eve"].includes(secondArg))
+    ) {
       global.GoatBot.eventsOff = false;
+      if (global.GoatBot.config) global.GoatBot.config.eventsOff = false;
+      if (global.FloppaBot) {
+        global.FloppaBot.eventsOff = false;
+        if (global.FloppaBot.config) global.FloppaBot.config.eventsOff = false;
+      }
       try {
         const conf = fs.readJsonSync(configPath);
         conf.eventsOff = false;
         fs.writeJsonSync(configPath, conf, { spaces: 2 });
       } catch (_) {}
-      return await reactEmoji("✅");
+      return await reactEmoji("👍");
     }
 
-    if (targetAction === "events" || targetAction === "event") {
-      global.GoatBot.eventsOff = !global.GoatBot.eventsOff;
+    if (["events", "event", "eve"].includes(firstArg) && !secondArg) {
+      const currentEventsOff = Boolean(global.GoatBot?.eventsOff ?? global.GoatBot?.config?.eventsOff);
+      const nextEventsOff = !currentEventsOff;
+      global.GoatBot.eventsOff = nextEventsOff;
+      if (global.GoatBot.config) global.GoatBot.config.eventsOff = nextEventsOff;
+      if (global.FloppaBot) {
+        global.FloppaBot.eventsOff = nextEventsOff;
+        if (global.FloppaBot.config) global.FloppaBot.config.eventsOff = nextEventsOff;
+      }
       try {
         const conf = fs.readJsonSync(configPath);
-        conf.eventsOff = global.GoatBot.eventsOff;
+        conf.eventsOff = nextEventsOff;
         fs.writeJsonSync(configPath, conf, { spaces: 2 });
       } catch (_) {}
-      return await reactEmoji(global.GoatBot.eventsOff ? "❌" : "✅");
+      return await reactEmoji(nextEventsOff ? "👎" : "👍");
     }
 
-    if (targetAction === "on") {
+    // ─── Bot Operational Control (ON/OFF) ────────────────────────────────────
+    if (isOnBot || (firstArg === "on" && !secondArg)) {
       global.GoatBot.botOff = false;
+      if (global.GoatBot.config) global.GoatBot.config.botOff = false;
+      if (global.FloppaBot) {
+        global.FloppaBot.botOff = false;
+        if (global.FloppaBot.config) global.FloppaBot.config.botOff = false;
+      }
       try {
         const conf = fs.readJsonSync(configPath);
         conf.botOff = false;
         fs.writeJsonSync(configPath, conf, { spaces: 2 });
       } catch (_) {}
-      return await reactEmoji("✅");
+      return await reactEmoji("👍");
     }
 
-    if (targetAction === "off") {
+    if (isOffBot || (firstArg === "off" && !secondArg)) {
       global.GoatBot.botOff = true;
+      if (global.GoatBot.config) global.GoatBot.config.botOff = true;
+      if (global.FloppaBot) {
+        global.FloppaBot.botOff = true;
+        if (global.FloppaBot.config) global.FloppaBot.config.botOff = true;
+      }
       try {
         const conf = fs.readJsonSync(configPath);
         conf.botOff = true;
         fs.writeJsonSync(configPath, conf, { spaces: 2 });
       } catch (_) {}
-      return await reactEmoji("❌");
+      return await reactEmoji("👎");
     }
 
-    if (targetAction === "status") {
-      return await reactEmoji(global.GoatBot.botOff ? "❌" : "✅");
-    }
-
-    if (targetAction === "") {
+    if (firstArg === "") {
       // Toggle if invoked without arguments
       global.GoatBot.botOff = !currentOff;
+      if (global.GoatBot.config) global.GoatBot.config.botOff = global.GoatBot.botOff;
+      if (global.FloppaBot) {
+        global.FloppaBot.botOff = global.GoatBot.botOff;
+        if (global.FloppaBot.config) global.FloppaBot.config.botOff = global.GoatBot.botOff;
+      }
       try {
         const conf = fs.readJsonSync(configPath);
         conf.botOff = global.GoatBot.botOff;
         fs.writeJsonSync(configPath, conf, { spaces: 2 });
       } catch (_) {}
-      return await reactEmoji(global.GoatBot.botOff ? "❌" : "✅");
+      return await reactEmoji(global.GoatBot.botOff ? "👎" : "👍");
     }
 
     // Invalid argument
-    return await reactEmoji("❌");
+    return await reactEmoji("👎");
   }
 };

@@ -35,11 +35,15 @@ module.exports = function (defaultFuncs, api, ctx) {
     const requestId = ++ctx.wsReqNumber;
     const taskId = ++ctx.wsTaskNumber;
 
+    let normalizedReaction = reaction || "";
+    if (normalizedReaction === "✅") normalizedReaction = "👍";
+    else if (normalizedReaction === "❌") normalizedReaction = "👎";
+
     const taskPayload = {
       thread_key: threadID,
       timestamp_ms: Date.now(),
       message_id: messageID,
-      reaction: reaction || "",
+      reaction: normalizedReaction,
       actor_id: ctx.userID,
       reaction_style: null,
       sync_group: 1,

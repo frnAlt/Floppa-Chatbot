@@ -40,13 +40,13 @@ module.exports = {
         throw new Error("Could not retrieve generated image stream.");
       }
 
-      message.reaction("✅", event.messageID);
+      message.reaction("👍", event.messageID);
       await message.reply({
         body: `🎨 DALL-E 3 generated:\n\n✨ "${prompt}"`,
         attachment: stream
       });
     } catch (error) {
-      message.reaction("❌", event.messageID);
+      message.reaction("👎", event.messageID);
       message.reply(`❌ Failed to generate DALL-E 3 image: ${error.message || error}`);
     }
   }

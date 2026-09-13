@@ -36,7 +36,7 @@ module.exports = {
 
       if (!stream) throw new Error("Failed to generate image.");
 
-      if (api.setMessageReaction) api.setMessageReaction("✅", event.messageID, () => {}, true);
+      if (api.setMessageReaction) api.setMessageReaction("👍", event.messageID, () => {}, true);
       const msgData = { body: `🎨 GenX generated:\n\n✨ "${prompt}"`, attachment: stream };
       if (message?.reply) {
         await message.reply(msgData);
@@ -45,7 +45,7 @@ module.exports = {
       }
     } catch (error) {
       console.error("GenX Error:", error);
-      if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+      if (api.setMessageReaction) api.setMessageReaction("👎", event.messageID, () => {}, true);
       const errMsg = "❌ Error generating image. Please try again later.";
       if (message?.reply) {
         await message.reply(errMsg);

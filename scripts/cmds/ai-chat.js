@@ -44,10 +44,10 @@ module.exports = {
         contextId
       });
 
-      message.reaction("✅", event.messageID);
+      message.reaction("👍", event.messageID);
       await message.reply(`🤖 [AI Agent - ${aiCore.getProvider().toUpperCase()}]\n\n${aiResponse}`);
     } catch (err) {
-      message.reaction("❌", event.messageID);
+      message.reaction("👎", event.messageID);
       return message.reply(`❌ AI Engine Error: ${err.message}`);
     }
   }

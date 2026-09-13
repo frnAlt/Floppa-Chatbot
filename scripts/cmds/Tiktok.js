@@ -130,7 +130,7 @@ module.exports = {
       }
 
       if (!mediaUrl) {
-        if (api && api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+        if (api && api.setMessageReaction) api.setMessageReaction("👎", event.messageID, () => {}, true);
         return message.reply(`❌ Could not find TikTok video for "${query}". Please try another keyword.`);
       }
 
@@ -181,7 +181,7 @@ module.exports = {
       });
 
       if (api && api.setMessageReaction) {
-        api.setMessageReaction("✅", event.messageID, () => {}, true);
+        api.setMessageReaction("👍", event.messageID, () => {}, true);
       }
 
       fs.remove(tmpFile).catch(() => {});
@@ -189,7 +189,7 @@ module.exports = {
       console.error("[TIKTOK COMMAND ERROR]:", error);
       if (tmpFile) fs.remove(tmpFile).catch(() => {});
       if (api && api.setMessageReaction) {
-        api.setMessageReaction("❌", event.messageID, () => {}, true);
+        api.setMessageReaction("👎", event.messageID, () => {}, true);
       }
       return message.reply(`❌ Failed to send TikTok: ${error.message || error}`);
     }

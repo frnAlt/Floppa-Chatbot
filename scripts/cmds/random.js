@@ -102,10 +102,10 @@ module.exports = {
       });
       
       fs.unlinkSync(tempFile);
-      api.setMessageReaction("✅", event.messageID, () => {}, true);
+      api.setMessageReaction("👍", event.messageID, () => {}, true);
     } catch (e) {
       console.error("Fetch video error:", e.message);
-      api.setMessageReaction("❌", event.messageID, () => {}, true);
+      api.setMessageReaction("👎", event.messageID, () => {}, true);
       return message.reply("⚠️ Failed to fetch video.");
     }
   }

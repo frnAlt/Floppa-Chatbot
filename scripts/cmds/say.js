@@ -103,12 +103,12 @@ module.exports = {
       });
 
       if (api.setMessageReaction) {
-        api.setMessageReaction("✅", event.messageID, () => {}, true);
+        api.setMessageReaction("👍", event.messageID, () => {}, true);
       }
     } catch (err) {
       console.error("Say command error:", err);
       if (api.setMessageReaction) {
-        api.setMessageReaction("❌", event.messageID, () => {}, true);
+        api.setMessageReaction("👎", event.messageID, () => {}, true);
       }
       message.reply("An error occurred while generating speech audio. Please try again.");
     }

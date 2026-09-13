@@ -38,7 +38,7 @@ module.exports = {
 
       const stream = await global.utils.getStreamFromURL(imageUrl, "image.png", { timeout: 15000 });
 
-      message.reaction("✅", event.messageID);
+      message.reaction("👍", event.messageID);
       await message.reply({
         body: `✨ Generated AI Image\n\n🎨 Prompt: ${prompt}`,
         attachment: stream
@@ -49,13 +49,13 @@ module.exports = {
         const fallbackUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=768&height=768&nologo=true&seed=${Date.now()}&model=turbo`;
         const stream = await global.utils.getStreamFromURL(fallbackUrl, "image.png", { timeout: 15000 });
 
-        message.reaction("✅", event.messageID);
+        message.reaction("👍", event.messageID);
         await message.reply({
           body: `✨ Generated AI Image (Fallback)\n\n🎨 Prompt: ${prompt}`,
           attachment: stream
         });
       } catch (fallbackErr) {
-        message.reaction("❌", event.messageID);
+        message.reaction("👎", event.messageID);
         return message.reply(`❌ Failed to generate image: ${err.message || fallbackErr.message}`);
       }
     }

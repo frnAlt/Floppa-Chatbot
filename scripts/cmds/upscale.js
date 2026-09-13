@@ -104,7 +104,7 @@ module.exports = {
       }
 
       if (api.setMessageReaction) {
-        api.setMessageReaction("✅", event.messageID, () => {}, true);
+        api.setMessageReaction("👍", event.messageID, () => {}, true);
       }
 
       await message.reply({
@@ -114,7 +114,7 @@ module.exports = {
     } catch (error) {
       console.error("4K Upscale error:", error);
       if (api.setMessageReaction) {
-        api.setMessageReaction("❌", event.messageID, () => {}, true);
+        api.setMessageReaction("👎", event.messageID, () => {}, true);
       }
       return message.reply(`❌ Failed to upscale image: ${error.message || error}`);
     }

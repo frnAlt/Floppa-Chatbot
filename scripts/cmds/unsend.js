@@ -85,7 +85,7 @@ module.exports = {
 					if (idx !== -1) threadBotMsgs.splice(idx, 1);
 				}
 				if (api.setMessageReaction) {
-					api.setMessageReaction("✅", event.messageID, () => {}, true);
+					api.setMessageReaction("👍", event.messageID, () => {}, true);
 				}
 				if (api.unsendMessage && event.messageID) {
 					setTimeout(() => api.unsendMessage(event.messageID, event.threadID).catch(() => {}), 1500);
@@ -104,7 +104,7 @@ module.exports = {
 			try {
 				await api.unsendMessage(lastMID, event.threadID);
 				if (api.setMessageReaction) {
-					api.setMessageReaction("✅", event.messageID, () => {}, true);
+					api.setMessageReaction("👍", event.messageID, () => {}, true);
 				}
 				if (api.unsendMessage && event.messageID) {
 					setTimeout(() => api.unsendMessage(event.messageID, event.threadID).catch(() => {}), 1500);

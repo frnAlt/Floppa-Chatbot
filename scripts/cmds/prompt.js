@@ -38,13 +38,13 @@ module.exports = {
 
       if (res.data.success && res.data.prompt) {
         message.reply(res.data.prompt);
-        api.setMessageReaction("✅", event.messageID);
+        api.setMessageReaction("👍", event.messageID);
       } else {
         throw new Error();
       }
 
     } catch (err) {
-      api.setMessageReaction("❌", event.messageID);
+      api.setMessageReaction("👎", event.messageID);
       message.reply("Failed to extract prompt from this image.");
     }
   }

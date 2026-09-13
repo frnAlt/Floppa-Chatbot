@@ -257,7 +257,7 @@ module.exports = {
 			const imageBuffer = await fetchHighQualityAvatar(uid, api, usersData);
 			if (!imageBuffer) {
 				if (api?.setMessageReaction) {
-					api.setMessageReaction("❌", event.messageID, () => {}, true);
+					api.setMessageReaction("👎", event.messageID, () => {}, true);
 				}
 				return message.reply(getLang("error", "Could not fetch high quality profile picture"));
 			}
@@ -291,12 +291,12 @@ module.exports = {
 			});
 
 			if (api?.setMessageReaction) {
-				api.setMessageReaction("✅", event.messageID, () => {}, true);
+				api.setMessageReaction("👍", event.messageID, () => {}, true);
 			}
 		} catch (err) {
 			console.error("[PFP ERROR]:", err);
 			if (api?.setMessageReaction) {
-				api.setMessageReaction("❌", event.messageID, () => {}, true);
+				api.setMessageReaction("👎", event.messageID, () => {}, true);
 			}
 			return message.reply(getLang("error", err.message || err)).catch(() => {});
 		}

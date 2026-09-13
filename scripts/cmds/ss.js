@@ -64,7 +64,7 @@ module.exports = {
       // Pipe the image stream to the file
       await pipeline(imageDownloadResponse.data, fs.createWriteStream(tempFilePath));
 
-      message.reaction("✅", event.messageID);
+      message.reaction("👍", event.messageID);
       
       // Reply with the screenshot
       await message.reply({
@@ -73,7 +73,7 @@ module.exports = {
       });
 
     } catch (error) {
-      message.reaction("❌", event.messageID);
+      message.reaction("👎", event.messageID);
       
       let errorMessage = "An error occurred during screenshot generation.";
       if (error.response) {

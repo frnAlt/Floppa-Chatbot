@@ -41,7 +41,7 @@ const reportCmd = easyCMD({
             }
         }
         output.reply("✅ Your report has been sent to the admins.");
-        output.reaction("✅");
+        output.reaction("👍");
     },
 });
 

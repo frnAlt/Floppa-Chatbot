@@ -170,7 +170,7 @@ module.exports = {
       stream.pipe(out);
 
       out.on('finish', () => {
-        api.setMessageReaction("✅", event.messageID, () => {}, true);
+        api.setMessageReaction("👍", event.messageID, () => {}, true);
         api.sendMessage({ attachment: fs.createReadStream(imagePath) }, threadID, (err) => {
           if (!err) fs.unlink(imagePath, () => {});
           else {
@@ -180,7 +180,7 @@ module.exports = {
       });
 
     } catch (error) {
-      api.setMessageReaction("❌", event.messageID, () => {}, true);
+      api.setMessageReaction("👎", event.messageID, () => {}, true);
       if (fs.existsSync(imagePath)) fs.unlink(imagePath, () => {});
     }
   }

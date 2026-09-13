@@ -105,10 +105,10 @@ module.exports = {
         paths.forEach(p => fs.remove(p).catch(() => {}));
       });
 
-      api.setMessageReaction("✅", event.messageID);
+      api.setMessageReaction("👍", event.messageID);
 
     } catch (error) {
-      api.setMessageReaction("❌", event.messageID);
+      api.setMessageReaction("👎", event.messageID);
       message.reply(`❌ Error: ${error.message}`);
       paths.forEach(p => fs.remove(p).catch(() => {}));
     }

@@ -53,11 +53,11 @@ module.exports = {
       });
 
       if (api.setMessageReaction) {
-        api.setMessageReaction("✅", event.messageID, () => {}, true);
+        api.setMessageReaction("👍", event.messageID, () => {}, true);
       }
     } catch (err) {
       console.error("Magic Studio AI error:", err);
-      if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+      if (api.setMessageReaction) api.setMessageReaction("👎", event.messageID, () => {}, true);
       return message.reply(`❌ Magic Studio AI generation failed: ${err.message || err}`);
     }
   }

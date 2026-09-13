@@ -118,7 +118,7 @@ module.exports = {
         }
 
         if (api?.setMessageReaction) {
-          api.setMessageReaction("✅", event.messageID, () => {}, true);
+          api.setMessageReaction("👍", event.messageID, () => {}, true);
         }
 
         return message.reply({
@@ -162,7 +162,7 @@ module.exports = {
       stream.path = `canvas_${action}.png`;
 
       if (api?.setMessageReaction) {
-        api.setMessageReaction("✅", event.messageID, () => {}, true);
+        api.setMessageReaction("👍", event.messageID, () => {}, true);
       }
 
       await message.reply({
@@ -172,7 +172,7 @@ module.exports = {
     } catch (err) {
       console.error("[CANVAS ERROR]:", err);
       if (api?.setMessageReaction) {
-        api.setMessageReaction("❌", event.messageID, () => {}, true);
+        api.setMessageReaction("👎", event.messageID, () => {}, true);
       }
       return message.reply(`❌ Failed to process canvas effect: ${err.message || err}`);
     }

@@ -48,12 +48,12 @@ module.exports = {
       });
 
       if (api.setMessageReaction) {
-        api.setMessageReaction("✅", event.messageID, () => {}, true);
+        api.setMessageReaction("👍", event.messageID, () => {}, true);
       }
     } catch (error) {
       console.error("Sayv2 error:", error);
       if (api.setMessageReaction) {
-        api.setMessageReaction("❌", event.messageID, () => {}, true);
+        api.setMessageReaction("👎", event.messageID, () => {}, true);
       }
       return message.reply(`❌ Failed to generate speech audio: ${error.message || error}`);
     }

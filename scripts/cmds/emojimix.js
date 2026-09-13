@@ -73,11 +73,11 @@ module.exports = {
     if (generate2 && (!generate1 || emoji1 !== emoji2)) readStream.push(generate2);
 
     if (readStream.length === 0) {
-      if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+      if (api.setMessageReaction) api.setMessageReaction("👎", event.messageID, () => {}, true);
       return message.reply(getLang("error", emoji1, emoji2));
     }
 
-    if (api.setMessageReaction) api.setMessageReaction("✅", event.messageID, () => {}, true);
+    if (api.setMessageReaction) api.setMessageReaction("👍", event.messageID, () => {}, true);
 
     message.reply({
       body: getLang("success", emoji1, emoji2, readStream.length),

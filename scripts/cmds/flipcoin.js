@@ -49,7 +49,7 @@ module.exports = {
         output.react("🕟");
       }, 12000);
       setTimeout(() => {
-        output.react("✅");
+        output.react("👍");
       }, 16000);
     }
 

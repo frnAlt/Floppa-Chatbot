@@ -34,7 +34,7 @@ module.exports = {
       const stream = await global.utils.getStreamFromURL(imageUrl, `photo_${Date.now()}.jpg`, { timeout: 15000 });
 
       if (api.setMessageReaction) {
-        api.setMessageReaction("✅", event.messageID, () => {}, true);
+        api.setMessageReaction("👍", event.messageID, () => {}, true);
       }
 
       await message.reply({
@@ -44,7 +44,7 @@ module.exports = {
     } catch (err) {
       console.error("[PHOTO ERROR]:", err.message);
       if (api.setMessageReaction) {
-        api.setMessageReaction("❌", event.messageID, () => {}, true);
+        api.setMessageReaction("👎", event.messageID, () => {}, true);
       }
       return message.reply(`❌ Failed to generate image: ${err.message || "Request timed out."}`);
     }

@@ -192,12 +192,12 @@ Reply with U1, U2, U3, or U4 to upscale a variation in 4K Ultra HD.`;
         { body: messageBody, attachment: sendAttachment },
         (err, info) => {
           if (err) {
-            if (api && api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+            if (api && api.setMessageReaction) api.setMessageReaction("👎", event.messageID, () => {}, true);
             sendFiles.forEach(fp => { try { fs.unlinkSync(fp); } catch (_) {} });
             return;
           }
 
-          if (api && api.setMessageReaction) api.setMessageReaction("✅", event.messageID, () => {}, true);
+          if (api && api.setMessageReaction) api.setMessageReaction("👍", event.messageID, () => {}, true);
 
           if (info?.messageID && global.GoatBot?.onReply) {
             global.GoatBot.onReply.set(info.messageID, {
@@ -231,7 +231,7 @@ Reply with U1, U2, U3, or U4 to upscale a variation in 4K Ultra HD.`;
     } catch (err) {
       if (gridPath && fs.existsSync(gridPath)) { try { fs.unlinkSync(gridPath); } catch (_) {} }
       quadrantPaths?.forEach(fp => { try { fs.unlinkSync(fp); } catch (_) {} });
-      if (api && api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+      if (api && api.setMessageReaction) api.setMessageReaction("👎", event.messageID, () => {}, true);
       console.error("[MIDJOURNEY ERROR]:", err.message);
       return message.reply("MidJourney Error: AI image service is currently busy. Please try again in a few moments.");
     }
@@ -280,7 +280,7 @@ Reply with U1, U2, U3, or U4 to upscale a variation in 4K Ultra HD.`;
       if (fallbackPath && fs.existsSync(fallbackPath)) {
         stream = fs.createReadStream(fallbackPath);
       } else {
-        if (api && api.setMessageReaction) api.setMessageReaction("❌", messageID, () => {}, true);
+        if (api && api.setMessageReaction) api.setMessageReaction("👎", messageID, () => {}, true);
         return message.reply("That image is no longer available.");
       }
     }
@@ -290,9 +290,9 @@ Reply with U1, U2, U3, or U4 to upscale a variation in 4K Ultra HD.`;
         body: `✨ MidJourney Upscale • U${index + 1}\n\n🎨 Prompt: "${Reply.prompt}"\n🌟 Resolution: Full 1024x1024 Ultra HD\n⚡ Model: MidJourney v6 / Flux Photorealism`,
         attachment: stream
       });
-      if (api && api.setMessageReaction) api.setMessageReaction("✅", messageID, () => {}, true);
+      if (api && api.setMessageReaction) api.setMessageReaction("👍", messageID, () => {}, true);
     } catch (err) {
-      if (api && api.setMessageReaction) api.setMessageReaction("❌", messageID, () => {}, true);
+      if (api && api.setMessageReaction) api.setMessageReaction("👎", messageID, () => {}, true);
       console.error("[MIDJOURNEY REPLY ERROR]:", err.message);
       return message.reply("Error sending the upscaled image variation.");
     }

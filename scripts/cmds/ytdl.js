@@ -82,21 +82,21 @@ module.exports = {
         const downloadUrl = isAudioOnly ? (media?.audioUrl || media?.videoUrl) : media?.videoUrl;
 
         if (!downloadUrl) {
-          if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+          if (api.setMessageReaction) api.setMessageReaction("👎", event.messageID, () => {}, true);
           return message.reply("❌ Could not extract video stream from this link.");
         }
 
         const ext = isAudioOnly ? "mp3" : "mp4";
         const stream = await global.utils.getStreamFromURL(downloadUrl, `ytdl_${Date.now()}.${ext}`);
 
-        if (api.setMessageReaction) api.setMessageReaction("✅", event.messageID, () => {}, true);
+        if (api.setMessageReaction) api.setMessageReaction("👍", event.messageID, () => {}, true);
 
         return message.reply({
           attachment: stream
         });
       } catch (err) {
         console.error("[YTDL] Direct download error:", err.message);
-        if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+        if (api.setMessageReaction) api.setMessageReaction("👎", event.messageID, () => {}, true);
         return message.reply(`❌ Download failed: ${err.message || err}`);
       }
     }
@@ -107,7 +107,7 @@ module.exports = {
       const videos = searchRes?.videos || [];
 
       if (videos.length === 0) {
-        if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+        if (api.setMessageReaction) api.setMessageReaction("👎", event.messageID, () => {}, true);
         return message.reply(`❌ No videos found for "${query}".`);
       }
 
@@ -150,7 +150,7 @@ module.exports = {
       );
     } catch (err) {
       console.error("[YTDL] Search error:", err.message);
-      if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+      if (api.setMessageReaction) api.setMessageReaction("👎", event.messageID, () => {}, true);
       return message.reply("❌ Search error. Please try again later.");
     }
   },
@@ -183,7 +183,7 @@ module.exports = {
       const downloadUrl = wantAudio ? (media?.audioUrl || media?.videoUrl) : media?.videoUrl;
 
       if (!downloadUrl) {
-        if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+        if (api.setMessageReaction) api.setMessageReaction("👎", event.messageID, () => {}, true);
         return message.reply(`❌ Could not fetch video stream for "${selected.title}".`);
       }
 
@@ -195,11 +195,11 @@ module.exports = {
       });
 
       if (api.setMessageReaction) {
-        api.setMessageReaction("✅", event.messageID, () => {}, true);
+        api.setMessageReaction("👍", event.messageID, () => {}, true);
       }
     } catch (err) {
       console.error("[YTDL] onReply download error:", err.message);
-      if (api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+      if (api.setMessageReaction) api.setMessageReaction("👎", event.messageID, () => {}, true);
       message.reply("❌ Failed to download video. The file may exceed Facebook size limits or the stream is unavailable.");
     }
   }

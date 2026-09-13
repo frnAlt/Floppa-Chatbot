@@ -774,9 +774,9 @@ async function runDiagnostics() {
       await handlerOff.onStart();
     }
     const offIsSet = global.FloppaBot.botOff === true;
-    const offReactedCross = lastReaction === "❌";
+    const offReactedCross = lastReaction === "👎";
     const offNoTextMessage = lastReply === null;
-    logTest("WORKFLOW", "!bot off sets botOff=true, reacts ❌ without text message", offIsSet && offReactedCross && offNoTextMessage);
+    logTest("WORKFLOW", "!bot off sets botOff=true, reacts 👎 without text message", offIsSet && offReactedCross && offNoTextMessage);
 
     // 2. Non-admin regular user tries command while bot is off: should be silently ignored (no reaction, no reply)
     lastReply = null;
@@ -815,11 +815,11 @@ async function runDiagnostics() {
       await handlerOn.onStart();
     }
     const onIsSet = global.FloppaBot.botOff === false;
-    const onReactedCheck = lastReaction === "✅";
+    const onReactedCheck = lastReaction === "👍";
     const onNoTextMessage = lastReply === null;
-    logTest("WORKFLOW", "!bot on sets botOff=false, reacts ✅ without text message", onIsSet && onReactedCheck && onNoTextMessage);
+    logTest("WORKFLOW", "!bot on sets botOff=false, reacts 👍 without text message", onIsSet && onReactedCheck && onNoTextMessage);
 
-    // 4. Test regular command execution delivers response without universal ✅ emoji reaction
+    // 4. Test regular command execution delivers response without universal 👍 emoji reaction
     lastReply = null;
     lastReaction = null;
     require(path.join(cwd, "func/cooldownManager.js")).clear();
@@ -837,10 +837,10 @@ async function runDiagnostics() {
     }
     const pingBody = typeof lastReply === "string" ? lastReply : (lastReply?.body || "");
     const pingReplied = pingBody.includes("Pong");
-    const pingNoUniversalCheck = lastReaction !== "✅";
-    logTest("WORKFLOW", "Successful command execution delivers response without universal ✅ emoji reaction", pingReplied && pingNoUniversalCheck);
+    const pingNoUniversalCheck = lastReaction !== "👍";
+    logTest("WORKFLOW", "Successful command execution delivers response without universal 👍 emoji reaction", pingReplied && pingNoUniversalCheck);
 
-    // 4b. Test media/image command execution reacts with ✅ emoji
+    // 4b. Test media/image command execution reacts with 👍 emoji
     lastReply = null;
     lastReaction = null;
     require(path.join(cwd, "func/cooldownManager.js")).clear();
@@ -864,10 +864,60 @@ async function runDiagnostics() {
       await handlerMedia.onStart();
     }
     const mediaReplied = lastReply !== null;
-    const mediaReactedCheck = lastReaction === "✅";
-    logTest("WORKFLOW", "Media/image command execution reacts with ✅ emoji", mediaReplied && mediaReactedCheck);
+    const mediaReactedCheck = lastReaction === "👍";
+    logTest("WORKFLOW", "Media/image command execution reacts with 👍 emoji", mediaReplied && mediaReactedCheck);
 
-    // 5. Test command execution error delivers error notice without ❌ emoji reaction
+    // 4c. Test !bot react off disables bot reaction feedback
+    lastReply = null;
+    lastReaction = null;
+    require(path.join(cwd, "func/cooldownManager.js")).clear();
+    const reactOffEvent = {
+      type: "message",
+      body: "!bot react off",
+      messageID: "msg_bot_react_off_01",
+      threadID: "20005",
+      senderID: "9999",
+      isGroup: true
+    };
+    const handlerReactOff = await handlerEvents(reactOffEvent, createMockMessage(reactOffEvent));
+    if (handlerReactOff && typeof handlerReactOff.onStart === "function") {
+      await handlerReactOff.onStart();
+    }
+    const reactOffIsSet = global.FloppaBot.reactOff === true;
+    lastReaction = null;
+    const handlerMediaNoReact = await handlerEvents(mediaEvent, createMockMessage(mediaEvent));
+    if (handlerMediaNoReact && typeof handlerMediaNoReact.onStart === "function") {
+      await handlerMediaNoReact.onStart();
+    }
+    const mediaReactSkipped = lastReaction === null;
+    logTest("WORKFLOW", "!bot react off disables bot reactions (reactOff=true, reaction skipped)", reactOffIsSet && mediaReactSkipped);
+
+    // 4d. Test !bot react on re-enables bot reaction feedback
+    lastReply = null;
+    lastReaction = null;
+    require(path.join(cwd, "func/cooldownManager.js")).clear();
+    const reactOnEvent = {
+      type: "message",
+      body: "!bot react on",
+      messageID: "msg_bot_react_on_01",
+      threadID: "20006",
+      senderID: "9999",
+      isGroup: true
+    };
+    const handlerReactOn = await handlerEvents(reactOnEvent, createMockMessage(reactOnEvent));
+    if (handlerReactOn && typeof handlerReactOn.onStart === "function") {
+      await handlerReactOn.onStart();
+    }
+    const reactOnIsSet = global.FloppaBot.reactOff === false;
+    lastReaction = null;
+    const handlerMediaReact = await handlerEvents(mediaEvent, createMockMessage(mediaEvent));
+    if (handlerMediaReact && typeof handlerMediaReact.onStart === "function") {
+      await handlerMediaReact.onStart();
+    }
+    const mediaReactRestored = lastReaction === "👍";
+    logTest("WORKFLOW", "!bot react on enables bot reactions (reactOff=false, reacts 👍)", reactOnIsSet && mediaReactRestored);
+
+    // 5. Test command execution error delivers error notice without 👎 emoji reaction
     lastReply = null;
     lastReaction = null;
     require(path.join(cwd, "func/cooldownManager.js")).clear();
@@ -889,10 +939,10 @@ async function runDiagnostics() {
       await handlerErr.onStart();
     }
     const errReplied = lastReply !== null;
-    const errNoCross = lastReaction !== "❌";
-    logTest("WORKFLOW", "Failing command execution delivers error notice without ❌ emoji reaction", errReplied && errNoCross);
+    const errNoCross = lastReaction !== "👎";
+    logTest("WORKFLOW", "Failing command execution delivers error notice without 👎 emoji reaction", errReplied && errNoCross);
 
-    // 6. Test SyntaxError displays command usage guide without ❌ emoji reaction
+    // 6. Test SyntaxError displays command usage guide without 👎 emoji reaction
     lastReply = null;
     lastReaction = null;
     require(path.join(cwd, "func/cooldownManager.js")).clear();
@@ -914,9 +964,9 @@ async function runDiagnostics() {
       await handlerSyntax.onStart();
     }
     const syntaxBody = typeof lastReply === "string" ? lastReply : (lastReply?.body || "");
-    const syntaxNoCross = lastReaction !== "❌";
+    const syntaxNoCross = lastReaction !== "👎";
     const syntaxHasGuide = syntaxBody.includes("Usage guide") && syntaxBody.includes("!syntaxdemo <param1> <param2>");
-    logTest("WORKFLOW", "message.SyntaxError() displays dynamic command guide without ❌ emoji reaction", syntaxNoCross && syntaxHasGuide);
+    logTest("WORKFLOW", "message.SyntaxError() displays dynamic command guide without 👎 emoji reaction", syntaxNoCross && syntaxHasGuide);
 
     // 7. Restore bot default state: OFF (admin-only)
     global.FloppaBot.botOff = true;

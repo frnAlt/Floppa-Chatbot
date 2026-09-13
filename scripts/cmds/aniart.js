@@ -30,14 +30,14 @@ module.exports = {
 
       const stream = await global.utils.getStreamFromURL(url, `aniart_${Date.now()}.png`, { timeout: 15000 });
 
-      api.setMessageReaction("✅", event.messageID, (err) => {}, true);
+      api.setMessageReaction("👍", event.messageID, (err) => {}, true);
       await api.sendMessage({
         body: `✨ Anime Art generated:\n"${prompt}"`,
         attachment: stream
       }, event.threadID, event.messageID);
     } catch (err) {
       console.log(err);
-      api.setMessageReaction("❌", event.messageID, (err) => {}, true);
+      api.setMessageReaction("👎", event.messageID, (err) => {}, true);
       api.sendMessage('An error occurred while generating your anime art, please try again later..🙂', 
                       event.threadID,
                       event.messageID);

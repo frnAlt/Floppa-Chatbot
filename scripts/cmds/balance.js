@@ -342,7 +342,7 @@ module.exports = {
             const userData = await usersData.get(targetID);
             
             if (!userData) {
-                message.reaction("❌", event.messageID);
+                message.reaction("👎", event.messageID);
                 return message.reply("User not found in database!");
             }
 
@@ -363,7 +363,7 @@ module.exports = {
                 attachment: fs.createReadStream(imagePath)
             });
 
-            message.reaction("✅", event.messageID);
+            message.reaction("👍", event.messageID);
 
             setTimeout(async () => {
                 try {
@@ -375,7 +375,7 @@ module.exports = {
 
         } catch (error) {
             console.error("Balance Card Error:", error);
-            message.reaction("❌", event.messageID);
+            message.reaction("👎", event.messageID);
             return message.reply("An error occurred while generating your balance card. Please try again.");
         }
     }

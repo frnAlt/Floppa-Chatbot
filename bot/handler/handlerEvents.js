@@ -910,14 +910,15 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                         global.systemMemoryDB.recordCommand(commandName, event, Date.now() - dateNow);
                                 }
 
-                                // React ✅ emoji ONLY on image and media-type commands / medialike output commands
+                                // React 👍 emoji ONLY on image and media-type commands / medialike output commands
+                                const isReactOff = global.GoatBot?.reactOff ?? (global.GoatBot?.config?.reactOff ?? false);
                                 const isMedia = outputtedMedia || isMediaCommand(command, commandName);
-                                if (isMedia && !message?._syntaxErrorCalled) {
+                                if (isMedia && !isReactOff && !message?._syntaxErrorCalled) {
                                         try {
                                                 if (typeof message?.reaction === "function") {
-                                                        await message.reaction("✅", event.messageID);
+                                                        await message.reaction("👍", event.messageID);
                                                 } else if (typeof api?.setMessageReaction === "function" && event?.messageID) {
-                                                        api.setMessageReaction("✅", event.messageID, () => {}, true);
+                                                        api.setMessageReaction("👍", event.messageID, () => {}, true);
                                                 }
                                         } catch (_) {}
                                 }

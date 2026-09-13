@@ -30,6 +30,9 @@ module.exports = function (defaultFuncs, api, ctx) {
         throw new Error("Please enter a valid emoji.");
       }
 
+      if (reaction === "✅") reaction = "👍";
+      else if (reaction === "❌") reaction = "👎";
+
       const action = reaction === "" ? "REMOVE_REACTION" : "ADD_REACTION";
 
       const defData = await defaultFuncs.postFormData(

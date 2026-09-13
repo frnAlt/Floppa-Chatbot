@@ -86,13 +86,13 @@ module.exports = {
                 attachment: fs.createReadStream(videoPath)
             });
 
-            message.reaction("✅", event.messageID);
+            message.reaction("👍", event.messageID);
             setTimeout(() => {
                 if (fs.existsSync(videoPath)) fs.unlinkSync(videoPath);
             }, 10000);
 
         } catch (error) {
-            message.reaction("❌", event.messageID);
+            message.reaction("👎", event.messageID);
             const errMsg = error.response?.data?.detail?.[0]?.msg || error.message;
             message.reply(`❌ Error: ${errMsg}`);
         }

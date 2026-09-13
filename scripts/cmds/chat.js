@@ -137,7 +137,7 @@ module.exports = {
       });
     } catch (err) {
       if (typeof message.reaction === "function") {
-        message.reaction("❌", event.messageID);
+        message.reaction("👎", event.messageID);
       }
       return message.reply(`❌ AI Chat Error: ${err.message || err}`);
     }

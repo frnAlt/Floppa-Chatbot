@@ -37,13 +37,13 @@ module.exports = {
 
       const stream = await global.utils.getStreamFromURL(url, `supanime_${Date.now()}.png`, { timeout: 15000 });
 
-      message.reaction("✅", event.messageID);
+      message.reaction("👍", event.messageID);
       await message.reply({
         body: `✨ SupAnime image generated:\n"${prompt}"`,
         attachment: stream
       });
     } catch (error) {
-      message.reaction("❌", event.messageID);
+      message.reaction("👎", event.messageID);
       
       let errorMessage = "An error occurred during image generation.";
       if (error.response) {

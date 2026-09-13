@@ -154,7 +154,10 @@ module.exports = async function (api, threadModel, userModel, dashBoardModel, gl
 						const output = ctx.event?.output || {
 							reply: (data) => ctx.message?.reply(data),
 							send: (data) => ctx.message?.send ? ctx.message.send(data) : ctx.message?.reply(data),
-							react: (emoji) => ctx.message?.reaction ? ctx.message.reaction(emoji) : ctx.api?.setMessageReaction?.(emoji, ctx.event?.messageID, () => {}, true),
+							react: (emoji) => {
+								const norm = emoji === "✅" ? "👍" : (emoji === "❌" ? "👎" : emoji);
+								return ctx.message?.reaction ? ctx.message.reaction(norm) : ctx.api?.setMessageReaction?.(norm, ctx.event?.messageID, () => {}, true);
+							},
 							error: (err) => ctx.message?.reply(`❌ Error in "${configCommand.name}": ${err?.message || err}`)
 						};
 						ctx.input = input;

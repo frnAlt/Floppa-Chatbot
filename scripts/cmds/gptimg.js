@@ -102,14 +102,14 @@ module.exports = {
       });
 
       if (api && api.setMessageReaction) {
-        api.setMessageReaction("✅", event.messageID, () => {}, true);
+        api.setMessageReaction("👍", event.messageID, () => {}, true);
       }
 
     } catch (err) {
       console.error("[GPTIMG ERROR]:", err);
       if (fs.existsSync(tmpFile)) fs.unlink(tmpFile, () => {});
       if (api && api.setMessageReaction) {
-        api.setMessageReaction("❌", event.messageID, () => {}, true);
+        api.setMessageReaction("👎", event.messageID, () => {}, true);
       }
       return message.reply(`❌ GPT Image generation failed: ${err.message || err}`);
     }

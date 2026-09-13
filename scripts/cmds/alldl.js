@@ -294,7 +294,7 @@ module.exports = {
         }
 
         if (!usedAudioFallback) {
-          if (api && api.setMessageReaction) api.setMessageReaction("✅", event.messageID, () => {}, true);
+          if (api && api.setMessageReaction) api.setMessageReaction("👍", event.messageID, () => {}, true);
           return message.reply(`⚠️ Media exceeds Facebook Messenger's 25MB attachment limit (${(fileBuffer.length / (1024 * 1024)).toFixed(1)}MB).\n\n🔗 Direct download link:\n${downloadUrl}`);
         }
       }
@@ -305,12 +305,12 @@ module.exports = {
         attachment: fs.createReadStream(tmpFile)
       });
 
-      if (api && api.setMessageReaction) api.setMessageReaction("✅", event.messageID, () => {}, true);
+      if (api && api.setMessageReaction) api.setMessageReaction("👍", event.messageID, () => {}, true);
       fs.remove(tmpFile).catch(() => {});
     } catch (error) {
       console.error("[ALLDL ERROR]:", error.message);
       if (tmpFile) fs.remove(tmpFile).catch(() => {});
-      if (api && api.setMessageReaction) api.setMessageReaction("❌", event.messageID, () => {}, true);
+      if (api && api.setMessageReaction) api.setMessageReaction("👎", event.messageID, () => {}, true);
       return message.reply(`❌ Download failed: ${error.message || "Unsupported URL or service timeout."}`);
     }
   }

@@ -62,7 +62,7 @@ module.exports = {
         body: ramadanInfo,
         attachment: stream
       });
-      await message.reaction("✅", event.messageID);
+      await message.reaction("👍", event.messageID);
 
 
 

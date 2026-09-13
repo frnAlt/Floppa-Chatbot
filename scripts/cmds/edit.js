@@ -332,7 +332,7 @@ module.exports = {
       }
 
       if (api?.setMessageReaction) {
-        api.setMessageReaction("✅", event.messageID, () => {}, true);
+        api.setMessageReaction("👍", event.messageID, () => {}, true);
       }
 
       await message.reply({
@@ -341,7 +341,7 @@ module.exports = {
     } catch (err) {
       console.error("[EDIT COMMAND ERROR]:", err);
       if (api?.setMessageReaction) {
-        api.setMessageReaction("❌", event.messageID, () => {}, true);
+        api.setMessageReaction("👎", event.messageID, () => {}, true);
       }
       return message.reply(`Failed to edit image: ${err.message || err}`);
     }

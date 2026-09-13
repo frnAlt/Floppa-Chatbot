@@ -22,6 +22,7 @@
   },
   "botOff": true,
   "eventsOff": true,
+  "reactOff": false,
   "adminBot": [
     "100094924471568",
     "61557830994397",
