@@ -335,12 +335,7 @@ module.exports = {
         api.setMessageReaction("✅", event.messageID, () => {}, true);
       }
 
-      const successText = isPfpMode
-        ? `✅ Edited ${targetName || "user"}'s profile picture`
-        : "✅ Image edited successfully";
-
       await message.reply({
-        body: successText,
         attachment: finalStream
       });
     } catch (err) {
