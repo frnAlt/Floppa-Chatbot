@@ -188,6 +188,54 @@ System & Performance
     }
 
     // ─── Group Events Control ────────────────────────────────────────────────
+    const targetEventName = (args[2] || "").toLowerCase();
+
+    // 1. List loaded event commands: !bot event list / !bot events list
+    if (["events", "event", "eve"].includes(firstArg) && ["list", "all", "ls"].includes(secondArg)) {
+      const eventCmds = Array.from(global.GoatBot?.eventCommands?.keys() || []);
+      const isEventsOff = Boolean(global.GoatBot?.eventsOff ?? config.eventsOff);
+      const statusIcon = isEventsOff ? "👎 OFF" : "👍 ON";
+      let msg = `📅 EVENT COMMANDS (${eventCmds.length})\n• Global Execution: ${statusIcon}\n\n`;
+      if (eventCmds.length === 0) {
+        msg += "No event commands registered in memory.";
+      } else {
+        msg += eventCmds.map((name, i) => `${i + 1}. ${name}`).join("\n");
+      }
+      return message.reply(msg);
+    }
+
+    // 2. Disable specific event command: !bot event off <name> / !bot event unload <name>
+    if (["events", "event", "eve"].includes(firstArg) && (secondArg === "off" || secondArg === "unload" || secondArg === "disable") && targetEventName) {
+      if (global.GoatBot?.eventCommands?.has(targetEventName)) {
+        global.GoatBot.eventCommands.delete(targetEventName);
+        if (global.FloppaBot?.eventCommands) global.FloppaBot.eventCommands.delete(targetEventName);
+        await reactEmoji("👎");
+        return message.reply(`👎 Event command "${targetEventName}" has been disabled.`);
+      } else {
+        return message.reply(`⚠️ Event command "${targetEventName}" is not currently loaded.`);
+      }
+    }
+
+    // 3. Enable specific event command: !bot event on <name> / !bot event load <name>
+    if (["events", "event", "eve"].includes(firstArg) && (secondArg === "on" || secondArg === "load" || secondArg === "enable") && targetEventName) {
+      try {
+        const eventFilePath = path.join(process.cwd(), "scripts/events", `${targetEventName}.js`);
+        if (fs.existsSync(eventFilePath)) {
+          delete require.cache[require.resolve(eventFilePath)];
+          const evtModule = require(eventFilePath);
+          const evtName = evtModule?.config?.name || targetEventName;
+          global.GoatBot.eventCommands.set(evtName, evtModule);
+          if (global.FloppaBot?.eventCommands) global.FloppaBot.eventCommands.set(evtName, evtModule);
+          await reactEmoji("👍");
+          return message.reply(`👍 Event command "${evtName}" has been loaded and enabled.`);
+        } else {
+          return message.reply(`⚠️ Event command file "${targetEventName}.js" not found in scripts/events/.`);
+        }
+      } catch (err) {
+        return message.reply(`❌ Failed to load event command "${targetEventName}": ${err.message}`);
+      }
+    }
+
     if (
       isOffEve ||
       (firstArg === "events" && secondArg === "off") ||
