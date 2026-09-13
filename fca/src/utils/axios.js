@@ -475,6 +475,27 @@ async function post(url, reqJar, form, options, ctx, customHeader) {
     );
 }
 
+async function bufferFormValues(form) {
+    const buffered = {};
+    for (const key in form) {
+        if (Object.prototype.hasOwnProperty.call(form, key)) {
+            const val = form[key];
+            if (val && typeof val.pipe === 'function' && typeof val.read === 'function') {
+                const chunks = [];
+                for await (const chunk of val) {
+                    chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
+                }
+                const buf = Buffer.concat(chunks);
+                buf.path = val.path || val._path || val.name || "attachment.png";
+                buffered[key] = buf;
+            } else {
+                buffered[key] = val;
+            }
+        }
+    }
+    return buffered;
+}
+
 async function postFormData(url, reqJar, form, qs, options, ctx) {
     if (ctx && !ctx.jar && !ctx.globalOptions &&
         (ctx.noRef !== undefined || ctx._skipSessionInspect !== undefined)) {
@@ -483,28 +504,44 @@ async function postFormData(url, reqJar, form, qs, options, ctx) {
     const requestClient = getClientForJar(reqJar);
     const endpoint = new URL(url).pathname;
     const threadHint = ctx && ctx.requestThreadID ? String(ctx.requestThreadID) : '';
+    const resolvedForm = await bufferFormValues(form);
+
     return requestWithRetry(async () => {
         // FormData streams are one-shot. Rebuild the stream and boundary on
         // every retry so the second attempt does not send an empty body.
         const formData = new FormData();
-        for (const key in form) {
-            if (Object.prototype.hasOwnProperty.call(form, key)) {
-                formData.append(key, form[key]);
+        for (const key in resolvedForm) {
+            if (Object.prototype.hasOwnProperty.call(resolvedForm, key)) {
+                const val = resolvedForm[key];
+                if (Buffer.isBuffer(val)) {
+                    formData.append(key, val, { filename: val.path || "attachment.png" });
+                } else {
+                    formData.append(key, val);
+                }
             }
         }
 
         const customHeader = {
             "Content-Type": `multipart/form-data; boundary=${formData.getBoundary()}`
         };
+        try {
+            const len = formData.getLengthSync();
+            if (len != null) {
+                customHeader["Content-Length"] = String(len);
+            }
+        } catch (_) {}
+
         const config = {
             headers: getHeaders(url, options, ctx, customHeader, 'xhr'),
-            timeout: 60000,
+            timeout: 30000,
             params: qs,
+            maxBodyLength: Infinity,
+            maxContentLength: Infinity,
             ...getProxyConfig(options),
             validateStatus: (status) => status >= 200 && status < 600,
         };
         return requestClient.post(url, formData, config);
-    }, 3, endpoint, threadHint, ctx);
+    }, 2, endpoint, threadHint, ctx);
 }
 
 module.exports = {

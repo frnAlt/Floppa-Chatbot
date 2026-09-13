@@ -40,10 +40,12 @@ module.exports = (defaultFuncs, api, ctx) => {
   }
 
   async function uploadSingleAttachment(attachment, threadIDHint) {
-    if (!utils.isReadableStream(attachment)) {
-      throw new Error("Attachment should be a readable stream and not " + utils.getType(attachment) + ".");
+    const isStream = utils.isReadableStream(attachment);
+    const isBuf = Buffer.isBuffer(attachment);
+    if (!isStream && !isBuf) {
+      throw new Error("Attachment should be a readable stream or buffer and not " + utils.getType(attachment) + ".");
     }
-    if (!attachment.path) attachment.path = "attachment.png";
+    if (!attachment.path && !attachment._path && !attachment.name) attachment.path = "attachment.png";
     const uploadType = detectAttachmentType(attachment);
     let lastError = null;
 
@@ -179,6 +181,9 @@ module.exports = (defaultFuncs, api, ctx) => {
         const type = Object.keys(file)[0];
         form["" + type + "s"].push(file[type]);
       });
+      if (files.length === 0 && !msg.url && !msg.sticker) {
+        form.has_attachment = false;
+      }
     }
     if (msg.url) {
       form["shareable_attachment[share_type]"] = "100";
@@ -386,6 +391,27 @@ module.exports = (defaultFuncs, api, ctx) => {
     let isSingleUser = false;
 
     try {
+      // Buffer stream attachments so both MQTT and HTTP fallback can reuse them without stream exhaustion
+      if (msg && msg.attachment) {
+        try {
+          const rawAtts = Array.isArray(msg.attachment) ? msg.attachment : [msg.attachment];
+          const buffered = await Promise.all(rawAtts.map(async (a) => {
+            if (Buffer.isBuffer(a)) return a;
+            if (utils.isReadableStream(a)) {
+              const chunks = [];
+              for await (const chunk of a) {
+                chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
+              }
+              const buf = Buffer.concat(chunks);
+              buf.path = a.path || a._path || a.name || "attachment.png";
+              return buf;
+            }
+            return a;
+          }));
+          msg.attachment = Array.isArray(msg.attachment) ? buffered : buffered[0];
+        } catch (_) {}
+      }
+
       // Simulate human typing delay when the option is enabled and there is
       // text to type. The indicator is sent first, we wait the computed delay,
       // then the actual send follows. The finally block stops the indicator.

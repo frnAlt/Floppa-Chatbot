@@ -23,10 +23,12 @@ module.exports = (defaultFuncs, api, ctx) => {
     const uploads = [];
     try {
       for (let i = 0; i < attachments.length; i++) {
-        if (!utils.isReadableStream(attachments[i])) {
-          throw { error: "Attachment should be a readable stream and not " + utils.getType(attachments[i]) + "." };
+        const isStream = utils.isReadableStream(attachments[i]);
+        const isBuf = Buffer.isBuffer(attachments[i]);
+        if (!isStream && !isBuf) {
+          throw { error: "Attachment should be a readable stream or buffer and not " + utils.getType(attachments[i]) + "." };
         }
-        if (!attachments[i].path) attachments[i].path = "attachment.png";
+        if (!attachments[i].path && !attachments[i]._path && !attachments[i].name) attachments[i].path = "attachment.png";
 
         if (i > 0) {
           await antiSuspension.addSmartDelay();

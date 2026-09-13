@@ -27,7 +27,7 @@ async function fetchHighQualityAvatar(uid, api, usersData) {
 			const res = await axios.get(url, {
 				responseType: "arraybuffer",
 				maxRedirects: 5,
-				timeout: 10000,
+				timeout: 5000,
 				validateStatus: status => status === 200,
 				headers: {
 					"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36"
@@ -55,7 +55,7 @@ async function fetchHighQualityAvatar(uid, api, usersData) {
 			if (directCdnUrl) {
 				const res = await axios.get(directCdnUrl, {
 					responseType: "arraybuffer",
-					timeout: 10000,
+					timeout: 5000,
 					validateStatus: status => status === 200
 				});
 				const buffer = Buffer.from(res.data);
@@ -71,7 +71,7 @@ async function fetchHighQualityAvatar(uid, api, usersData) {
 			if (avatarUrl) {
 				const res = await axios.get(avatarUrl, {
 					responseType: "arraybuffer",
-					timeout: 10000,
+					timeout: 5000,
 					validateStatus: status => status === 200
 				});
 				const buffer = Buffer.from(res.data);
@@ -87,7 +87,7 @@ module.exports = {
 	config: {
 		name: "pfp",
 		aliases: ["profilepic", "getpfp", "userpic", "dp", "pp"],
-		version: "2.2.0",
+		version: "2.3.0",
 		author: "frnAlt",
 		countDown: 5,
 		role: 0,
@@ -126,7 +126,6 @@ module.exports = {
 	},
 
 	onStart: async function ({ api, message, args, event, getLang, usersData, threadsData }) {
-		let cachePath = null;
 		try {
 			if (api?.setMessageReaction) {
 				api.setMessageReaction("🖼️", event.messageID, () => {}, true);
@@ -263,29 +262,43 @@ module.exports = {
 				return message.reply(getLang("error", "Could not fetch high quality profile picture"));
 			}
 
-			const cacheDir = path.join(__dirname, "cache");
-			await fs.ensureDir(cacheDir);
-			cachePath = path.join(cacheDir, `pfp_${uid}_${Date.now()}.jpg`);
-			await fs.writeFile(cachePath, imageBuffer);
+			const { Readable } = require("stream");
+			const createStream = () => {
+				const s = Readable.from(imageBuffer);
+				s.path = `pfp_${uid}.jpg`;
+				return s;
+			};
+
+			const replyAction = async () => {
+				try {
+					return await message.reply({
+						body: getLang("success", userName),
+						attachment: createStream()
+					});
+				} catch (sendErr) {
+					console.warn("[PFP] Attachment send failed, falling back to text reply:", sendErr.message);
+					return await message.reply(getLang("success", userName));
+				}
+			};
+
+			const timeoutPromise = new Promise((_, reject) => {
+				const t = setTimeout(() => reject(new Error("Attachment upload timed out")), 20000);
+				if (t.unref) t.unref();
+			});
+
+			await Promise.race([replyAction(), timeoutPromise]).catch(async () => {
+				await message.reply(getLang("success", userName)).catch(() => {});
+			});
 
 			if (api?.setMessageReaction) {
 				api.setMessageReaction("✅", event.messageID, () => {}, true);
 			}
-
-			await message.reply({
-				body: getLang("success", userName),
-				attachment: fs.createReadStream(cachePath)
-			});
 		} catch (err) {
 			console.error("[PFP ERROR]:", err);
 			if (api?.setMessageReaction) {
 				api.setMessageReaction("❌", event.messageID, () => {}, true);
 			}
-			return message.reply(getLang("error", err.message || err));
-		} finally {
-			if (cachePath) {
-				await fs.remove(cachePath).catch(() => {});
-			}
+			return message.reply(getLang("error", err.message || err)).catch(() => {});
 		}
 	}
 };
