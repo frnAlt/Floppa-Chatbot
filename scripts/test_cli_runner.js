@@ -43,7 +43,7 @@ async function runDiagnostics() {
     logTest("FCA", "Native FCA package loads successfully", typeof fca === "function" || typeof fca.login === "function");
 
     const fcaPkg = require(path.join(cwd, "fca/package.json"));
-    logTest("FCA", `Package identity intact: ${fcaPkg.name}@${fcaPkg.version}`, fcaPkg.name === "@floppa/fca-native");
+    logTest("FCA", `Package identity intact: ${fcaPkg.name}@${fcaPkg.version}`, fcaPkg.name === "@floppa/fca" || fcaPkg.name === "@floppa/fca-native");
 
     const formatCookie = require(path.join(cwd, "fca/src/utils/formatters/value/formatCookie"));
     logTest("FCA", "formatCookie parser exports available", typeof formatCookie.parseUniversalCookies === "function");

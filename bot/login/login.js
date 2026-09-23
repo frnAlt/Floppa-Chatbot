@@ -845,8 +845,7 @@ async function startBot(loginWithEmail) {
                         const botName = await getName(global.botID);
                         logColor("#f5ab00", createLine("FLOPPA BOT INFO"));
                         log.info("PROJECT", `Floppa-Chatbot v${currentVersion}`);
-                        log.info("NODE RUNTIME", process.version);
-                        log.info("FCA ENGINE", `@floppa/fca-native v5.0.0 (Native Local Engine)`);
+                        log.info("FCA ENGINE", `@floppa/fca v5.1.0 (GoatBot v2 Native Engine with Priyansh Core & Anti-Ban)`);
                         log.info("DEVELOPER", "frnAlt (https://github.com/frnAlt)");
                         log.info("BOT ID", `${global.botID}${botName ? ` (${botName})` : ""}`);
                         log.info("BOT NICKNAME", global.GoatBot.config.nickNameBot || "Floppa Bot 🐱");
@@ -872,6 +871,17 @@ async function startBot(loginWithEmail) {
 				if (globalAntiSuspension && fcaConfig.antiSuspension?.enabled !== false && fcaConfig.antiSuspension?.warmupOnStart !== false) {
 					globalAntiSuspension.enableWarmup();
 					log.info("FLOPPA-FCA", "Anti-suspension warmup mode active (calibrated rate-limiting)");
+				}
+
+				let globalIpBanProtection;
+				try {
+					globalIpBanProtection = require(path.join(process.cwd(), "fca/src/utils/ipSpoofing")).globalIpBanProtection;
+				} catch (_) {
+					globalIpBanProtection = null;
+				}
+				if (globalIpBanProtection && fcaConfig.antiBan?.enabled !== false) {
+					const ipStatus = globalIpBanProtection.getStatus();
+					log.info("FLOPPA-ANTI-BAN", `Residential IP spoofing active (IP: ${ipStatus.currentIP}, Subnet: ${ipStatus.currentMeta?.isp || "Residential"})`);
 				}
 
                                 if (typeof api.getHealthStatus === "function") {

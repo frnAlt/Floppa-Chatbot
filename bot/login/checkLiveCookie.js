@@ -3,6 +3,11 @@ const axios = require("axios");
 const DEFAULT_DESKTOP_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.182 Safari/537.36";
 const DEFAULT_MOBILE_AGENT = "Mozilla/5.0 (Linux; Android 14; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Mobile Safari/537.36";
 
+let getSpoofedIpHeaders = null;
+try {
+	getSpoofedIpHeaders = require("../../fca/src/utils/ipSpoofing").getSpoofedIpHeaders;
+} catch (_) {}
+
 /**
  * Validates whether a cookie/appState session is alive on Facebook without triggering security flags.
  * @param {string} cookie Cookie string format
@@ -26,6 +31,12 @@ module.exports = async function (cookie, userAgent) {
 			"sec-fetch-site": "none",
 			"upgrade-insecure-requests": "1"
 		};
+
+		if (typeof getSpoofedIpHeaders === "function") {
+			try {
+				Object.assign(headers, getSpoofedIpHeaders());
+			} catch (_) {}
+		}
 
 		const response = await axios({
 			url: targetUrl,

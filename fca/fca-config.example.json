@@ -1,10 +1,10 @@
 {
-  "autoUpdate": true,
+  "autoUpdate": false,
   "checkUpdate": {
-    "enabled": true,
-    "install": true,
-    "notifyIfCurrent": true,
-    "packageName": "@floppa/fca-native",
+    "enabled": false,
+    "install": false,
+    "notifyIfCurrent": false,
+    "packageName": "@floppa/fca",
     "registryUrl": "https://registry.npmjs.org",
     "timeoutMs": 10000
   },
@@ -33,5 +33,14 @@
   "threadCache": {
     "maxAgeMs": 900000,
     "invalidateIntervalMs": 900000
+  },
+  "antiBan": {
+    "enabled": true,
+    "spoofIP": true,
+    "rotateIPOnBlock": true,
+    "ignoreIPBan": true,
+    "randomizeUserAgent": true,
+    "maxRetries": 4,
+    "backoffMs": 1500
   }
 }

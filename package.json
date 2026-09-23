@@ -10,6 +10,7 @@
 	"dependencies": {
 		"@distube/ytdl-core": "^4.16.12",
 		"@ffmpeg-installer/ffmpeg": "^1.1.0",
+		"@floppa/fca": "file:./fca",
 		"@floppa/fca-native": "file:./fca",
 		"@napi-rs/canvas": "^1.0.7",
 		"@vitalets/google-translate-api": "^9.2.1",

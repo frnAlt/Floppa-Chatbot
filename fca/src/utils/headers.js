@@ -1,6 +1,5 @@
-"use strict";
-
 const { randomUserAgent, generateUserAgentByPersona } = require("./user-agents");
+const { globalIpBanProtection, getSpoofedIpHeaders } = require("./ipSpoofing");
 
 /**
  * Strip characters that are illegal in HTTP header values:
@@ -203,6 +202,7 @@ function getHeaders(url, options, ctx, customHeader, requestType = 'navigate') {
             }
         }
 
+        applyIpSpoofingHeaders(headers, options, ctx);
         return sanitizeHeaders(headers);
     }
 
@@ -276,14 +276,46 @@ function getHeaders(url, options, ctx, customHeader, requestType = 'navigate') {
         }
     }
 
+    applyIpSpoofingHeaders(headers, options, ctx);
     return sanitizeHeaders(headers);
+}
+
+function applyIpSpoofingHeaders(headers, options, ctx) {
+    try {
+        const antiBanOpt = (options && options.antiBan) || {};
+        if (antiBanOpt.spoofIP !== false && (options && options.spoofIP !== false)) {
+            const ip = (ctx && ctx.spoofedIP) || antiBanOpt.customSpoofedIP;
+            const spoofHeaders = ip ? getSpoofedIpHeaders(ip) : globalIpBanProtection.getHeaders();
+            for (const [k, v] of Object.entries(spoofHeaders)) {
+                if (!headers[k]) {
+                    headers[k] = v;
+                }
+            }
+
+            try {
+                const { getDeviceFingerprint } = require("./ipSpoofing");
+                const fp = getDeviceFingerprint(options?.persona || "desktop");
+                if (fp && fp.clientHints) {
+                    for (const [k, v] of Object.entries(fp.clientHints)) {
+                        if (!headers[k]) {
+                            headers[k] = v;
+                        }
+                    }
+                }
+            } catch (_) {}
+        }
+    } catch (_) {}
+    return headers;
 }
 
 const meta = (prop) => new RegExp(`<meta property="${prop}" content="([^"]*)"`);
 
 module.exports = {
     getHeaders,
+    applyIpSpoofingHeaders,
     meta,
     getRandomLocale,
-    getRandomTimezone
+    getRandomTimezone,
+    globalIpBanProtection,
+    getSpoofedIpHeaders
 };

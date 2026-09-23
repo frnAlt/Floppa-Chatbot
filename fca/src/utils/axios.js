@@ -8,6 +8,7 @@ const FormData = require("form-data");
 const { getHeaders } = require("./headers");
 const { getType } = require("./constants");
 const { globalRateLimiter } = require("./rateLimiter");
+const { globalIpBanProtection, isIpBannedOrRateLimited } = require("./ipSpoofing");
 
 // Lazy-loaded to avoid circular dependency: clients.js requires axios.js
 let _saveCookies = null;
@@ -337,15 +338,17 @@ async function requestWithRetry(requestFunction, retries = 5, endpoint = '', thr
 
                 checkAndApplyRateLimitCooldowns(adapted.body);
 
-                // Emit rateLimit event on HTTP 429 so consumers can react
-                if (error.response.status === 429) {
+                // Inspect for IP ban, rate-limit, or anti-bot challenge
+                if (isIpBannedOrRateLimited(error.response, adapted.body)) {
                     if (ctx && ctx._emitter && typeof ctx._emitter.emit === 'function') {
-                        try { ctx._emitter.emit('rateLimit', { res: adapted.body, status: 429 }); } catch (_) {}
+                        try { ctx._emitter.emit('rateLimit', { res: adapted.body, status: error.response.status }); } catch (_) {}
                     }
-                    const waitMs = Math.min(Math.pow(2, i) * 1000 + Math.floor(Math.random() * 200), 30000);
-                    console.warn(`Rate limited (429). Waiting ${waitMs}ms before retry...`);
-                    await delay(waitMs);
-                    continue;
+                    const blockInfo = globalIpBanProtection.handleBlock(adapted.body, i + 1);
+                    console.warn(`[FLOPPA-ANTI-BAN] IP rate limit/ban detected (${error.response.status}). Rotated spoofed residential IP to ${blockInfo.newIP}. Backing off for ${blockInfo.waitMs}ms before retry (attempt ${i + 1}/${retries})...`);
+                    if (blockInfo.shouldRetry && i < retries - 1) {
+                        await delay(blockInfo.waitMs);
+                        continue;
+                    }
                 }
             }
 

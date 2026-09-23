@@ -6,5 +6,14 @@
   "healthMonitor": {
     "enabled": true,
     "logIntervalMs": 3600000
+  },
+  "antiBan": {
+    "enabled": true,
+    "spoofIP": true,
+    "rotateIPOnBlock": true,
+    "ignoreIPBan": true,
+    "randomizeUserAgent": true,
+    "maxRetries": 4,
+    "backoffMs": 1500
   }
 }

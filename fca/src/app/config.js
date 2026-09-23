@@ -27,6 +27,16 @@ const DEFAULT_CONFIG = {
         AntiGetThreadInfo: false,
         AntiGetUserInfo: false,
     },
+    antiBan: {
+        enabled: true,
+        spoofIP: true,
+        rotateIPOnBlock: true,
+        ignoreIPBan: true,
+        randomizeUserAgent: true,
+        maxRetries: 4,
+        backoffMs: 1500,
+        customSpoofedIP: "",
+    },
     remoteControl: {
         enabled: false,
         url: "",

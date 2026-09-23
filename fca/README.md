@@ -1,264 +1,279 @@
 <div align="center">
 
-<img src="./assets/fca-native-banner.svg" alt="FCA Native Banner" width="100%" />
+<img src="./assets/fca-native-banner.svg" alt="Floppa FCA Banner" width="100%" />
 
 <br><br>
 
-<img src="./assets/fca-logo.svg" alt="FCA Native Logo" width="130" height="130" />
+<img src="./assets/fca-logo.svg" alt="Floppa FCA Logo" width="130" height="130" />
 
-# @floppa/fca-native
+# @floppa/fca — Priyansh Facebook Chat API Engine
 
-**Next-Generation Native Facebook Chat API Engine for GoatBot v2 & Floppa-Chatbot**  
-*24/7 Session Stability • Adaptive Rate Limiter • Circuit Breaker Self-Healing • MQTT Realtime*
+**High-Performance Facebook Chat API Engine ported from Priyansh Rajput (fca-priyansh) with Native GoatBot v2 & Floppa-Chatbot Resilience**  
+*Priyansh Core Logic • 24/7 Session Stability • Adaptive Rate Limiter • Anti-Suspension Warmup • MQTT Realtime*
 
-[![Version](https://img.shields.io/npm/v/%40floppa%2Ffca-native?style=for-the-badge&color=38bdf8)](https://www.npmjs.com/package/@floppa/fca-native)
+[![Version](https://img.shields.io/badge/Version-5.1.0-38bdf8.svg?style=for-the-badge)](https://github.com/frnAlt/fca)
+[![Priyansh Core](https://img.shields.io/badge/Priyansh%20Core-v19.0.0%20Port-a855f7.svg?style=for-the-badge&logo=facebook)](https://github.com/priyanshufsdev)
 [![License](https://img.shields.io/badge/License-Apache%202.0-34d399.svg?style=for-the-badge)](LICENSE)
 [![Engine](https://img.shields.io/badge/Node.js-%3E%3D18.0.0-f59e0b?style=for-the-badge&logo=node.js)](https://nodejs.org/)
-[![GoatBot v2](https://img.shields.io/badge/GoatBot%20v2-100%25%20Compatible-818cf8?style=for-the-badge)](https://github.com/frnAlt/fca-native)
-[![Author](https://img.shields.io/badge/Author-Gtajisan%20(frnAlt)-ec4899?style=for-the-badge)](https://github.com/frnAlt)
+[![GoatBot v2](https://img.shields.io/badge/GoatBot%20v2-100%25%20Compatible-818cf8?style=for-the-badge)](https://github.com/frnAlt/Floppa-Chatbot)
+[![Core Creator](https://img.shields.io/badge/Core%20Creator-Priyansh%20Rajput-e11d48?style=for-the-badge&logo=facebook)](https://facebook.com/Priyanhu.Rajput.official)
+[![Port Author](https://img.shields.io/badge/Port%20Author-Gtajisan%20(Farhan%20Muh%20Tasim)-ec4899?style=for-the-badge&logo=github)](https://github.com/frnAlt)
+[![Developer](https://img.shields.io/badge/Developer-frnAlt-blueviolet?style=for-the-badge&logo=github)](https://github.com/frnAlt)
+[![Contact](https://img.shields.io/badge/Contact-sultana01537118%40gmail.com-red?style=for-the-badge&logo=gmail)](mailto:sultana01537118@gmail.com)
 
 </div>
 
-Native **Floppa-Chatbot Facebook Chat API Engine** — High-performance, modern 24/7 Messenger API designed as a drop-in replacement for all **GoatBot v2**, **Mirai**, and modern bot frameworks with advanced session stability, adaptive rate limiting, circuit breakers, and self-healing resilience.
+---
 
-It communicates via the same HTTP/GraphQL and MQTT protocols as the official browser client, providing programmatic access to messages, threads, reactions, typing indicators, attachments, and more — with full CommonJS and ES Module support and complete TypeScript typings.
+## 📖 Overview
 
-> **Disclaimer:** This library operates by emulating a logged-in browser session. Using it may violate Facebook / Meta's Terms of Service and could result in account restrictions or bans. The authors assume **no responsibility** for how you use this software. Use it only for lawful purposes and at your own risk.
+This repository ports and modernizes the complete **Priyansh Facebook Chat API** (`fca-priyansh`) core logic created by **[Priyansh Rajput](https://github.com/priyanshufsdev)**, combining it with **Gtajisan's (Farhan Muh Tasim / frnAlt)** Floppa native resilience architecture for **GoatBot v2** and **Floppa-Chatbot**.
+
+Facebook now has an official API for chat bots [here](https://developers.facebook.com/docs/messenger-platform).
+
+This API is the only way to automate chat functionalities on a personal Facebook user account. We do this by emulating the browser. This means doing the exact same GET/POST requests and tricking Facebook into thinking we're accessing the website normally. Because we're doing it this way, this API does not work with an OAuth bot token but requires the credentials or `appState` cookies of a Facebook account.
+
+> _Disclaimer_: We are not responsible if your account gets banned for spammy activities such as sending lots of messages to people you don't know, sending messages very quickly, sending spammy looking URLs, logging in and out very quickly... Be responsible Facebook citizens and enable warmup protection.
+
+See [below](#projects-using-this-api) for projects using this API.
 
 ---
 
 ## 📑 Table of Contents
 
-- [🌟 Native Architecture & Core Logic](#-native-architecture--core-logic)
-- [🐐 GoatBot v2 & Metachat Compatibility](#-goatbot-v2--metachat-compatibility)
+- [🌟 Priyansh FCA Core Logic & Hybrid Integration](#-priyansh-fca-core-logic--hybrid-integration)
+- [🛡️ How We Ported Priyansh's FCA to Modern Bot Logic](#️-how-we-ported-priyanshs-fca-to-modern-bot-logic)
+- [⚖️ Architecture & Core Logic Differences](#️-architecture--core-logic-differences)
+- [🐐 GoatBot v2 & Floppa-Chatbot Compatibility](#-goatbot-v2--floppa-chatbot-compatibility)
 - [📦 Installation](#-installation)
-- [🚀 Quick Start](#-quick-start)
-- [🔑 Authentication & Cookie Formats](#-authentication--cookie-formats)
-- [🧩 API Styles](#-api-styles)
-- [🤖 MessengerBot (Event-Driven)](#-messengerbot-event-driven)
-- [🛠️ Configuration (`fca-config.json`)](#️-configuration-fca-configjson)
-- [📚 Core API Methods](#-core-api-methods)
-- [👥 Authors & Credits](#-authors--credits)
+- [🚀 Example Usage & Quick Start](#-example-usage--quick-start)
+- [💬 Main Functionality (Sending Messages, Attachments & Stickers)](#-main-functionality)
+- [💾 Saving Session (`appState`)](#-saving-session-appstate)
+- [🎧 Listening to a Chat (`listenMqtt`)](#-listening-to-a-chat-listenmqtt)
+- [🔑 Authentication & Universal Cookie Normalizer](#-authentication--universal-cookie-normalizer)
+- [🧩 Modern API Styles](#-modern-api-styles)
+- [🤖 MessengerBot (Event-Driven Engine)](#-messengerbot-event-driven-engine)
+- [🛠️ Configuration (`fca-config.json` & `PriyanshFca.json`)](#️-configuration)
+- [🧪 Testing Your Bots](#-testing-your-bots)
+- [❓ Frequently Asked Questions (FAQs)](#-frequently-asked-questions-faqs)
+- [🌐 Projects Using This API](#-projects-using-this-api)
+- [👨‍💻 Author & Developer Info](#-author--developer-info)
+- [👥 Contributors & Credits](#-contributors--credits)
 - [📄 License](#-license)
 
 ---
 
-## 🌟 Native Architecture & Core Logic
+## 🌟 Priyansh FCA Core Logic & Hybrid Integration
 
-`@floppa/fca-native` includes an integrated suite of stability, security, and resilience subsystems designed to keep bots running continuously 24/7 without session degradation or account locks:
+`@floppa/fca` keeps **all of Priyansh's original Facebook Chat API code stuff** completely intact while extending it with enterprise-grade resilience:
 
-### 1. Enhanced Session Stability Manager (`SessionStabilityManager`)
-- **Proactive Token & Session Refresh**: Automatically refreshes session tokens and `fb_dtsg` tokens before expiration.
-- **Continuous Session Validation**: Performs background health checks and validates session integrity.
-- **Resource & Memory Safeguards**: Tracks heap memory usage and resets stale connections to prevent memory leaks during long-running bot instances.
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                              @floppa/fca                               │
+├──────────────────────────────────┬─────────────────────────────────────┤
+│      Priyansh FCA Core Logic     │    Native Resilience & Stability    │
+│    (Created by Priyansh Rajput)  │      (Engineered by Gtajisan)       │
+├──────────────────────────────────┼─────────────────────────────────────┤
+│ • High-Speed MQTT Delta v1/v2    │ • SessionStabilityManager (Tokens)  │
+│ • Main.js Login Engine & 2FA     │ • AdaptiveRateLimiter (Buckets)     │
+│ • Broadcast & Multi-Language     │ • ResilienceManager (Circuit Breaker│
+│ • Checkpoint Bypass Routines     │ • BotHealthMonitor (0-100 Score)    │
+│ • Extra Database & Balancer      │ • Lifecycle & Socket Pooling        │
+│ • Horizon_Database Storage       │ • Anti-Suspension Warmup Curves     │
+├──────────────────────────────────┴─────────────────────────────────────┤
+│                   GoatBot v2 Universal Adapter Layer                   │
+│ • parseUniversalCookies (AppState, Netscape, Header strings)           │
+│ • globalAntiSuspension (Warmup heuristics & protection)               │
+│ • Domain-Based Modular Facades (Messages, Threads, Users, Account)     │
+└────────────────────────────────────────────────────────────────────────┘
+```
 
-### 2. Intelligent Adaptive Rate Limiter (`AdaptiveRateLimiter`)
-- **Multi-Bucket Throttling**: Independent sliding-window rate limit buckets for:
-  - `message`: 60 operations/min
-  - `thread`: 30 operations/min
-  - `user`: 40 operations/min
-  - `media`: 20 uploads/min
-  - `typing`: 100 indicators/min
-  - `global`: 150 total operations/min
-- **Dynamic Penalty Scaling**: Analyzes Facebook HTTP response codes and headers; dynamically scales back request velocity when Facebook flags temporary rate limits.
-
-### 3. Self-Healing & Fault Tolerance (`ResilienceManager`)
-- **Circuit Breakers**: Implements 3-state circuit breakers (`CLOSED`, `OPEN`, `HALF_OPEN`) per endpoint to fail fast and prevent cascading network timeouts.
-- **Bulkhead Concurrency Pools**: Limits concurrent network requests to prevent socket exhaustion.
-- **Exponential Backoff & Jitter**: Automatically retries failed requests with randomized exponential backoff.
-
-### 4. Real-Time Bot Health Monitor (`BotHealthMonitor`)
-- **Live Health Score (0–100)**: Evaluates latency, error frequency, MQTT stability, and process memory.
-- **Telemetry & Metrics**: Records API latency distributions, MQTT reconnect counts, and error classifications.
-- **Proactive Recovery**: Automatically initiates self-healing or alert hooks when the health score falls below safety thresholds.
-
-### 5. Multi-Format Cookie Parsing & Auth Core
-- **Universal Cookie Normalizer**: Seamlessly parses and accepts:
-  - **JSON AppState Array**: Standard array of cookie objects (`c_user`, `xs`, `datr`, etc.)
-  - **Netscape Cookie Format**: Tab-separated format exported by browser tools
-  - **Semicolon-Delimited String**: Raw HTTP `Cookie` header string
-- **Built-in 2FA (TOTP)**: Integrated TOTP generator support for automated 2FA challenge resolution.
-
-### 6. Lifecycle & Connection Management
-- **`LifecycleManager`**: Traps OS signals (`SIGINT`, `SIGTERM`), ensures state serialization, closes active MQTT sessions, and shuts down gracefully.
-- **`ConnectionPoolManager`**: High-performance HTTP Keep-Alive pooling and socket reuse across all Facebook endpoints.
+### What Priyansh Core Modules Are Preserved:
+* **`Main.js`**: Priyansh's authentication state machine, 2FA OTP prompt resolver (`Otp_code`), credential encryption via `Extra/Security`, checkpoint bypass handlers (`CheckPointBypass 956`), and fast config loader (`PriyanshFca.json`).
+* **`src/listenMqtt.js` & `src/listenMqttV1.js`**: High-performance real-time MQTT Delta protocol parsers, decoding delta messages, delivery receipts, read markers, reactions, unsends, and typing events.
+* **`utils.js`**: Core HTTP request builder, streaming attachments, proxy management (`setProxy`), form-data builders, and cookie jar handling.
+* **`Language/`**: Multi-language localization engine supporting English (`en`), Vietnamese (`vi`), and customizable notification templates.
+* **`Extra/`**:
+  * `Extra/Balancer.js`: Traffic balancing and connection load distribution.
+  * `Extra/Bypass/`: 956 checkpoint challenge resolution routines.
+  * `Extra/Database/`: SQLite persistent storage with automatic JSON fallback for Node 24 compatibility.
+  * `Extra/ExtraScreenShot.js`: Programmatic screenshot capture helper.
+  * `Extra/ExtraUptimeRobot.js`: Integrated uptime keep-alive pinger.
+* **`Horizon_Database/`**: Thread and user data directory used by ChernobyL data engine.
+* **Complete FB Methods**: Full implementations of `sendMessage`, `changeNickname`, `changeThreadColor`, `changeThreadEmoji`, `changeGroupImage`, `deleteMessage`, `unsendMessage`, `addUserToGroup`, `removeUserFromGroup`, `createPoll`, `getUserInfo`, and `getThreadInfo`.
 
 ---
 
-## 🐐 GoatBot v2 & Metachat Compatibility
+## 🛡️ How We Ported Priyansh's FCA to Modern Bot Logic
 
-`@floppa/fca-native` is 100% compatible with the **GoatBot v2** ecosystem (as well as Mirai and Metachat consumers).
+To make Priyansh's core engine seamlessly drive modern bot frameworks like **GoatBot v2**, **Floppa-Chatbot**, and **Baka-Chan**, the following modern systems were integrated:
 
-### Method 1: Drop-in Configuration
-In your bot's `config.json` (or `fca-config.json`):
+1. **Universal Cookie Normalizer (`parseUniversalCookies`)**:  
+   Allows the bot to log in using standard JSON AppState arrays, browser Netscape tab-separated text (`cookies.txt`), or raw `Cookie` header strings without format conversion errors.
+2. **Anti-Suspension Warmup System (`globalAntiSuspension`)**:  
+   Implements an intelligent warmup curve upon bot startup. Outgoing message velocity is gently accelerated to avoid sudden velocity spikes that trigger Facebook security checkpoints.
+3. **Session Stability Manager (`SessionStabilityManager`)**:  
+   Continuously validates session health in the background and proactively refreshes `fb_dtsg` tokens before they expire.
+4. **Adaptive Rate Limiter (`AdaptiveRateLimiter`)**:  
+   Features separate token buckets for messages (60/min), threads (30/min), users (40/min), media (20/min), and global actions (150/min), automatically backing off when Facebook returns warning headers.
+5. **Circuit Breakers & Self-Healing (`ResilienceManager`)**:  
+   3-state circuit breakers (`CLOSED`, `OPEN`, `HALF_OPEN`) prevent bot freezes during transient Facebook outages.
+6. **Node 24 Compatibility**:  
+   Added native crypto fallbacks for legacy `aes-js`, UUID v4 compatibility hooks, and automatic local `node_modules` path resolution.
+
+---
+
+## ⚖️ Architecture & Core Logic Differences
+
+Below is an in-depth technical comparison highlighting the evolutionary differences between **Classic Legacy FCA**, **Priyansh FCA Core**, and our **Floppa @floppa/fca** engine:
+
+| Architectural Dimension | Classic Legacy FCA (`fca-unofficial`) | Priyansh FCA Core (`fca-priyansh`) | Floppa Hybrid Engine (`@floppa/fca`) |
+|---|---|---|---|
+| **Facebook Protocol** | Legacy Sync HTTP / Polling | High-Speed MQTT Delta v1/v2 | Enhanced MQTT Delta v1/v2 + Circuit Breakers |
+| **Authentication Logic** | Basic credentials / raw AppState | 2FA OTP (`Otp_code`) + Encrypted state + 956 bypass | Priyansh 2FA + `parseUniversalCookies` (AppState, Netscape, Header strings) |
+| **Anti-Suspension & Warmup** | ❌ None (Rapid account checkpoint) | ⚠️ Manual delays | ✅ `globalAntiSuspension` (Gradual startup warmup heuristics) |
+| **Rate Limiting Engine** | ❌ None (Uncontrolled bursts) | ⚠️ Basic static timeout | ✅ `AdaptiveRateLimiter` (6 sliding-window token buckets + dynamic penalty scaling) |
+| **Session Longevity** | ❌ Expires after hours (`fb_dtsg` loss) | ⚠️ Requires full re-login | ✅ `SessionStabilityManager` (Automated background token renewal) |
+| **Database & Persistence** | ❌ None / plaintext JSON | ✅ SQLite (`Extra/Database`) + `Horizon_Database` | ✅ Resilient SQLite + auto JSON fallback for zero-crash Node 24 support |
+| **Bot Framework Integration** | Mirai only | Priyansh-Bot & customized Mirai | 🐐 **100% GoatBot v2**, **Floppa-Chatbot**, **Baka-Chan**, & **Mirai** drop-in (`./fca`) |
+| **API Architecture** | Flat monolithic callback | Flat callback + basic promises | Dual-mode: Flat API + Grouped Domain Facades + `createMessengerBot` |
+| **Runtime & Dependencies** | ❌ Crashes on Node 20+ | ⚠️ Native compile errors on Node 24 | ✅ Modern Node 24 support with native crypto & auto-resolving local modules |
+| **Distribution Method** | Broken public npm | GitHub fork (`Porter-union-rom-updates/Fca`) | 🔒 Independent GitHub engine (`frnAlt/fca`) & local drop-in clone |
+
+### 🔍 Deep Dive: Logic Improvements in Floppa's Port
+
+#### 1. Credential Ingestion Logic (Universal Cookie Parser)
+* **Priyansh Logic**: Required an exact JSON array format or email/password. Any formatting deviation (such as browser-exported Netscape `cookies.txt` or raw semicolon-separated headers) threw a parsing exception.
+* **Floppa Port**: Injects [`parseUniversalCookies`](./src/utils/formatters/value/formatCookie.js). It dynamically inspects the input type, sanitizes attribute keys (`domain`, `expires`, `samesite`), strips Netscape `#HttpOnly_` prefixes, and deduplicates cookie pairs on the fly.
+
+#### 2. Outgoing Traffic Regulation (Adaptive Rate Limiter)
+* **Priyansh Logic**: Relied on static `autoRestartMinutes` and bot-level sleep calls.
+* **Floppa Port**: Implements [`AdaptiveRateLimiter`](./src/utils/AdaptiveRateLimiter.js). Every outbound request (`sendMessage`, `changeNickname`, `setReaction`, `uploadAttachment`) is routed through independent rate limit buckets with sliding-window accounting. If Facebook responds with temporary rate limit headers, the limiter automatically scales down request velocity without crashing the bot.
+
+#### 3. Error Resilience & Self-Healing (Circuit Breakers)
+* **Priyansh Logic**: Network exceptions or Facebook API timeouts were caught via standard `try/catch` callbacks, which could cause socket backlogs and memory leaks during extended outages.
+* **Floppa Port**: Uses [`ResilienceManager`](./src/utils/ResilienceManager.js). Endpoints transition between `CLOSED`, `OPEN`, and `HALF_OPEN` states, failing fast when Facebook is unresponsive and recovering automatically when connectivity returns.
+
+#### 4. Zero-Config GoatBot v2 Integration
+* **Priyansh Logic**: Required custom bot bootstrap scripts to initialize `global.Fca`.
+* **Floppa Port**: Seamlessly auto-initializes `global.Fca` when required, provides `api.getCurrentUserID()`, `api.stopListening()`, and `api.getHealthStatus()`, and auto-registers with GoatBot v2's `./fca` local loader.
+
+---
+
+## 🐐 GoatBot v2 & Floppa-Chatbot Compatibility
+
+`@floppa/fca` is 100% compatible with **GoatBot v2** and can be used immediately using any of these methods:
+
+### Method 1: Local Engine Drop-In (Zero Configuration)
+Clone directly into your bot root as `./fca`:
+```bash
+git clone https://github.com/frnAlt/fca.git ./fca
+```
+GoatBot v2's login loader (`bot/login/login.js`) automatically detects `./fca` and loads it as the native engine:
+```javascript
+const localFca = defaultRequire(path.join(process.cwd(), "fca"));
+```
+
+### Method 2: Bot Configuration (`config.json`)
+In your bot's `config.json`:
 ```json
 {
   "optionsFca": {
-    "fca": "@floppa/fca-native"
+    "fca": "@floppa/fca"
   }
 }
 ```
 
-### Method 2: GoatBot Login Loader (`bot/login/login.js`)
+### Method 3: Direct Require
 ```javascript
-const login = require("@floppa/fca-native");
+const login = require("@floppa/fca");
 
-login({ appState }, global.GoatBot.config.optionsFca, async (error, api) => {
-  if (error) return console.error("Login failed:", error);
+login({ appState }, global.GoatBot.config.optionsFca, async (err, api) => {
+  if (err) return console.error("Login failed:", err);
   global.GoatBot.fcaApi = api;
-  // Proceeds with GoatBot v2 initialization
 });
 ```
 
-### Method 3: Local Engine Replacement (`./fca`)
-Clone or copy `@floppa/fca-native` directly into the `./fca` directory in your bot's workspace. GoatBot will automatically detect and load it as a native local engine.
-
 ---
 
-## 📦 Installation & Usage (GitHub & npm)
+## 📦 Installation
 
-Since this package is currently hosted directly on GitHub prior to npm registry release, **normal users do not need an npm account or SSH keys**. You can install and use it directly using standard npm via public GitHub HTTPS:
-
-### 1. Install Directly from GitHub (Recommended)
-
+### Direct from GitHub (Public HTTPS — No NPM Account Needed)
 ```bash
-npm install frnAlt/fca-native
-```
-Or with full GitHub shortcut / Git HTTPS URL:
-```bash
-npm install github:frnAlt/fca-native
-# or
-npm install https://github.com/frnAlt/fca-native.git
+# Standard npm
+npm install github:frnAlt/fca
+
+# Or with HTTPS URL
+npm install https://github.com/frnAlt/fca.git
 ```
 
-#### Add to your bot's `package.json`:
+#### Add to `package.json`:
 ```json
-"dependencies": {
-  "@floppa/fca-native": "github:frnAlt/fca-native"
+{
+  "dependencies": {
+    "@floppa/fca": "github:frnAlt/fca"
+  }
 }
 ```
-Then simply run:
+Then run:
 ```bash
 npm install
 ```
-And import normally in your code:
-```javascript
-const login = require("@floppa/fca-native");
-
-(async () => {
-  const api = await login({ appState: require("./appstate.json") });
-  // ...
-})();
-```
 
 ---
 
-### 2. Use Completely Without npm (Direct Local Clone / Drop-in `./fca`)
+### 2. Local Drop-In Engine (No npm Needed — Recommended for GoatBot v2)
 
-If you want an offline-ready, portable local engine without managing npm packages:
+If you want a portable, standalone local engine without managing npm dependencies:
 
-#### Step 1: Clone into your bot directory
 ```bash
 # In your bot root directory:
-git clone https://github.com/frnAlt/fca-native.git ./fca
+git clone https://github.com/frnAlt/fca.git ./fca
 ```
 
-#### Step 2: Install internal dependencies
-```bash
-cd fca
-npm install --production
-cd ..
-```
+GoatBot v2 and Floppa-Chatbot will automatically detect and prioritize `./fca` as the native local engine with zero configuration required!
 
-#### Step 3: Require locally in your code
+> 🔒 **Independent GitHub Distribution:** This library is maintained and distributed exclusively via GitHub (`frnAlt/fca`) and direct local drop-in. It is **not published on the public npm registry** to ensure complete stability, security, and full autonomy over your bot infrastructure.
+
+---
+
+## 🚀 Example Usage & Quick Start
+
+### Basic Echo Bot (Callback Style)
 ```javascript
-// Load directly from local folder
-const login = require("./fca");
+const login = require("@floppa/fca");
 
-login({ appState: require("./appstate.json") }, (err, api) => {
-  if (err) return console.error("Login failed:", err);
-  console.log("Logged in using local native engine!");
-});
-```
-
-> **🐐 GoatBot v2 Automatic Detection:**  
-> GoatBot v2's `login.js` natively checks for `./fca` first:
-> ```javascript
-> const localFca = defaultRequire(path.join(process.cwd(), "fca"));
-> ```
-> If `./fca` exists, GoatBot **automatically detects and loads it** as the native local engine with zero extra configuration required!
-
----
-
-### 3. npm Registry (Upcoming Release)
-
-Once published to the global npm registry:
-```bash
-# Standard npm install
-npm install @floppa/fca-native@latest
-
-# Yarn
-yarn add @floppa/fca-native
-
-# pnpm
-pnpm add @floppa/fca-native
-```
-
----
-
-### Build Artifacts Provided
-
-| File | Format / Role |
-|---|---|
-| `index.js` | **Universal CommonJS Entry** — Callable default `login` export for GoatBot & Node.js |
-| `dist/cjs.cjs` | CommonJS legacy entry for Mirai / older bundlers |
-| `dist/index.mjs` | ES Modules (ESM) bundle |
-| `src/types/index.d.ts` | Complete TypeScript type definitions |
-
----
-
-## 🚀 Quick Start
-
-### 1. Classic `require` (Default Export = `login`)
-
-Compatible with standard FCA bot scripts and GoatBot. The required module **is** `login`:
-
-```javascript
-const login = require("@floppa/fca-native");
-
-login({ appState: require("./appstate.json") }, (err, api) => {
-  if (err) return console.error("Login failed:", err);
+// Login with Facebook credentials or AppState
+login({ email: "FB_EMAIL", password: "FB_PASSWORD" }, (err, api) => {
+  if (err) return console.error(err);
 
   api.setOptions({ listenEvents: true, selfListen: false });
 
-  api.listenMqtt((err, event) => {
+  api.listenMqtt((err, message) => {
     if (err) return console.error("MQTT Error:", err);
-    if (event.type === "message") {
-      api.sendMessage("Hello from Floppa FCA Native! 🚀", event.threadID);
+    if (message.type === "message") {
+      api.sendMessage(message.body, message.threadID);
     }
   });
 });
 ```
 
-### 2. Modern Async / Await Style
-
+### Modern Async / Await Style
 ```javascript
-const { login } = require("@floppa/fca-native");
+const { login } = require("@floppa/fca");
 
 async function main() {
-  const api = await login({
-    appState: require("./appstate.json")
-  }, {
-    listenEvents: true,
-    autoReconnect: true
-  });
+  const api = await login(
+    { appState: require("./appstate.json") },
+    { listenEvents: true, autoReconnect: true }
+  );
 
-  console.log(`Logged in as User ID: ${api.getCurrentUserID()}`);
+  console.log(`Bot logged in! UID: ${api.getCurrentUserID()}`);
 
   api.listenMqtt(async (err, event) => {
     if (err) return console.error(err);
-    if (event.type === "message") {
-      await api.sendMessage(`Echo: ${event.body}`, event.threadID);
+    if (event.type === "message" && event.body === "ping") {
+      await api.sendMessage("pong! 🏓", event.threadID);
     }
   });
 }
@@ -266,150 +281,198 @@ async function main() {
 main();
 ```
 
-### 3. Event-Driven Bot Engine (`createMessengerBot`)
+---
+
+## 💬 Main Functionality
+
+### Sending a Message
+```javascript
+api.sendMessage(message, threadID[, callback][, messageID])
+```
+
+Various types of messages can be sent:
+* **Regular Text:** Set `body` to your message string.
+* **Sticker:** Set `sticker` to the desired sticker ID.
+* **File or Image:** Set `attachment` to a readable stream or array of streams.
+* **URL:** Set `url` to a web link.
+* **Emoji:** Set `emoji` to the emoji character and `emojiSize` (`small`, `medium`, `large`).
+
+> **Tip:** To find your bot account's ID, check `api.getCurrentUserID()` or the `c_user` cookie.
+
+#### Example: Basic Message
+```javascript
+const login = require("@floppa/fca");
+
+login({ appState: require("./appstate.json") }, (err, api) => {
+  if (err) return console.error(err);
+
+  var targetID = "100000000000000";
+  api.sendMessage("Hey from Floppa FCA!", targetID);
+});
+```
+
+#### Example: File & Media Upload
+```javascript
+const fs = require("fs");
+const login = require("@floppa/fca");
+
+login({ appState: require("./appstate.json") }, (err, api) => {
+  if (err) return console.error(err);
+
+  var targetID = "100000000000000";
+  var msg = {
+    body: "Check out this image!",
+    attachment: fs.createReadStream(__dirname + "/image.jpg")
+  };
+  api.sendMessage(msg, targetID);
+});
+```
+
+---
+
+## 💾 Saving Session (`appState`)
+
+To avoid logging in with passwords every time, export and save your session cookies:
 
 ```javascript
-const { createMessengerBot } = require("@floppa/fca-native");
+const fs = require("fs");
+const login = require("@floppa/fca");
 
-async function main() {
-  const bot = await createMessengerBot(
-    { appState: require("./appstate.json") },
-    {
-      listenEvents: true,
-      stopOnSignals: true,
-      commandPrefix: "/"
-    }
-  );
+login({ email: "FB_EMAIL", password: "FB_PASSWORD" }, (err, api) => {
+  if (err) return console.error(err);
 
-  bot.on("error", (err) => console.error("Bot error:", err));
-
-  bot.on("messageCreate", (event) => {
-    if (event.body) {
-      console.log(`[${event.threadID}] ${event.body}`);
-    }
-  });
-
-  bot.command("ping", async (ctx) => {
-    await ctx.replyAsync("pong! 🏓");
-  });
-}
-
-main();
+  fs.writeFileSync("appstate.json", JSON.stringify(api.getAppState(), null, 2));
+  console.log("AppState saved successfully!");
+});
 ```
 
 ---
 
-## 🔑 Authentication & Cookie Formats
+## 🎧 Listening to a Chat (`listenMqtt`)
 
-`@floppa/fca-native` supports multiple flexible credential strategies:
+`api.listenMqtt` receives messages, typing indicators, reactions, and thread events:
 
-| Credential | Description |
-|---|---|
-| `appState` | JSON array of cookie objects (`[ { key, value, domain, path, ... } ]`). **Recommended for 24/7 bots.** |
-| `Cookie` | Raw semicolon-delimited cookie string, e.g. `"c_user=...; xs=...; datr=...;"`. |
-| `email` + `password` | Web credentials (optionally with 2FA secret key via `twofactor`). |
+```javascript
+const fs = require("fs");
+const login = require("@floppa/fca");
 
-The auth core automatically normalizes Netscape cookie formats, raw strings, and handles session persistence seamlessly.
+login({ appState: JSON.parse(fs.readFileSync("appstate.json", "utf8")) }, (err, api) => {
+  if (err) return console.error(err);
+
+  api.setOptions({ listenEvents: true });
+
+  const stopListening = api.listenMqtt((err, event) => {
+    if (err) return console.error(err);
+
+    api.markAsRead(event.threadID, () => {});
+
+    switch (event.type) {
+      case "message":
+        if (event.body === "/stop") {
+          api.sendMessage("Goodbye! 👋", event.threadID);
+          return stopListening();
+        }
+        api.sendMessage("Echo: " + event.body, event.threadID);
+        break;
+      case "event":
+        console.log("Thread event:", event);
+        break;
+    }
+  });
+});
+```
 
 ---
 
-## 🧩 API Styles
+## 🔑 Authentication & Universal Cookie Normalizer
 
-### 1. Flat API (Classic Compatibility)
+`@floppa/fca` provides universal credential parsing through [`parseUniversalCookies`](./src/utils/formatters/value/formatCookie.js):
 
-Every method is directly available on `api`:
+| Strategy | Description |
+|---|---|
+| **JSON AppState** | Array of cookie objects (`[ { key, value, domain, path, ... } ]`). **Recommended for 24/7 uptime.** |
+| **Raw Cookie String** | Semicolon-delimited header string: `"c_user=1000...; xs=2%3A...; datr=...;"` |
+| **Netscape Format** | Browser tab-delimited text (`cookies.txt`) |
+| **Email & Password** | Standard web login with automated 2FA (TOTP secret key supported via `twofactor`) |
 
+---
+
+## 🧩 Modern API Styles
+
+### 1. Flat API (Classic Priyansh Compatibility)
 ```javascript
 api.sendMessage("Hello!", threadID);
 api.getThreadInfo(threadID, (err, info) => { ... });
 api.setMessageReaction("❤️", messageID);
 ```
 
-### 2. Namespaced Domain Client Facade
+### 2. Grouped Domain Client Facade
+Organized by functional domain for modern TypeScript / ES codebases:
+```javascript
+const { createFcaClient } = require("@floppa/fca");
 
-Organized by domain for modern TypeScript / ES codebases:
+const client = createFcaClient(api);
 
-```typescript
-import { createFcaClient } from "@floppa/fca-native";
-
-const client = createFcaClient(ctx.api);
-
-await client.messages.send("Hello!", threadID);
+await client.messages.send("Hello world!", threadID);
 await client.threads.getInfo(threadID);
 await client.users.getInfo(userID);
 ```
 
 Available namespaces:
-- `client.messages`
-- `client.threads`
-- `client.users`
-- `client.account`
-- `client.realtime`
-- `client.http`
-- `client.scheduler`
+* `client.messages`
+* `client.threads`
+* `client.users`
+* `client.account`
+* `client.realtime`
+* `client.http`
+* `client.scheduler`
 
 ---
 
-## 🤖 MessengerBot (Event-Driven)
+## 🤖 MessengerBot (Event-Driven Engine)
 
-`MessengerBot` provides a composable, event-driven framework:
+```javascript
+const { createMessengerBot } = require("@floppa/fca");
 
-```typescript
-import { createMessengerBot } from "@floppa/fca-native";
+async function start() {
+  const bot = await createMessengerBot(
+    { appState: require("./appstate.json") },
+    {
+      listenEvents: true,
+      stopOnSignals: true,
+      commandPrefix: "!"
+    }
+  );
 
-const bot = await createMessengerBot(
-  { appState: require("./appstate.json") },
-  {
-    listenEvents: true,
-    stopOnSignals: true,
-    commandPrefix: "/",
-    maxEventListeners: 64,
-    enableComposer: true
-  }
-);
+  bot.on("error", (err) => console.error("Bot error:", err));
 
-// Global logging middleware
-bot.use(async (ctx, next) => {
-  console.log(`[Thread ${ctx.threadID}] ${ctx.text}`);
-  await next();
-});
+  bot.on("messageCreate", (event) => {
+    console.log(`[${event.threadID}] ${event.body}`);
+  });
 
-// Command handler
-bot.command("ping", async (ctx) => {
-  await ctx.replyAsync("pong");
-});
+  bot.command("ping", async (ctx) => {
+    await ctx.replyAsync("pong! 🏓");
+  });
 
-// Pattern matching
-bot.hears(/hello/i, async (ctx) => {
-  await ctx.replyAsync("Hi there!");
-});
+  bot.hears(/hello/i, async (ctx) => {
+    await ctx.replyAsync("Hello there!");
+  });
+}
+
+start();
 ```
 
-### Events
-
-| Event | Trigger |
-|---|---|
-| `message` / `messageCreate` | Any incoming message (including replies) |
-| `message_reply` | A reply to an existing message |
-| `messageReactionAdd` | Reaction added to a message |
-| `messageDelete` | Message unsent / deleted |
-| `typingStart` / `typingStop` | Typing indicators |
-| `threadUpdate` | Thread title, emoji, or participant updates |
-| `ready` | MQTT session established |
-| `error` | Any error during listening |
-
 ---
 
-## 🛠️ Configuration (`fca-config.json`)
+## 🛠️ Configuration
 
-When loaded, `@floppa/fca-native` will search for `fca-config.json` in the current working directory, generating safe defaults if absent:
-
+### `fca-config.json`
 ```json
 {
+  "autoUpdate": false,
   "checkUpdate": {
-    "enabled": true,
-    "packageName": "@floppa/fca-native",
-    "registryUrl": "https://registry.npmjs.org",
+    "enabled": false,
+    "packageName": "@floppa/fca",
     "notifyIfCurrent": false
   },
   "mqtt": {
@@ -424,55 +487,92 @@ When loaded, `@floppa/fca-native` will search for `fca-config.json` in the curre
   "healthMonitor": {
     "enabled": true,
     "logIntervalMs": 3600000
-  },
-  "threadCache": {
-    "maxAgeMs": 900000,
-    "invalidateIntervalMs": 900000
   }
+}
+```
+
+### `PriyanshFca.json`
+Priyansh core options can also be customized via `PriyanshFca.json`:
+```json
+{
+  "Language": "en",
+  "MainColor": "#9900FF",
+  "MainName": "[ FCA-FLOPPA ]",
+  "DevMode": false,
+  "Login2Fa": false,
+  "AutoLogin": false,
+  "EncryptFeature": true,
+  "ResetDataLogin": false
 }
 ```
 
 ---
 
-## 📚 Core API Methods
+## 🧪 Testing Your Bots
 
-| Method | Description |
-|---|---|
-| `api.sendMessage(msg, threadID, [callback], [replyToID])` | Send text, attachments, mentions, or replies |
-| `api.listenMqtt(callback)` | Start real-time MQTT listener for messages & events |
-| `api.stopListening([callback])` | Gracefully disconnect MQTT listener |
-| `api.getThreadInfo(threadID, [callback])` | Retrieve full group or DM thread metadata |
-| `api.getUserInfo(userID(s), [callback])` | Fetch user profile information and avatars |
-| `api.sendTypingIndicator(state, threadID)` | Show or hide typing bubble (`true`/`false`) |
-| `api.setMessageReaction(reaction, messageID)` | React to a message with emojis (`👍`, `❤️`, etc.) |
-| `api.changeNickname(nickname, threadID, userID)` | Change a member's nickname in a chat |
-| `api.changeThreadColor(color, threadID)` | Set group chat theme color |
-| `api.changeThreadEmoji(emoji, threadID)` | Update group chat default emoji |
-| `api.changeGroupImage(stream, threadID)` | Change group chat avatar photo |
-| `api.unsendMessage(messageID, [callback])` | Unsend (delete for everyone) a sent message |
-| `api.deleteMessage(messageIDs, [callback])` | Delete message(s) from current view |
-| `api.addUserToGroup(userID, threadID)` | Add a member to a group chat |
-| `api.removeUserFromGroup(userID, threadID)`| Remove/kick a member from a group chat |
-| `api.createPoll(title, options, threadID)` | Create a poll in a group chat |
-| `api.getCurrentUserID()` | Get logged-in bot account's UID |
-| `api.getAppState()` | Export current active session cookie array |
-| `api.logout([callback])` | Safely logout active session |
+If you want to test your bots without risking personal accounts, use [Facebook Whitehat Accounts](https://www.facebook.com/whitehat/accounts/).
 
 ---
 
-## 👥 Authors & Credits
+## ❓ Frequently Asked Questions (FAQs)
 
-- **Author & Lead Developer:** [Gtajisan (Farhan Muh Tasim / frnAlt)](https://github.com/frnAlt)
-- **Core Architecture & Resilience:** [NeoKEX (lazyneoaz)](https://github.com/lazyneoaz) — Creator of [Metachat](https://github.com/lazyneoaz/Metachat)
-- **Foundational Contributions:** [DongDev](https://github.com/dongp06)
-- **Community:** [GoatBot v2](https://github.com/frnAlt/Floppa-Chatbot) & Facebook Chat API open-source contributors
+1. **How do I run tests?**  
+   Run `npm test` or `node test/fca.test.cjs` from the repository root.
+
+2. **Why doesn't `sendMessage` always work when logged in as a page?**  
+   Facebook pages cannot initiate conversations with users directly; this is Facebook policy to prevent page spam.
+
+3. **What do I do when `login` doesn't work?**  
+   First verify you can log into Facebook via a web browser. If 2FA is enabled, provide your TOTP code or secret key in `twofactor`. For best results, use `appState`.
+
+4. **How can I avoid logging in every time?**  
+   Use `api.getAppState()` to export cookies and save to `appstate.json`, then pass `{ appState: require("./appstate.json") }` into `login()`.
+
+5. **Do you support sending messages as a page?**  
+   Yes, specify `{ pageID: "100000000000000" }` in the login options.
+
+6. **How can I silence logging messages?**  
+   Call `api.setOptions({ logLevel: "silent" })`.
+
+---
+
+## 🌐 Projects Using This API
+
+* **[Floppa-Chatbot](https://github.com/frnAlt/Floppa-Chatbot)** — Modern Facebook Messenger bot powered by Floppa Engine.
+* **[GoatBot v2](https://github.com/frnAlt/Floppa-Chatbot)** — GoatBot v2 platform integration.
+* **[Priyansh-Bot](https://github.com/codedbypriyansh/Priyansh-Bot)** — Facebook Messenger Bot made by Priyansh Rajput.
+* **[c3c](https://github.com/lequanglam/c3c)** — Customizable plugin-based chatbot supporting Facebook & Discord.
+
+---
+
+## 👨‍💻 Author & Developer Info
+
+| Role | Details |
+|---|---|
+| **Original FCA Creator** | **[Priyansh Rajput](https://github.com/priyanshufsdev)** ([Facebook Profile](https://facebook.com/Priyanhu.Rajput.official)) |
+| **Port Author & Lead Maintainer** | **[Gtajisan (Farhan Muh Tasim)](https://github.com/frnAlt)** |
+| **GitHub Account** | [@frnAlt](https://github.com/frnAlt) |
+| **Repository** | [frnAlt/fca](https://github.com/frnAlt/fca) |
+| **Direct Contact / Email** | [sultana01537118@gmail.com](mailto:sultana01537118@gmail.com) |
+| **Primary Bot Framework** | [Floppa-Chatbot](https://github.com/frnAlt/Floppa-Chatbot) |
+
+---
+
+## 👥 Contributors & Credits
+
+* **[Priyansh Rajput](https://github.com/priyanshufsdev)** — Original author and creator of the **Priyansh Facebook Chat API** (`fca-priyansh`) core logic.
+* **[Gtajisan (Farhan Muh Tasim / frnAlt)](https://github.com/frnAlt)** — Lead Developer of `@floppa/fca`, GoatBot v2 adapter layer, universal cookies, and maintainer of the Floppa Ecosystem.
+* **[NeoKEX (lazyneoaz)](https://github.com/lazyneoaz)** — Creator of [Metachat](https://github.com/lazyneoaz/Metachat) & Native Resilience architecture.
+* **[Phạm Minh Đồng (DongDev)](https://github.com/dongp06)** — Foundational contributions, security patches, and optimizations.
+* **[XNIL6X 404](https://github.com/xnil6x404)** — Contributor & maintainer.
+* **[GoatBot v2 Community](https://github.com/frnAlt/Floppa-Chatbot)** — Facebook Chat API open-source developers worldwide.
 
 ---
 
 ## 📄 License
 
-This project is licensed under the [Apache License, Version 2.0](./LICENSE).
+This project is licensed under the **[Apache License, Version 2.0](./LICENSE)**.
 
 <div align="center">
-  <sub>Built with ❤️ by frnAlt & lazyneoaz for the GoatBot and Messenger bot community.</sub>
+  <sub>Priyansh Facebook Chat API Core Logic © <b>Priyansh Rajput</b>. Floppa Native Engine & GoatBot v2 Port © <b>Gtajisan (frnAlt)</b>.</sub>
 </div>
