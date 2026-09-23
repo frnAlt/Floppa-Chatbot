@@ -2,6 +2,7 @@
 
 const logger = require("../logger");
 module.exports = function() {
+    if (!global.Fca?.Require?.Priyansh?.Uptime) return;
     var Logger = global.Fca.Require.logger;
     switch (process.platform) {
         case 'win32': {

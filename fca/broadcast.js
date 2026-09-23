@@ -26,9 +26,8 @@ const broadcastRandomMessage = () => {
 };
 
 const startBroadcasting = async (enabled) => {
-  enabled = global.Fca.Require.Priyansh.BroadCast
-
-  if (enabled) {
+  enabled = Boolean(global.Fca?.Require?.Priyansh?.BroadCast);
+  if (!enabled) return;
     try {
       await fetchBroadcastData();
       broadcastRandomMessage();

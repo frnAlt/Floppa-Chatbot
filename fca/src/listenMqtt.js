@@ -188,8 +188,6 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
     }
 
     if (process.env.OnStatus === undefined) {
-      global.Fca.Require.logger.Normal('You Are Using Version: Premium Access');
-
       if (Number(global.Fca.Require.Priyansh.AutoRestartMinutes) === 0) {
         // something
       } else if (Number(global.Fca.Require.Priyansh.AutoRestartMinutes) < 10) {
@@ -204,7 +202,9 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
           process.exit(1);
         }, Number(global.Fca.Require.Priyansh.AutoRestartMinutes) * 60000);
       }
-      require('../broadcast').startBroadcasting();
+      if (global.Fca?.Require?.Priyansh?.BroadCast) {
+        require('../broadcast').startBroadcasting();
+      }
       const MemoryManager = require('../Extra/Src/Release_Memory');
       const path = require('path');
 
@@ -407,7 +407,7 @@ if (global.Fca.Require.Priyansh.AntiGetInfo.AntiGetThreadInfo) {
             }
             
         } catch (e) {
-            console.log(e);
+            // ignore periodic count error
         }
     }, 30 * 1000);
 }
@@ -424,7 +424,7 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, {
         try {
           fmtMsg = utils.formatDeltaMessage(delta);
         } catch (err) {
-          return log.error('Lỗi Nhẹ', err);
+          return;
         }
         
         if (fmtMsg) {
@@ -663,7 +663,7 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, {
       try {
         fmtMsg = utils.formatDeltaReadReceipt(delta);
       } catch (err) {
-        return log.error('Lỗi Nhẹ', err);
+        return;
       }
       globalCallback(null, fmtMsg);
       break;
@@ -685,8 +685,7 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, {
           try {
             fmtMsg = utils.formatDeltaEvent(delta);
           } catch (err) {
-            console.log(delta);
-            return log.error('Lỗi Nhẹ', err);
+            return;
           }
           globalCallback(null, fmtMsg);
           break;
@@ -730,7 +729,6 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, {
             const fetchData = resData[0].o0.data.message;
 
             if (utils.getType(fetchData) === 'Object') {
-              log.info('forcedFetch', fetchData);
               switch (fetchData.__typename) {
                 case 'ThreadImageMessage':
                   if (!ctx.globalOptions.selfListen && fetchData.message_sender.id.toString() === ctx.userID) return;
@@ -777,18 +775,15 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, {
                     isGroup: (fetchData.message_sender.id !== tid.toString()),
                   };
 
-                  log.info('ff-Return', event);
                   globalCallback(null, event);
                   break;
                 }
                 default:
-                  log.error('forcedFetch', fetchData);
+                  break;
               }
-            } else {
-              log.error('forcedFetch', fetchData);
             }
           })
-          .catch((err) => log.error('forcedFetch', err));
+          .catch(() => {});
       }
       break;
     }
@@ -799,8 +794,7 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, {
       try {
         formattedEvent = utils.formatDeltaEvent(delta);
       } catch (err) {
-        console.log(err);
-        return log.error('Lỗi Nhẹ', err);
+        return;
       }
 
       if (!ctx.globalOptions.selfListen && formattedEvent.author.toString() === ctx.userID) return;
@@ -822,8 +816,7 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, {
           const fmtMsg = utils.formatDeltaEvent(delta);
           globalCallback(null, fmtMsg);
         } catch (err) {
-          console.log(delta);
-          log.error('Lỗi Nhẹ', err);
+          // ignore delta formatting failure
         }
       }
       break;

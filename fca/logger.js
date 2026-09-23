@@ -3,44 +3,72 @@
 
 const rawChalk = require('chalk');
 const chalk = (rawChalk && rawChalk.default) ? rawChalk.default : rawChalk;
-const isHexcolor = (color) => typeof color === 'string' && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(color);
-var getText = function(/** @type {string[]} */ ...Data) {
-	var Main = (Data.splice(0,1)).toString();
-		for (let i = 0; i < Data.length; i++) Main = Main.replace(RegExp(`%${i + 1}`, 'g'), Data[i]);
-	return Main;
-};
-/**
- * @param {any} obj
- */
+const moment = require('moment-timezone');
+
+function getCurrentTime() {
+	const tz = global.GoatBot?.config?.timeZone || global.FloppaBot?.config?.timeZone || "Asia/Dhaka";
+	try {
+		const str = moment().tz(tz).format("HH:mm:ss DD/MM/YYYY");
+		return chalk.gray ? chalk.gray(str) : str;
+	} catch (_) {
+		const str = moment().format("HH:mm:ss DD/MM/YYYY");
+		return chalk.gray ? chalk.gray(str) : str;
+	}
+}
+
 function getType(obj) {
     return Object.prototype.toString.call(obj).slice(8, -1);
 }
 
-function safeHex(color, text) {
-	try {
-		if (typeof chalk.hex === 'function' && isHexcolor(color)) {
-			return chalk.hex(color)(text);
-		}
-		if (typeof chalk.cyan === 'function') {
-			return chalk.cyan(text);
-		}
-	} catch (_) {}
-	return text;
+// Patterns of noisy Priyansh FCA messages to suppress so output remains clean and beautiful
+const SPAM_PATTERNS = [
+	/Start the Login Process/i,
+	/Not Ready To Solve Appstate/i,
+	/Encrypt State Off/i,
+	/Successfully Appstate Solved/i,
+	/Login as ID:/i,
+	/Welcome To Server:/i,
+	/You Are Currently Using Version:/i,
+	/0 Hours/i,
+	/Good luck/i,
+	/You Are Using Version: Premium Access/i,
+	/Auto Restart MQTT Client After: 0 Minutes/i,
+	/Can't get account area but fca ignores it/i,
+	/Currently logged/i,
+	/This feature is only for Replit/i,
+	/ExtraUpTime/i
+];
+
+function isSpam(str) {
+	if (!str || typeof str !== 'string') return false;
+	return SPAM_PATTERNS.some(rx => rx.test(str));
+}
+
+function getPrefix(level) {
+	const name = "FLOPPA-NATIVE";
+	switch (level) {
+		case 'warn':
+			return chalk.yellowBright ? chalk.yellowBright(`${name} WARN:`) : `${name} WARN:`;
+		case 'error':
+			return chalk.redBright ? chalk.redBright(`${name} ERR:`) : `${name} ERR:`;
+		case 'success':
+			return chalk.greenBright ? chalk.greenBright(`${name}:`) : `${name}:`;
+		case 'info':
+		case 'normal':
+		default:
+			return chalk.cyanBright ? chalk.cyanBright(`${name}:`) : `${name}:`;
+	}
 }
 
 module.exports = {
-	Normal: function(/** @type {string} */ Str, /** @type {() => any} */ Data ,/** @type {() => void} */ Callback) {
-		try {
-			const tag = `${(global.Fca?.Require?.Priyansh?.MainName) || '[ FCA-HZI ]'} > `;
-			const prefix = safeHex(global.Fca?.Require?.Priyansh?.MainColor || '#9900FF', tag);
-			console.log(prefix + Str);
-		} catch (_) {
-			console.log('[ FCA ] > ' + Str);
+	Normal: function(Str, Data, Callback) {
+		if (Str && !isSpam(String(Str))) {
+			console.log(`${getCurrentTime()} ${getPrefix('normal')} ${Str}`);
 		}
 		if (getType(Data) == 'Function' || getType(Data) == 'AsyncFunction') {
 			return Data();
 		}
-		if (Data) {
+		if (Data !== undefined) {
 			return Data;
 		}
 		if (getType(Callback) == 'Function' || getType(Callback) == 'AsyncFunction') {
@@ -48,54 +76,36 @@ module.exports = {
 		}
 		else return Callback;
 	},
-	Warning: function(/** @type {unknown} */ str, /** @type {() => void} */ callback) {
-		try {
-			const prefix = (chalk.magenta && chalk.magenta.bold) ? chalk.magenta.bold('[ FCA-WARNING ] > ') : '[ FCA-WARNING ] > ';
-			const body = chalk.yellow ? chalk.yellow(str) : String(str);
-			console.log(prefix + body);
-		} catch (_) {
-			console.log('[ FCA-WARNING ] > ' + str);
+	Warning: function(str, callback) {
+		if (str && !isSpam(String(str))) {
+			console.log(`${getCurrentTime()} ${getPrefix('warn')} ${str}`);
 		}
 		if (getType(callback) == 'Function' || getType(callback) == 'AsyncFunction') {
 			callback();
 		}
 		else return callback;
 	},
-	Error: function(/** @type {unknown} */ str, /** @type {() => void} */ callback) {
-		try {
-			const prefix = (chalk.magenta && chalk.magenta.bold) ? chalk.magenta.bold('[ FCA-ERROR ] > ') : '[ FCA-ERROR ] > ';
-			const body = chalk.red ? chalk.red(str || "Already Faulty, Please Contact: Facebook.com/Priyanhu.Rajput.official") : String(str || "");
-			console.log(prefix + body);
-		} catch (_) {
-			console.log('[ FCA-ERROR ] > ' + str);
+	Error: function(str, callback) {
+		if (str && !isSpam(String(str))) {
+			console.log(`${getCurrentTime()} ${getPrefix('error')} ${str}`);
 		}
 		if (getType(callback) == 'Function' || getType(callback) == 'AsyncFunction') {
 			callback();
 		}
 		else return callback;
 	},
-	Success: function(/** @type {unknown} */ str, /** @type {() => void} */ callback) {
-		try {
-			const tag = `${(global.Fca?.Require?.Priyansh?.MainName) || '[ FCA-HZI ]'} > `;
-			const prefix = safeHex('#9900FF', tag);
-			const body = chalk.green ? chalk.green(str) : String(str);
-			console.log(prefix + body);
-		} catch (_) {
-			console.log('[ FCA-SUCCESS ] > ' + str);
+	Success: function(str, callback) {
+		if (str && !isSpam(String(str))) {
+			console.log(`${getCurrentTime()} ${getPrefix('success')} ${str}`);
 		}
 		if (getType(callback) == 'Function' || getType(callback) == 'AsyncFunction') {
 			callback();
 		}
 		else return callback;
 	},
-	Info: function(/** @type {unknown} */ str, /** @type {() => void} */ callback) {
-		try {
-			const tag = `${(global.Fca?.Require?.Priyansh?.MainName) || '[ FCA-HZI ]'} > `;
-			const prefix = safeHex('#9900FF', tag);
-			const body = chalk.blue ? chalk.blue(str) : String(str);
-			console.log(prefix + body);
-		} catch (_) {
-			console.log('[ FCA-INFO ] > ' + str);
+	Info: function(str, callback) {
+		if (str && !isSpam(String(str))) {
+			console.log(`${getCurrentTime()} ${getPrefix('info')} ${str}`);
 		}
 		if (getType(callback) == 'Function' || getType(callback) == 'AsyncFunction') {
 			callback();

@@ -845,7 +845,7 @@ async function startBot(loginWithEmail) {
                         const botName = await getName(global.botID);
                         logColor("#f5ab00", createLine("FLOPPA BOT INFO"));
                         log.info("PROJECT", `Floppa-Chatbot v${currentVersion}`);
-                        log.info("FCA ENGINE", `@floppa/fca v5.1.0 (GoatBot v2 Native Engine with Priyansh Core & Anti-Ban)`);
+                        log.info("FCA ENGINE", `floppa-native v5.1.0`);
                         log.info("DEVELOPER", "frnAlt (https://github.com/frnAlt)");
                         log.info("BOT ID", `${global.botID}${botName ? ` (${botName})` : ""}`);
                         log.info("BOT NICKNAME", global.GoatBot.config.nickNameBot || "Floppa Bot 🐱");
@@ -1161,7 +1161,7 @@ async function startBot(loginWithEmail) {
                                 console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mBot Account:\x1b[0m     \x1b[33m${global.botID}\x1b[0m (${botName})`));
                                 console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mCommand Prefix:\x1b[0m  \x1b[32m${prefix}\x1b[0m  |  \x1b[1mLanguage:\x1b[0m \x1b[37m${lang}\x1b[0m  |  \x1b[1mBoot Time:\x1b[0m \x1b[32m${loadDuration}\x1b[0m`));
                                 console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mActive Modules:\x1b[0m  \x1b[1m\x1b[32m${cmdsCount}\x1b[0m Commands  |  \x1b[1m\x1b[32m${eventsCount}\x1b[0m Event Commands`));
-                                console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mFCA Core Engine:\x1b[0m @floppa/fca v5.1.0 (Priyansh Core + Anti-Ban)`));
+                                console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mFCA Core Engine:\x1b[0m floppa-native v5.1.0`));
                                 console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mAnti-Ban Route:\x1b[0m  \x1b[32m✔ Active\x1b[0m (${ipInfo})`));
                                 console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mAnti-Suspension:\x1b[0m \x1b[32m✔ Protected\x1b[0m (Adaptive Warmup + Circuit Breaker)`));
                                 if (isDashboard) {

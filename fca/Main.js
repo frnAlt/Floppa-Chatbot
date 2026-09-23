@@ -246,7 +246,7 @@ function buildAPI(globalOptions, html, jar, bypass_region) {
     
         }
         else userID = maybeUser[0].cookieString().split("=")[1].toString();    
-        process.env['UID'] = logger.Normal(getText(Language.UID,userID), userID);
+        process.env['UID'] = userID;
 
         try {
             clearInterval(checkVerified);
@@ -370,7 +370,6 @@ function buildAPI(globalOptions, html, jar, bypass_region) {
         }
         
         const Location = regions.find(r => r.code === region.toUpperCase());
-        logger.Normal(getText(Language.Area,(Location == undefined ? region.toUpperCase() : Location.name)));
 
         var ctx = {
             userID: userID,
@@ -438,7 +437,7 @@ function buildAPI(globalOptions, html, jar, bypass_region) {
         }
         else {
             if (bypass_region) {
-                logger.Normal(Language.NoAreaDataBypass);
+                // bypassed region check silently
             }
             else {
                 log.warn("login", getText(Language.NoAreaData));
@@ -519,7 +518,6 @@ function makeLogin(jar, email, password, loginOptions, callback, prCallback) {
             jar.setCookie(utils.formatCookie(JSON.parse("[\"" + utils.getFrom(val, "", "]") + "]"), "facebook"),"https://www.facebook.com")
         });
 
-        logger.Normal(Language.OnLogin);
         return utils
             .post("https://www.facebook.com/login/device-based/regular/login/?login_attempt=1&lwv=110", jar, form, loginOptions)
             .then(utils.saveCookies(jar))
@@ -931,7 +929,6 @@ function loginHelper(appState, email, password, globalOptions, callback, prCallb
 
 try {
     if (appState) {
-        logger.Normal(Language.OnProcess);
             switch (Database().has("FBKEY")) {
                 case true: {
                     process.env.FBKEY = Database().get("FBKEY");
@@ -957,12 +954,11 @@ try {
                             case "Array": {
                                 switch (utils.getType(appState[0])) {
                                     case "Object": {
-                                        logger.Normal(Language.NotReadyToDecrypt);
+                                        // AppState object ready
                                     }
                                         break;
                                     case "String": {
                                         appState = Security(appState,process.env['FBKEY'],'Decrypt');
-                                        logger.Normal(Language.DecryptSuccess);
                                     }
                                         break;
                                     default: {
@@ -984,13 +980,11 @@ try {
                             case "Array": {
                                 switch (utils.getType(appState[0])) {
                                     case "Object": {
-                                        logger.Normal(Language.EncryptStateOff);
+                                        // AppState object ready
                                     }
                                         break;
                                     case "String": {
                                         appState = Security(appState,process.env['FBKEY'],'Decrypt');
-                                        logger.Normal(Language.EncryptStateOff);
-                                        logger.Normal(Language.DecryptSuccess);
                                     }
                                         break;
                                     default: {
@@ -1167,10 +1161,9 @@ try {
             }
         mainPromise
             .then(async() => {
-                logger.Normal(getText(Language.LocalVersion,global.Fca.Version));
-                    logger.Normal(getText(Language.CountTime,global.Fca.Data.CountTime()))   
-                        logger.Normal(Language.WishMessage[Math.floor(Math.random()*Language.WishMessage.length)]);
+                if (global.Fca?.Require?.Priyansh?.Uptime) {
                     require('./Extra/ExtraUptimeRobot')();
+                }
                 callback(null, api);
             }).catch(function(/** @type {{ error: any; }} */e) {
             log.error("login", e.error || e);

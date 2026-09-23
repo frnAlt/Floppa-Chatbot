@@ -65,8 +65,11 @@ if (!global.Fca) {
     let npmlog = null;
     try {
         npmlog = require("npmlog");
+        if (npmlog) {
+            npmlog.level = process.env.DEBUG ? "info" : "silent";
+        }
     } catch (_) {
-        npmlog = { info: console.log, warn: console.warn, error: console.error, level: "info" };
+        npmlog = { info: () => {}, warn: () => {}, error: () => {}, level: "silent" };
     }
     let logger = null;
     try {
@@ -86,8 +89,8 @@ if (!global.Fca) {
         Language: "en",
         PreKey: "",
         AutoUpdate: false,
-        MainColor: "#9900FF",
-        MainName: "[ FCA-PRIYANSH ]",
+        MainColor: "#00CCCC",
+        MainName: "[ FLOPPA-NATIVE ]",
         Uptime: false,
         Config: "default",
         DevMode: false,
