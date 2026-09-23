@@ -282,9 +282,12 @@ module.exports = async function (api, threadModel, userModel, dashBoardModel, gl
 					error
 				});
 			}
-			loading.info('LOADED', `${colors.green(`${commandLoadSuccess}`)}${commandError.length ? `, ${colors.red(`${commandError.length}`)}` : ''}`);
+			if (process.stdout.isTTY) {
+				loading.info('LOADED', `${colors.green(`${commandLoadSuccess}`)}${commandError.length ? `, ${colors.red(`${commandError.length}`)}` : ''}`);
+			}
 		}
-		console.log("\r");
+		if (process.stdout.isTTY) console.log("\r");
+		log.info("LOADED", `Loaded ${colors.green(`${commandLoadSuccess}`)} ${text}s successfully${commandError.length ? ` (${colors.red(`${commandError.length}`)} failed)` : ""}`);
 		if (commandError.length > 0) {
 			log.err("LOADED", getText('loadScripts', 'loadScriptsError', colors.yellow(text)));
 			for (const item of commandError)

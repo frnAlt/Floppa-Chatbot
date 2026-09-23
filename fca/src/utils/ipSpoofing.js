@@ -259,18 +259,19 @@ function isIpBannedOrRateLimited(statusOrRes, bodyOrError) {
         "checkpoint_scraping",
         "rate limit reached",
         "temporarily unavailable",
-        "IP address has been blocked",
-        "1357004", // Facebook Challenge / Anti-spam checkpoint
-        "1357001", // Rate limit exceeded
-        "368",     // Action temporarily blocked for spam heuristics
-        "1404078", // Flood control / messaging blocked
-        "1404110"  // Message flood protection
+        "IP address has been blocked"
     ];
 
     for (const sig of BAN_SIGNATURES) {
         if (text.includes(sig)) {
             return true;
         }
+    }
+
+    // Specific error codes returned by Facebook API in JSON / query / response
+    const FB_ERROR_CODE_REGEX = /(?:"error"|"code"|"error_subcode"|error_code)\s*[:=]\s*(?:1357004|1357001|368|1404078|1404110)\b/;
+    if (FB_ERROR_CODE_REGEX.test(text)) {
+        return true;
     }
 
     return false;

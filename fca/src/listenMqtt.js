@@ -157,17 +157,19 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
   global.mqttClient = ctx.mqttClient;
 
   global.mqttClient.on('error', (err) => {
-    log.error('listenMqtt', err);
-    global.mqttClient.end();
+    const isFramingQuirk = err && typeof err.message === "string" && (err.message.includes('Invalid header flag bits') || err.message.includes('packet parsing'));
+    if (!isFramingQuirk) {
+      log.error('listenMqtt', err);
+    }
+    try { global.mqttClient.end(); } catch (_) {}
 
-    if (ctx.globalOptions.autoReconnect) {
+    if (ctx.globalOptions.autoReconnect !== false) {
       getSeqID();
     } else {
       globalCallback({
         type: 'stop_listen',
-        error: 'Server Đã Sập - Auto Restart'
+        error: 'MQTT connection ended'
       }, null);
-      return process.exit(1);
     }
   });
 

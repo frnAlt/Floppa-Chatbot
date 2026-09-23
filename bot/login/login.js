@@ -1106,21 +1106,77 @@ async function startBot(loginWithEmail) {
                         const adminBot = global.GoatBot.config.adminBot
                                 .filter(item => !isNaN(item))
                                 .map(item => item = item.toString());
+                        const adminDisplayList = [];
                         for (const uid of adminBot) {
                                 try {
                                         const userName = await usersData.getName(uid);
+                                        adminDisplayList.push(`${uid} (${userName || "Admin"})`);
                                         log.master("ADMINBOT", `[${++i}] ${uid} | ${userName}`);
                                 }
                                 catch (e) {
+                                        adminDisplayList.push(uid);
                                         log.master("ADMINBOT", `[${++i}] ${uid}`);
                                 }
                         }
-                        log.master("NOTIFICATION", (notification || "").trim());
-                        log.master("SUCCESS", getText('login', 'runBot'));
-                        log.master("LOAD TIME", `${convertTime(Date.now() - global.GoatBot.startTime)}`);
-                        logColor("#f5ab00", createLine("FLOPPA CHATBOT"));
-                        console.log(`\x1b[1m\x1b[33m${("FLOPPA-CHATBOT:")}\x1b[0m\x1b[1m\x1b[37m \x1b[0m\x1b[1m\x1b[36m${("Floppa-Chatbot v1.5.35 - Intelligent Facebook Messenger Bot Engine | Developer: Gtajisan (Farhan Muh Tasim) | Maintained by frnAlt")}\x1b[0m`);
-                        logColor("#f5ab00", character);
+
+                        // —————————————————— AESTHETIC DEPLOYMENT SUMMARY —————————————————— //
+                        function renderDeploymentSummary(api, adminList = []) {
+                                const mem = process.memoryUsage();
+                                const memMB = (mem.heapUsed / 1024 / 1024).toFixed(1);
+                                const totalMemMB = (mem.heapTotal / 1024 / 1024).toFixed(1);
+                                const rssMB = (mem.rss / 1024 / 1024).toFixed(1);
+                                const os = require("os");
+                                const loadDuration = global.utils ? global.utils.convertTime(Date.now() - global.GoatBot.startTime) : `${Math.floor((Date.now() - global.GoatBot.startTime) / 1000)}s`;
+
+                                let ipInfo = "Residential Spoofed (Active)";
+                                try {
+                                        const { globalIpBanProtection } = require(path.join(process.cwd(), "fca/src/utils/ipSpoofing"));
+                                        if (globalIpBanProtection) {
+                                                const status = globalIpBanProtection.getStatus();
+                                                ipInfo = `${status.currentIP} (${status.currentMeta?.isp || "Residential"})`;
+                                        }
+                                } catch (_) {}
+
+                                const cmdsCount = global.GoatBot?.commands?.size || 0;
+                                const eventsCount = global.GoatBot?.eventCommands?.size || 0;
+                                const prefix = global.GoatBot?.config?.prefix || "!";
+                                const botName = global.GoatBot?.config?.nickNameBot || "Floppa Bot 🐱";
+                                const lang = global.GoatBot?.config?.language || "en";
+                                const port = global.GoatBot?.config?.dashBoard?.port || 5000;
+                                const isDashboard = global.GoatBot?.config?.dashBoard?.enable !== false;
+
+                                const w = 70;
+                                const stripAnsi = s => String(s).replace(/\x1b\[[0-9;]*m/g, "");
+                                const boxLine = str => {
+                                        const visibleLen = stripAnsi(str).length;
+                                        const pad = Math.max(0, w - 4 - visibleLen);
+                                        return "\x1b[38;2;245;175;25m║\x1b[0m " + str + " ".repeat(pad) + " \x1b[38;2;245;175;25m║\x1b[0m";
+                                };
+                                const hr = (c1, c2, c3) => "\x1b[38;2;245;175;25m" + c1 + "═".repeat(w - 2) + c3 + "\x1b[0m";
+
+                                console.log("");
+                                console.log(hr("╔", "═", "╗"));
+                                console.log(boxLine(`\x1b[1m\x1b[38;2;250;139;255m  🐱 FLOPPA-CHATBOT v${currentVersion}\x1b[0m \x1b[38;2;43;210;255m— DEPLOYMENT READY\x1b[0m`));
+                                console.log(hr("╠", "═", "╣"));
+                                console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mBot Account:\x1b[0m     \x1b[33m${global.botID}\x1b[0m (${botName})`));
+                                console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mCommand Prefix:\x1b[0m  \x1b[32m${prefix}\x1b[0m  |  \x1b[1mLanguage:\x1b[0m \x1b[37m${lang}\x1b[0m  |  \x1b[1mBoot Time:\x1b[0m \x1b[32m${loadDuration}\x1b[0m`));
+                                console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mActive Modules:\x1b[0m  \x1b[1m\x1b[32m${cmdsCount}\x1b[0m Commands  |  \x1b[1m\x1b[32m${eventsCount}\x1b[0m Event Commands`));
+                                console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mFCA Core Engine:\x1b[0m @floppa/fca v5.1.0 (Priyansh Core + Anti-Ban)`));
+                                console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mAnti-Ban Route:\x1b[0m  \x1b[32m✔ Active\x1b[0m (${ipInfo})`));
+                                console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mAnti-Suspension:\x1b[0m \x1b[32m✔ Protected\x1b[0m (Adaptive Warmup + Circuit Breaker)`));
+                                if (isDashboard) {
+                                        console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mWeb Dashboard:\x1b[0m   \x1b[34mhttp://localhost:${port}\x1b[0m (Socket.IO Live)`));
+                                }
+                                console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mRuntime Memory:\x1b[0m  ${memMB}MB / ${totalMemMB}MB Heap (${rssMB}MB RSS)`));
+                                console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mSystem Host:\x1b[0m     ${os.platform()}-${os.arch()} | Node ${process.version}`));
+                                if (adminList.length > 0) {
+                                        console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mAdministrators:\x1b[0m  ${adminList.slice(0, 2).join(", ")}${adminList.length > 2 ? ` (+${adminList.length - 2} more)` : ""}`));
+                                }
+                                console.log(hr("╚", "═", "╝"));
+                                console.log("");
+                        }
+                        renderDeploymentSummary(api, adminDisplayList);
+
                         global.GoatBot.config.adminBot = adminBot;
                         writeFileSync(global.client.dirConfig, JSON.stringify(global.GoatBot.config, null, 2));
                         writeFileSync(global.client.dirConfigCommands, JSON.stringify(global.GoatBot.configCommands, null, 2));
@@ -1153,6 +1209,28 @@ async function startBot(loginWithEmail) {
                         // —————————————————— CALLBACK LISTEN —————————————————— //
                         async function callBackListen(error, event) {
                                 if (error) {
+                                        // Meta Action Block (368) / Rate-Limit (1357004) self-healing
+                                        if (
+                                                error.error === 368 ||
+                                                error.error === 1357004 ||
+                                                error.error === "temporarily blocked" ||
+                                                (typeof error.error === "string" && (
+                                                        error.error.includes("temporarily blocked") ||
+                                                        error.error.includes("action blocked") ||
+                                                        error.error.includes("rate limit")
+                                                ))
+                                        ) {
+                                                log.warn("META ACTION BLOCK", "Temporary action block or rate limit detected (code 368/1357004). Initiating self-healing backoff...");
+                                                try {
+                                                        const { globalIpBanProtection } = require(path.join(process.cwd(), "fca/src/utils/ipSpoofing"));
+                                                        if (globalIpBanProtection) {
+                                                                const block = globalIpBanProtection.handleBlock(error, 1);
+                                                                log.info("ANTI-BAN", `Auto-rotated residential IP to ${block.newIP} with ${block.waitMs}ms backoff.`);
+                                                        }
+                                                } catch (_) {}
+                                                return; // Do not tear down session; allow live recovery
+                                        }
+
                                         global.responseUptimeCurrent = responseUptimeError;
                                         if (
                                                 error.type === "account_inactive" ||

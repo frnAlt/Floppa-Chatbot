@@ -198,7 +198,26 @@ if (!global.Fca) {
                 return "0 Hours";
             }
         },
-        Action: async function() {}
+        Action: async function(actionName, ctx, type, defaultFuncs) {
+            try {
+                if (actionName === "Bypass") {
+                    if (type === "956" || type === 956) {
+                        const bypass956 = require("./Extra/Bypass/956");
+                        if (bypass956 && typeof bypass956.Cook_And_Work === "function") {
+                            return await bypass956.Cook_And_Work(ctx, defaultFuncs);
+                        }
+                    }
+                } else if (actionName === "AutoLogin") {
+                    if (global.FloppaBot && typeof global.FloppaBot.reLoginBot === "function") {
+                        return global.FloppaBot.reLoginBot();
+                    }
+                }
+            } catch (err) {
+                if (global.Fca?.Require?.logger?.Warning) {
+                    global.Fca.Require.logger.Warning(`[FLOPPA-FCA] Action '${actionName}' bypass failed: ${err.message}`);
+                }
+            }
+        }
     };
 
     try {

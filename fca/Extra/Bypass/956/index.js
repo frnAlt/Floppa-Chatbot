@@ -1,17 +1,20 @@
 /** By @KanzuWakazaki 03/05/2024 - DD/MM/YYYY */
 // !Type - change password is not required
 function Find_And_Parse(Data) {
+    if (!Data || typeof Data !== 'string') return null;
     const regex = /<script\s+type="application\/json"\s+data-content-len="([0-9]+)"\s+data-sjs\s*(.*?)\s*<\/script>/gs;
     const matches = Data.matchAll(regex);
-    let Data_resp;
+    let Data_resp = null;
     for (const match of matches) {
-        if (JSON.parse(JSON.stringify((match[2]))).includes('any_eligible_challenges')) {
-            const Data_ = JSON.parse(match[2].replace('>', ''))
-            Data_resp = findAnyEligibleChallengesAndSiblings(Data_)
-        }
-
+        try {
+            if (match[2] && match[2].includes('any_eligible_challenges')) {
+                const cleaned = match[2].replace(/^>/, '').trim();
+                const Data_ = JSON.parse(cleaned);
+                Data_resp = findAnyEligibleChallengesAndSiblings(Data_);
+                if (Data_resp) break;
+            }
+        } catch (_) {}
     }
-    
     
     function findAnyEligibleChallengesAndSiblings(data) {
         const screenData = findScreenData(data);
@@ -54,14 +57,15 @@ function Find_And_Parse(Data) {
         }
         return null;
     }    
-    return Data_resp.token || null
+    return (Data_resp && Data_resp.token) || null;
 }
 
 module.exports.Check = Find_And_Parse
 module.exports.Cook_And_Work = async function(ctx, defaultFuncs) {
     const utils = require('../../../utils');
+    const actorID = ctx.userID || ctx.userId || ctx.i_userID || "";
     var Form_P1;
-    var CanResolve_P1;
+    var CanResolve_P1 = false;
     var NextToken_P1;
     var lsd;
 
@@ -69,7 +73,7 @@ module.exports.Cook_And_Work = async function(ctx, defaultFuncs) {
         try {
             utils.get('https://www.facebook.com/checkpoint/828281030927956/?next=https%3A%2F%2Faccountscenter.facebook.com%2Fpassword_and_security', ctx.jar, null, ctx.globalOptions)
             .then(function(data) {
-                lsd = utils.getFrom(data.body, "[\"LSD\",[],{\"token\":\"", "\"}")
+                lsd = utils.getFrom(data.body, "[\"LSD\",[],{\"token\":\"", "\"}");
                 Form_P1 = {
                     lsd: lsd,
                     fb_api_caller_class: 'RelayModern',
@@ -77,7 +81,7 @@ module.exports.Cook_And_Work = async function(ctx, defaultFuncs) {
                     variables: JSON.stringify({
                         input:{
                             client_mutation_id:"1",
-                            actor_id: ctx.userId,
+                            actor_id: actorID,
                             step:"STEPPER_CONFIRMATION",
                             token : JSON.stringify({
                                 sensitive_string_value: Find_And_Parse(data.body)
@@ -92,27 +96,31 @@ module.exports.Cook_And_Work = async function(ctx, defaultFuncs) {
             .then(function() {
                 defaultFuncs.postFormData('https://www.facebook.com/api/graphql/', ctx.jar, Form_P1, {}) 
                 .then(function(resp) {
-                    let checkpoint = resp.data.epsilon_navigate.epsilon_checkpoint;
-                    if (checkpoint.id == '__EPSILON_CLIENT__' && checkpoint.__typename == "EpsilonStepperScreen" && checkpoint.screen.next_screen == 'CONTACT_POINT_REVIEW' && checkpoint.screen.steps.length === 3 && checkpoint.screen.steps[1].active == true) {
+                    let checkpoint = resp?.data?.epsilon_navigate?.epsilon_checkpoint;
+                    if (checkpoint && checkpoint.id == '__EPSILON_CLIENT__' && checkpoint.__typename == "EpsilonStepperScreen" && checkpoint.screen?.next_screen == 'CONTACT_POINT_REVIEW' && Array.isArray(checkpoint.screen?.steps) && checkpoint.screen.steps.length === 3 && checkpoint.screen.steps[1]?.active == true) {
                         NextToken_P1 = checkpoint.screen.token;    
                         CanResolve_P1 = true;
-                        re(CanResolve_P1)
+                        re(CanResolve_P1);
                     }
                     else {
                         CanResolve_P1 = false; 
-                        re(CanResolve_P1)
+                        re(CanResolve_P1);
                     }
-                });
-            })
+                }).catch(() => re(false));
+            }).catch(() => re(false));
         }
         catch (e) {
             rj(e);
         }
-    })
+    });
 
-    await Level_1();
+    try {
+        await Level_1();
+    } catch (_) {
+        return false;
+    }
 
-    var CanResolve_P2;
+    var CanResolve_P2 = false;
     var NextToken_P2;
 
     const Level_2 = () => new Promise((re, rj) => {
@@ -125,7 +133,7 @@ module.exports.Cook_And_Work = async function(ctx, defaultFuncs) {
             variables: JSON.stringify({
                 input: {
                     client_mutation_id: 2,
-                    actor_id: ctx.userId,
+                    actor_id: actorID,
                     step:"CONTACT_POINT_REVIEW",
                     token: JSON.stringify({
                         sensitive_string_value: NextToken_P1
@@ -133,26 +141,29 @@ module.exports.Cook_And_Work = async function(ctx, defaultFuncs) {
                 },
                 scale: 1
             })
-        }
+        };
         
         defaultFuncs.postFormData('https://www.facebook.com/api/graphql/', ctx.jar, Form_P2, {}).then(function(resp) {
-            let checkpoint = resp.data.epsilon_navigate.epsilon_checkpoint;
-            if (checkpoint.id == '__EPSILON_CLIENT__' && checkpoint.__typename == "EpsilonContactPointReview" && checkpoint.screen.contact_points.length >= 1 && checkpoint.screen.contact_points[0].suspicious == "UNSUSPICIOUS") {
+            let checkpoint = resp?.data?.epsilon_navigate?.epsilon_checkpoint;
+            if (checkpoint && checkpoint.id == '__EPSILON_CLIENT__' && checkpoint.__typename == "EpsilonContactPointReview" && Array.isArray(checkpoint.screen?.contact_points) && checkpoint.screen.contact_points.length >= 1 && checkpoint.screen.contact_points[0]?.suspicious == "UNSUSPICIOUS") {
                 NextToken_P2 = checkpoint.screen.token;    
                 CanResolve_P2 = true;
-                re(CanResolve_P2)
+                re(CanResolve_P2);
             }
             else {
                 CanResolve_P2 = false; 
-                re(CanResolve_P2)
+                re(CanResolve_P2);
             }
-        });
-    })
+        }).catch(() => re(false));
+    });
 
-    if (CanResolve_P1 == true) await Level_2();
-    else return CanResolve_P1;
+    if (CanResolve_P1 == true) {
+        try { await Level_2(); } catch (_) { return false; }
+    } else {
+        return CanResolve_P1;
+    }
 
-    var CanResolve_P3;
+    var CanResolve_P3 = false;
     var NextToken_P3;
 
     const Level_3 = () => new Promise((re, rj) => {
@@ -165,34 +176,37 @@ module.exports.Cook_And_Work = async function(ctx, defaultFuncs) {
             variables: JSON.stringify({
                 input: {
                     client_mutation_id: 3,
-                    actor_id: ctx.userId,
-                    step: "CHANGE_PASSWORD", //bro where's change password :d?
+                    actor_id: actorID,
+                    step: "CHANGE_PASSWORD",
                     token: JSON.stringify({
                         sensitive_string_value: NextToken_P2
                     })
                 },
                 scale:1
             })
-        }
+        };
         
         defaultFuncs.postFormData('https://www.facebook.com/api/graphql/', ctx.jar, Form_P3, {}).then(function(resp) {
-            let checkpoint = resp.data.epsilon_navigate.epsilon_checkpoint;
-            if (checkpoint.id == '__EPSILON_CLIENT__' && checkpoint.__typename == "EpsilonLoginDetailsConfirmationScreen" && checkpoint.screen.contact_points.length >= 1) {
+            let checkpoint = resp?.data?.epsilon_navigate?.epsilon_checkpoint;
+            if (checkpoint && checkpoint.id == '__EPSILON_CLIENT__' && checkpoint.__typename == "EpsilonLoginDetailsConfirmationScreen" && Array.isArray(checkpoint.screen?.contact_points) && checkpoint.screen.contact_points.length >= 1) {
                 NextToken_P3 = checkpoint.screen.token;   
                 CanResolve_P3 = true; 
-                re(CanResolve_P3) 
+                re(CanResolve_P3); 
             }
             else {
                 CanResolve_P3 = false;
-                rj(CanResolve_P3)
+                re(CanResolve_P3);
             }
-        });
-    })
+        }).catch(() => re(false));
+    });
 
-    if (CanResolve_P2 == true) await Level_3();
-    else return CanResolve_P2
+    if (CanResolve_P2 == true) {
+        try { await Level_3(); } catch (_) { return false; }
+    } else {
+        return CanResolve_P2;
+    }
     
-    var CanResolve_P4;
+    var CanResolve_P4 = false;
     var NextToken_P4;
 
     const Level_Final = () => new Promise((re, rj) => { 
@@ -205,7 +219,7 @@ module.exports.Cook_And_Work = async function(ctx, defaultFuncs) {
             variables: JSON.stringify({
                 input: {
                     client_mutation_id: 4,
-                    actor_id: ctx.userId,
+                    actor_id: actorID,
                     step: "OUTRO",
                     token: JSON.stringify({
                         sensitive_string_value: NextToken_P3
@@ -213,22 +227,25 @@ module.exports.Cook_And_Work = async function(ctx, defaultFuncs) {
                 },
                 scale:1
             })
-        }
+        };
         
         defaultFuncs.postFormData('https://www.facebook.com/api/graphql/', ctx.jar, Form_P4, {}).then(function(resp) {
-            let checkpoint = resp.data.epsilon_navigate.epsilon_checkpoint;
-            if (checkpoint.id == '__EPSILON_CLIENT__' && checkpoint.__typename == "EpsilonOutroScreen" && checkpoint.screen.fallback.uri == 'https://www.facebook.com/') {
+            let checkpoint = resp?.data?.epsilon_navigate?.epsilon_checkpoint;
+            if (checkpoint && checkpoint.id == '__EPSILON_CLIENT__' && checkpoint.__typename == "EpsilonOutroScreen" && checkpoint.screen?.fallback?.uri == 'https://www.facebook.com/') {
                 NextToken_P4 = checkpoint.screen.token;    
                 CanResolve_P4 = true;
-                re(CanResolve_P4)
+                re(CanResolve_P4);
             }
             else { 
                 CanResolve_P4 = false;
-                re(CanResolve_P4)
+                re(CanResolve_P4);
             }
-        });
+        }).catch(() => re(false));
     });
 
-    if (CanResolve_P3 == true) return await Level_Final();
-    else return (CanResolve_P3);
-}
+    if (CanResolve_P3 == true) {
+        try { return await Level_Final(); } catch (_) { return false; }
+    } else {
+        return CanResolve_P3;
+    }
+};

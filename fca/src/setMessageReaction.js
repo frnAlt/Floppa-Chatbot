@@ -101,10 +101,18 @@ module.exports = function (defaultFuncs, api, ctx) {
         {},
         qs
       )
-      .then(utils.parseAndCheckLogin(ctx.jar, defaultFuncs))
+      .then(utils.parseAndCheckLogin(ctx, defaultFuncs))
       .then(function (resData) {
         if (!resData) throw { error: "setReaction returned empty object." };
-        if (resData.error) throw resData;
+        if (resData.error) {
+          if (resData.error === 368 || resData.error === 1357004) {
+            try {
+              const { globalIpBanProtection } = require("./utils/ipSpoofing");
+              if (globalIpBanProtection) globalIpBanProtection.handleBlock(resData, 1);
+            } catch (_) {}
+          }
+          throw resData;
+        }
         callback(null); 
       })
       .catch(function (err) {

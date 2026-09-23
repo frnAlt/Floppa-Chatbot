@@ -114,17 +114,18 @@ function setOptions(globalOptions, options) {
     });
 }
 
-function BypassAutomationNotification(resp, jar, globalOptions, appstate,ID) {
-    global.Fca.BypassAutomationNotification = BypassAutomationNotification
+function BypassAutomationNotification(resp, jar, globalOptions, appstate, ID) {
+    global.Fca.BypassAutomationNotification = BypassAutomationNotification;
     try {
-        let UID;
-        if (ID) UID = ID
-        else {
-            UID = (appstate.find(i => i.key == 'c_user') || appstate.find(i => i.key == 'i_user'))
-            UID = UID.value;
+        let UID = "";
+        if (ID) {
+            UID = String(ID);
+        } else if (Array.isArray(appstate)) {
+            const userObj = appstate.find(i => (i.key || i.name) === 'c_user') || appstate.find(i => (i.key || i.name) === 'i_user');
+            UID = userObj ? String(userObj.value || "") : "";
         }
         if (resp !== undefined) {
-            if (resp.request.uri && resp.request.uri.href.includes("https://www.facebook.com/checkpoint/")) {
+            if (resp && resp.request && resp.request.uri && resp.request.uri.href.includes("https://www.facebook.com/checkpoint/")) {
                 if (resp.request.uri.href.includes('601051028565049')) {
                     const fb_dtsg = utils.getFrom(resp.body, '["DTSGInitData",[],{"token":"', '","');
                     const jazoest = utils.getFrom(resp.body, 'jazoest=', '",');
@@ -138,11 +139,13 @@ function BypassAutomationNotification(resp, jar, globalOptions, appstate,ID) {
                         variables: JSON.stringify({}),
                         server_timestamps: true,
                         doc_id: 6339492849481770
-                    }
+                    };
                     return utils.post("https://www.facebook.com/api/graphql/", jar, FormBypass, globalOptions)
                     .then(utils.saveCookies(jar)).then(function(res) {
                         global.Fca.Require.logger.Warning(global.Fca.Require.Language.Index.Bypass_AutoNoti);
-                        return process.exit(1);                    
+                        return res || resp;
+                    }).catch(function() {
+                        return resp;
                     });
                 }
                 else {
@@ -150,16 +153,16 @@ function BypassAutomationNotification(resp, jar, globalOptions, appstate,ID) {
                 }
             }
             else {
-                return resp
+                return resp;
             }
         }
         else {
             return utils.get('https://www.facebook.com/', jar, null, globalOptions).then(function(res) {
-                if (res.request.uri && res.request.uri.href.includes("https://www.facebook.com/checkpoint/")) {
-                    if (res.request.uri.href.includes('601051028565049')) return { Status: true, Body: res.body }
-                    else return { Status: false, Body: res.body }
+                if (res && res.request && res.request.uri && res.request.uri.href.includes("https://www.facebook.com/checkpoint/")) {
+                    if (res.request.uri.href.includes('601051028565049')) return { Status: true, Body: res.body };
+                    else return { Status: false, Body: res.body };
                 }
-                else return { Status: false, Body: res.body }
+                else return { Status: false, Body: res ? res.body : "" };
             }).then(function(res) {
                 if (res.Status === true) {
                     const fb_dtsg = utils.getFrom(res.Body, '["DTSGInitData",[],{"token":"', '","');
@@ -174,26 +177,21 @@ function BypassAutomationNotification(resp, jar, globalOptions, appstate,ID) {
                         variables: JSON.stringify({}),
                         server_timestamps: true,
                         doc_id: 6339492849481770
-                    }
-                return utils.post("https://www.facebook.com/api/graphql/", jar, FormBypass, globalOptions).then(utils.saveCookies(jar))
+                    };
+                    return utils.post("https://www.facebook.com/api/graphql/", jar, FormBypass, globalOptions).then(utils.saveCookies(jar))
                     .then(res => {
                         global.Fca.Require.logger.Warning(global.Fca.Require.Language.Index.Bypass_AutoNoti);
-                        return res
-                    })
+                        return res;
+                    });
                 }
                 else return res;
-
-            })
-            .then(function(res) {
-                return utils.get('https://www.facebook.com/', jar, null, globalOptions, { noRef: true }).then(utils.saveCookies(jar))
-            })
-            .then(function(res) {
-                return process.exit(1)
-            })
+            }).catch(function() {
+                return resp;
+            });
         }
     }
     catch (e) {
-        console.log(e)
+        return resp;
     }
 }
 
@@ -212,17 +210,32 @@ function buildAPI(globalOptions, html, jar, bypass_region) {
     //check tiktik
     var userID;
     var cookie = jar.getCookies("https://www.facebook.com");
-    //.log(cookie)
     var maybeUser = cookie.filter(function(val) { return val.cookieString().split("=")[0] === "c_user"; });
     var maybeTiktik = cookie.filter(function(val) { return val.cookieString().split("=")[0] === "i_user"; });
+    if (maybeUser.length === 0 && maybeTiktik.length === 0 && Array.isArray(global.Fca?.Data?.AppState)) {
+        const appState = global.Fca.Data.AppState;
+        const foundUser = appState.find(c => (c.key || c.name) === 'c_user');
+        const foundTiktik = appState.find(c => (c.key || c.name) === 'i_user');
+        if (foundUser || foundTiktik) {
+            const fallbackVal = (foundTiktik || foundUser).value;
+            if (fallbackVal) {
+                if (foundTiktik) maybeTiktik = [{ cookieString: () => `i_user=${fallbackVal}` }];
+                else maybeUser = [{ cookieString: () => `c_user=${fallbackVal}` }];
+            }
+        }
+    }
     if (maybeUser.length === 0 && maybeTiktik.length === 0) {
         if (global.Fca.Require.Priyansh.AutoLogin) {
             return global.Fca.Require.logger.Warning(global.Fca.Require.Language.Index.AutoLogin, function() {
                 global.Fca.Action('AutoLogin')
             });
         }
-        else if (!global.Fca.Require.Priyansh.AutoLogin) {
-            return global.Fca.Require.logger.Error(global.Fca.Require.Language.Index.ErrAppState);
+        else {
+            const errMsg = global.Fca.Require.Language?.Index?.ErrAppState || "Failed to find session c_user cookie in AppState";
+            global.Fca.Require.logger.Error(errMsg);
+            const err = new Error(errMsg);
+            err.name = "COOKIE_INVALID";
+            throw err;
         }
     }
     else {
@@ -449,6 +462,19 @@ function buildAPI(globalOptions, html, jar, bypass_region) {
         try {
             const { attachClientFacade } = require('./src/app/createFcaClient');
             attachClientFacade(api);
+        } catch (_) {}
+
+        try {
+            let extendFCA = null;
+            try { extendFCA = require(require('path').join(__dirname, "../func/fcaExtension.js")); } catch (_) {}
+            if (!extendFCA) {
+                try { extendFCA = require(require('path').join(process.cwd(), "func/fcaExtension.js")); } catch (_) {}
+            }
+            if (typeof extendFCA === "function") {
+                extendFCA(api);
+            } else if (extendFCA && typeof extendFCA.extendFCA === "function") {
+                extendFCA.extendFCA(api);
+            }
         } catch (_) {}
 
         return {
@@ -941,14 +967,14 @@ try {
                                         break;
                                     default: {
                                         logger.Warning(Language.InvaildAppState);
-                                        process.exit(0)
+                                        return callback(new Error(Language.InvaildAppState || "Invalid AppState"));
                                     }
                                 }
                             }
                                 break;
                             default: {
                                 logger.Warning(Language.InvaildAppState);
-                                process.exit(0)
+                                return callback(new Error(Language.InvaildAppState || "Invalid AppState"));
                             }
                         } 
                     }
@@ -969,21 +995,21 @@ try {
                                         break;
                                     default: {
                                         logger.Warning(Language.InvaildAppState);
-                                        process.exit(0)
+                                        return callback(new Error(Language.InvaildAppState || "Invalid AppState"));
                                     }
                                 }
                             }
                                 break;
                             default: {
                                 logger.Warning(Language.InvaildAppState);
-                                process.exit(0)
+                                return callback(new Error(Language.InvaildAppState || "Invalid AppState"));
                             }
                         } 
                     }
                         break;
                     default: {
-                        logger.Warning(getText(Language.IsNotABoolean,global.Fca.Require.Priyansh.EncryptFeature))
-                        process.exit(0);
+                        logger.Warning(getText(Language.IsNotABoolean,global.Fca.Require.Priyansh.EncryptFeature));
+                        return callback(new Error("EncryptFeature is not a boolean"));
                     }
                 }
             }
@@ -1004,11 +1030,24 @@ try {
         }
         try {
             global.Fca.Data.AppState = appState;
-                appState.map(function(/** @type {{ key: string; value: string; expires: string; domain: string; path: string; }} */c) {
-                    var str = c.key + "=" + c.value + "; expires=" + c.expires + "; domain=" + c.domain + "; path=" + c.path + ";";
-                    jar.setCookie(str, "http://" + c.domain);
+            if (Array.isArray(appState)) {
+                appState.forEach(function(/** @type {{ key: string; name: string; value: string; expires: string; expirationDate: number; domain: string; path: string; }} */c) {
+                    if (!c) return;
+                    var key = c.key || c.name;
+                    var val = c.value !== undefined ? c.value : "";
+                    if (!key || val === "") return;
+                    var rawDomain = c.domain || "facebook.com";
+                    var cleanDomain = rawDomain.replace(/^\./, "");
+                    var expStr = c.expires || (c.expirationDate ? new Date(Number(c.expirationDate) * 1000).toUTCString() : "");
+                    var str = key + "=" + val + "; " + (expStr ? "expires=" + expStr + "; " : "") + "domain=." + cleanDomain + "; path=" + (c.path || "/") + ";";
+                    try {
+                        jar.setCookie(str, "https://" + cleanDomain);
+                    } catch (_) {
+                        try { jar.setCookie(str, "https://www.facebook.com"); } catch (__) {}
+                    }
                 });
-                Database().set('Backup', appState);
+            }
+            Database().set('Backup', appState);
             mainPromise = utils.get('https://www.facebook.com/', jar, null, globalOptions, { noRef: true }).then(utils.saveCookies(jar));
         } 
         catch (e) {
@@ -1018,12 +1057,12 @@ try {
                 }
                 else {
                     logger.Warning(Language.ErrBackup);
-                    process.exit(0);
+                    return callback(new Error(Language.ErrBackup || "FCA session backup error"));
                 }
             }
             catch (e) {
                 logger.Warning(Language.ErrBackup);
-                process.exit(0);
+                return callback(new Error(Language.ErrBackup || "FCA session backup error"));
             }
         }
     }   

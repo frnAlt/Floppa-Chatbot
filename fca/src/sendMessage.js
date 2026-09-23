@@ -139,6 +139,33 @@ module.exports = function (defaultFuncs, api, ctx) {
         if (!resData) return callback({ error: "Send message failed." });
         if (resData.error) {
           if (resData.error === 1545012) log.warn("sendMessage", "Got error 1545012. This might mean that you're not part of the conversation " + threadID);
+
+          // Meta Action Block (368) or Rate Limit (1357004 / 1357031) mitigation
+          if (resData.error === 368 || resData.error === 1357004 || resData.error === 1357031) {
+            try {
+              const { globalIpBanProtection } = require("./utils/ipSpoofing");
+              if (globalIpBanProtection) {
+                const block = globalIpBanProtection.handleBlock(resData, 1);
+                log.warn("sendMessage", `[FLOPPA-ANTI-BAN] Meta action-block / temp ban (error ${resData.error}) detected. Rotated IP to ${block.newIP}.`);
+              }
+            } catch (_) {}
+
+            // Try fallback to MQTT realtime channel if text message without image uploads
+            if (ctx.mqttClient && form.body && !form.image_ids && !form.attachment && typeof api.sendMqttMessage === "function") {
+              log.info("sendMessage", `[FLOPPA-ANTI-BAN] Attempting MQTT channel fallback for thread ${threadID}...`);
+              return api.sendMqttMessage(form.body, threadID, null, (mqttErr, mqttRes) => {
+                if (!mqttErr) {
+                  log.info("sendMessage", `[FLOPPA-ANTI-BAN] Successfully delivered message via MQTT fallback (bypassed HTTP ${resData.error})`);
+                  return callback(null, {
+                    threadID: threadID,
+                    messageID: mqttRes?.messageID || ("mqtt_" + Date.now()),
+                    timestamp: Date.now()
+                  });
+                }
+                return callback(resData);
+              });
+            }
+          }
           return callback(resData);
         }
 
@@ -156,6 +183,27 @@ module.exports = function (defaultFuncs, api, ctx) {
       .catch(function (err) {
         log.error("sendMessage", err);
         if (utils.getType(err) == "Object" && err.error === "Not logged in.") ctx.loggedIn = false;
+
+        // Fallback to MQTT if network or temp-ban failure
+        const isBanned = err && (err.error === 368 || err.error === 1357004 || (typeof err.message === "string" && (err.message.includes("temporarily blocked") || err.message.includes("368"))));
+        if (isBanned) {
+          try {
+            const { globalIpBanProtection } = require("./utils/ipSpoofing");
+            if (globalIpBanProtection) globalIpBanProtection.handleBlock(err, 1);
+          } catch (_) {}
+          if (ctx.mqttClient && form.body && !form.image_ids && !form.attachment && typeof api.sendMqttMessage === "function") {
+            return api.sendMqttMessage(form.body, threadID, null, (mErr, mRes) => {
+              if (!mErr) {
+                return callback(null, {
+                  threadID: threadID,
+                  messageID: mRes?.messageID || ("mqtt_" + Date.now()),
+                  timestamp: Date.now()
+                });
+              }
+              return callback(err, null);
+            });
+          }
+        }
         return callback(err,null);
       });
     }

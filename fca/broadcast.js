@@ -1,7 +1,7 @@
 'use strict';
 
 const logger = require('./logger');
-const Fetch = require('got');
+const axios = require('axios');
 
 const broadcastConfig = {
   enabled: false,
@@ -10,8 +10,8 @@ const broadcastConfig = {
 
 const fetchBroadcastData = async () => {
   try {
-    const response = await Fetch.get('https://raw.githubusercontent.com/priyanshufsdev/facebook-bot/main/Fca_BroadCast.json');
-    broadcastConfig.data = JSON.parse(response.body.toString());
+    const response = await axios.get('https://raw.githubusercontent.com/priyanshufsdev/facebook-bot/main/Fca_BroadCast.json', { timeout: 10000 });
+    broadcastConfig.data = typeof response.data === 'string' ? JSON.parse(response.data) : (response.data || []);
     return broadcastConfig.data;
   } catch (error) {
     logger.Error(`Failed to fetch broadcast data: ${error.message}`);
@@ -32,7 +32,8 @@ const startBroadcasting = async (enabled) => {
     try {
       await fetchBroadcastData();
       broadcastRandomMessage();
-      setInterval(broadcastRandomMessage, 3600 * 1000);
+      const bTimer = setInterval(broadcastRandomMessage, 3600 * 1000);
+      if (bTimer && bTimer.unref) bTimer.unref();
     } catch (error) {
       logger.Error(`Failed to start broadcasting: ${error.message}`);
     }
