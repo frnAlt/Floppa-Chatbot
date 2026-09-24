@@ -1,5 +1,7 @@
 // set bash title
-process.stdout.write("\x1b]2;Floppa-Chatbot - Dev: Gtajisan (Farhan Muh Tasim)\x1b\x5c");
+if (process.stdout.isTTY) {
+	process.stdout.write("\x1b]2;Floppa-Chatbot - Dev: Gtajisan (Farhan Muh Tasim)\x1b\x5c");
+}
 const defaultRequire = require;
 
 function decode(text) {
@@ -65,13 +67,11 @@ const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 const currentVersion = require(`${process.cwd()}/package.json`).version;
 
 function centerText(text, length) {
-	const width = process.stdout.columns;
-	const leftPadding = Math.floor((width - (length || text.length)) / 2);
-	const rightPadding = width - leftPadding - (length || text.length);
-	// Build the padded string using the calculated padding values
-	const paddedString = ' '.repeat(leftPadding > 0 ? leftPadding : 0) + text + ' '.repeat(rightPadding > 0 ? rightPadding : 0);
-	// Print the padded string to the terminal
-	console.log(paddedString);
+	const width = process.stdout.columns || 64;
+	const len = length !== undefined ? length : String(text).replace(/\x1b\[[0-9;]*m/g, "").length;
+	const leftPadding = Math.max(0, Math.floor((width - len) / 2));
+	const rightPadding = Math.max(0, width - leftPadding - len);
+	console.log(' '.repeat(leftPadding) + text + ' '.repeat(rightPadding));
 }
 
 // logo
@@ -95,8 +95,8 @@ const titles = [
 		"FLOPPA CHATBOT"
 	]
 ];
-const maxWidth = process.stdout.columns;
-const title = maxWidth > 58 ?
+const maxWidth = process.stdout.columns || 64;
+const title = maxWidth >= 50 ?
 	titles[0] :
 	maxWidth > 36 ?
 		titles[1] :
@@ -135,23 +135,24 @@ centerText(gradient("#9F98E8", "#AFF6CF")(author), author.length);
 centerText(gradient("#9F98E8", "#AFF6CF")(srcUrl), srcUrl.length);
 centerText(gradient("#f5af19", "#f12711")(releaseInfo), releaseInfo.length);
 
-let widthConsole = process.stdout.columns;
+let widthConsole = process.stdout.columns || 64;
 if (widthConsole > 50)
-        widthConsole = 50;
+	widthConsole = 50;
 
 function createLine(content, isMaxWidth = false) {
-        if (!content)
-                return Array(isMaxWidth ? process.stdout.columns : widthConsole).fill("─").join("");
-        else {
-                content = ` ${content.trim()} `;
-                const lengthContent = content.length;
-                const lengthLine = isMaxWidth ? process.stdout.columns - lengthContent : widthConsole - lengthContent;
-                let left = Math.floor(lengthLine / 2);
-                if (left < 0 || isNaN(left))
-                        left = 0;
-                const lineOne = Array(left).fill("─").join("");
-                return lineOne + content + lineOne;
-        }
+	const totalWidth = isMaxWidth ? (process.stdout.columns || 64) : (widthConsole || 50);
+	if (!content)
+		return Array(totalWidth).fill("─").join("");
+	else {
+		content = ` ${content.trim()} `;
+		const lengthContent = content.length;
+		const lengthLine = Math.max(0, totalWidth - lengthContent);
+		let left = Math.floor(lengthLine / 2);
+		if (left < 0 || isNaN(left))
+			left = 0;
+		const lineOne = Array(left).fill("─").join("");
+		return lineOne + content + lineOne;
+	}
 }
 
 const character = createLine();
@@ -1155,9 +1156,16 @@ async function startBot(loginWithEmail) {
                                 const w = 70;
                                 const stripAnsi = s => String(s).replace(/\x1b\[[0-9;]*m/g, "");
                                 const boxLine = str => {
-                                        const visibleLen = stripAnsi(str).length;
-                                        const pad = Math.max(0, w - 4 - visibleLen);
-                                        return "\x1b[38;2;245;175;25m║\x1b[0m " + str + " ".repeat(pad) + " \x1b[38;2;245;175;25m║\x1b[0m";
+                                        let content = str;
+                                        const maxLen = w - 4;
+                                        let visibleLen = stripAnsi(content).length;
+                                        if (visibleLen > maxLen) {
+                                                const plain = stripAnsi(content);
+                                                content = plain.slice(0, maxLen - 3) + "...";
+                                                visibleLen = content.length;
+                                        }
+                                        const pad = Math.max(0, maxLen - visibleLen);
+                                        return "\x1b[38;2;245;175;25m║\x1b[0m " + content + " ".repeat(pad) + " \x1b[38;2;245;175;25m║\x1b[0m";
                                 };
                                 const hr = (c1, c2, c3) => "\x1b[38;2;245;175;25m" + c1 + "═".repeat(w - 2) + c3 + "\x1b[0m";
 
@@ -1177,7 +1185,9 @@ async function startBot(loginWithEmail) {
                                 console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mRuntime Memory:\x1b[0m  ${memMB}MB / ${totalMemMB}MB Heap (${rssMB}MB RSS)`));
                                 console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mSystem Host:\x1b[0m     ${os.platform()}-${os.arch()} | Node ${process.version}`));
                                 if (adminList.length > 0) {
-                                        console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mAdministrators:\x1b[0m  ${adminList.slice(0, 2).join(", ")}${adminList.length > 2 ? ` (+${adminList.length - 2} more)` : ""}`));
+                                        const cleanAdmins = adminList.map(a => a.includes("(") ? a.replace(/^\d+\s*\((.+)\)$/, "$1") : a);
+                                        const adminNames = cleanAdmins.slice(0, 2).join(", ") + (cleanAdmins.length > 2 ? ` (+${cleanAdmins.length - 2} more)` : "");
+                                        console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mAdministrators:\x1b[0m  ${adminNames}`));
                                 }
                                 console.log(hr("╚", "═", "╝"));
                                 console.log("");

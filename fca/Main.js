@@ -283,19 +283,28 @@ function buildAPI(globalOptions, html, jar, bypass_region) {
                 switch (Slot.indexOf(MQTT)) {
                     case 0: {
                         irisSeqID = CHECK_MQTT[MQTT][1];
-                            mqttEndpoint = CHECK_MQTT[MQTT][2].replace(/\\\//g, "/");
-                            region = new URL(mqttEndpoint).searchParams.get("region").toUpperCase();
+                        mqttEndpoint = (CHECK_MQTT[MQTT][2] || "").replace(/\\\//g, "/");
+                        try {
+                            const reg = new URL(mqttEndpoint).searchParams.get("region");
+                            if (reg) region = reg.toUpperCase();
+                        } catch (_) {}
                         return;
                     }
                     case 1: {
                         irisSeqID = CHECK_MQTT[MQTT][2];
-                            mqttEndpoint = CHECK_MQTT[MQTT][1].replace(/\\\//g, "/");
-                            region = new URL(mqttEndpoint).searchParams.get("region").toUpperCase();
+                        mqttEndpoint = (CHECK_MQTT[MQTT][1] || "").replace(/\\\//g, "/");
+                        try {
+                            const reg = new URL(mqttEndpoint).searchParams.get("region");
+                            if (reg) region = reg.toUpperCase();
+                        } catch (_) {}
                         return;
                     }
                     case 2: {
-                        mqttEndpoint = CHECK_MQTT[MQTT][2].replace(/\\\//g, "/"); //is important lmao f?
-                            region = new URL(mqttEndpoint).searchParams.get("region").toUpperCase();
+                        mqttEndpoint = (CHECK_MQTT[MQTT][2] || "").replace(/\\\//g, "/"); //is important lmao f?
+                        try {
+                            const reg = new URL(mqttEndpoint).searchParams.get("region");
+                            if (reg) region = reg.toUpperCase();
+                        } catch (_) {}
                         return;
                     }
                 }

@@ -22,8 +22,12 @@ function printDeployBanner() {
 	console.log("\x1b[38;2;245;175;25m" + border + "\x1b[0m\n");
 }
 
+let isFirstStart = true;
 function startProject() {
-	printDeployBanner();
+	if (isFirstStart) {
+		printDeployBanner();
+		isFirstStart = false;
+	}
 	// --expose-gc  : lets MemoryManager call global.gc() to force V8 GC when heap is high
 	// --max-old-space-size=400 : caps V8 old-gen heap at 400 MB
 	const child = spawn("node", ["--expose-gc", "--max-old-space-size=400", "Floppa.js"], {

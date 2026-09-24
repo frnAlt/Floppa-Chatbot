@@ -16,6 +16,11 @@ process.on('unhandledRejection', (error, promise) => {
 });
 
 process.on('uncaughtException', (error) => {
+	const errMsg = String(error?.message || error);
+	if (errMsg.includes("IRIS_CURSOR_LIMIT") || (errMsg.includes("is not valid JSON") && String(error?.stack || "").includes("listenMqtt"))) {
+		log.warn('FCA_MQTT', `Transient MQTT frame ignored without exit: ${errMsg}`);
+		return;
+	}
 	log.error('UNCAUGHT_EXCEPTION', error?.message || error);
 	log.error('UNCAUGHT_EXCEPTION', error?.stack || 'No stack trace');
 	if (global.systemMemoryDB) {

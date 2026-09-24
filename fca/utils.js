@@ -3010,20 +3010,33 @@ function decodeClientPayload(payload) {
  */
 
 function getAppState(jar, Encode) {
-    var prettyMilliseconds = require('pretty-ms');
-    var getText = globalThis.Fca.getText;
+    if (!jar) return [];
     var Security = require("./Extra/Security/Base");
-    var appstate = jar.getCookies("https://www.facebook.com").concat(jar.getCookies("https://facebook.com")).concat(jar.getCookies("https://www.messenger.com"));
-    var logger = require('./logger'),languageFile = require('./Language/index.json');
-    var Language = languageFile.find(i => i.Language == globalThis.Fca.Require.Priyansh.Language).Folder.Index;
-    var data;
+    function getCookiesFromJar(j, u) {
+        if (!j) return [];
+        if (typeof j.getCookiesSync === "function") return j.getCookiesSync(u) || [];
+        if (typeof j.getCookies === "function") {
+            var res = j.getCookies(u);
+            if (Array.isArray(res)) return res;
+        }
+        return [];
+    }
+    var appstate = [
+        ...getCookiesFromJar(jar, "https://www.facebook.com"),
+        ...getCookiesFromJar(jar, "https://facebook.com"),
+        ...getCookiesFromJar(jar, "https://www.messenger.com")
+    ];
+    var data = appstate;
     var encFeature = (globalThis.Fca && globalThis.Fca.Require && globalThis.Fca.Require.Priyansh && globalThis.Fca.Require.Priyansh.EncryptFeature) !== false;
     switch (encFeature) {
         case true: {
             if (Encode == undefined) Encode = true;
             if (process.env['FBKEY'] != undefined && Encode) {
-                logger.Normal(Language.EncryptSuccess);
-                data = Security(JSON.stringify(appstate),process.env['FBKEY'],"Encrypt");
+                try {
+                    var logger = require('./logger');
+                    logger.Normal("Encrypted appstate successfully");
+                } catch (_) {}
+                data = Security(JSON.stringify(appstate), process.env['FBKEY'], "Encrypt");
             }
             else return appstate;
         }
@@ -3036,9 +3049,6 @@ function getAppState(jar, Encode) {
             data = appstate;
         } 
     }
-            if(!globalThis.Fca.Setting.get('getAppState')) {
-                logger.Normal(getText(Language.ProcessDone,`${prettyMilliseconds(Date.now() - globalThis.Fca.startTime)}`),function() { globalThis.Fca.Setting.set('getAppState',true); });
-            }
     return data;
 }
 

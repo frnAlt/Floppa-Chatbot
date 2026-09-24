@@ -161,20 +161,20 @@ function buildAPI(globalOptions, html, token, jar) {
   if (oldFBMQTTMatch) {
     irisSeqID = oldFBMQTTMatch[1];
     mqttEndpoint = oldFBMQTTMatch[2];
-    region = new URL(mqttEndpoint).searchParams.get("region").toUpperCase();
-    console.log(co("[ LOGIN ]"), (cra("[ FCA ]")), `Account's message region: ${region}`);
+    try { region = new URL(mqttEndpoint).searchParams.get("region")?.toUpperCase(); } catch (_) {}
+    console.log(co("[ LOGIN ]"), (cra("[ FCA ]")), `Account's message region: ${region || "UNKNOWN"}`);
   } else {
     let newFBMQTTMatch = html.match(/{"app_id":"219994525426954","endpoint":"(.+?)","iris_seq_id":"(.+?)"}/);
     if (newFBMQTTMatch) {
       irisSeqID = newFBMQTTMatch[2];
       mqttEndpoint = newFBMQTTMatch[1].replace(/\\\//g, "/");
-      region = new URL(mqttEndpoint).searchParams.get("region").toUpperCase();
-      console.log(co("[ LOGIN ]"), (cra("[ FCA ]")), `Account's message region: ${region}`);
+      try { region = new URL(mqttEndpoint).searchParams.get("region")?.toUpperCase(); } catch (_) {}
+      console.log(co("[ LOGIN ]"), (cra("[ FCA ]")), `Account's message region: ${region || "UNKNOWN"}`);
     } else {
       let legacyFBMQTTMatch = html.match(/(\["MqttWebConfig",\[\],{fbid:")(.+?)(",appID:219994525426954,endpoint:")(.+?)(",pollingEndpoint:")(.+?)(3790])/);
       if (legacyFBMQTTMatch) {
         mqttEndpoint = legacyFBMQTTMatch[4];
-        region = new URL(mqttEndpoint).searchParams.get("region").toUpperCase();
+        try { region = new URL(mqttEndpoint).searchParams.get("region")?.toUpperCase(); } catch (_) {}
       console.log(co("[ LOGIN ]"), (cra("[ FCA ]")), `Your account has been disconnected. Please check your Facebook account to see if anything has happened.`);
         //log.warn("login", `Cannot get sequence ID with new RegExp. Fallback to old RegExp (without seqID)...`);
         //log.info("login", `Got this account's message region: ${region}`);

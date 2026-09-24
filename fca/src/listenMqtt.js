@@ -269,7 +269,19 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
   });
 
   const HandleMessage = function(topic, message, _packet) {
-    const jsonMessage = JSON.parse(message.toString());
+    if (!message) return;
+    const raw = message.toString();
+    let jsonMessage;
+    try {
+      jsonMessage = JSON.parse(raw);
+    } catch (e) {
+      if (raw.includes("IRIS_CURSOR_LIMIT") || raw.includes("CURSOR")) {
+        if (ctx.tmsWait && typeof ctx.tmsWait == "function") ctx.tmsWait();
+        getSeqID();
+      }
+      return;
+    }
+    if (!jsonMessage || typeof jsonMessage !== "object") return;
     if (topic === "/t_ms") {
       if (ctx.tmsWait && typeof ctx.tmsWait == "function") ctx.tmsWait();
 
@@ -280,14 +292,21 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
 
       if (jsonMessage.lastIssuedSeqId) ctx.lastSeqId = parseInt(jsonMessage.lastIssuedSeqId);
       //If it contains more than 1 delta
-      for (var i in jsonMessage.deltas) {
-        var delta = jsonMessage.deltas[i];
-        parseDelta(defaultFuncs, api, ctx, globalCallback, {
-          "delta": delta
-        });
+      if (Array.isArray(jsonMessage.deltas)) {
+        for (var i in jsonMessage.deltas) {
+          var delta = jsonMessage.deltas[i];
+          parseDelta(defaultFuncs, api, ctx, globalCallback, {
+            "delta": delta
+          });
+        }
       }
     } else if (topic === "/ls_resp") {
-      const payload = JSON.parse(jsonMessage.payload); //'{"name":null,"step":[1,[1,[4,0,1,[5,"taskExists",[19,"415"]]],[23,[2,0],[1,[5,"replaceOptimsiticMessage","7192532113093667880","mid.$gABfX5li9LA6VdUymnWPRAdlkiawo"]]]],[1,[4,0,1,[5,"taskExists",[19,"415"]]],[23,[2,0],[1,[5,"mailboxTaskCompletionApiOnTaskCompletion",[19,"415"],true]]]],[1,[4,0,1,[5,"taskExists",[19,"415"]]],[23,[2,0],[1,[5,"removeTask",[19,"415"],[9]]]]]]}'
+      let payload;
+      try {
+        payload = typeof jsonMessage.payload === "string" ? JSON.parse(jsonMessage.payload) : jsonMessage.payload;
+      } catch (_) {
+        payload = jsonMessage.payload;
+      }
       const request_ID = jsonMessage.request_id;
 
       if (ctx.callback_Task[request_ID] != undefined && ctx.callback_Task[request_ID].type != undefined) {
@@ -309,8 +328,8 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
       var typ = {
         type: "typ",
         isTyping: !!jsonMessage.state,
-        from: jsonMessage.sender_fbid.toString(),
-        threadID: utils.formatID((jsonMessage.thread || jsonMessage.sender_fbid).toString())
+        from: (jsonMessage.sender_fbid || "").toString(),
+        threadID: utils.formatID(((jsonMessage.thread || jsonMessage.sender_fbid) || "").toString())
       };
       (function() {
         globalCallback(null, typ);
@@ -323,7 +342,7 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
 
           var presence = {
             type: "presence",
-            userID: userID.toString(),
+            userID: (userID || "").toString(),
             //Convert to ms
             timestamp: data["l"] * 1000,
             statuses: data["p"]
@@ -339,12 +358,15 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
 
   global.mqttClient.on('message', HandleMessage);
 
-  process.on('SIGINT', () => {
-    LogUptime();
-    process.kill(process.pid);
-  });
-
-  process.on('exit', LogUptime);
+  if (!global.__fca_sigint_listener_attached) {
+    global.__fca_sigint_listener_attached = true;
+    process.once('SIGINT', () => {
+      try { LogUptime(); } catch (_) {}
+    });
+    process.once('exit', () => {
+      try { LogUptime(); } catch (_) {}
+    });
+  }
 
 
 }
