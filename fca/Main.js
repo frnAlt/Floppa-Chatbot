@@ -401,8 +401,8 @@ function buildAPI(globalOptions, html, jar, bypass_region) {
 
         var api = {
             setOptions: setOptions.bind(null, globalOptions),
-            getAppState: function getAppState() {
-                return utils.getAppState(jar);
+            getAppState: function getAppState(Encode = false) {
+                return utils.getAppState(jar, Encode);
             },
             getCurrentUserID: function getCurrentUserID() {
                 return ctx.userID || userID;

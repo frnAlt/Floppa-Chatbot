@@ -237,6 +237,7 @@ function checkAndTrimString(string) {
 
 function filterKeysAppState(appState) {
         if (!Array.isArray(appState)) return [];
+        const seen = new Set();
         return appState
                 .map(item => {
                         if (!item) return null;
@@ -253,7 +254,13 @@ function filterKeysAppState(appState) {
                                 lastAccessed: item.lastAccessed || new Date().toISOString()
                         };
                 })
-                .filter(item => item && item.key && item.value && item.key !== "x-referer");
+                .filter(item => {
+                        if (!item || !item.key || !item.value || item.key === "x-referer") return false;
+                        const identifier = `${item.key}:${item.domain}`;
+                        if (seen.has(identifier)) return false;
+                        seen.add(identifier);
+                        return true;
+                });
 }
 
 global.responseUptimeCurrent = responseUptimeSuccess;
@@ -956,8 +963,14 @@ async function startBot(loginWithEmail) {
                         if (global.GoatBot.config.autoRefreshFbstate == true) {
                                 changeFbStateByCode = true;
                                 try {
-                                        writeFileSync(dirAccount, JSON.stringify(filterKeysAppState(api.getAppState()), null, 2));
-                                        log.info("REFRESH FBSTATE", getText('login', 'refreshFbstateSuccess', path.basename(dirAccount)));
+                                        const currentAppState = typeof api.getAppState === "function" ? (api.getAppState(false) || api.getAppState()) : null;
+                                        if (Array.isArray(currentAppState) && currentAppState.length > 0) {
+                                                const filtered = filterKeysAppState(currentAppState);
+                                                if (filtered && filtered.length > 0) {
+                                                        writeFileSync(dirAccount, JSON.stringify(filtered, null, 2));
+                                                        log.info("REFRESH FBSTATE", getText('login', 'refreshFbstateSuccess', path.basename(dirAccount)));
+                                                }
+                                        }
                                 }
                                 catch (err) {
                                         log.warn("REFRESH FBSTATE", getText('login', 'refreshFbstateError', path.basename(dirAccount)), err);
@@ -973,7 +986,7 @@ async function startBot(loginWithEmail) {
                                 global.intervalSaveAppState = setInterval(() => {
                                         try {
                                                 if (!api || typeof api.getAppState !== "function") return;
-                                                const currentAppState = api.getAppState();
+                                                const currentAppState = api.getAppState(false) || api.getAppState();
                                                 if (Array.isArray(currentAppState) && currentAppState.length > 0) {
                                                         const filtered = filterKeysAppState(currentAppState);
                                                         if (filtered && filtered.length > 0) {
@@ -992,7 +1005,7 @@ async function startBot(loginWithEmail) {
                                 const saveOnExit = () => {
                                         try {
                                                 if (api && typeof api.getAppState === "function") {
-                                                        const currentAppState = api.getAppState();
+                                                        const currentAppState = api.getAppState(false) || api.getAppState();
                                                         if (Array.isArray(currentAppState) && currentAppState.length > 0) {
                                                                 const filtered = filterKeysAppState(currentAppState);
                                                                 if (filtered && filtered.length > 0) {

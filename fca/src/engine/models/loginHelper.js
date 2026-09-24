@@ -273,11 +273,14 @@ async function loginHelper(credentials, globalOptions, callback, setOptionsFunc,
         if (!api) {
             api = {
                 setOptions: setOptionsFunc.bind(null, globalOptions),
-                getAppState() {
-                    const appState = utils.getAppState(jar);
+                getAppState(Encode = false) {
+                    const appState = utils.getAppState(jar, Encode);
                     if (!Array.isArray(appState)) return [];
-                    const uniqueAppState = appState.filter((item, index, self) => self.findIndex((t) => t.key === item.key) === index);
-                    return uniqueAppState.length > 0 ? uniqueAppState : appState;
+                    if (appState.length > 0 && typeof appState[0] === "object") {
+                        const uniqueAppState = appState.filter((item, index, self) => item && self.findIndex((t) => t && t.key === item.key) === index);
+                        return uniqueAppState.length > 0 ? uniqueAppState : appState;
+                    }
+                    return appState;
                 },
             };
         }
