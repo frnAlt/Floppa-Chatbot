@@ -1406,13 +1406,33 @@ async function startBot(loginWithEmail) {
                                                 return;
                                 }
 
+                                // Deduplicate messages
                                 if (event.messageID && (event.type == "message" || event.type == "message_reply")) {
                                         if (global.GoatBot.storage5Message?.includes(event.messageID))
                                                 return;
                                         if (!global.GoatBot.storage5Message) global.GoatBot.storage5Message = [];
                                         global.GoatBot.storage5Message.push(event.messageID);
-                                        if (global.GoatBot.storage5Message.length > 30)
+                                        if (global.GoatBot.storage5Message.length > 50)
                                                 global.GoatBot.storage5Message.shift();
+                                }
+
+                                // Deduplicate rapid duplicate reaction deltas from MQTT
+                                if (event.type === "message_reaction") {
+                                        const rawSender = event.senderID;
+                                        const rSender = (rawSender && String(rawSender) !== "0") ? rawSender : (event.userID || rawSender || "");
+                                        const reactKey = `${event.threadID}:${event.messageID}:${rSender}:${event.reaction || ""}`;
+                                        if (!global.GoatBot.recentReactions) global.GoatBot.recentReactions = new Map();
+                                        const now = Date.now();
+                                        const lastSeen = global.GoatBot.recentReactions.get(reactKey);
+                                        if (lastSeen && (now - lastSeen < 3000)) {
+                                                return;
+                                        }
+                                        global.GoatBot.recentReactions.set(reactKey, now);
+                                        if (global.GoatBot.recentReactions.size > 200) {
+                                                for (const [k, ts] of global.GoatBot.recentReactions.entries()) {
+                                                        if (now - ts > 6000) global.GoatBot.recentReactions.delete(k);
+                                                 }
+                                        }
                                 }
 
                                 if (configLog.disableAll === false && configLog[event.type] !== false) {

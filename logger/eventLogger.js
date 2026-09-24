@@ -15,6 +15,53 @@ const { colors } = require("../func/colors.js");
 const userCache = new Map();
 const threadCache = new Map();
 
+// Deduplication cache to prevent bursts of duplicate MQTT events (e.g. [REACT] and [MSG] duplicates)
+const recentEventsCache = new Map();
+const DEDUP_TTL_MS = 3000;
+
+function isDuplicateEvent(type, event) {
+	if (!event || !type) return false;
+	const now = Date.now();
+	let key = null;
+
+	if (type === "message_reaction") {
+		const rawSender = event.senderID;
+		const sender = (rawSender && String(rawSender) !== "0") ? rawSender : (event.userID || rawSender || "");
+		key = `react:${event.threadID || ""}:${event.messageID || ""}:${sender}:${event.reaction || ""}`;
+	} else if (type === "message" || type === "message_reply") {
+		if (event.messageID) {
+			key = `msg:${event.threadID || ""}:${event.messageID}`;
+		}
+	} else if (type === "message_unsend") {
+		if (event.messageID) {
+			key = `unsend:${event.threadID || ""}:${event.messageID}`;
+		}
+	} else if (type === "event") {
+		const author = event.author || event.senderID || "";
+		key = `evt:${event.threadID || ""}:${event.logMessageType || ""}:${author}:${JSON.stringify(event.logMessageData || {})}`;
+	}
+
+	if (!key) return false;
+
+	const prev = recentEventsCache.get(key);
+	if (prev && (now - prev < DEDUP_TTL_MS)) {
+		return true;
+	}
+
+	recentEventsCache.set(key, now);
+
+	// Periodic cleanup if cache grows
+	if (recentEventsCache.size > 500) {
+		for (const [k, ts] of recentEventsCache.entries()) {
+			if (now - ts > DEDUP_TTL_MS * 2) {
+				recentEventsCache.delete(k);
+			}
+		}
+	}
+
+	return false;
+}
+
 // Styling helpers (ANSI based for reliability across all terminal environments)
 const c = {
 	bold: text => `\x1b[1m${text}\x1b[0m`,
@@ -336,8 +383,12 @@ const eventLogger = {
 			const type = event.type || "unknown";
 			if (cfg[type] === false) return null;
 
+			// Check for rapid duplicate events (e.g. MQTT retransmission of reactions/messages)
+			const isDuplicate = isDuplicateEvent(type, event);
+
 			const threadID = event.threadID;
-			const senderID = event.senderID || event.author || event.userID;
+			const rawSenderID = event.senderID;
+			const senderID = (rawSenderID && String(rawSenderID) !== "0") ? rawSenderID : (event.userID || event.author || rawSenderID);
 			const isGroupHint = typeof event.isGroup === "boolean" ? event.isGroup : (threadID && senderID ? String(threadID) !== String(senderID) : true);
 
 			const thread = resolveThread(threadID, isGroupHint, event.threadName);
@@ -354,6 +405,18 @@ const eventLogger = {
 			}
 
 			const roleBadge = getRoleBadge(user.role, cfg);
+
+			// If duplicate burst event, suppress console log while returning structured metadata
+			if (isDuplicate) {
+				return {
+					...thread,
+					...user,
+					displayBody: event.body || attachStr,
+					timeStr,
+					fullTimeStr,
+					isDuplicate: true
+				};
+			}
 
 			// Raw mode requested
 			if (cfg.mode === "raw") {

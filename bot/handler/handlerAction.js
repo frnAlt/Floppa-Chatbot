@@ -57,6 +57,9 @@ module.exports = (api, threadModel, userModel, dashBoardModel, globalModel, user
 
                         // Unified, colorized event logger (standard / advanced / compact mode with group & sender names)
                         const loggedInfo = eventLogger.logEvent(event, { usersData, threadsData });
+                        if (loggedInfo?.isDuplicate) {
+                                return;
+                        }
 
                         const message = createFuncMessage(api, event);
 

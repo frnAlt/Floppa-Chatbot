@@ -395,7 +395,7 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
                             threadID: (delta.deltaMessageReaction.threadKey.threadFbId ? delta.deltaMessageReaction.threadKey.threadFbId : delta.deltaMessageReaction.threadKey.otherUserFbId).toString(),
                             messageID: delta.deltaMessageReaction.messageId,
                             reaction: delta.deltaMessageReaction.reaction,
-                            senderID: delta.deltaMessageReaction.senderId.toString(),
+                            senderID: (delta.deltaMessageReaction.senderId && delta.deltaMessageReaction.senderId.toString() !== "0") ? delta.deltaMessageReaction.senderId.toString() : delta.deltaMessageReaction.userId.toString(),
                             userID: delta.deltaMessageReaction.userId.toString()
                         });
                     })();

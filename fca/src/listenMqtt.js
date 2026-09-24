@@ -490,12 +490,14 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, {
     if (clientPayload && clientPayload.deltas) {
       for (const delta of clientPayload.deltas) {
         if (delta.deltaMessageReaction && !!ctx.globalOptions.listenEvents) {
+          const rawSenderId = delta.deltaMessageReaction.senderId;
+          const senderIdStr = (rawSenderId && rawSenderId.toString() !== "0") ? rawSenderId.toString() : delta.deltaMessageReaction.userId.toString();
           const messageReaction = {
             type: 'message_reaction',
             threadID: (delta.deltaMessageReaction.threadKey.threadFbId ? delta.deltaMessageReaction.threadKey.threadFbId : delta.deltaMessageReaction.threadKey.otherUserFbId).toString(),
             messageID: delta.deltaMessageReaction.messageId,
             reaction: delta.deltaMessageReaction.reaction,
-            senderID: delta.deltaMessageReaction.senderId.toString(),
+            senderID: senderIdStr,
             userID: delta.deltaMessageReaction.userId.toString(),
           };
           globalCallback(null, messageReaction);
