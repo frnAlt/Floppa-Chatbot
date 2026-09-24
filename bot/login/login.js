@@ -1253,6 +1253,8 @@ async function startBot(loginWithEmail) {
                                                 error.type === "account_inactive" ||
                                                 error.error == "Not logged in" ||
                                                 error.error == "Not logged in." ||
+                                                error.errorNumber === 1357001 ||
+                                                (typeof error.message === "string" && (error.message.includes("1357001") || error.message.includes("blocked login"))) ||
                                                 error.error == "Connection refused: Server unavailable" ||
                                                 error.reason === "checkpoint" ||
                                                 error.reason === "login_blocked" ||

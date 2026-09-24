@@ -879,16 +879,17 @@ module.exports = function(defaultFuncs, api, ctx) {
       .then(utils.parseAndCheckLogin(ctx, defaultFuncs))
       .then((resData) => {
         if (utils.getType(resData) != "Array") {
-          if (okeoke.request.uri && okeoke.request.uri.href.includes("https://www.facebook.com/checkpoint/")) {
-            if (okeoke.request.uri.href.includes('601051028565049')) {
-                return global.Fca.BypassAutomationNotification(undefined, ctx.jar, ctx.globalOptions, undefined ,process.env.UID)
+          const reqHref = okeoke?.request?.uri?.href || "";
+          if (reqHref && reqHref.includes("https://www.facebook.com/checkpoint/")) {
+            if (reqHref.includes('601051028565049') && typeof global.Fca?.BypassAutomationNotification === "function") {
+                return global.Fca.BypassAutomationNotification(undefined, ctx.jar, ctx.globalOptions, undefined ,process.env.UID);
             }
           }
-          if (global.Fca.Require.Priyansh.AutoLogin) {
+          if (global.Fca?.Require?.Priyansh?.AutoLogin && typeof global.Fca?.Require?.logger?.Warning === "function") {
             return global.Fca.Require.logger.Warning(global.Fca.Require.Language.Index.AutoLogin, function() {
               return global.Fca.Action('AutoLogin');
             });
-          } else if (!global.Fca.Require.Priyansh.AutoLogin) {
+          } else if (global.Fca?.Require?.Priyansh?.AutoLogin === false && typeof global.Fca?.Require?.logger?.Error === "function") {
             return global.Fca.Require.logger.Error(global.Fca.Require.Language.Index.ErrAppState);
           }
           return;
@@ -909,12 +910,13 @@ module.exports = function(defaultFuncs, api, ctx) {
       })
       .catch((err) => {
         log.error("getSeqId", err);
-        if (okeoke.request.uri && okeoke.request.uri.href.includes("https://www.facebook.com/checkpoint/")) {
-              if (okeoke.request.uri.href.includes('601051028565049')) {
-                  return global.Fca.BypassAutomationNotification(undefined, ctx.jar, ctx.globalOptions, undefined ,process.env.UID)
+        const reqHref = okeoke?.request?.uri?.href || "";
+        if (reqHref && reqHref.includes("https://www.facebook.com/checkpoint/")) {
+              if (reqHref.includes('601051028565049') && typeof global.Fca?.BypassAutomationNotification === "function") {
+                  return global.Fca.BypassAutomationNotification(undefined, ctx.jar, ctx.globalOptions, undefined ,process.env.UID);
               }
           }
-        if (utils.getType(err) == "Object" && err.error === global.Fca.Require.Language.Index.ErrAppState) ctx.loggedIn = false;
+        if (utils.getType(err) == "Object" && err.error === global.Fca?.Require?.Language?.Index?.ErrAppState) ctx.loggedIn = false;
         return globalCallback(err);
       });
   };

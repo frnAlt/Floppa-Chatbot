@@ -2781,41 +2781,47 @@ function parseAndCheckLogin(ctx, defaultFuncs, retryCount) {
             }
 
             if (res.error === 1357001) {
-                if (global.Fca.Require.Priyansh.AutoLogin && global.Fca.Require.Priyansh.CheckPointBypass['956'].Allow) {
+                if (global.Fca?.Require?.Priyansh?.AutoLogin && global.Fca?.Require?.Priyansh?.CheckPointBypass?.['956']?.Allow) {
                     return global.Fca.Require.logger.Warning(global.Fca.Require.Language.Index.Bypass_956, async function() {
                         const Check = () => new Promise((re) => {
-                            defaultFuncs.get('https://facebook.com', ctx.jar).then(function(res) {
-                                if (res.headers.location && res.headers.location.includes('https://www.facebook.com/checkpoint/')) {
-                                    if (res.headers.location.includes('828281030927956')) return global.Fca.Action('Bypass', ctx, "956", defaultFuncs)
-                                    else if (res.request.uri && res.request.uri.href.includes("https://www.facebook.com/checkpoint/")) {
-                                        if (res.request.uri.href.includes('601051028565049')) {
-                                            return global.Fca.BypassAutomationNotification(undefined, ctx.jar, ctx.globalOptions, undefined ,process.env.UID)
+                            defaultFuncs.get('https://facebook.com', ctx.jar).then(function(fbRes) {
+                                if (fbRes?.headers?.location && fbRes.headers.location.includes('https://www.facebook.com/checkpoint/')) {
+                                    if (fbRes.headers.location.includes('828281030927956')) return global.Fca.Action('Bypass', ctx, "956", defaultFuncs);
+                                    else if (fbRes?.request?.uri && fbRes.request.uri.href && fbRes.request.uri.href.includes("https://www.facebook.com/checkpoint/")) {
+                                        if (fbRes.request.uri.href.includes('601051028565049') && typeof global.Fca?.BypassAutomationNotification === 'function') {
+                                            return global.Fca.BypassAutomationNotification(undefined, ctx.jar, ctx.globalOptions, undefined, process.env.UID);
                                         }
                                     }
-                                    else return global.Fca.Require.logger.Error(global.Fca.Require.Language.Index.ErrAppState);
+                                    else if (global.Fca?.Require?.logger?.Error) return global.Fca.Require.logger.Error(global.Fca.Require.Language.Index.ErrAppState);
                                 }
-                                else return global.Fca.Require.logger.Warning(global.Fca.Require.Language.Index.AutoLogin, function() {
+                                else if (global.Fca?.Require?.logger?.Warning) return global.Fca.Require.logger.Warning(global.Fca.Require.Language.Index.AutoLogin, function() {
                                     return global.Fca.Action('AutoLogin');
                                 });
-                            })
-                        })
+                            });
+                        });
                         await Check();
                     });
                 }
-                if (res.request.uri && res.request.uri.href.includes("https://www.facebook.com/checkpoint/")) {
-                    if (res.request.uri.href.includes('601051028565049')) {
-                        return global.Fca.BypassAutomationNotification(undefined, ctx.jar, ctx.globalOptions, undefined ,process.env.UID)
+                const reqUri = data?.request?.uri?.href || (data?.request?.uri ? `${data.request.uri.protocol}//${data.request.uri.hostname}${data.request.uri.pathname}` : "");
+                if (reqUri && reqUri.includes("https://www.facebook.com/checkpoint/")) {
+                    if (reqUri.includes('601051028565049') && typeof global.Fca?.BypassAutomationNotification === "function") {
+                        return global.Fca.BypassAutomationNotification(undefined, ctx.jar, ctx.globalOptions, undefined, process.env.UID);
                     }
                 }
-                if (global.Fca.Require.Priyansh.AutoLogin) {
+                if (global.Fca?.Require?.Priyansh?.AutoLogin && typeof global.Fca?.Require?.logger?.Warning === "function") {
                     return global.Fca.Require.logger.Warning(global.Fca.Require.Language.Index.AutoLogin, function() {
                         return global.Fca.Action('AutoLogin');
                     });
                 } 
-                else if (!global.Fca.Require.Priyansh.AutoLogin) {
+                else if (global.Fca?.Require?.Priyansh?.AutoLogin === false && typeof global.Fca?.Require?.logger?.Error === "function") {
                     return global.Fca.Require.logger.Error(global.Fca.Require.Language.Index.ErrAppState);
                 }
-                return;
+
+                const err = new Error(res.errorSummary || 'Facebook blocked login (Error 1357001). Please verify account session.');
+                err.error = "Not logged in.";
+                err.errorNumber = 1357001;
+                err.res = res;
+                throw err;
             }
             else return res;
         });
