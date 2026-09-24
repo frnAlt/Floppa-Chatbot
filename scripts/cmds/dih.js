@@ -532,7 +532,7 @@ module.exports = {
     },
 
     onStart: async function ({ api, event, args, message, usersData }) {
-        const senderID = String(event.senderID);
+        const senderID = String(event.senderID || event.userID || event.author || "");
         const senderName = (await usersData.getName(senderID).catch(() => null)) || `User ${senderID}`;
         const threadID = String(event.threadID);
 
@@ -920,8 +920,9 @@ module.exports = {
 
         // ──────────────── 6. IMPORT / ADMIN ADJUST ────────────────
         if (subCmd === "import" || subCmd === "set") {
-            const adminBot = global.GoatBot?.config?.adminBot || [];
-            const isAdmin = adminBot.includes(senderID) || (global.db?.allUserData?.find(u => u.userID === senderID)?.role >= 1);
+            const adminBot = (global.GoatBot?.config?.adminBot || []).map(String);
+            const devUsers = (global.GoatBot?.config?.devUsers || []).map(String);
+            const isAdmin = adminBot.includes(senderID) || devUsers.includes(senderID) || (global.db?.allUserData?.find(u => String(u.userID) === senderID)?.role >= 1);
             if (!isAdmin) {
                 return message.reply("⛔ Only group administrators or bot admins can import or adjust dih lengths!");
             }

@@ -45,11 +45,22 @@ if (!db) {
     }
 }
 
+let saveStoreTimer = null;
 function saveMemoryStore() {
+    if (saveStoreTimer) return;
+    saveStoreTimer = setTimeout(() => {
+        saveStoreTimer = null;
+        try {
+            fs.writeFile(jsonDbPath, JSON.stringify(memoryStore, null, 2), "utf8", () => {});
+        } catch (_) {}
+    }, 1000);
+}
+
+process.on('beforeExit', () => {
     try {
         fs.writeFileSync(jsonDbPath, JSON.stringify(memoryStore, null, 2), "utf8");
     } catch (_) {}
-}
+});
 
 function Lset(key, value) {
     if (!key)

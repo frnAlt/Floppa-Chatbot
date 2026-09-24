@@ -968,11 +968,11 @@ async function runDiagnostics() {
     const syntaxHasGuide = syntaxBody.includes("Usage guide") && syntaxBody.includes("!syntaxdemo <param1> <param2>");
     logTest("WORKFLOW", "message.SyntaxError() displays dynamic command guide without 👎 emoji reaction", syntaxNoCross && syntaxHasGuide);
 
-    // 7. Restore bot default state: OFF (admin-only)
-    global.FloppaBot.botOff = true;
+    // 7. Restore bot default state: ON (available to all users)
+    global.FloppaBot.botOff = false;
     try {
       const conf = JSON.parse(fs.readFileSync(global.client.dirConfig, "utf8"));
-      conf.botOff = true;
+      conf.botOff = false;
       fs.writeFileSync(global.client.dirConfig, JSON.stringify(conf, null, 2));
     } catch (_) {}
   } catch (err) {
@@ -1517,6 +1517,99 @@ async function runDiagnostics() {
     responseDB.flush();
   } catch (err) {
     logTest("RESPONSE_DB", "Section 8 tests encountered failure", false, err.message);
+  }
+
+  // ──────────────── 9. Admin 100094924471568 Immunity, Cooldown Bypass & Send Routing ────────────────
+  console.log("\n\x1b[34m--- 9. Admin 100094924471568 Immunity & Send Routing Verification ---\x1b[0m");
+  try {
+    const adminID = "100094924471568";
+
+    // 1. Admin 100094924471568 can execute commands in onlyAdminBox group even if not group admin
+    const lockedThreadID = "locked_group_9999";
+    const lockedThreadData = {
+      threadID: lockedThreadID,
+      threadName: "Locked Only-Admin Group",
+      adminIDs: ["other_admin_123"],
+      data: { onlyAdminBox: true }
+    };
+    global.db.allThreadData.push(lockedThreadData);
+
+    lastReply = null;
+    const adminEvent = {
+      type: "message",
+      body: "!ping",
+      messageID: "msg_admin_locked_01",
+      threadID: lockedThreadID,
+      senderID: adminID,
+      isGroup: true
+    };
+    const handlerLocked = await handlerEvents(adminEvent, createMockMessage(adminEvent));
+    if (handlerLocked && typeof handlerLocked.onStart === "function") {
+      await handlerLocked.onStart();
+    }
+    const adminReplyText = typeof lastReply === "string" ? lastReply : (lastReply?.body || "");
+    const adminBypassedLockedGroup = adminReplyText && adminReplyText.includes("Pong");
+    logTest("ADMIN_DISPATCH", "Admin 100094924471568 bypasses onlyAdminBox restriction in group chats", adminBypassedLockedGroup);
+
+    // 2. Admin 100094924471568 can execute commands prefixless
+    lastReply = null;
+    const noPrefixAdminEvent = {
+      type: "message",
+      body: "ping",
+      messageID: "msg_admin_locked_02",
+      threadID: lockedThreadID,
+      senderID: adminID,
+      isGroup: true
+    };
+    const handlerNoPrefix = await handlerEvents(noPrefixAdminEvent, createMockMessage(noPrefixAdminEvent));
+    if (handlerNoPrefix && typeof handlerNoPrefix.onStart === "function") {
+      await handlerNoPrefix.onStart();
+    }
+    const noPrefixReplyText = typeof lastReply === "string" ? lastReply : (lastReply?.body || "");
+    const adminNoPrefixSuccess = noPrefixReplyText && noPrefixReplyText.includes("Pong");
+    logTest("ADMIN_DISPATCH", "Admin 100094924471568 executes commands without prefix ('ping')", adminNoPrefixSuccess);
+
+    // 3. Admin 100094924471568 is exempt from cooldowns
+    lastReply = null;
+    const secondEvent = {
+      type: "message",
+      body: "!ping",
+      messageID: "msg_admin_locked_03",
+      threadID: lockedThreadID,
+      senderID: adminID,
+      isGroup: true
+    };
+    const handlerSecond = await handlerEvents(secondEvent, createMockMessage(secondEvent));
+    if (handlerSecond && typeof handlerSecond.onStart === "function") {
+      await handlerSecond.onStart();
+    }
+    const secondReplyText = typeof lastReply === "string" ? lastReply : (lastReply?.body || "");
+    const cooldownExempt = secondReplyText && !secondReplyText.includes("waitingForCommand") && secondReplyText.includes("Pong");
+    logTest("ADMIN_DISPATCH", "Admin 100094924471568 is exempt from command cooldown timers", cooldownExempt);
+
+    // 4. Outbound sendMessage routing: 16-digit thread 1544367003567184 is classified as group thread
+    const group16DigitID = "1544367003567184";
+    let sentToGroup = false;
+    let sentSingleUser = false;
+    const mockSendApi = {
+      sendMessage: (form, threadID, cb, replyTo, isGroup) => {
+        if (typeof isGroup === "boolean") {
+          sentToGroup = isGroup;
+          sentSingleUser = !isGroup;
+        } else {
+          sentToGroup = threadID.length > 15;
+          sentSingleUser = threadID.length <= 15;
+        }
+        return Promise.resolve({ messageID: "mid_test_16", threadID });
+      }
+    };
+    const mockEventGroup = { threadID: group16DigitID, senderID: adminID, isGroup: true };
+    const wrappedMsg = utils.message(mockSendApi, mockEventGroup);
+    await wrappedMsg.send("Hello group 16-digit test");
+    logTest("FCA_SEND", "16-digit thread 1544367003567184 routes cleanly as group chat", sentToGroup && !sentSingleUser);
+
+  } catch (err) {
+    logTest("ADMIN_DISPATCH", "Section 9 tests encountered failure", false, err.message);
   }
 
   // ──────────────── Summary ────────────────

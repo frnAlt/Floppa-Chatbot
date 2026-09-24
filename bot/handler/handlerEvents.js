@@ -114,32 +114,34 @@ async function trackCommandSpam(threadID, threadName, globalData, message) {
 
 function getRole(threadData, senderID) {
         const config = global.GoatBot.config;
-        const adminBot = config.adminBot || [];
-        const devUsers = config.devUsers || [];
-        const premiumUsers = config.premiumUsers || [];
-        if (!senderID)
+        const sID = String(senderID || "");
+        if (!sID)
                 return 0;
-        const adminBox = threadData ? threadData.adminIDs || [] : [];
+
+        const adminBot = (config.adminBot || []).map(String);
+        const devUsers = (config.devUsers || []).map(String);
+        const premiumUsers = (config.premiumUsers || []).map(String);
+        const adminBox = (threadData ? threadData.adminIDs || [] : []).map(String);
 
         // Priority: Developer (4) > Bot Admin (2) > Premium (3) > Group Admin (1) > Normal (0)
         // Admin and Dev always get their role regardless of premium membership
-        if (devUsers.includes(senderID.toString()))
+        if (devUsers.includes(sID))
                 return 4;
-        if (adminBot.includes(senderID.toString()))
+        if (adminBot.includes(sID))
                 return 2;
-        if (premiumUsers.includes(senderID.toString())) {
-                const userData = global.db.allUserData.find(u => u.userID == senderID);
+        if (premiumUsers.includes(sID)) {
+                const userData = global.db.allUserData.find(u => String(u.userID) === sID);
                 if (userData && userData.data && userData.data.premiumExpireTime) {
                         if (userData.data.premiumExpireTime < Date.now()) {
                                 global.temp.expiredPremiumUsers = global.temp.expiredPremiumUsers || [];
-                                if (!global.temp.expiredPremiumUsers.includes(senderID))
-                                        global.temp.expiredPremiumUsers.push(senderID);
-                                return adminBox.map(String).includes(senderID.toString()) ? 1 : 0;
+                                if (!global.temp.expiredPremiumUsers.includes(sID))
+                                        global.temp.expiredPremiumUsers.push(sID);
+                                return adminBox.includes(sID) ? 1 : 0;
                         }
                 }
                 return 3;
         }
-        if (adminBox.map(String).includes(senderID.toString()))
+        if (adminBox.includes(sID))
                 return 1;
         return 0;
 }
@@ -238,7 +240,15 @@ function isMediaCommand(cmd, name) {
 
 function isBannedOrOnlyAdmin(userData, threadData, senderID, threadID, isGroup, commandName, message, lang) {
         const config = global.GoatBot.config;
-        const adminBot = config.adminBot || [];
+        const sID = String(senderID || "");
+        const adminBot = (config.adminBot || []).map(String);
+        const devUsers = (config.devUsers || []).map(String);
+        const isBotAdmin = adminBot.includes(sID) || devUsers.includes(sID);
+
+        // Bot admins and developers are completely immune to all bans and admin-only restrictions
+        if (isBotAdmin)
+                return false;
+
         const hideNotiMessage = config.hideNotiMessage || {};
 
         // check if user banned
@@ -253,7 +263,7 @@ function isBannedOrOnlyAdmin(userData, threadData, senderID, threadID, isGroup, 
         // check if only admin bot
         if (
                 config.adminOnly?.enable == true
-                && !adminBot.includes(senderID)
+                && !adminBot.includes(sID)
                 && !(config.adminOnly?.ignoreCommand || []).includes(commandName)
         ) {
                 if (hideNotiMessage.adminOnly == false)
@@ -263,9 +273,10 @@ function isBannedOrOnlyAdmin(userData, threadData, senderID, threadID, isGroup, 
 
         // ==========    Check Thread    ========== //
         if (isGroup == true && threadData) {
+                const threadAdminIDs = (threadData.adminIDs || []).map(String);
                 if (
                         threadData.data?.onlyAdminBox === true
-                        && Array.isArray(threadData.adminIDs) && !threadData.adminIDs.includes(senderID)
+                        && !threadAdminIDs.includes(sID)
                         && !(threadData.data?.ignoreCommanToOnlyAdminBox || []).includes(commandName)
                 ) {
                         // check if only admin box
@@ -551,6 +562,9 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         }
 
                         const trimmedBody = (body || "").trim();
+                        const isBotAdmin = role === 2 || role === 4 ||
+                                ((global.GoatBot.config.adminBot || []).map(String).includes(String(senderID))) ||
+                                ((global.GoatBot.config.devUsers || []).map(String).includes(String(senderID)));
                         const threadPrefix = prefix || getPrefix(threadID);
                         const globalPrefix = global.GoatBot?.config?.prefix;
                         const validPrefixes = Array.from(new Set([threadPrefix, globalPrefix, "!"].filter(Boolean)))
@@ -560,9 +574,6 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         let hasNoPrefix = false;
 
                         if (!hasPrefix) {
-                                const isBotAdmin = role === 2 || role === 4 ||
-                                        (global.GoatBot.config.adminBot && global.GoatBot.config.adminBot.includes(String(senderID))) ||
-                                        (global.GoatBot.config.devUsers && global.GoatBot.config.devUsers.includes(String(senderID)));
                                 const noPrefixConfig = global.GoatBot.config.noPrefix !== false;
 
                                 // Extract all tokens with strict boundary matching at the very start of the message
@@ -629,13 +640,13 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         }
 
                         // Check bot maintenance / off state: only admin (role 2 or 4) can use bot. Silently ignore non-admins without emoji reactions
-                        if (global.GoatBot.botOff && role !== 2 && role !== 4) {
+                        if (global.GoatBot.botOff && role !== 2 && role !== 4 && !isBotAdmin) {
                                 // Silently ignore non-admin command attempts when bot is off (no emoji reaction, no response)
                                 return;
                         }
 
                         // —————————— CHECK SPAM BANNED THREAD —————————— //
-                        if (isGroup) {
+                        if (isGroup && role !== 2 && role !== 4 && !isBotAdmin) {
                                 const isSpamBanned = await checkSpamBannedThread(threadID, globalData);
                                 if (isSpamBanned) {
                                         if (!hideNotiMessage.threadBanned)
@@ -792,7 +803,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         }
                         // ————————— CHECK MONEY REQUIREMENT (FIRST) ————————— //
                         const requiredMoney = command.config.requiredMoney;
-                        if (requiredMoney && requiredMoney > 0) {
+                        if (requiredMoney && requiredMoney > 0 && role !== 2 && role !== 4 && !isBotAdmin) {
                                 const hasEnoughMoney = await checkMoneyRequirement(userData, requiredMoney);
                                 if (!hasEnoughMoney) {
                                         const userMoney = userData.money || 0;
@@ -831,9 +842,11 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                 getCoolDown = 1;
                         const cooldownMs = getCoolDown * 1000;
                         
-                        const cooldownCheck = cooldownManager.checkCooldown(commandName, senderID, cooldownMs);
-                        if (cooldownCheck.onCooldown) {
-                                return await message.reply(utils.getText({ lang: langCode, head: "handlerEvents" }, "waitingForCommand", cooldownCheck.remainingTime.toString()));
+                        if (role !== 2 && role !== 4 && !isBotAdmin) {
+                                const cooldownCheck = cooldownManager.checkCooldown(commandName, senderID, cooldownMs);
+                                if (cooldownCheck.onCooldown) {
+                                        return await message.reply(utils.getText({ lang: langCode, head: "handlerEvents" }, "waitingForCommand", cooldownCheck.remainingTime.toString()));
+                                }
                         }
                         
                         // ——————————————— RUN COMMAND ——————————————— //
@@ -841,7 +854,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         isUserCallCommand = true;
 
                         // —————————— TRACK SPAM AND AUTO-BAN —————————— //
-                        if (isGroup) {
+                        if (isGroup && role !== 2 && role !== 4 && !isBotAdmin) {
                                 const threadName = threadData?.threadName || "Unknown Group";
                                 const wasSpamBanned = await trackCommandSpam(threadID, threadName, globalData, message);
                                 if (wasSpamBanned) {

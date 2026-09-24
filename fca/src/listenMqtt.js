@@ -145,7 +145,7 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
     },
     keepalive: 60,
     reschedulePings: true,
-    reconnectPeriod: 3,
+    reconnectPeriod: 0,
   };
 
   if (ctx.globalOptions.proxy !== undefined) {
@@ -156,21 +156,47 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
   ctx.mqttClient = new mqtt.Client(() => buildStream(options, new WebSocket(host, options.wsOptions), buildProxy()), options);
   global.mqttClient = ctx.mqttClient;
 
-  global.mqttClient.on('error', (err) => {
-    const isFramingQuirk = err && typeof err.message === "string" && (err.message.includes('Invalid header flag bits') || err.message.includes('packet parsing'));
-    if (!isFramingQuirk) {
-      log.error('listenMqtt', err);
-    }
-    try { global.mqttClient.end(); } catch (_) {}
+  let reconnecting = false;
+  function triggerReconnect(reason) {
+    if (global.Fca?.Data?.StopListening === true) return;
+    if (reconnecting) return;
+    reconnecting = true;
+    log.warn('listenMqtt', `MQTT connection lost (${reason || 'unknown'}), re-establishing session...`);
+    try {
+      if (global.mqttClient) {
+        global.mqttClient.removeAllListeners();
+        global.mqttClient.end(true);
+      }
+    } catch (_) {}
+    ctx.mqttClient = undefined;
+    global.mqttClient = undefined;
 
     if (ctx.globalOptions.autoReconnect !== false) {
-      getSeqID();
+      setTimeout(() => {
+        getSeqID();
+      }, 2000);
     } else {
       globalCallback({
         type: 'stop_listen',
         error: 'MQTT connection ended'
       }, null);
     }
+  }
+
+  global.mqttClient.on('error', (err) => {
+    const isFramingQuirk = err && typeof err.message === "string" && (err.message.includes('Invalid header flag bits') || err.message.includes('packet parsing'));
+    if (!isFramingQuirk) {
+      log.error('listenMqtt', err);
+    }
+    triggerReconnect(err?.message || 'error');
+  });
+
+  global.mqttClient.on('close', () => {
+    triggerReconnect('close');
+  });
+
+  global.mqttClient.on('offline', () => {
+    triggerReconnect('offline');
   });
 
   global.mqttClient.on('connect', () => {
@@ -916,8 +942,18 @@ module.exports = function(defaultFuncs, api, ctx) {
                   return global.Fca.BypassAutomationNotification(undefined, ctx.jar, ctx.globalOptions, undefined ,process.env.UID);
               }
           }
-        if (utils.getType(err) == "Object" && err.error === global.Fca?.Require?.Language?.Index?.ErrAppState) ctx.loggedIn = false;
-        return globalCallback(err);
+        if (utils.getType(err) == "Object" && err.error === global.Fca?.Require?.Language?.Index?.ErrAppState) {
+          ctx.loggedIn = false;
+          return globalCallback(err);
+        }
+        if (global.Fca?.Data?.StopListening !== true && ctx.globalOptions.autoReconnect !== false) {
+          log.warn("getSeqId", "Transient error in getSeqId; retrying in 5 seconds...");
+          setTimeout(() => {
+            getSeqID();
+          }, 5000);
+        } else {
+          return globalCallback(err);
+        }
       });
   };
 
