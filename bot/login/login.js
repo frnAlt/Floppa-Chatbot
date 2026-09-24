@@ -1423,7 +1423,7 @@ async function startBot(loginWithEmail) {
 
                                 // Deduplicate messages
                                 if (event.messageID && (event.type == "message" || event.type == "message_reply")) {
-                                        if (global.GoatBot.storage5Message?.includes(event.messageID))
+                                        if (!isAdminOrDev && global.GoatBot.storage5Message?.includes(event.messageID))
                                                 return;
                                         if (!global.GoatBot.storage5Message) global.GoatBot.storage5Message = [];
                                         global.GoatBot.storage5Message.push(event.messageID);

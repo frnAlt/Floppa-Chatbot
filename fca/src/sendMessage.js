@@ -209,23 +209,60 @@ module.exports = function (defaultFuncs, api, ctx) {
     }
 
   function send(form, threadID, messageAndOTID, callback, isGroup) {
-//Full Fix sendMessage
-  if (utils.getType(threadID) === "Array") sendContent(form, threadID, false, messageAndOTID, callback);
-    else {
-      var THREADFIX = "ThreadID".replace("ThreadID",threadID); // i cũng đôn nâu
-        if (THREADFIX.length <= 15 || global.Fca.isUser.includes(threadID)) sendContent(form, threadID, !isGroup, messageAndOTID, callback);
-        else if (THREADFIX.length >= 15 && THREADFIX.indexOf(1) != 0 || global.Fca.isThread.includes(threadID)) sendContent(form, threadID, threadID.length === 15, messageAndOTID, callback);
-        else {
-          if (global.Fca.Data.event.isGroup) {
-            sendContent(form, threadID, threadID.length === 15, messageAndOTID, callback);
-            global.Fca.isThread.push(threadID);
-          } 
-          else {
-            sendContent(form, threadID, !isGroup, messageAndOTID, callback);
-            global.Fca.isUser.push(threadID);
-        }
+    if (utils.getType(threadID) === "Array") {
+      return sendContent(form, threadID, false, messageAndOTID, callback);
+    }
+
+    const tID = String(threadID || "");
+    let isSingleUser = false;
+
+    if (!Array.isArray(global.Fca?.isThread)) {
+      if (global.Fca) global.Fca.isThread = [];
+    }
+    if (!Array.isArray(global.Fca?.isUser)) {
+      if (global.Fca) global.Fca.isUser = [];
+    }
+
+    // 1. Explicit isGroup flag provided by caller (highest precedence)
+    if (typeof isGroup === "boolean") {
+      isSingleUser = !isGroup;
+      if (isSingleUser) {
+        if (!global.Fca.isUser.includes(tID)) global.Fca.isUser.push(tID);
+        const idx = global.Fca.isThread.indexOf(tID);
+        if (idx !== -1) global.Fca.isThread.splice(idx, 1);
+      } else {
+        if (!global.Fca.isThread.includes(tID)) global.Fca.isThread.push(tID);
+        const idx = global.Fca.isUser.indexOf(tID);
+        if (idx !== -1) global.Fca.isUser.splice(idx, 1);
       }
     }
+    // 2. Explicitly known from cache
+    else if (global.Fca.isThread.includes(tID)) {
+      isSingleUser = false;
+    }
+    else if (global.Fca.isUser.includes(tID)) {
+      isSingleUser = true;
+    }
+    // 3. From global event context if threadID matches current event
+    else if (global.Fca?.Data?.event && typeof global.Fca.Data.event.isGroup === "boolean" && String(global.Fca.Data.event.threadID) === tID) {
+      isSingleUser = !global.Fca.Data.event.isGroup;
+      if (isSingleUser) {
+        if (!global.Fca.isUser.includes(tID)) global.Fca.isUser.push(tID);
+      } else {
+        if (!global.Fca.isThread.includes(tID)) global.Fca.isThread.push(tID);
+      }
+    }
+    // 4. Default heuristic: modern group threads are 16+ digits, user IDs are <= 15 digits
+    else {
+      isSingleUser = tID.length <= 15 && !tID.startsWith("154");
+      if (isSingleUser) {
+        if (!global.Fca.isUser.includes(tID)) global.Fca.isUser.push(tID);
+      } else {
+        if (!global.Fca.isThread.includes(tID)) global.Fca.isThread.push(tID);
+      }
+    }
+
+    sendContent(form, threadID, isSingleUser, messageAndOTID, callback);
   }
   
   function handleUrl(msg, form, callback, cb) {

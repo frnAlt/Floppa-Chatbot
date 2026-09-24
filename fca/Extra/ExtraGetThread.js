@@ -55,7 +55,6 @@ exports.updateData = function(threadID,threadData) {
     if (global.Fca.Require.Priyansh.AntiGetInfo.Database_Type == "default") {
         try { 
             Database(true).set(String(threadID),Object(threadData));
-            logger.Normal(getText(language.updateDataSuccess,String(threadID)));
         }
         catch (e) {
             console.log(e);
@@ -64,17 +63,15 @@ exports.updateData = function(threadID,threadData) {
     }
     else if (global.Fca.Require.Priyansh.AntiGetInfo.Database_Type == "json") {
         try {
+            var data = {};
             try {
-                var data = require(process.cwd() + "/Horizon_Database/Threads.json");
+                data = require(process.cwd() + "/Horizon_Database/Threads.json");
             }
             catch (e) {
-                var data = {};
-                fs.writeFileSync(process.cwd() + "/Horizon_Database/Threads.json",JSON.stringify(data));
+                data = {};
             }
-            
             data[String(threadID)] = Object(threadData);
-            fs.writeFileSync(process.cwd() + "/Horizon_Database/Threads.json",JSON.stringify(data));
-            logger.Normal(getText(language.updateDataSuccess,String(threadID)));
+            fs.writeFile(process.cwd() + "/Horizon_Database/Threads.json", JSON.stringify(data), () => {});
         }
         catch (e) {
             console.log(e);

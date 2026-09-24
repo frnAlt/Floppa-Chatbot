@@ -57,7 +57,12 @@ module.exports = (api, threadModel, userModel, dashBoardModel, globalModel, user
 
                         // Unified, colorized event logger (standard / advanced / compact mode with group & sender names)
                         const loggedInfo = eventLogger.logEvent(event, { usersData, threadsData });
-                        if (loggedInfo?.isDuplicate) {
+                        const sID = String(event.senderID || event.userID || event.author || "");
+                        const adminBot = (global.GoatBot?.config?.adminBot || []).map(String);
+                        const devUsers = (global.GoatBot?.config?.devUsers || []).map(String);
+                        const isAdminOrDev = adminBot.includes(sID) || devUsers.includes(sID);
+
+                        if (loggedInfo?.isDuplicate && !isAdminOrDev) {
                                 return;
                         }
 
