@@ -2814,7 +2814,7 @@ function parseAndCheckLogin(ctx, defaultFuncs, retryCount) {
                     });
                 } 
                 else if (global.Fca?.Require?.Priyansh?.AutoLogin === false && typeof global.Fca?.Require?.logger?.Error === "function") {
-                    return global.Fca.Require.logger.Error(global.Fca.Require.Language.Index.ErrAppState);
+                    global.Fca.Require.logger.Error(global.Fca.Require.Language.Index.ErrAppState);
                 }
 
                 const err = new Error(res.errorSummary || 'Facebook blocked login (Error 1357001). Please verify account session.');

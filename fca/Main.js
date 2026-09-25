@@ -204,15 +204,20 @@ function BypassAutomationNotification(resp, jar, globalOptions, appstate, ID) {
  */
 
 function buildAPI(globalOptions, html, jar, bypass_region) {
-    //new feat
-    const fb_dtsg = utils.getFroms(html, '["DTSGInitData",[],{"token":"', '","')[0]; //nhăm nhăm nhăm nhăm
+    // Check DTSG token with modern variants
+    let fb_dtsg = utils.getFroms(html, '["DTSGInitData",[],{"token":"', '","')[0];
+    if (!fb_dtsg) {
+        fb_dtsg = utils.getFrom(html, '"DTSGInitialData",[],{"token":"', '"') ||
+                  (html.match(/name="fb_dtsg"\s+value="([^"]+)"/) || [])[1];
+    }
 
     //check tiktik
     var userID;
     var cookie = jar.getCookies("https://www.facebook.com");
     var maybeUser = cookie.filter(function(val) { return val.cookieString().split("=")[0] === "c_user"; });
     var maybeTiktik = cookie.filter(function(val) { return val.cookieString().split("=")[0] === "i_user"; });
-    if (maybeUser.length === 0 && maybeTiktik.length === 0 && Array.isArray(global.Fca?.Data?.AppState)) {
+    // Only allow fallback to AppState if Facebook returned valid DTSG data (meaning authenticated, but cookie under different sub-domain)
+    if (maybeUser.length === 0 && maybeTiktik.length === 0 && fb_dtsg && Array.isArray(global.Fca?.Data?.AppState)) {
         const appState = global.Fca.Data.AppState;
         const foundUser = appState.find(c => (c.key || c.name) === 'c_user');
         const foundTiktik = appState.find(c => (c.key || c.name) === 'i_user');
@@ -224,7 +229,7 @@ function buildAPI(globalOptions, html, jar, bypass_region) {
             }
         }
     }
-    if (maybeUser.length === 0 && maybeTiktik.length === 0) {
+    if ((maybeUser.length === 0 && maybeTiktik.length === 0) || !fb_dtsg) {
         if (global.Fca.Require.Priyansh.AutoLogin) {
             return global.Fca.Require.logger.Warning(global.Fca.Require.Language.Index.AutoLogin, function() {
                 global.Fca.Action('AutoLogin')
