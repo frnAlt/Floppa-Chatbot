@@ -241,6 +241,7 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
       log.warn('listenMqtt', 'Ignoring connect event because MQTT client is disconnected or ending');
       return;
     }
+    log.info('listenMqtt', `Connected to Facebook MQTT broker successfully (seqID: ${ctx.lastSeqId || 'N/A'})`);
 
     if (!global.Fca.Data.Setup || global.Fca.Data.Setup === undefined) {
       if (global.Fca.Require.Priyansh.RestartMQTT_Minutes !== 0 && global.Fca.Data.StopListening !== true) {
@@ -352,6 +353,7 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
         clearTimeout(rTimeout);
         rTimeout = null;
       }
+      log.info('listenMqtt', 'Initial sync established with Facebook (/t_ms received). Live listening is active.');
       if (ctx.globalOptions.emitReady && !ctx._readyEmitted) {
         ctx._readyEmitted = true;
         globalCallback(null, {

@@ -6,6 +6,14 @@
 
 const log = require('./logger/log.js');
 
+// Ensure stdout and stderr flush immediately in non-TTY CI/GitHub Actions runners
+if (process.stdout._handle && typeof process.stdout._handle.setBlocking === 'function') {
+	process.stdout._handle.setBlocking(true);
+}
+if (process.stderr._handle && typeof process.stderr._handle.setBlocking === 'function') {
+	process.stderr._handle.setBlocking(true);
+}
+
 global.systemMemoryDB = require("./func/systemMemoryDB.js");
 
 process.on('unhandledRejection', (error, promise) => {
@@ -97,8 +105,8 @@ global.FloppaBot = {
 	onAnyEvent: [],
 	config,
 	configCommands,
-	botOff: typeof config.botOff !== "undefined" ? Boolean(config.botOff) : true,
-	eventsOff: typeof config.eventsOff !== "undefined" ? Boolean(config.eventsOff) : (typeof config.events !== "undefined" ? !config.events : true),
+	botOff: typeof config.botOff !== "undefined" ? Boolean(config.botOff) : false,
+	eventsOff: typeof config.eventsOff !== "undefined" ? Boolean(config.eventsOff) : (typeof config.events !== "undefined" ? !config.events : false),
 	reactOff: typeof config.reactOff !== "undefined" ? Boolean(config.reactOff) : (typeof config.botReact !== "undefined" ? !config.botReact : false),
 	envCommands: {},
 	envEvents: {},

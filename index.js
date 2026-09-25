@@ -9,6 +9,14 @@ const os = require("os");
 const log = require("./logger/log.js");
 const pkg = require("./package.json");
 
+// Ensure stdout and stderr flush immediately in non-TTY CI/GitHub Actions runners
+if (process.stdout._handle && typeof process.stdout._handle.setBlocking === 'function') {
+	process.stdout._handle.setBlocking(true);
+}
+if (process.stderr._handle && typeof process.stderr._handle.setBlocking === 'function') {
+	process.stderr._handle.setBlocking(true);
+}
+
 function printDeployBanner() {
 	const border = "─".repeat(Math.min(process.stdout.columns || 64, 64));
 	console.log("\x1b[38;2;245;175;25m" + border + "\x1b[0m");

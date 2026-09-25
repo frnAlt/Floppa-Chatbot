@@ -1620,6 +1620,8 @@ async function startBot(loginWithEmail) {
                         log.info("FLOPPA", "Floppa Bot initialization complete. Listening for incoming messages...");
                         if (global.GoatBot.config.botOff) {
                                 log.warn("BOT_MODE", "Bot is currently in Admin-Only mode (botOff: true). Non-admin commands are silently ignored. Use '!bot on' or set 'botOff: false' in config.json to enable for all users.");
+                        } else {
+                                log.info("BOT_MODE", "Bot is active and accepting commands for all users (botOff: false).");
                         }
                 });
         })(appState);

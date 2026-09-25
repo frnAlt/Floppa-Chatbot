@@ -243,9 +243,17 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
             getSeqID();
         }, 15000);
 
-            if (ctx.globalOptions.emitReady) {
+        ctx.tmsWait = function () {
+            if (rTimeout) {
+                clearTimeout(rTimeout);
+                rTimeout = null;
+            }
+            if (ctx.globalOptions.emitReady && !ctx._readyEmitted) {
+                ctx._readyEmitted = true;
                 globalCallback(null, { type: "ready", error: null });
             }
+            delete ctx.tmsWait;
+        };
     });
 
     global.mqttClient.on('message', function (topic, message, _packet) {

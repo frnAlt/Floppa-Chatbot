@@ -326,7 +326,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                 const { autoRefreshThreadInfoFirstTime } = config.database;
                 let { hideNotiMessage = {} } = config;
                 if (typeof GoatBot.botOff === "undefined")
-                        GoatBot.botOff = typeof config.botOff !== "undefined" ? Boolean(config.botOff) : true;
+                        GoatBot.botOff = typeof config.botOff !== "undefined" ? Boolean(config.botOff) : false;
 
                 const { body, messageID, threadID, isGroup } = event;
 
@@ -641,7 +641,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 
                         // Check bot maintenance / off state: only admin (role 2 or 4) can use bot. Silently ignore non-admins without emoji reactions
                         if (global.GoatBot.botOff && role !== 2 && role !== 4 && !isBotAdmin) {
-                                // Silently ignore non-admin command attempts when bot is off (no emoji reaction, no response)
+                                log.warn("BOT_MODE", `[Ignored] Command attempt from non-admin user ${senderID} in thread ${threadID} while bot is in Admin-Only mode (botOff: true).`);
                                 return;
                         }
 
@@ -1375,7 +1375,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                  +------------------------------------------------+
                 */
                 async function handlerEvent() {
-                        const isEventsOff = global.GoatBot?.eventsOff ?? (global.GoatBot?.config?.eventsOff ?? true);
+                        const isEventsOff = global.GoatBot?.eventsOff ?? (global.GoatBot?.config?.eventsOff ?? false);
                         const isBotOff = global.GoatBot?.botOff === true;
                         if (isEventsOff || isBotOff) {
                                 return;
