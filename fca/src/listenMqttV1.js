@@ -243,11 +243,9 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
             getSeqID();
         }, 15000);
 
-        ctx.tmsWait = function () {
-            clearTimeout(rTimeout);
-            ctx.globalOptions.emitReady ? globalCallback({type: "ready",error: null}) : '';
-            delete ctx.tmsWait;
-        };
+            if (ctx.globalOptions.emitReady) {
+                globalCallback(null, { type: "ready", error: null });
+            }
     });
 
     global.mqttClient.on('message', function (topic, message, _packet) {

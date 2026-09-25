@@ -1250,6 +1250,10 @@ async function startBot(loginWithEmail) {
                         const handlerAction = require("../handler/handlerAction.js")(api, threadModel, userModel, dashBoardModel, globalModel, usersData, threadsData, dashBoardData, globalData);
                         // —————————————————— CALLBACK LISTEN —————————————————— //
                         async function callBackListen(error, event) {
+                                if (error && error.type === "ready") {
+                                        event = error;
+                                        error = null;
+                                }
                                 if (error) {
                                         // Meta Action Block (368) / Rate-Limit (1357004) self-healing
                                         if (

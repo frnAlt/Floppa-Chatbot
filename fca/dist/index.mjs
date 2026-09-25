@@ -24453,7 +24453,7 @@ var require_connect_mqtt = __commonJS({
               if (ctx._rTimeout) {
                 delete ctx._rTimeout;
               }
-              if (ctx.globalOptions.emitReady) globalCallback({ type: "ready", error: null });
+              if (ctx.globalOptions.emitReady) globalCallback(null, { type: "ready", error: null });
               delete ctx.tmsWait;
             };
           });

@@ -352,10 +352,13 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
         clearTimeout(rTimeout);
         rTimeout = null;
       }
-      ctx.globalOptions.emitReady ? globalCallback({
-        type: "ready",
-        error: null
-      }) : '';
+      if (ctx.globalOptions.emitReady && !ctx._readyEmitted) {
+        ctx._readyEmitted = true;
+        globalCallback(null, {
+          type: "ready",
+          error: null
+        });
+      }
       delete ctx.tmsWait;
     };
   });
@@ -367,7 +370,8 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
     try {
       jsonMessage = JSON.parse(raw);
     } catch (e) {
-      if (raw.includes("IRIS_CURSOR_LIMIT") || raw.includes("CURSOR")) {
+      if (raw.includes("IRIS_CURSOR_LIMIT") || (raw.includes("CURSOR") && raw.includes("IRIS"))) {
+        log.warn("listenMqtt", `IRIS cursor limit encountered on topic ${topic}, refreshing sequence ID...`);
         if (ctx.tmsWait && typeof ctx.tmsWait == "function") ctx.tmsWait();
         getSeqID();
       }
