@@ -1,27 +1,46 @@
 const axios = require("axios");
 
-const DEFAULT_DESKTOP_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.182 Safari/537.36";
-const DEFAULT_MOBILE_AGENT = "Mozilla/5.0 (Linux; Android 14; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Mobile Safari/537.36";
+const DEFAULT_DESKTOP_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36";
+const DEFAULT_MOBILE_AGENT = "Mozilla/5.0 (Linux; Android 14; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Mobile Safari/537.36";
 
-let getSpoofedIpHeaders = null;
+let formatCookieHelper = null;
 try {
-	getSpoofedIpHeaders = require("../../fca/src/utils/ipSpoofing").getSpoofedIpHeaders;
+	formatCookieHelper = require("../../fca/src/utils/formatters/value/formatCookie");
 } catch (_) {}
 
 /**
  * Validates whether a cookie/appState session is alive on Facebook without triggering security flags.
- * @param {string} cookie Cookie string format
+ * @param {string|Array} cookie Cookie string format or AppState JSON array
  * @param {string} userAgent Custom Mobile or Desktop User-Agent
  * @returns {Promise<Boolean>}
  */
 module.exports = async function (cookie, userAgent) {
 	try {
+		let cookieString = typeof cookie === "string" ? cookie : "";
+		if (Array.isArray(cookie)) {
+			cookieString = cookie.map(i => `${i.key || i.name}=${i.value}`).join("; ");
+		} else if (typeof cookie === "string" && (cookie.trim().startsWith("[") || cookie.trim().startsWith("{") || cookie.includes("\t"))) {
+			try {
+				if (formatCookieHelper && typeof formatCookieHelper.parseUniversalCookies === "function") {
+					const parsed = formatCookieHelper.parseUniversalCookies(cookie);
+					if (Array.isArray(parsed) && parsed.length > 0) {
+						cookieString = parsed.map(i => `${i.key || i.name}=${i.value}`).join("; ");
+					}
+				} else {
+					const parsed = JSON.parse(cookie);
+					if (Array.isArray(parsed)) {
+						cookieString = parsed.map(i => `${i.key || i.name}=${i.value}`).join("; ");
+					}
+				}
+			} catch (_) {}
+		}
+
 		const ua = userAgent || DEFAULT_DESKTOP_AGENT;
 		const isMobile = /Android|iPhone|iPad|Mobile/i.test(ua);
 		const targetUrl = isMobile ? "https://mbasic.facebook.com/" : "https://www.facebook.com/";
 
 		const headers = {
-			cookie,
+			cookie: cookieString,
 			"user-agent": ua,
 			"accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
 			"accept-language": "en-US,en;q=0.9",
@@ -31,12 +50,6 @@ module.exports = async function (cookie, userAgent) {
 			"sec-fetch-site": "none",
 			"upgrade-insecure-requests": "1"
 		};
-
-		if (typeof getSpoofedIpHeaders === "function") {
-			try {
-				Object.assign(headers, getSpoofedIpHeaders());
-			} catch (_) {}
-		}
 
 		const response = await axios({
 			url: targetUrl,

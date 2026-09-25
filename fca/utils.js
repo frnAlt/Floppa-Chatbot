@@ -84,7 +84,7 @@ function getHeaders(url, options, ctx, customHeader) {
         Referer: "https://www.facebook.com/",
         Host: url.replace("https://", "").split("/")[0],
         Origin: "https://www.facebook.com",
-        "user-agent": (options.userAgent || "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.5060.114 Safari/537.36"),
+        "user-agent": (options.userAgent || "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"),
         Connection: "keep-alive",
         "sec-fetch-site": 'same-origin',
         "sec-fetch-mode": 'cors'
@@ -94,9 +94,11 @@ function getHeaders(url, options, ctx, customHeader) {
 
     try {
         const { globalIpBanProtection } = require("./src/utils/ipSpoofing");
-        const spoof = globalIpBanProtection.getHeaders();
-        for (const [k, v] of Object.entries(spoof)) {
-            if (!headers[k]) headers[k] = v;
+        if (globalIpBanProtection && globalIpBanProtection.spoofIP) {
+            const spoof = globalIpBanProtection.getHeaders();
+            for (const [k, v] of Object.entries(spoof)) {
+                if (!headers[k]) headers[k] = v;
+            }
         }
     } catch (_) {}
 
@@ -138,8 +140,10 @@ function sendRequestWithAntiBan(op, retries = 3) {
                 try {
                     const { globalIpBanProtection } = require("./src/utils/ipSpoofing");
                     const block = globalIpBanProtection.handleBlock(res, attempt);
-                    console.warn(`[FLOPPA-ANTI-BAN] (utils) IP rate-limit/ban detected (${res.statusCode}). Rotated IP to ${block.newIP}. Retrying in ${block.waitMs}ms...`);
-                    Object.assign(op.headers, globalIpBanProtection.getHeaders());
+                    if (globalIpBanProtection.spoofIP) {
+                        console.warn(`[FLOPPA-ANTI-BAN] (utils) IP rate-limit/ban detected (${res.statusCode}). Rotated IP to ${block.newIP}. Retrying in ${block.waitMs}ms...`);
+                        Object.assign(op.headers, globalIpBanProtection.getHeaders());
+                    }
                     return bluebird.delay(block.waitMs).then(execute);
                 } catch (_) {}
             }
@@ -154,8 +158,10 @@ function sendRequestWithAntiBan(op, retries = 3) {
                 try {
                     const { globalIpBanProtection } = require("./src/utils/ipSpoofing");
                     const block = globalIpBanProtection.handleBlock(err, attempt);
-                    console.warn(`[FLOPPA-ANTI-BAN] (utils) IP rate-limit/ban caught (${err.message}). Rotated IP to ${block.newIP}. Retrying in ${block.waitMs}ms...`);
-                    Object.assign(op.headers, globalIpBanProtection.getHeaders());
+                    if (globalIpBanProtection.spoofIP) {
+                        console.warn(`[FLOPPA-ANTI-BAN] (utils) IP rate-limit/ban caught (${err.message}). Rotated IP to ${block.newIP}. Retrying in ${block.waitMs}ms...`);
+                        Object.assign(op.headers, globalIpBanProtection.getHeaders());
+                    }
                     return bluebird.delay(block.waitMs).then(execute);
                 } catch (_) {}
             }
