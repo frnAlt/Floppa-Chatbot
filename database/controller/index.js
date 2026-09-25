@@ -87,6 +87,7 @@ class DatabaseCacheManager {
 	}
 
 	_evictOldThreads() {
+		if (global.GoatBot?.config?.database?.type === "json") return;
 		const allData = global.db.allThreadData;
 		const now = Date.now();
 
@@ -121,6 +122,7 @@ class DatabaseCacheManager {
 	}
 
 	_evictOldUsers() {
+		if (global.GoatBot?.config?.database?.type === "json") return;
 		const allData = global.db.allUserData;
 		const now = Date.now();
 

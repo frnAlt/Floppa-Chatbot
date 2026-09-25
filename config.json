@@ -20,8 +20,8 @@
     "enable": false,
     "ignoreCommand": []
   },
-  "botOff": false,
-  "eventsOff": false,
+  "botOff": true,
+  "eventsOff": true,
   "reactOff": false,
   "adminBot": [
     "100094924471568",

@@ -15,7 +15,7 @@ class MemoryManager extends EventEmitter {
     this.interval = options.interval || 5000;
     this.logLevel = options.logLevel || 'info';
     this.logFile = options.logFile || path.join(__dirname, 'memory.log');
-    this.allowLog = options.allowLog || true;
+    this.allowLog = options.allowLog !== undefined ? Boolean(options.allowLog) : false;
     this.weakRefs = new WeakMap();
     this.smartReleaseEnabled = options.smartReleaseEnabled || false;
     this.memoryUsageHistory = [];
@@ -40,6 +40,9 @@ class MemoryManager extends EventEmitter {
 
       if (this.smartReleaseEnabled) {
         this.memoryUsageHistory.push(memoryUsage);
+        if (this.memoryUsageHistory.length > 100) {
+          this.memoryUsageHistory.splice(0, this.memoryUsageHistory.length - 100);
+        }
         this.smartRelease();
       }
     }, this.interval);
@@ -50,20 +53,27 @@ class MemoryManager extends EventEmitter {
   }
 
   getMemoryUsage() {
-    const heapStats = v8.getHeapStatistics();
-    const totalHeapSize = heapStats.total_available_size / 1024 / 1024;
-    const usedHeapSize = heapStats.used_heap_size / 1024 / 1024;
-    return usedHeapSize / totalHeapSize;
+    try {
+      const heapStats = v8.getHeapStatistics();
+      const limit = heapStats.heap_size_limit || (1024 * 1024 * 1024);
+      return heapStats.used_heap_size / limit;
+    } catch (_) {
+      const mem = process.memoryUsage();
+      return mem.heapUsed / (mem.heapTotal || 1);
+    }
   }
 
   releaseMemory(memoryUsage) {
-    if (global.gc) {
-      global.gc();
-    } else {
-      v8.setFlagsFromString('--expose_gc');
-      const vm = require('vm');
-      vm.runInNewContext('gc')();
-    }
+    try {
+      if (typeof global.gc === "function") {
+        global.gc();
+      } else {
+        v8.setFlagsFromString('--expose_gc');
+        const vm = require('vm');
+        const gcFn = vm.runInNewContext('gc');
+        if (typeof gcFn === "function") gcFn();
+      }
+    } catch (_) {}
     this.emit('memoryReleased', memoryUsage);
   }
 
@@ -89,7 +99,7 @@ class MemoryManager extends EventEmitter {
     }
     if (this.allowLog) {
       fs.appendFile(this.logFile, `${logMessage}\n`, (err) => {
-        if (err) throw err;
+        if (err) return; // Do not throw uncaught inside async appendFile callback
       });
     }
   }
@@ -137,18 +147,18 @@ class MemoryManager extends EventEmitter {
   }
 
   autoStart(interval) { //1h
-    this.stopMemoryManager();
-    this.startMemoryManager();
+    this.stop();
+    this.start();
+    if (this.autoStartInterval) clearInterval(this.autoStartInterval);
     this.autoStartInterval = setInterval(() => {
-      this.stopMemoryManager();
-      this.startMemoryManager();
+      this.stop();
+      this.start();
     }, interval);
   }
 
   stopMemoryManager() {
     this.stop();
-    clearInterval(this.intervalId);
-    clearInterval(this.autoStartInterval);
+    if (this.autoStartInterval) clearInterval(this.autoStartInterval);
   }
   
   startMemoryManager() {

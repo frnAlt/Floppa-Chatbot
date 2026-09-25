@@ -1236,6 +1236,7 @@ async function startBot(loginWithEmail) {
                         // ——————————————————————————————————————————————————— //
                         const { restartListenMqtt } = global.GoatBot.config;
                         let intervalCheckLiveCookieAndRelogin = false;
+                        const handlerAction = require("../handler/handlerAction.js")(api, threadModel, userModel, dashBoardModel, globalModel, usersData, threadsData, dashBoardData, globalData);
                         // —————————————————— CALLBACK LISTEN —————————————————— //
                         async function callBackListen(error, event) {
                                 if (error) {
@@ -1474,8 +1475,6 @@ async function startBot(loginWithEmail) {
                                         else
                                                 return;
                                 }
-
-                                const handlerAction = require("../handler/handlerAction.js")(api, threadModel, userModel, dashBoardModel, globalModel, usersData, threadsData, dashBoardData, globalData);
 
                                 if (hasBanned === false)
                                         handlerAction(event);

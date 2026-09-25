@@ -36,6 +36,40 @@ async function runDiagnostics() {
 
   const cwd = process.cwd();
 
+  const trackedFilesToRestore = [
+    "config.json",
+    "database/data/system_memory.json",
+    "database/data/ai_debug_snapshot.json",
+    "database/data/responseDB.json"
+  ];
+  const fileSnapshots = new Map();
+  for (const relPath of trackedFilesToRestore) {
+    const fullPath = path.join(cwd, relPath);
+    if (fs.existsSync(fullPath)) {
+      fileSnapshots.set(fullPath, fs.readFileSync(fullPath, "utf8"));
+    }
+  }
+
+  const restoreSnapshots = () => {
+    try {
+      if (global.systemMemoryDB) {
+        global.systemMemoryDB.flushSync = () => {};
+        global.systemMemoryDB.flush = async () => {};
+        global.systemMemoryDB.dirty = false;
+        if (global.systemMemoryDB.flushTimer) {
+          clearTimeout(global.systemMemoryDB.flushTimer);
+          global.systemMemoryDB.flushTimer = null;
+        }
+      }
+    } catch (_) {}
+    for (const [fullPath, content] of fileSnapshots.entries()) {
+      try {
+        fs.writeFileSync(fullPath, content, "utf8");
+      } catch (_) {}
+    }
+  };
+  process.on("exit", restoreSnapshots);
+
   // ──────────────── 1. Native FCA Module Verification ────────────────
   console.log("\x1b[33m--- 1. Native FCA Engine Verification ---\x1b[0m");
   try {
@@ -1611,6 +1645,9 @@ async function runDiagnostics() {
   } catch (err) {
     logTest("ADMIN_DISPATCH", "Section 9 tests encountered failure", false, err.message);
   }
+
+  // Restore original tracked files so diagnostic execution does not dirty repo state or reset botOff
+  restoreSnapshots();
 
   // ──────────────── Summary ────────────────
   console.log("\n\x1b[36m============================================================\x1b[0m");

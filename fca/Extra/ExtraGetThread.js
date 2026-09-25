@@ -215,37 +215,33 @@ exports.hasData = function(threadID) {
 
 exports.alreadyUpdate = function(threadID) {
     if (global.Fca.Require.Priyansh.AntiGetInfo.Database_Type == "default") {
-        var Time = Database(true).get(String(threadID)).TimeUpdate;
-            try { 
-                if (global.Fca.startTime >= (Time + (3600 * 1000))) {
-                    logger.Normal(getText(language.alreadyUpdate, String(threadID)));
-                    return true;
-                }
-                else return false;
+        try {
+            var threadObj = Database(true).get(String(threadID));
+            var Time = threadObj?.TimeUpdate || 0;
+            if (global.Fca.startTime >= (Time + (3600 * 1000))) {
+                logger.Normal(getText(language.alreadyUpdate, String(threadID)));
+                return true;
             }
-            catch (e) { 
-                console.log(e);
+            else return false;
+        }
+        catch (e) { 
             return true;
         }
     }
     else if (global.Fca.Require.Priyansh.AntiGetInfo.Database_Type == "json") {
         try {
-            var data = require(process.cwd() + "/Horizon_Database/Threads.json");
-            var Time = data[String(threadID)].TimeUpdate;
-            try { 
-                if (global.Fca.startTime >= (Time + (3600 * 1000))) {
-                    logger.Normal(getText(language.alreadyUpdate, String(threadID)));
-                    return true;
-                }
-                else return false;
+            var data = {};
+            try {
+                data = require(process.cwd() + "/Horizon_Database/Threads.json");
+            } catch (_) {}
+            var Time = data[String(threadID)]?.TimeUpdate || 0;
+            if (global.Fca.startTime >= (Time + (3600 * 1000))) {
+                logger.Normal(getText(language.alreadyUpdate, String(threadID)));
+                return true;
             }
-            catch (e) { 
-                console.log(e);
-            return true;
-        }
+            else return false;
         }
         catch (e) {
-            console.log(e);
             return true;
         }
     }
