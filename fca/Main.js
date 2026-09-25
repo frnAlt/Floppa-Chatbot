@@ -428,8 +428,13 @@ function buildAPI(globalOptions, html, jar, bypass_region) {
                         ctx.mqttClient.unsubscribe("/rtc_multi");
                         ctx.mqttClient.unsubscribe("/onevc");
                         ctx.mqttClient.publish("/browser_close", "{}");
-                        ctx.mqttClient.end(false, () => {
-                            ctx.mqttClient = undefined;
+                    } catch (_) {}
+                    try {
+                        const oldClient = ctx.mqttClient;
+                        ctx.mqttClient = undefined;
+                        if (global.mqttClient === oldClient) global.mqttClient = undefined;
+                        oldClient.removeAllListeners();
+                        oldClient.end(true, () => {
                             if (typeof cb === "function") cb();
                         });
                         return;
