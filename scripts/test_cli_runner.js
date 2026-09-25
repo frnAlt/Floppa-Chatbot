@@ -40,7 +40,9 @@ async function runDiagnostics() {
     "config.json",
     "database/data/system_memory.json",
     "database/data/ai_debug_snapshot.json",
-    "database/data/responseDB.json"
+    "database/data/responseDB.json",
+    "database/data/dihData.json",
+    "database/data/dihData.json.bak"
   ];
   const fileSnapshots = new Map();
   for (const relPath of trackedFilesToRestore) {
@@ -1549,6 +1551,34 @@ async function runDiagnostics() {
     responseDB.clearConversation("ctx_diag_01");
     responseDB.clearAICache();
     responseDB.flush();
+
+    // 10. scripts/cmds/dih.js database and execution test
+    const dihCmd = require(path.join(cwd, "scripts/cmds/dih.js"));
+    const dihConfigValid = Boolean(
+      dihCmd.config &&
+      dihCmd.config.name === "dih" &&
+      typeof dihCmd.onStart === "function"
+    );
+    let dihReplyMsg = null;
+    const mockDihMsg = {
+      reply: async (text) => {
+        dihReplyMsg = text;
+        return { messageID: "mid_dih_test" };
+      }
+    };
+    const mockUsersData = {
+      getName: async () => "Tester",
+      getAvatarUrl: async () => null
+    };
+    await dihCmd.onStart({
+      api: { getCurrentUserID: () => "bot_123" },
+      event: { threadID: "dih_test_thread", senderID: "9999", mentions: {} },
+      args: ["top"],
+      message: mockDihMsg,
+      usersData: mockUsersData
+    });
+    const dihDataExists = fs.existsSync(path.join(cwd, "database/data/dihData.json"));
+    logTest("DIH_DB", "scripts/cmds/dih.js database and leaderboard query runs crash-free", dihConfigValid && dihDataExists && Boolean(dihReplyMsg));
   } catch (err) {
     logTest("RESPONSE_DB", "Section 8 tests encountered failure", false, err.message);
   }

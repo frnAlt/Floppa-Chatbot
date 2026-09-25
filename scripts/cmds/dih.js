@@ -32,15 +32,26 @@ const STREAK_EXPIRY_MS = 48 * 60 * 60 * 1000; // 48 hours
 
 // Helper to access safe persistent database
 function getDihData() {
-    return readJSONSafe(DB_FILE, { threads: {} });
+    let data = readJSONSafe(DB_FILE, { threads: {} });
+    if (!data || typeof data !== "object" || Array.isArray(data)) {
+        data = { threads: {} };
+    }
+    if (!data.threads || typeof data.threads !== "object" || Array.isArray(data.threads)) {
+        data.threads = {};
+    }
+    return data;
 }
 
 function saveDihData(data) {
+    if (!data || typeof data !== "object" || Array.isArray(data)) {
+        data = { threads: {} };
+    }
     writeJSONSafeSync(DB_FILE, data);
 }
 
 function getThreadDih(data, threadID) {
-    if (!data.threads) data.threads = {};
+    if (!data || typeof data !== "object") data = { threads: {} };
+    if (!data.threads || typeof data.threads !== "object") data.threads = {};
     if (!data.threads[threadID]) {
         data.threads[threadID] = {
             users: {},
