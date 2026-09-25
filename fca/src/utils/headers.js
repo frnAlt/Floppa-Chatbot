@@ -283,9 +283,10 @@ function getHeaders(url, options, ctx, customHeader, requestType = 'navigate') {
 function applyIpSpoofingHeaders(headers, options, ctx) {
     try {
         const antiBanOpt = (options && options.antiBan) || {};
-        if (antiBanOpt.spoofIP !== false && (options && options.spoofIP !== false)) {
-            const ip = (ctx && ctx.spoofedIP) || antiBanOpt.customSpoofedIP;
-            const spoofHeaders = ip ? getSpoofedIpHeaders(ip) : globalIpBanProtection.getHeaders();
+        const shouldSpoof = antiBanOpt.spoofIP === true || (options && options.spoofIP === true) || (globalIpBanProtection && globalIpBanProtection.spoofIP === true);
+        if (shouldSpoof) {
+            const ip = (ctx && ctx.spoofedIP) || antiBanOpt.customSpoofedIP || (globalIpBanProtection && globalIpBanProtection.getCurrentIP());
+            const spoofHeaders = getSpoofedIpHeaders(ip);
             for (const [k, v] of Object.entries(spoofHeaders)) {
                 if (!headers[k]) {
                     headers[k] = v;

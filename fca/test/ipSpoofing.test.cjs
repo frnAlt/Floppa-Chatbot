@@ -101,12 +101,17 @@ test("IpBanProtection rotates IP, tracks history, and calculates backoff", () =>
     assert.ok(status.currentIP);
 });
 
-test("getHeaders automatically incorporates spoofed IP headers", () => {
-    const headers = getHeaders("https://www.facebook.com/api/graphql/", {}, {});
-    assert.ok(headers["X-Forwarded-For"], "X-Forwarded-For header missing in getHeaders");
-    assert.ok(headers["Client-IP"], "Client-IP header missing in getHeaders");
-    assert.ok(headers["CF-Connecting-IP"], "CF-Connecting-IP header missing in getHeaders");
-    assert.ok(headers["X-Real-IP"], "X-Real-IP header missing in getHeaders");
+test("getHeaders incorporates spoofed IP headers when enabled and omits them by default", () => {
+    const spoofedHeaders = getHeaders("https://www.facebook.com/api/graphql/", { spoofIP: true }, {});
+    assert.ok(spoofedHeaders["X-Forwarded-For"], "X-Forwarded-For header missing in getHeaders when spoofIP=true");
+    assert.ok(spoofedHeaders["Client-IP"], "Client-IP header missing in getHeaders when spoofIP=true");
+    assert.ok(spoofedHeaders["CF-Connecting-IP"], "CF-Connecting-IP header missing in getHeaders when spoofIP=true");
+    assert.ok(spoofedHeaders["X-Real-IP"], "X-Real-IP header missing in getHeaders when spoofIP=true");
+
+    const directHeaders = getHeaders("https://www.facebook.com/api/graphql/", {}, {});
+    assert.strictEqual(directHeaders["CF-Connecting-IP"], undefined, "CF-Connecting-IP should not be present on direct connections");
+    assert.strictEqual(directHeaders["Fastly-Client-IP"], undefined, "Fastly-Client-IP should not be present on direct connections");
+    assert.strictEqual(directHeaders["X-Forwarded-For"], undefined, "X-Forwarded-For should not be present on direct connections");
 });
 
 test("generateResidentialIPMeta provides rich geo and ISP metadata", () => {

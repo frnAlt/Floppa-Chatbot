@@ -317,10 +317,10 @@ class ProxyRotator {
 class IpBanProtection {
     constructor(config = {}) {
         this.enabled = config.enabled !== false;
-        this.spoofIP = config.spoofIP !== false;
+        this.spoofIP = config.spoofIP === true;
         this.rotateIPOnBlock = config.rotateIPOnBlock !== false;
         this.ignoreIPBan = config.ignoreIPBan !== false;
-        this.randomizeUserAgent = config.randomizeUserAgent !== false;
+        this.randomizeUserAgent = config.randomizeUserAgent === true;
         this.maxRetries = Number.isInteger(config.maxRetries) ? config.maxRetries : 4;
         this.backoffMs = Number.isInteger(config.backoffMs) ? config.backoffMs : 1500;
         this.customSpoofedIP = config.customSpoofedIP || null;
