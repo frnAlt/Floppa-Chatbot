@@ -619,7 +619,7 @@ function makeLogin(jar, email, password, loginOptions, callback, prCallback) {
                                                                     logger.Warning(Language.ErrThroughCookies, function() {
                                                                         Database().delete('Through2Fa');
                                                                     });
-                                                                    process.exit(1);
+                                                                    return callback(new Error(Language.ErrThroughCookies || "Through2Fa cookie deleted."));
                                                                 }
                                                             if (headers.location && headers.location.indexOf('https://www.facebook.com/checkpoint/') > -1) {
                                                                 return utils
@@ -661,7 +661,9 @@ function makeLogin(jar, email, password, loginOptions, callback, prCallback) {
                                                                                         var headers = res.headers;
                                                                                         if (!headers.location && res.headers['set-cookie'][0].includes('checkpoint')) {
                                                                                             Database().delete('Through2Fa');
-                                                                                            process.exit(1);
+                                                                                            const cpErr = new Error("Facebook Account Checkpoint detected.");
+                                                                                            cpErr.name = "CHECKPOINT_ERROR";
+                                                                                            return callback(cpErr);
                                                                                         }
                                                                                         var appState = utils.getAppState(jar,false);
                                                                                         Database().set('Through2Fa', appState);
@@ -787,9 +789,8 @@ function makeLogin(jar, email, password, loginOptions, callback, prCallback) {
                                                 return approvals(Code)
                                             }
                                             catch (e) {
-                                                logger.Error(e)
-                                                logger.Error();
-                                                process.exit(0);
+                                                logger.Error(e);
+                                                return callback(e);
                                             }
                                         } 
                                     case false: {
@@ -923,11 +924,12 @@ function backup(data,globalOptions, callback, prCallback) {
         }
         catch (e) {
             logger.Error(Language.ErrBackup);
-            process.exit(0);
+            return callback(e || new Error(Language.ErrBackup));
         }
     }
     catch (e) {
-        return logger.Error();
+        logger.Error(e);
+        return callback(e);
     }
 }
 
@@ -1195,7 +1197,13 @@ try {
  * It asks the user for their account and password, and then saves it to the database.
  */
 
-function setUserNameAndPassWord() {
+function setUserNameAndPassWord(callback) {
+    if (!process.stdin.isTTY) {
+        const err = new Error("Interactive credential prompt is not available in non-TTY environment.");
+        logger.Error(err.message);
+        if (typeof callback === "function") return callback(err);
+        return;
+    }
     let rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout
@@ -1208,8 +1216,13 @@ function setUserNameAndPassWord() {
     console.log(chalk.bold.hex('#9900FF')("[</>]") + chalk.bold.yellow(' => ') + "Fca Version: " + chalk.bold.red(global.Fca.Version) + '\n');
     try {
         rl.question(Language.TypeAccount, (Account) => {
-            if (!Account.includes("@") && global.Fca.Require.utils.getType(parseInt(Account)) != "Number") return logger.Normal(Language.TypeAccountError, function () { process.exit(1) }); //Very Human
-                else rl.question(Language.TypePassword, function (Password) {
+            if (!Account.includes("@") && global.Fca.Require.utils.getType(parseInt(Account)) != "Number") {
+                rl.close();
+                logger.Normal(Language.TypeAccountError);
+                if (typeof callback === "function") return callback(new Error(Language.TypeAccountError));
+                return;
+            } else {
+                rl.question(Language.TypePassword, function (Password) {
                     rl.close();
                     try {
                         Database().set("Account", Account);
@@ -1217,20 +1230,23 @@ function setUserNameAndPassWord() {
                     }
                     catch (e) {
                         logger.Warning(Language.ErrDataBase);
-                            logger.Error();
-                        process.exit(0);
+                        logger.Error(e);
+                        if (typeof callback === "function") return callback(e);
+                        return;
                     }
                     if (global.Fca.Require.Priyansh.ResetDataLogin) {
                         global.Fca.Require.Priyansh.ResetDataLogin = false;
                         global.Fca.Require.fs.writeFileSync(process.cwd() + '/PriyanshFca.json', JSON.stringify(global.Fca.Require.Priyansh, null, 4));
                     }
-                logger.Success(Language.SuccessSetData);
-                process.exit(1);
-            });
-        })
+                    logger.Success(Language.SuccessSetData);
+                    if (typeof callback === "function") return callback(null, { status: "Credentials saved." });
+                });
+            }
+        });
     }
     catch (e) {
-        logger.Error(e)
+        logger.Error(e);
+        if (typeof callback === "function") return callback(e);
     }
 }
 
@@ -1368,7 +1384,7 @@ function login(loginData, options, callback) {
 **/
         switch (global.Fca.Require.Priyansh.AutoLogin) {
             case true: {
-                if (global.Fca.Require.Priyansh.ResetDataLogin) return setUserNameAndPassWord();
+                if (global.Fca.Require.Priyansh.ResetDataLogin) return setUserNameAndPassWord(callback);
                 else {
                     try {
                         const TempState = Database().get("TempState")
@@ -1383,21 +1399,21 @@ function login(loginData, options, callback) {
                         }
                     }
                     catch (e) {
-                        console.log(e)
+                        console.log(e);
                         Database().delete("TempState");
-                            logger.Warning(Language.ErrDataBase);
-                            logger.Error();
-                        process.exit(0);
+                        logger.Warning(Language.ErrDataBase);
+                        logger.Error(e);
+                        return callback(e || new Error(Language.ErrDataBase));
                     }
                     try {
                         if (Database().has('Account') && Database().has('Password')) return loginHelper(loginData.appState, loginData.email, loginData.password, globalOptions, callback, prCallback);
-                        else return setUserNameAndPassWord();
+                        else return setUserNameAndPassWord(callback);
                     }
                     catch (e) {
-                        console.log(e)
+                        console.log(e);
                         logger.Warning(Language.ErrDataBase);
-                            logger.Error();
-                        process.exit(0);
+                        logger.Error(e);
+                        return callback(e || new Error(Language.ErrDataBase));
                     }
                 }
             }

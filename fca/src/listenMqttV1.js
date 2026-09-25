@@ -153,8 +153,7 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
 
         if (ctx.globalOptions.autoReconnect) getSeqID();
         else {
-            globalCallback({ type: "stop_listen", error: "Server Đã Sập - Auto Restart" }, null);
-            return process.exit(1);
+            return globalCallback({ type: "stop_listen", error: "Connection closed." }, null);
         }
     });
 
@@ -190,7 +189,15 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
                 global.Fca.Require.logger.Normal("Auto Restart MQTT Client After: " + global.Fca.Require.Priyansh.RestartMQTT_Minutes + " Minutes");
                 setInterval(() => { 
                     global.Fca.Require.logger.Normal(global.Fca.Require.Language.Src.OnRestart);
-                    process.exit(1);
+                    try {
+                        if (global.mqttClient) {
+                            global.mqttClient.removeAllListeners();
+                            global.mqttClient.end(true);
+                        }
+                        getSeqID();
+                    } catch (_) {
+                        process.exit(2);
+                    }
                 }, Number(global.Fca.Require.Priyansh.AutoRestartMinutes) * 60000);
             }
             require('../broadcast').startBroadcasting();

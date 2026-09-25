@@ -424,20 +424,27 @@ async function getAppStateFromEmail(spin = { _start: () => { }, _stop: () => { }
                         }
                 }
 
-                appState = await loginMbasic({
-                        email,
-                        pass: password,
-                        twoFactorSecretOrCode: code2FATemp,
-                        userAgent,
-                        proxy
-                });
+                try {
+                        appState = await loginMbasic({
+                                email,
+                                pass: password,
+                                twoFactorSecretOrCode: code2FATemp,
+                                userAgent,
+                                proxy
+                        });
 
-                appState = appState.map(item => {
-                        item.key = item.name;
-                        delete item.name;
-                        return item;
-                });
-                appState = filterKeysAppState(appState);
+                        appState = appState.map(item => {
+                                item.key = item.name;
+                                delete item.name;
+                                return item;
+                        });
+                        appState = filterKeysAppState(appState);
+                } catch (mErr) {
+                        log.err("LOGIN FACEBOOK", `mbasic fallback login failed for ${email}:`, mErr?.message || mErr);
+                        const finalErr = new Error(`Facebook authentication failed for ${email}: ${mErr?.message || 'Invalid credentials or checkpoint'}`);
+                        finalErr.name = mErr?.name || "LOGIN_FAILED";
+                        throw finalErr;
+                }
         }
 
         global.GoatBot.config.facebookAccount['2FASecret'] = code2FATemp || "";
@@ -820,9 +827,9 @@ async function startBot(loginWithEmail) {
                                 // ——————————— SINGLE ACCOUNT MODE ——————————— //
                                 // If only one account, keep retrying with exponential backoff
                                 if (multiAccountManager.isSingleAccount()) {
-                                        if (process.env.CI || process.env.GITHUB_ACTIONS || !process.stdout.isTTY) {
+                                        if (process.env.CI_TEST_MODE) {
                                                 if (multiAccountManager.singleAccountRetryCount >= 3) {
-                                                        log.err("SINGLE ACCOUNT", "Exceeded max login retry attempts (3) in non-interactive environment. Exiting to prevent runner hang.");
+                                                        log.err("SINGLE ACCOUNT", "Exceeded max login retry attempts (3) in CI test mode. Exiting.");
                                                         process.exit(1);
                                                 }
                                         }
@@ -876,6 +883,7 @@ async function startBot(loginWithEmail) {
 
                         // Mark current account as working
                         multiAccountManager.markCurrentAsWorking();
+                        multiAccountManager.singleAccountRetryCount = 0;
 
                         let hasBanned = false;
                         global.botID = api.getCurrentUserID();
@@ -1321,9 +1329,9 @@ async function startBot(loginWithEmail) {
                                                 // ——————————— SINGLE ACCOUNT MODE ——————————— //
                                                 // If only one account, keep retrying instead of restarting
                                                 if (multiAccountManager.isSingleAccount()) {
-                                                        if (process.env.CI || process.env.GITHUB_ACTIONS || !process.stdout.isTTY) {
+                                                        if (process.env.CI_TEST_MODE) {
                                                                 if (multiAccountManager.singleAccountRetryCount >= 3) {
-                                                                        log.err("SINGLE ACCOUNT", "Exceeded max login retry attempts (3) in non-interactive environment. Exiting to prevent runner hang.");
+                                                                        log.err("SINGLE ACCOUNT", "Exceeded max login retry attempts (3) in CI test mode. Exiting.");
                                                                         process.exit(1);
                                                                 }
                                                         }
@@ -1404,6 +1412,7 @@ async function startBot(loginWithEmail) {
                                                                                 clearInterval(interval);
                                                                                 clearInterval(countTimes);
                                                                                 intervalCheckLiveCookieAndRelogin = false;
+                                                                                multiAccountManager.singleAccountRetryCount = 0;
                                                                                 const keyListen = Date.now();
                                                                                 isSendNotiErrorMessage = false;
                                                                                 global.GoatBot.Listening = api.listenMqtt(createCallBackListen(keyListen));

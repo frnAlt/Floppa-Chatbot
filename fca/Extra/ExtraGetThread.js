@@ -15,8 +15,8 @@ if (global.Fca.Require.Priyansh.AntiGetInfo.Database_Type == "json") {
     }
 }
 else if (global.Fca.Require.Priyansh.AntiGetInfo.Database_Type != "default" && global.Fca.Require.Priyansh.AntiGetInfo.Database_Type != "json") {
-    logger.Warning("Database_Type in PriyanshFca.json is not valid. Only default and json are valid.");
-    process.exit(0);
+    logger.Warning("Database_Type in PriyanshFca.json is not valid. Only default and json are valid. Defaulting to 'default'.");
+    global.Fca.Require.Priyansh.AntiGetInfo.Database_Type = "default";
 }
 
 exports.createData = function(threadID,threadData) {

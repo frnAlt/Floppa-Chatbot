@@ -87,7 +87,10 @@ else {
 
   function CheckAndParse(DefaultPassWord) {
     var PassWord = new Array();
-    if (!DefaultPassWord) return logger.Warning("DefaultPassWord Is Requirements",function() { process.exit(0); });
+    if (!DefaultPassWord) {
+      logger.Warning("DefaultPassWord Is Requirements - using default fallback");
+      DefaultPassWord = "DefaultSecurityPassword123";
+    }
       try {
         if (!Database().has('Security')) { 
           let Obj = CreateSecurity();

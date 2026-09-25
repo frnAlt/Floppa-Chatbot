@@ -271,7 +271,15 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
         global.Fca.Require.logger.Normal(`Auto Restart MQTT Client After: ${global.Fca.Require.Priyansh.RestartMQTT_Minutes} Minutes`);
         setTimeout(() => {
           global.Fca.Require.logger.Normal(global.Fca.Require.Language.Src.OnRestart);
-          process.exit(1);
+          try {
+            if (client) {
+              client.removeAllListeners();
+              client.end(true);
+            }
+            getSeqID();
+          } catch (_) {
+            process.exit(2);
+          }
         }, Number(global.Fca.Require.Priyansh.AutoRestartMinutes) * 60000);
       }
       if (global.Fca?.Require?.Priyansh?.BroadCast) {
@@ -297,8 +305,14 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
 
       if (global.Fca.Require.Priyansh.AntiStuckAndMemoryLeak.AutoRestart.Use) {
         memoryManager.onMaxMemory(function() {
-          global.Fca.Require.logger.Warning('Memory Usage >= 90% - Auto Restart Avoid Crash');
-          process.exit(1);
+          global.Fca.Require.logger.Warning('Memory Usage >= 90% - Forcing GC & Session Recycle');
+          if (global.gc) {
+            try { global.gc(); } catch (_) {}
+          }
+          const mem = process.memoryUsage();
+          if (mem.heapTotal > 0 && (mem.heapUsed / mem.heapTotal) > 0.92) {
+            process.exit(2);
+          }
         });
       }
       process.env.OnStatus = true;
@@ -1006,6 +1020,7 @@ module.exports = function(defaultFuncs, api, ctx) {
           };
           if (resData[0].o0.data.viewer.message_threads.sync_sequence_id) {
             ctx.lastSeqId = resData[0].o0.data.viewer.message_threads.sync_sequence_id;
+            ctx.getSeqIdRetryCount = 0;
             listenMqtt(defaultFuncs, api, ctx, globalCallback);
           } else throw {
             error: "getSeqId: no sync_sequence_id found.",
@@ -1030,11 +1045,13 @@ module.exports = function(defaultFuncs, api, ctx) {
         }
         if (!ctx.getSeqIdRetryCount) ctx.getSeqIdRetryCount = 0;
         ctx.getSeqIdRetryCount++;
-        if (ctx.getSeqIdRetryCount <= 3 && global.Fca?.Data?.StopListening !== true && ctx.globalOptions.autoReconnect !== false) {
-          log.warn("getSeqId", `Transient error in getSeqId; retrying attempt ${ctx.getSeqIdRetryCount}/3 in 5 seconds...`);
+        const MAX_RETRIES = 10;
+        if (ctx.getSeqIdRetryCount <= MAX_RETRIES && global.Fca?.Data?.StopListening !== true && ctx.globalOptions.autoReconnect !== false) {
+          const delay = Math.min(2000 * Math.pow(1.5, ctx.getSeqIdRetryCount - 1), 30000) + Math.floor(Math.random() * 1000);
+          log.warn("getSeqId", `Transient error in getSeqId; retrying attempt ${ctx.getSeqIdRetryCount}/${MAX_RETRIES} in ${(delay / 1000).toFixed(1)}s...`);
           setTimeout(() => {
             getSeqID();
-          }, 5000);
+          }, delay);
         } else {
           ctx.loggedIn = false;
           return globalCallback(err);

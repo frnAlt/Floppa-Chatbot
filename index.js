@@ -50,8 +50,8 @@ function startProject() {
 			log.info("Floppa-Chatbot", "Stopped cleanly. Not restarting.");
 			return;
 		}
-		if ((process.env.CI || process.env.GITHUB_ACTIONS) && code !== 2) {
-			log.err("Floppa-Chatbot", `Process exited with code ${code} in CI/GitHub Actions. Not restarting.`);
+		if (process.env.CI_TEST_MODE && code !== 2) {
+			log.err("Floppa-Chatbot", `Process exited with code ${code} in CI test mode. Not restarting.`);
 			process.exit(code || 1);
 		}
 		const delay = code === 2 ? 0 : 3000;
