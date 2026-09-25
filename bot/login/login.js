@@ -448,8 +448,14 @@ async function getAppStateFromEmail(spin = { _start: () => { }, _stop: () => { }
 function isNetScapeCookie(cookie) {
         if (typeof cookie !== 'string')
                 return false;
-        return /(.+)\t(1|TRUE|true)\t([\w\/.-]*)\t(1|TRUE|true)\t\d+\t([\w-]+)\t(.+)/i.test(cookie);
-        // match
+        return (
+                cookie.includes('\t') ||
+                cookie.startsWith('# Netscape') ||
+                cookie.startsWith('# HTTP Cookie') ||
+                cookie.includes('#HttpOnly_') ||
+                /(.+)\t(1|TRUE|true)\t([\w\/.-]*)\t(1|TRUE|true)\t\d+\t([\w-]+)\t(.+)/i.test(cookie) ||
+                /(.+)\s+(1|TRUE|true)\s+([\w\/.-]*)\s+(1|TRUE|true)\s+\d+\s+([\w-]+)\s+(.+)/i.test(cookie)
+        );
 }
 
 function netScapeToCookies(cookieData) {
@@ -459,18 +465,30 @@ function netScapeToCookies(cookieData) {
         }
         const cookies = [];
         const lines = cookieData.split(/\r?\n/);
-        for (const line of lines) {
-                let trimmed = line.trim();
-                if (!trimmed || (trimmed.startsWith('#') && !trimmed.startsWith('#HttpOnly_'))) continue;
-                trimmed = trimmed.replace(/^#HttpOnly_/i, '').trim();
-                const fields = trimmed.split(/\t+|\s{2,}/);
+        for (const rawLine of lines) {
+                let line = rawLine.trim();
+                if (!line || (line.startsWith('#') && !line.startsWith('#HttpOnly_'))) continue;
+                const commentIdx = line.indexOf(' #');
+                if (commentIdx !== -1) {
+                        line = line.substring(0, commentIdx).trim();
+                }
+                const isHttpOnly = /^#HttpOnly_/i.test(line);
+                line = line.replace(/^#HttpOnly_/i, '').trim();
+                let fields = line.split(/\t+/);
+                if (fields.length < 7) {
+                        fields = line.split(/\s+/);
+                }
                 if (fields.length < 7) continue;
+                let value = fields[6].trim().replace(/^"(.*)"$/, '$1');
+                if (value.includes('#')) {
+                        value = value.split('#')[0].trim();
+                }
                 cookies.push({
                         key: fields[5].trim(),
-                        value: fields[6].trim(),
+                        value: value,
                         domain: fields[0].trim().replace(/^\./, ""),
                         path: fields[2].trim() || "/",
-                        hostOnly: false,
+                        hostOnly: !isHttpOnly,
                         creation: new Date(Number(fields[4]) > 0 ? Number(fields[4]) * 1000 : Date.now()).toISOString(),
                         lastAccessed: new Date().toISOString()
                 });

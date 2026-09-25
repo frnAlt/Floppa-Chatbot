@@ -19,14 +19,14 @@ module.exports = async function (cookie, userAgent) {
 		let cookieString = typeof cookie === "string" ? cookie : "";
 		if (Array.isArray(cookie)) {
 			cookieString = cookie.map(i => `${i.key || i.name}=${i.value}`).join("; ");
-		} else if (typeof cookie === "string" && (cookie.trim().startsWith("[") || cookie.trim().startsWith("{") || cookie.includes("\t"))) {
+		} else if (typeof cookie === "string") {
 			try {
 				if (formatCookieHelper && typeof formatCookieHelper.parseUniversalCookies === "function") {
 					const parsed = formatCookieHelper.parseUniversalCookies(cookie);
 					if (Array.isArray(parsed) && parsed.length > 0) {
 						cookieString = parsed.map(i => `${i.key || i.name}=${i.value}`).join("; ");
 					}
-				} else {
+				} else if (cookie.trim().startsWith("[") || cookie.trim().startsWith("{")) {
 					const parsed = JSON.parse(cookie);
 					if (Array.isArray(parsed)) {
 						cookieString = parsed.map(i => `${i.key || i.name}=${i.value}`).join("; ");

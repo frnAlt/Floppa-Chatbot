@@ -37,6 +37,7 @@ async function runDiagnostics() {
   const cwd = process.cwd();
 
   const trackedFilesToRestore = [
+    "account.txt",
     "config.json",
     "database/data/system_memory.json",
     "database/data/ai_debug_snapshot.json",
@@ -82,11 +83,13 @@ async function runDiagnostics() {
     const formatCookie = require(path.join(cwd, "fca/src/utils/formatters/value/formatCookie"));
     logTest("FCA", "formatCookie parser exports available", typeof formatCookie.parseUniversalCookies === "function");
 
-    // Test Netscape / Cookie-Editor parsing
-    const testNetscape = `# Netscape HTTP Cookie File\n#HttpOnly_.facebook.com\tTRUE\t/\tTRUE\t1899999999\tc_user\t1000888888\n.facebook.com\tTRUE\t/\tTRUE\t1899999999\txs\t42%3Asome_token\n`;
+    // Test Netscape / Cookie-Editor parsing (tab-separated, space-separated, and inline comments)
+    const testNetscape = `# Netscape HTTP Cookie File\n#HttpOnly_.facebook.com\tTRUE\t/\tTRUE\t1899999999\tc_user\t1000888888\n.facebook.com\tTRUE\t/\tTRUE\t1899999999\txs\t42%3Asome_token\n.facebook.com    TRUE    /    TRUE    1790957349    wd    1070x595 # trailing comment\n`;
     const parsedCookies = formatCookie.parseUniversalCookies(testNetscape);
     const hasCUser = Array.isArray(parsedCookies) && parsedCookies.some(c => c.key === "c_user" && c.value === "1000888888");
+    const hasCleanWd = Array.isArray(parsedCookies) && parsedCookies.some(c => c.key === "wd" && c.value === "1070x595");
     logTest("FCA", "Universal Cookie parser supports #HttpOnly_ Netscape cookies", hasCUser);
+    logTest("FCA", "Universal Cookie parser handles space-separated Netscape with trailing comments", hasCleanWd);
   } catch (err) {
     logTest("FCA", "Native FCA engine verification failed", false, err.message);
   }

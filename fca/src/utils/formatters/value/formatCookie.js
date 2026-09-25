@@ -231,29 +231,52 @@ function parseUniversalCookies(input) {
         str = str.replace(/^cookie\s*:/i, "").trim();
     }
 
-    // Check for Netscape format
-    if (str.includes('\t') || str.startsWith('# Netscape') || str.startsWith('# HTTP Cookie') || str.includes('#HttpOnly_') || str.includes('.facebook.com')) {
+    // Check for Netscape format (tab-separated, space-separated, #HttpOnly_, comments)
+    if (str.includes('\t') || str.startsWith('# Netscape') || str.startsWith('# HTTP Cookie') || str.includes('#HttpOnly_') || str.includes('.facebook.com') || str.includes('facebook.com') || /#\s*HttpOnly_/i.test(str)) {
         const lines = str.split(/\r?\n/);
         const cookies = [];
-        for (const line of lines) {
-            let trimmed = line.trim();
-            if (!trimmed || (trimmed.startsWith('#') && !trimmed.startsWith('#HttpOnly_'))) continue;
-            trimmed = trimmed.replace(/^#HttpOnly_/i, '').trim();
-            const parts = trimmed.split(/\t+|\s{2,}/);
+        for (const rawLine of lines) {
+            let line = rawLine.trim();
+            if (!line) continue;
+            if (line.startsWith('#') && !line.startsWith('#HttpOnly_')) continue;
+
+            // Strip inline comments (e.g. "wd 1070x595 # comment...")
+            const commentIdx = line.indexOf(' #');
+            if (commentIdx !== -1) {
+                line = line.substring(0, commentIdx).trim();
+            }
+
+            const isHttpOnly = /^#HttpOnly_/i.test(line);
+            line = line.replace(/^#HttpOnly_/i, '').trim();
+
+            let parts = line.split(/\t+/);
+            if (parts.length < 7) {
+                parts = line.split(/\s+/);
+            }
             if (parts.length >= 7) {
-                cookies.push({
-                    key: parts[5].trim(),
-                    value: parts[6].trim(),
-                    domain: parts[0].trim().replace(/^\./, ""),
-                    path: parts[2].trim() || "/",
-                    hostOnly: false,
-                    creation: new Date(Number(parts[4]) > 0 ? Number(parts[4]) * 1000 : Date.now()).toISOString(),
-                    lastAccessed: new Date().toISOString()
-                });
+                const domain = parts[0].trim().replace(/^\./, '');
+                const path = parts[2].trim() || '/';
+                const exp = Number(parts[4]);
+                const key = parts[5].trim();
+                let value = parts[6].trim().replace(/^"(.*)"$/, '$1');
+                if (value.includes('#')) {
+                    value = value.split('#')[0].trim();
+                }
+                if (key && value && key !== 'x-referer') {
+                    cookies.push({
+                        key,
+                        value,
+                        domain: domain || 'facebook.com',
+                        path,
+                        hostOnly: !isHttpOnly,
+                        creation: new Date(exp > 0 ? exp * 1000 : Date.now()).toISOString(),
+                        lastAccessed: new Date().toISOString()
+                    });
+                }
             }
         }
         if (cookies.length > 0) {
-            return cookies.filter(i => i.key && i.value && i.key !== "x-referer");
+            return cookies.filter(i => i.key && i.value && i.key !== 'x-referer');
         }
     }
 
