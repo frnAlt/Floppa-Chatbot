@@ -8,6 +8,7 @@ const WebSocket = require('ws');
 const HttpsProxyAgent = require('https-proxy-agent');
 const EventEmitter = require('events');
 const Duplexify = require('duplexify');
+const SafeMqttStore = require('./utils/SafeMqttStore');
 const {
   Transform
 } = require('stream');
@@ -19,13 +20,11 @@ global.Fca.Data.event = new Map();
 
 const topics = ['/ls_req', '/ls_resp', '/legacy_web', '/webrtc', '/rtc_multi', '/onevc', '/br_sr', '/sr_res', '/t_ms', '/thread_typing', '/orca_typing_notifications', '/notify_disconnect', '/orca_presence', '/inbox', '/mercury', '/messaging_events', '/orca_message_notifications', '/pp', '/webrtc_response'];
 
-let WebSocket_Global;
-
-function buildProxy() {
+function buildProxy(ws) {
   const Proxy = new Transform({
     objectMode: false,
     transform(chunk, enc, next) {
-      if (WebSocket_Global.readyState !== WebSocket_Global.OPEN) {
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
         return next();
       }
 
@@ -36,11 +35,15 @@ function buildProxy() {
         data = chunk;
       }
 
-      WebSocket_Global.send(data);
+      try {
+        ws.send(data);
+      } catch (_) {}
       next();
     },
     flush(done) {
-      WebSocket_Global.close();
+      try {
+        if (ws && ws.readyState === WebSocket.OPEN) ws.close();
+      } catch (_) {}
       done();
     },
     writev(chunks, cb) {
@@ -56,37 +59,58 @@ function buildProxy() {
   return Proxy;
 }
 
-function buildStream(options, WebSocket, Proxy) {
+function buildStream(options, ws) {
+  const Proxy = buildProxy(ws);
   const Stream = Duplexify(undefined, undefined, options);
-  Stream.socket = WebSocket;
+  Stream.socket = ws;
 
-  WebSocket.onclose = () => {
-    Stream.end();
-    Stream.destroy();
+  ws.onclose = () => {
+    try { Stream.end(); } catch (_) {}
+    try { Stream.destroy(); } catch (_) {}
   };
 
-  WebSocket.onerror = (err) => {
-    Stream.destroy(err);
+  ws.onerror = (err) => {
+    try { Stream.destroy(err); } catch (_) {}
   };
 
-  WebSocket.onmessage = (event) => {
+  ws.onmessage = (event) => {
     const data = event.data instanceof ArrayBuffer ? Buffer.from(event.data) : Buffer.from(event.data, 'utf8');
     Stream.push(data);
   };
 
-  WebSocket.onopen = () => {
+  ws.onopen = () => {
     Stream.setReadable(Proxy);
     Stream.setWritable(Proxy);
     Stream.emit('connect');
   };
 
-  WebSocket_Global = WebSocket;
-  Proxy.on('close', () => WebSocket.close());
+  Proxy.on('close', () => {
+    try { ws.close(); } catch (_) {}
+  });
 
   return Stream;
 }
 
 function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
+  if (ctx.tmsWait && typeof ctx.tmsWait === "function") {
+    try { ctx.tmsWait(); } catch (_) {}
+    delete ctx.tmsWait;
+  }
+  if (ctx.mqttClient) {
+    try {
+      ctx.mqttClient.removeAllListeners();
+      ctx.mqttClient.end(true);
+    } catch (_) {}
+    ctx.mqttClient = undefined;
+  }
+  if (global.mqttClient) {
+    try {
+      global.mqttClient.removeAllListeners();
+      global.mqttClient.end(true);
+    } catch (_) {}
+    global.mqttClient = undefined;
+  }
+
   const chatOn = ctx.globalOptions.online;
   const foreground = false;
 
@@ -131,6 +155,8 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
     protocolVersion: 3,
     username: JSON.stringify(username),
     clean: true,
+    incomingStore: new SafeMqttStore(),
+    outgoingStore: new SafeMqttStore(),
     wsOptions: {
       headers: {
         Cookie: cookies,
@@ -153,8 +179,10 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
     options.wsOptions.agent = agent;
   }
 
-  ctx.mqttClient = new mqtt.Client(() => buildStream(options, new WebSocket(host, options.wsOptions), buildProxy()), options);
+  const ws = new WebSocket(host, options.wsOptions);
+  ctx.mqttClient = new mqtt.Client(() => buildStream(options, ws), options);
   global.mqttClient = ctx.mqttClient;
+  const client = ctx.mqttClient;
 
   let reconnecting = false;
   function triggerReconnect(reason) {
@@ -162,14 +190,23 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
     if (reconnecting) return;
     reconnecting = true;
     log.warn('listenMqtt', `MQTT connection lost (${reason || 'unknown'}), re-establishing session...`);
+    if (ctx.tmsWait && typeof ctx.tmsWait === "function") {
+      try { ctx.tmsWait(); } catch (_) {}
+      delete ctx.tmsWait;
+    }
     try {
-      if (global.mqttClient) {
-        global.mqttClient.removeAllListeners();
-        global.mqttClient.end(true);
+      if (client) {
+        client.removeAllListeners();
+        client.end(true);
       }
     } catch (_) {}
-    ctx.mqttClient = undefined;
-    global.mqttClient = undefined;
+    try {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.close();
+      }
+    } catch (_) {}
+    if (ctx.mqttClient === client) ctx.mqttClient = undefined;
+    if (global.mqttClient === client) global.mqttClient = undefined;
 
     if (ctx.globalOptions.autoReconnect !== false) {
       setTimeout(() => {
@@ -183,7 +220,7 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
     }
   }
 
-  global.mqttClient.on('error', (err) => {
+  client.on('error', (err) => {
     const isFramingQuirk = err && typeof err.message === "string" && (err.message.includes('Invalid header flag bits') || err.message.includes('packet parsing'));
     if (!isFramingQuirk) {
       log.error('listenMqtt', err);
@@ -191,21 +228,29 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
     triggerReconnect(err?.message || 'error');
   });
 
-  global.mqttClient.on('close', () => {
+  client.on('close', () => {
     triggerReconnect('close');
   });
 
-  global.mqttClient.on('offline', () => {
+  client.on('offline', () => {
     triggerReconnect('offline');
   });
 
-  global.mqttClient.on('connect', () => {
+  client.on('connect', () => {
+    if (!client || client.disconnected || client.disconnecting || !client.connected) {
+      log.warn('listenMqtt', 'Ignoring connect event because MQTT client is disconnected or ending');
+      return;
+    }
+
     if (!global.Fca.Data.Setup || global.Fca.Data.Setup === undefined) {
       if (global.Fca.Require.Priyansh.RestartMQTT_Minutes !== 0 && global.Fca.Data.StopListening !== true) {
         global.Fca.Data.Setup = true;
         setTimeout(() => {
           global.Fca.Require.logger.Warning('Closing MQTT Client...');
-          ctx.mqttClient.end();
+          try {
+            client.removeAllListeners();
+            client.end(true);
+          } catch (_) {}
           global.Fca.Require.logger.Warning('Reconnecting MQTT Client...');
           global.Fca.Data.Setup = false;
           getSeqID();
@@ -258,8 +303,11 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
       process.env.OnStatus = true;
     }
 
-    topics.forEach((topicsub) => global.mqttClient.subscribe(topicsub));
-
+    topics.forEach((topicsub) => {
+      try {
+        client.subscribe(topicsub);
+      } catch (_) {}
+    });
 
     let topic;
     const queue = {
@@ -274,18 +322,36 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
     queue.initial_titan_sequence_id = ctx.lastSeqId;
     queue.device_params = null;
 
-    global.mqttClient.publish(topic, JSON.stringify(queue), {
-      qos: 1,
-      retain: false
-    });
+    try {
+      if (client.connected && !client.disconnected && !client.disconnecting) {
+        client.publish(topic, JSON.stringify(queue), {
+          qos: 1,
+          retain: false
+        }, (err) => {
+          if (err) log.warn('listenMqtt', 'Sync queue publish callback warning:', err.message || err);
+        });
+      }
+    } catch (err) {
+      log.warn('listenMqtt', 'Sync queue publish failed:', err?.message || err);
+    }
 
-    var rTimeout = setTimeout(function() {
-      global.mqttClient.end();
+    let rTimeout = setTimeout(function() {
+      if (client.disconnected || client.disconnecting) return;
+      log.warn('listenMqtt', 'Initial sync message wait timed out; re-synchronizing sequence ID...');
+      try {
+        client.removeAllListeners();
+        client.end(true);
+      } catch (_) {}
+      if (global.mqttClient === client) global.mqttClient = undefined;
+      if (ctx.mqttClient === client) ctx.mqttClient = undefined;
       getSeqID();
-    }, 3000);
+    }, 15000);
 
     ctx.tmsWait = function() {
-      clearTimeout(rTimeout);
+      if (rTimeout) {
+        clearTimeout(rTimeout);
+        rTimeout = null;
+      }
       ctx.globalOptions.emitReady ? globalCallback({
         type: "ready",
         error: null
@@ -382,7 +448,7 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
 
   };
 
-  global.mqttClient.on('message', HandleMessage);
+  client.on('message', HandleMessage);
 
   if (!global.__fca_sigint_listener_attached) {
     global.__fca_sigint_listener_attached = true;
@@ -975,16 +1041,30 @@ module.exports = function(defaultFuncs, api, ctx) {
       stopListening(callback) {
         callback = callback || (() => {});
         globalCallback = identity;
+        if (ctx.tmsWait && typeof ctx.tmsWait === "function") {
+          try { ctx.tmsWait(); } catch (_) {}
+          delete ctx.tmsWait;
+        }
         if (ctx.mqttClient) {
-          ctx.mqttClient.unsubscribe("/webrtc");
-          ctx.mqttClient.unsubscribe("/rtc_multi");
-          ctx.mqttClient.unsubscribe("/onevc");
-          ctx.mqttClient.publish("/browser_close", "{}");
-          ctx.mqttClient.end(false, function(...data) {
+          try {
+            ctx.mqttClient.unsubscribe("/webrtc");
+            ctx.mqttClient.unsubscribe("/rtc_multi");
+            ctx.mqttClient.unsubscribe("/onevc");
+            ctx.mqttClient.publish("/browser_close", "{}");
+          } catch (_) {}
+          try {
+            const oldClient = ctx.mqttClient;
             ctx.mqttClient = undefined;
-          });
+            if (global.mqttClient === oldClient) global.mqttClient = undefined;
+            oldClient.removeAllListeners();
+            oldClient.end(true, function(...data) {
+              callback();
+            });
+            return;
+          } catch (_) {}
         }
         global.Fca.Data.StopListening = true;
+        callback();
       }
     }
 

@@ -4,6 +4,7 @@ const mqtt = require('mqtt');
 const WebSocket = require('ws');
 const HttpsProxyAgent = require('https-proxy-agent');
 const EventEmitter = require('events');
+const SafeMqttStore = require('../utils/SafeMqttStore');
 const { parseDelta } = require('./mqttDeltaValue');
 
 const topics = [
@@ -216,7 +217,9 @@ async function listenMqtt(defaultFuncs, api, ctx, globalCallback, scheduleReconn
             : 10,
         reschedulePings: false,
         connectTimeout: 12000,
-        reconnectPeriod: 0
+        reconnectPeriod: 0,
+        incomingStore: new SafeMqttStore(),
+        outgoingStore: new SafeMqttStore()
     };
 
     if (ctx.globalOptions.proxy) options.wsOptions.agent = new HttpsProxyAgent(ctx.globalOptions.proxy);

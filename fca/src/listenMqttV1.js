@@ -7,6 +7,7 @@ const Websocket = require('ws');
 const HttpsProxyAgent = require('https-proxy-agent');
 const EventEmitter = require('events');
 const Duplexify = require('duplexify');
+const SafeMqttStore = require('./utils/SafeMqttStore');
 const Transform = require('readable-stream').Transform;
 var identity = function () { };
 var form = {};
@@ -131,7 +132,9 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
         },
         keepalive: 60,
         reschedulePings: true,
-        reconnectPeriod: 3
+        reconnectPeriod: 3,
+        incomingStore: new SafeMqttStore(),
+        outgoingStore: new SafeMqttStore()
     };
 
     if (typeof ctx.globalOptions.proxy != "undefined") {
@@ -143,7 +146,10 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
 
     global.mqttClient.on('error', function (err) {
         log.error("listenMqtt", err);
-        global.mqttClient.end();
+        try {
+            global.mqttClient.removeAllListeners();
+            global.mqttClient.end(true);
+        } catch (_) {}
 
         if (ctx.globalOptions.autoReconnect) getSeqID();
         else {
@@ -153,6 +159,9 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
     });
 
     global.mqttClient.on('connect', function () {
+        if (!ctx.mqttClient || ctx.mqttClient.disconnected || ctx.mqttClient.disconnecting || !ctx.mqttClient.connected) {
+            return;
+        }
         if (!global.Fca.Data.Setup || global.Fca.Data.Setup == undefined) {
             if (global.Fca.Require.Priyansh.RestartMQTT_Minutes != 0 && global.Fca.Data.StopListening != true) { 
                 global.Fca.Data.Setup = true;
@@ -219,12 +228,20 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
         queue.initial_titan_sequence_id = ctx.lastSeqId;
         queue.device_params = null;
 
-        global.mqttClient.publish(topic, JSON.stringify(queue), { qos: 1, retain: false });
+        try {
+            if (ctx.mqttClient && ctx.mqttClient.connected && !ctx.mqttClient.disconnected && !ctx.mqttClient.disconnecting) {
+                global.mqttClient.publish(topic, JSON.stringify(queue), { qos: 1, retain: false });
+            }
+        } catch (_) {}
 
         var rTimeout = setTimeout(function () {
-            global.mqttClient.end();
+            if (!ctx.mqttClient || ctx.mqttClient.disconnected || ctx.mqttClient.disconnecting) return;
+            try {
+                ctx.mqttClient.removeAllListeners();
+                ctx.mqttClient.end(true);
+            } catch (_) {}
             getSeqID();
-        }, 3000);
+        }, 15000);
 
         ctx.tmsWait = function () {
             clearTimeout(rTimeout);
@@ -798,15 +815,25 @@ module.exports = function (defaultFuncs, api, ctx) {
                 callback = callback || (() => { });
                 globalCallback = identity;
                 if (ctx.mqttClient) {
-                    ctx.mqttClient.unsubscribe("/webrtc");
-                    ctx.mqttClient.unsubscribe("/rtc_multi");
-                    ctx.mqttClient.unsubscribe("/onevc");
-                    ctx.mqttClient.publish("/browser_close", "{}");
-                    ctx.mqttClient.end(false, function (...data) {
+                    try {
+                        ctx.mqttClient.unsubscribe("/webrtc");
+                        ctx.mqttClient.unsubscribe("/rtc_multi");
+                        ctx.mqttClient.unsubscribe("/onevc");
+                        ctx.mqttClient.publish("/browser_close", "{}");
+                    } catch (_) {}
+                    try {
+                        const oldClient = ctx.mqttClient;
                         ctx.mqttClient = undefined;
-                    });
+                        if (global.mqttClient === oldClient) global.mqttClient = undefined;
+                        oldClient.removeAllListeners();
+                        oldClient.end(true, function (...data) {
+                            callback();
+                        });
+                        return;
+                    } catch (_) {}
                 }
                 global.Fca.Data.StopListening = true;
+                callback();
             }
         }
 
