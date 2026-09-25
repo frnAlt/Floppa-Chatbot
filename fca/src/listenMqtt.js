@@ -443,17 +443,20 @@ if (global.Fca.Require.Priyansh.AntiGetInfo.AntiGetThreadInfo) {
         try {
             const { updateMessageCount, getData, hasData } = require('../Extra/ExtraGetThread');
             const Data = global.Fca.Data.MsgCount;
-            const Arr = Array.from(Data.keys());
-            for (let i of Arr) {
-                const Count = parseInt(Data.get(i));
-                if (hasData(i)) {
-                    let x = getData(i);
-                    x.messageCount += Count;
-                    updateMessageCount(i, x);
+            if (Data && Data.size > 0) {
+                const Arr = Array.from(Data.keys());
+                for (let i of Arr) {
+                    const Count = parseInt(Data.get(i), 10) || 0;
+                    if (hasData(i)) {
+                        let x = getData(i);
+                        if (x) {
+                            x.messageCount = (x.messageCount || 0) + Count;
+                            updateMessageCount(i, x);
+                        }
+                    }
                     Data.delete(i);
                 }
             }
-            
         } catch (e) {
             // ignore periodic count error
         }
@@ -912,11 +915,17 @@ module.exports = function(defaultFuncs, api, ctx) {
             }
           }
           if (global.Fca?.Require?.Priyansh?.AutoLogin && typeof global.Fca?.Require?.logger?.Warning === "function") {
-            return global.Fca.Require.logger.Warning(global.Fca.Require.Language.Index.AutoLogin, function() {
+            global.Fca.Require.logger.Warning(global.Fca.Require.Language.Index.AutoLogin, function() {
               return global.Fca.Action('AutoLogin');
             });
           } else if (global.Fca?.Require?.Priyansh?.AutoLogin === false && typeof global.Fca?.Require?.logger?.Error === "function") {
-            return global.Fca.Require.logger.Error(global.Fca.Require.Language.Index.ErrAppState);
+            global.Fca.Require.logger.Error(global.Fca.Require.Language.Index.ErrAppState);
+          }
+          if (global.Fca?.Data?.StopListening !== true && ctx.globalOptions.autoReconnect !== false) {
+            log.warn("getSeqId", "Non-array response in getSeqId; retrying in 5 seconds...");
+            setTimeout(() => {
+              getSeqID();
+            }, 5000);
           }
           return;
         } else {

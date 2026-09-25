@@ -213,6 +213,16 @@ module.exports = function(defaultFuncs, api, ctx) {
           }
         }
       });
+
+      // Prevent memory leak by pruning oldest entries if map exceeds 5000
+      if (global.Fca.Data.Userinfo.size > 5000) {
+        const excess = global.Fca.Data.Userinfo.size - 5000;
+        let count = 0;
+        for (const k of global.Fca.Data.Userinfo.keys()) {
+          global.Fca.Data.Userinfo.delete(k);
+          if (++count >= excess) break;
+        }
+      }
     };
   
   const getMultiInfo = async function (threadIDs) {
@@ -315,24 +325,19 @@ module.exports = function(defaultFuncs, api, ctx) {
   const autoUpdateData = async function() {
       //[ [ {}, {} ], [ {}, {}  ] ]
       let doUpdate = [];
-      let holdTime = [];
+      const remainingQueues = [];
   
-      Queues.forEach((i, index) => {
-          // [ {}, {} ]
-          const averageTimestamp = Math.round(i.reduce((acc, obj) => acc + obj.TimeCreate, 0) / i.length);
-          // thời gian trung bình của 1 mảng từ lúc bắt đầu request lần đầu, cần + thêm thời gian cố định là 15p !
-  
-          const DataAvg = checkAverageStaticTimestamp(averageTimestamp)
+      Queues.forEach((i) => {
+          const averageTimestamp = Math.round(i.reduce((acc, obj) => acc + obj.TimeCreate, 0) / (i.length || 1));
+          const DataAvg = checkAverageStaticTimestamp(averageTimestamp);
           if (DataAvg.Check) {
-              // chờ tiếp
+              remainingQueues.push(i);
           }
           else {
-            // đã hơn thời gian 15p
-              doUpdate.push(i) // [ {}, {} ]
-              Queues.splice(index, 1); //đạt điều kiện nên xoá để tý nó tự thêm 💀
+              doUpdate.push(i);
           }
-  
       });
+      Queues = remainingQueues;
   
       if (doUpdate.length >= 1) {
           // maybe [ [ {}, {} ] [ {}, {} ] ]
@@ -412,8 +417,10 @@ module.exports = function(defaultFuncs, api, ctx) {
       global.Fca.Data.Already = true;
       autoCheckAndUpdateRecallTime(); 
       setInterval(function(){ 
-        const MapToArray = Array.from(global.Fca.Data.Userinfo, ([name, value]) => (value));
-        Database(true).set('UserInfo', MapToArray); 
+        if (global.Fca.Data.Userinfo && global.Fca.Data.Userinfo.size > 0) {
+          const MapToArray = Array.from(global.Fca.Data.Userinfo.values()).slice(0, 5000);
+          Database(true).set('UserInfo', MapToArray); 
+        }
       }, 420 * 1000); 
     } 
 

@@ -301,9 +301,22 @@ class MemoryManager {
 			}
 		}
 
-		if (global.gc && memUsage.heapUsed > this.options.heapThreshold * 1.5) {
-			global.gc();
-			cleaned++;
+		if (memUsage.heapUsed > this.options.heapThreshold) {
+			try {
+				if (typeof global.gc === "function") {
+					global.gc();
+					cleaned++;
+				} else {
+					const v8 = require("v8");
+					v8.setFlagsFromString("--expose_gc");
+					const vm = require("vm");
+					const gcFn = vm.runInNewContext("gc");
+					if (typeof gcFn === "function") {
+						gcFn();
+						cleaned++;
+					}
+				}
+			} catch (_) {}
 		}
 
 		if (cleaned > 0) {
