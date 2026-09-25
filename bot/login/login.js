@@ -590,6 +590,11 @@ async function getAppStateToLogin(loginWithEmail) {
                 }
 
                 if (!email || !password) {
+                        if (!process.stdin.isTTY) {
+                                log.err("LOGIN FACEBOOK", "Cannot prompt for credentials in non-interactive environment (TTY unavailable).");
+                                log.err("LOGIN FACEBOOK", "Please set the FB_STATE secret in GitHub Actions or provide a valid account.txt file.");
+                                process.exit(1);
+                        }
                         log.warn("LOGIN FACEBOOK", getText('login', 'cannotFindAccount'));
                         const rl = readline.createInterface({
                                 input: process.stdin,
@@ -797,6 +802,12 @@ async function startBot(loginWithEmail) {
                                 // ——————————— SINGLE ACCOUNT MODE ——————————— //
                                 // If only one account, keep retrying with exponential backoff
                                 if (multiAccountManager.isSingleAccount()) {
+                                        if (process.env.CI || process.env.GITHUB_ACTIONS || !process.stdout.isTTY) {
+                                                if (multiAccountManager.singleAccountRetryCount >= 3) {
+                                                        log.err("SINGLE ACCOUNT", "Exceeded max login retry attempts (3) in non-interactive environment. Exiting to prevent runner hang.");
+                                                        process.exit(1);
+                                                }
+                                        }
                                         multiAccountManager.singleAccountRetryCount++;
                                         const retryDelay = multiAccountManager.getRetryDelay(multiAccountManager.singleAccountRetryCount);
                                         
@@ -1288,6 +1299,12 @@ async function startBot(loginWithEmail) {
                                                 // ——————————— SINGLE ACCOUNT MODE ——————————— //
                                                 // If only one account, keep retrying instead of restarting
                                                 if (multiAccountManager.isSingleAccount()) {
+                                                        if (process.env.CI || process.env.GITHUB_ACTIONS || !process.stdout.isTTY) {
+                                                                if (multiAccountManager.singleAccountRetryCount >= 3) {
+                                                                        log.err("SINGLE ACCOUNT", "Exceeded max login retry attempts (3) in non-interactive environment. Exiting to prevent runner hang.");
+                                                                        process.exit(1);
+                                                                }
+                                                        }
                                                         if (!isSendNotiErrorMessage) {
                                                                 await handlerWhenListenHasError({ api, threadModel, userModel, dashBoardModel, globalModel, threadsData, usersData, dashBoardData, globalData, error });
                                                                 isSendNotiErrorMessage = true;

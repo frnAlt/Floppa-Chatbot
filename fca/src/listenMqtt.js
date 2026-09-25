@@ -921,13 +921,11 @@ module.exports = function(defaultFuncs, api, ctx) {
           } else if (global.Fca?.Require?.Priyansh?.AutoLogin === false && typeof global.Fca?.Require?.logger?.Error === "function") {
             global.Fca.Require.logger.Error(global.Fca.Require.Language.Index.ErrAppState);
           }
-          if (global.Fca?.Data?.StopListening !== true && ctx.globalOptions.autoReconnect !== false) {
-            log.warn("getSeqId", "Non-array response in getSeqId; retrying in 5 seconds...");
-            setTimeout(() => {
-              getSeqID();
-            }, 5000);
-          }
-          return;
+          ctx.loggedIn = false;
+          const sessionErr = new Error(global.Fca?.Require?.Language?.Index?.ErrAppState || "Failed to initialize MQTT sequence: session not logged in.");
+          sessionErr.error = global.Fca?.Require?.Language?.Index?.ErrAppState || "Not logged in.";
+          sessionErr.errorNumber = 1357001;
+          return globalCallback(sessionErr);
         } else {
           if (resData && resData[resData.length - 1].error_results > 0) throw resData[0].o0.errors;
           if (resData[resData.length - 1].successful_results === 0) throw {
@@ -951,16 +949,22 @@ module.exports = function(defaultFuncs, api, ctx) {
                   return global.Fca.BypassAutomationNotification(undefined, ctx.jar, ctx.globalOptions, undefined ,process.env.UID);
               }
           }
-        if (utils.getType(err) == "Object" && err.error === global.Fca?.Require?.Language?.Index?.ErrAppState) {
+        if (
+          (utils.getType(err) == "Object" && (err.error === global.Fca?.Require?.Language?.Index?.ErrAppState || err.errorNumber === 1357001 || err.error === "Not logged in." || err.error === "Not logged in")) ||
+          (err && err.message && (err.message.includes("1357001") || err.message.includes("Not logged in") || err.message.includes("ErrAppState") || err.name === "COOKIE_INVALID"))
+        ) {
           ctx.loggedIn = false;
           return globalCallback(err);
         }
-        if (global.Fca?.Data?.StopListening !== true && ctx.globalOptions.autoReconnect !== false) {
-          log.warn("getSeqId", "Transient error in getSeqId; retrying in 5 seconds...");
+        if (!ctx.getSeqIdRetryCount) ctx.getSeqIdRetryCount = 0;
+        ctx.getSeqIdRetryCount++;
+        if (ctx.getSeqIdRetryCount <= 3 && global.Fca?.Data?.StopListening !== true && ctx.globalOptions.autoReconnect !== false) {
+          log.warn("getSeqId", `Transient error in getSeqId; retrying attempt ${ctx.getSeqIdRetryCount}/3 in 5 seconds...`);
           setTimeout(() => {
             getSeqID();
           }, 5000);
         } else {
+          ctx.loggedIn = false;
           return globalCallback(err);
         }
       });

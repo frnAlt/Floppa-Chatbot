@@ -47,6 +47,15 @@ module.exports = async function (cookie, userAgent) {
 			timeout: 15000
 		});
 
+		const setCookie = (response.headers["set-cookie"] || []).join("; ");
+		if (setCookie.includes("c_user=deleted") || setCookie.includes("xs=deleted")) {
+			return false;
+		}
+
+		if (response.status === 400) {
+			return false;
+		}
+
 		const finalUrl = response.request?.res?.responseUrl || "";
 		if (finalUrl.includes("/checkpoint/")) {
 			const checkpointMatch = finalUrl.match(/\/checkpoint\/(\d+)/);
@@ -64,24 +73,28 @@ module.exports = async function (cookie, userAgent) {
 		const cUserMatch = cookie.match(/c_user=(\d+)/);
 		const currentUserId = cUserMatch ? cUserMatch[1] : "";
 
+		const isLoggedOut =
+			dataStr.includes('id="login_form"') ||
+			dataStr.includes('id="loginbutton"') ||
+			finalUrl.includes("/login/");
+
+		if (isLoggedOut) return false;
+
 		const isLoggedIn =
-			(currentUserId && (dataStr.includes(`"USER_ID":"${currentUserId}"`) || dataStr.includes(`c_user=${currentUserId}`))) ||
+			(currentUserId && (
+				dataStr.includes(`"USER_ID":"${currentUserId}"`) ||
+				dataStr.includes(`c_user=${currentUserId}`) ||
+				dataStr.includes(`"actorID":"${currentUserId}"`)
+			)) ||
 			dataStr.includes('"USER_ID"') ||
 			dataStr.includes('"actorID"') ||
 			dataStr.includes('"ACCOUNT_ID"') ||
 			dataStr.includes('action="/logout.php"') ||
 			dataStr.includes('name="fb_dtsg"') ||
-			dataStr.includes('/privacy/') ||
-			dataStr.includes('/notifications') ||
-			dataStr.includes('href="/login/save-password');
+			dataStr.includes('["DTSGInitData"') ||
+			dataStr.includes('"DTSGInitialData"');
 
-		const isLoggedOut =
-			!isLoggedIn &&
-			(dataStr.includes('id="login_form"') ||
-			 dataStr.includes('id="loginbutton"') ||
-			 finalUrl.includes("/login/"));
-
-		return isLoggedIn && !isLoggedOut;
+		return Boolean(isLoggedIn);
 	}
 	catch (e) {
 		if (e.name === "CHECKPOINT_ERROR") {
