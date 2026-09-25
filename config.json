@@ -148,7 +148,6 @@
     "autoMarkRead": false,
     "autoReconnect": true,
     "forceLogin": false,
-    "emitReady": true,
     "simulateTyping": false,
     "randomUserAgent": false,
     "persona": "desktop",
