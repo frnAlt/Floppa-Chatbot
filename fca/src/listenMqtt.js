@@ -4,6 +4,22 @@
 const utils = require('../utils');
 const log = require('npmlog');
 const mqtt = require('mqtt');
+// Relax mqtt-packet header flag bit constraints for Facebook Edge-Chat MQTT broker compatibility
+try {
+  for (const k of Object.keys(require.cache)) {
+    if (k.includes('mqtt-packet/constants.js') || k.includes('mqtt-packet\\constants.js')) {
+      const constants = require.cache[k]?.exports;
+      if (constants && constants.requiredHeaderFlags) {
+        delete constants.requiredHeaderFlags[4]; // puback (FB returns 0x2)
+        delete constants.requiredHeaderFlags[5]; // pubrec
+        delete constants.requiredHeaderFlags[6]; // pubrel
+        delete constants.requiredHeaderFlags[7]; // pubcomp
+        delete constants.requiredHeaderFlags[9]; // suback
+        delete constants.requiredHeaderFlags[11]; // unsuback
+      }
+    }
+  }
+} catch (_) {}
 const WebSocket = require('ws');
 const HttpsProxyAgent = require('https-proxy-agent');
 const EventEmitter = require('events');
@@ -195,10 +211,16 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
   }
 
   client.on('error', (err) => {
-    const isFramingQuirk = err && typeof err.message === "string" && (err.message.includes('Invalid header flag bits') || err.message.includes('packet parsing'));
-    if (!isFramingQuirk) {
-      logError(err?.message || err);
+    const isFramingQuirk = err && typeof err.message === "string" && (
+      err.message.includes('Invalid header flag bits') ||
+      err.message.includes('packet parsing') ||
+      err.message.includes('header flag')
+    );
+    if (isFramingQuirk) {
+      logWarn('Ignored Facebook broker framing quirk: ' + (err?.message || err));
+      return;
     }
+    logError(err?.message || err);
     triggerReconnect(err?.message || 'error');
   });
 
@@ -808,24 +830,33 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, {
     }
     case 'AdminTextMessage': {
       switch (delta.type) {
+        case 'instant_game_dynamic_custom_update':
+        case 'accept_pending_thread':
+        case 'confirm_friend_request':
+        case 'shared_album_delete':
+        case 'shared_album_addition':
         case 'joinable_group_link_mode_change':
         case 'magic_words':
         case 'pin_messages_v2':
+        case 'unpin_messages_v2':
         case 'change_thread_theme':
         case 'change_thread_icon':
         case 'change_thread_nickname':
+        case 'change_thread_quick_reaction':
         case 'change_thread_admins':
         case 'change_thread_approval_mode':
         case 'group_poll':
         case 'messenger_call_log':
-        case 'participant_joined_group_call': {
+        case 'participant_joined_group_call':
+        case 'rtc_call_log':
+        case 'update_vote': {
           let fmtMsg;
           try {
             fmtMsg = utils.formatDeltaEvent(delta);
           } catch (err) {
             return;
           }
-          globalCallback(null, fmtMsg);
+          if (fmtMsg) globalCallback(null, fmtMsg);
           break;
         }
       }

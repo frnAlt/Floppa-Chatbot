@@ -56,6 +56,24 @@ try {
     }
 } catch (_) {}
 
+// Relax mqtt-packet header flag bit constraints for Facebook Edge-Chat MQTT broker compatibility
+try {
+    require("mqtt");
+    for (const k of Object.keys(require.cache)) {
+        if (k.includes("mqtt-packet/constants.js") || k.includes("mqtt-packet\\constants.js")) {
+            const constants = require.cache[k]?.exports;
+            if (constants && constants.requiredHeaderFlags) {
+                delete constants.requiredHeaderFlags[4]; // puback (FB returns 0x2)
+                delete constants.requiredHeaderFlags[5]; // pubrec
+                delete constants.requiredHeaderFlags[6]; // pubrel
+                delete constants.requiredHeaderFlags[7]; // pubcomp
+                delete constants.requiredHeaderFlags[9]; // suback
+                delete constants.requiredHeaderFlags[11]; // unsuback
+            }
+        }
+    }
+} catch (_) {}
+
 // Initialize Priyansh FCA Global State safely
 if (!global.Fca) {
     let utils = null;

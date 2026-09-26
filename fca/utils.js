@@ -962,7 +962,9 @@ function formatHistoryMessage(m) {
  */
 
 function getAdminTextMessageType(m) {
-    switch (m.type) {
+    if (!m) return undefined;
+    const type = typeof m === "string" ? m : m.type;
+    switch (type) {
         case "joinable_group_link_mode_change":
             return "log:link-status";
         case "magic_words":
@@ -970,20 +972,27 @@ function getAdminTextMessageType(m) {
         case "change_thread_theme":
             return "log:thread-color";
         case "change_thread_icon":
+        case "change_thread_quick_reaction":
             return "log:thread-icon";
         case "change_thread_nickname":
             return "log:user-nickname";
         case "change_thread_admins":
             return "log:thread-admins";
         case "group_poll":
+        case "update_vote":
             return "log:thread-poll";
         case "change_thread_approval_mode":
             return "log:thread-approval-mode";
         case "messenger_call_log":
         case "participant_joined_group_call":
+        case "rtc_call_log":
             return "log:thread-call";
         case "pin_messages_v2":
             return "log:thread-pinned";
+        case "unpin_messages_v2":
+            return "log:thread-unpinned";
+        default:
+            return type ? ("log:" + type) : undefined;
     }
 }
 
