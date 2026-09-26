@@ -650,7 +650,7 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
             var tid = v.delta.threadKey.threadFbId;
             if (mid && tid) {
                 const form = {
-                    "av": ctx.globalOptions.pageID,
+                    "av": ctx.globalOptions.pageID || ctx.userID,
                     "queries": JSON.stringify({
                         "o0": {
                             //This doc_id is valid as of March 25, 2020

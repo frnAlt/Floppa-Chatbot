@@ -884,7 +884,7 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, {
 
       if (mid && tid) {
         const form = {
-          av: ctx.globalOptions.pageID,
+          av: ctx.globalOptions.pageID || ctx.userID,
           queries: JSON.stringify({
             o0: {
               doc_id: '2848441488556444',
