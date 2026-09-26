@@ -20,75 +20,42 @@ global.Fca.Data.event = new Map();
 
 const topics = ['/ls_req', '/ls_resp', '/legacy_web', '/webrtc', '/rtc_multi', '/onevc', '/br_sr', '/sr_res', '/t_ms', '/thread_typing', '/orca_typing_notifications', '/notify_disconnect', '/orca_presence', '/inbox', '/mercury', '/messaging_events', '/orca_message_notifications', '/pp', '/webrtc_response'];
 
-function buildProxy(ws) {
-  const Proxy = new Transform({
-    objectMode: false,
-    transform(chunk, enc, next) {
-      if (!ws || ws.readyState !== WebSocket.OPEN) {
-        return next();
-      }
-
-      let data;
-      if (typeof chunk === 'string') {
-        data = Buffer.from(chunk, 'utf8');
-      } else {
-        data = chunk;
-      }
-
-      try {
-        ws.send(data);
-      } catch (_) {}
-      next();
-    },
-    flush(done) {
-      try {
-        if (ws && ws.readyState === WebSocket.OPEN) ws.close();
-      } catch (_) {}
-      done();
-    },
-    writev(chunks, cb) {
-      const buffers = chunks.map(({ chunk }) => {
-        if (typeof chunk === 'string') {
-          return Buffer.from(chunk, 'utf8');
-        }
-        return chunk;
-      });
-      this._write(Buffer.concat(buffers), 'binary', cb);
-    },
-  });
-  return Proxy;
+function logInfo(...args) {
+  const msg = args.join(' ');
+  log.info('listenMqtt', msg);
+  if (global.Fca?.Require?.logger?.Normal) {
+    global.Fca.Require.logger.Normal(msg);
+  }
 }
 
-function buildStream(options, ws) {
-  const Proxy = buildProxy(ws);
-  const Stream = Duplexify(undefined, undefined, options);
-  Stream.socket = ws;
+function logWarn(...args) {
+  const msg = args.join(' ');
+  log.warn('listenMqtt', msg);
+  if (global.Fca?.Require?.logger?.Warning) {
+    global.Fca.Require.logger.Warning(msg);
+  }
+}
 
-  ws.onclose = () => {
-    try { Stream.end(); } catch (_) {}
-    try { Stream.destroy(); } catch (_) {}
-  };
+function logError(...args) {
+  const msg = args.join(' ');
+  log.error('listenMqtt', msg);
+  if (global.Fca?.Require?.logger?.Error) {
+    global.Fca.Require.logger.Error(msg);
+  }
+}
 
-  ws.onerror = (err) => {
-    try { Stream.destroy(err); } catch (_) {}
-  };
-
-  ws.onmessage = (event) => {
-    const data = event.data instanceof ArrayBuffer ? Buffer.from(event.data) : Buffer.from(event.data, 'utf8');
-    Stream.push(data);
-  };
-
-  ws.onopen = () => {
-    Stream.setReadable(Proxy);
-    Stream.setWritable(Proxy);
-    Stream.emit('connect');
-  };
-
-  Proxy.on('close', () => {
-    try { ws.close(); } catch (_) {}
+function buildMqttStream(host, options) {
+  const socket = new WebSocket(host, options.wsOptions);
+  const stream = WebSocket.createWebSocketStream(socket, options.wsOptions);
+  stream.url = host;
+  stream.socket = socket;
+  socket.once('error', (error) => {
+    if (!stream.destroyed) stream.destroy(error);
   });
-
-  return Stream;
+  socket.once('close', () => {
+    if (!stream.destroyed) stream.destroy();
+  });
+  return stream;
 }
 
 function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
@@ -111,11 +78,12 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
     global.mqttClient = undefined;
   }
 
-  const chatOn = ctx.globalOptions.online;
-  const foreground = false;
+  const chatOn = ctx.globalOptions.online !== false;
+  const foreground = true;
 
   const sessionID = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER) + 1;
-  const GUID = utils.getGUID()
+  const GUID = ctx.clientID || (ctx.clientID = utils.getGUID());
+  const cachedUA = ctx.globalOptions.cachedUserAgent || ctx.globalOptions.userAgent;
   const username = {
     u: ctx.userID,
     s: sessionID,
@@ -135,6 +103,7 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
     gas: null,
     pack: [],
     p: null,
+    a: cachedUA,
     php_override: ""
   };
 
@@ -142,7 +111,15 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
 
   let host;
   if (ctx.mqttEndpoint) {
-    host = `${ctx.mqttEndpoint}&sid=${sessionID}&cid=${GUID}`;
+    try {
+      const endpoint = new URL(ctx.mqttEndpoint);
+      endpoint.searchParams.set("sid", String(sessionID));
+      endpoint.searchParams.set("cid", String(GUID));
+      host = endpoint.toString();
+    } catch (_) {
+      const separator = ctx.mqttEndpoint.includes("?") ? "&" : "?";
+      host = `${ctx.mqttEndpoint}${separator}sid=${sessionID}&cid=${GUID}`;
+    }
   } else if (ctx.region) {
     host = `wss://edge-chat.facebook.com/chat?region=${ctx.region.toLowerCase()}&sid=${sessionID}&cid=${GUID}`;
   } else {
@@ -161,7 +138,7 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
       headers: {
         Cookie: cookies,
         Origin: 'https://www.facebook.com',
-        'User-Agent': ctx.globalOptions.userAgent,
+        'User-Agent': cachedUA,
         Referer: 'https://www.facebook.com/',
         Host: new URL(host).hostname,
       },
@@ -169,8 +146,11 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
       protocolVersion: 13,
       binaryType: 'arraybuffer',
     },
-    keepalive: 60,
-    reschedulePings: true,
+    keepalive: Number(ctx.globalOptions.mqttKeepalive) > 0
+      ? Math.floor(ctx.globalOptions.mqttKeepalive)
+      : 10,
+    reschedulePings: false,
+    connectTimeout: 15000,
     reconnectPeriod: 0,
   };
 
@@ -179,8 +159,7 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
     options.wsOptions.agent = agent;
   }
 
-  const ws = new WebSocket(host, options.wsOptions);
-  ctx.mqttClient = new mqtt.Client(() => buildStream(options, ws), options);
+  ctx.mqttClient = new mqtt.Client(() => buildMqttStream(host, options), options);
   global.mqttClient = ctx.mqttClient;
   const client = ctx.mqttClient;
 
@@ -189,7 +168,7 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
     if (global.Fca?.Data?.StopListening === true) return;
     if (reconnecting) return;
     reconnecting = true;
-    log.warn('listenMqtt', `MQTT connection lost (${reason || 'unknown'}), re-establishing session...`);
+    logWarn(`MQTT connection lost (${reason || 'unknown'}), re-establishing session...`);
     if (ctx.tmsWait && typeof ctx.tmsWait === "function") {
       try { ctx.tmsWait(); } catch (_) {}
       delete ctx.tmsWait;
@@ -198,11 +177,6 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
       if (client) {
         client.removeAllListeners();
         client.end(true);
-      }
-    } catch (_) {}
-    try {
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.close();
       }
     } catch (_) {}
     if (ctx.mqttClient === client) ctx.mqttClient = undefined;
@@ -223,7 +197,7 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
   client.on('error', (err) => {
     const isFramingQuirk = err && typeof err.message === "string" && (err.message.includes('Invalid header flag bits') || err.message.includes('packet parsing'));
     if (!isFramingQuirk) {
-      log.error('listenMqtt', err);
+      logError(err?.message || err);
     }
     triggerReconnect(err?.message || 'error');
   });
@@ -238,10 +212,10 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
 
   client.on('connect', () => {
     if (!client || client.disconnected || client.disconnecting || !client.connected) {
-      log.warn('listenMqtt', 'Ignoring connect event because MQTT client is disconnected or ending');
+      logWarn('Ignoring connect event because MQTT client is disconnected or ending');
       return;
     }
-    log.info('listenMqtt', `Connected to Facebook MQTT broker successfully (seqID: ${ctx.lastSeqId || 'N/A'})`);
+    logInfo(`Connected to Facebook MQTT broker successfully (seqID: ${ctx.lastSeqId || 'N/A'})`);
 
     if (!global.Fca.Data.Setup || global.Fca.Data.Setup === undefined) {
       if (global.Fca.Require.Priyansh.RestartMQTT_Minutes !== 0 && global.Fca.Data.StopListening !== true) {
@@ -318,10 +292,12 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
       process.env.OnStatus = true;
     }
 
-    topics.forEach((topicsub) => {
-      try {
-        client.subscribe(topicsub);
-      } catch (_) {}
+    client.subscribe(topics, { qos: 1 }, (err) => {
+      if (err) {
+        logWarn(`Topic subscription warning: ${err.message || err}`);
+      } else {
+        logInfo(`Subscribed to ${topics.length} MQTT topics successfully.`);
+      }
     });
 
     let topic;
@@ -331,11 +307,17 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
       delta_batch_size: 500,
       encoding: 'JSON',
       entity_fbid: ctx.userID,
+      initial_titan_sequence_id: ctx.lastSeqId,
+      device_params: null
     };
 
-    topic = "/messenger_sync_create_queue";
-    queue.initial_titan_sequence_id = ctx.lastSeqId;
-    queue.device_params = null;
+    if (ctx.syncToken) {
+      topic = "/messenger_sync_get_diffs";
+      queue.last_seq_id = ctx.lastSeqId;
+      queue.sync_token = ctx.syncToken;
+    } else {
+      topic = "/messenger_sync_create_queue";
+    }
 
     try {
       if (client.connected && !client.disconnected && !client.disconnecting) {
@@ -343,23 +325,24 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
           qos: 1,
           retain: false
         }, (err) => {
-          if (err) log.warn('listenMqtt', 'Sync queue publish callback warning:', err.message || err);
+          if (err) logWarn('Sync queue publish callback warning: ' + (err.message || err));
         });
+        client.publish("/foreground_state", JSON.stringify({ foreground: chatOn }), { qos: 1 });
+        client.publish("/set_client_settings", JSON.stringify({ make_user_available_when_in_foreground: true }), { qos: 1 });
       }
     } catch (err) {
-      log.warn('listenMqtt', 'Sync queue publish failed:', err?.message || err);
+      logWarn('Sync queue publish failed: ' + (err?.message || err));
     }
 
     let rTimeout = setTimeout(function() {
-      if (client.disconnected || client.disconnecting) return;
-      log.warn('listenMqtt', 'Initial sync message wait timed out; re-synchronizing sequence ID...');
+      if (client.disconnected || client.disconnecting || !client.connected) return;
+      if (ctx._tmsReceived) return;
+      logInfo('Initial sync wait elapsed; re-asserting foreground state and sync queue...');
       try {
-        client.removeAllListeners();
-        client.end(true);
+        client.publish("/foreground_state", JSON.stringify({ foreground: chatOn }), { qos: 1 });
+        client.publish("/set_client_settings", JSON.stringify({ make_user_available_when_in_foreground: true }), { qos: 1 });
+        client.publish(topic, JSON.stringify(queue), { qos: 1, retain: false });
       } catch (_) {}
-      if (global.mqttClient === client) global.mqttClient = undefined;
-      if (ctx.mqttClient === client) ctx.mqttClient = undefined;
-      getSeqID();
     }, 15000);
 
     ctx.tmsWait = function() {
@@ -367,7 +350,8 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
         clearTimeout(rTimeout);
         rTimeout = null;
       }
-      log.info('listenMqtt', 'Initial sync established with Facebook (/t_ms received). Live listening is active.');
+      ctx._tmsReceived = true;
+      logInfo('Initial sync established with Facebook (/t_ms received). Live listening is active.');
       if (ctx.globalOptions.emitReady && !ctx._readyEmitted) {
         ctx._readyEmitted = true;
         globalCallback(null, {
@@ -588,9 +572,9 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, {
         }
       } else {
         const attachment = delta.attachments[i];
-        if (attachment.mercury.attach_type === 'photo') {
+        if (attachment && attachment.mercury && attachment.mercury.attach_type === 'photo') {
           api.resolvePhotoUrl(attachment.fbid, (err, url) => {
-            if (!err) attachment.mercury.metadata.url = url;
+            if (!err && attachment.mercury && attachment.mercury.metadata) attachment.mercury.metadata.url = url;
             resolveAttachmentUrl(i + 1);
           });
         } else {
@@ -627,14 +611,15 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, {
           };
           globalCallback(null, messageUnsend);
         } else if (delta.deltaMessageReply) {
-          const mdata =
-            delta.deltaMessageReply.message === undefined ?
-            [] :
-            delta.deltaMessageReply.message.data === undefined ?
-            [] :
-            delta.deltaMessageReply.message.data.prng === undefined ?
-            [] :
-            JSON.parse(delta.deltaMessageReply.message.data.prng);
+          let mdata = [];
+          try {
+            if (delta.deltaMessageReply.message?.data?.prng) {
+              mdata = JSON.parse(delta.deltaMessageReply.message.data.prng);
+            }
+          } catch (_) {
+            mdata = [];
+          }
+          if (!Array.isArray(mdata)) mdata = [];
 
           const m_id = mdata.map((u) => u.i);
           const m_offset = mdata.map((u) => u.o);
@@ -642,18 +627,27 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, {
 
           const mentions = {};
           for (let i = 0; i < m_id.length; i++) {
-            mentions[m_id[i]] = (delta.deltaMessageReply.message.body || '').substring(m_offset[i], m_offset[i] + m_length[i]);
+            mentions[m_id[i]] = (delta.deltaMessageReply.message?.body || '').substring(m_offset[i], m_offset[i] + m_length[i]);
           }
+
+          const msgMeta = delta.deltaMessageReply.message?.messageMetadata || {};
+          const threadKey = msgMeta.threadKey || {};
+          const threadIdStr = (threadKey.threadFbId ? threadKey.threadFbId : threadKey.otherUserFbId || "").toString();
+          const actorFbIdStr = (msgMeta.actorFbId || "").toString();
 
           const callbackToReturn = {
             type: 'message_reply',
-            threadID: (delta.deltaMessageReply.message.messageMetadata.threadKey.threadFbId ? delta.deltaMessageReply.message.messageMetadata.threadKey.threadFbId : delta.deltaMessageReply.message.messageMetadata.threadKey.otherUserFbId).toString(),
-            messageID: delta.deltaMessageReply.message.messageMetadata.messageId,
-            senderID: delta.deltaMessageReply.message.messageMetadata.actorFbId.toString(),
-            attachments: ( delta.deltaMessageReply.message.attachments || [] )
+            threadID: threadIdStr,
+            messageID: msgMeta.messageId || "",
+            senderID: actorFbIdStr,
+            attachments: (delta.deltaMessageReply.message?.attachments || [])
               .map((att) => {
-                const mercury = JSON.parse(att.mercuryJSON);
-                Object.assign(att, mercury);
+                if (att && att.mercuryJSON) {
+                  try {
+                    const mercury = JSON.parse(att.mercuryJSON);
+                    Object.assign(att, mercury);
+                  } catch (_) {}
+                }
                 return att;
               })
               .map((att) => {
@@ -667,45 +661,50 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, {
                 }
                 return x;
               }),
-            args: (delta.deltaMessageReply.message.body || '').trim().split(/\s+/),
-            body: delta.deltaMessageReply.message.body || '',
-            isGroup: !!delta.deltaMessageReply.message.messageMetadata.threadKey.threadFbId,
+            args: (delta.deltaMessageReply.message?.body || '').trim().split(/\s+/),
+            body: delta.deltaMessageReply.message?.body || '',
+            isGroup: !!threadKey.threadFbId,
             mentions,
-            timestamp: parseInt(delta.deltaMessageReply.message.messageMetadata.timestamp),
-            participantIDs: (delta.deltaMessageReply.message.participants || []).map((e) => e.toString()),
+            timestamp: parseInt(msgMeta.timestamp || Date.now()),
+            participantIDs: (delta.deltaMessageReply.message?.participants || []).map((e) => e.toString()),
           };
 
           if (delta.deltaMessageReply.repliedToMessage) {
-            const mdata =
-              delta.deltaMessageReply.repliedToMessage === undefined ?
-              [] :
-              delta.deltaMessageReply.repliedToMessage.data === undefined ?
-              [] :
-              delta.deltaMessageReply.repliedToMessage.data.prng === undefined ?
-              [] :
-              JSON.parse(delta.deltaMessageReply.repliedToMessage.data.prng);
+            let rmdata = [];
+            try {
+              if (delta.deltaMessageReply.repliedToMessage?.data?.prng) {
+                rmdata = JSON.parse(delta.deltaMessageReply.repliedToMessage.data.prng);
+              }
+            } catch (_) {
+              rmdata = [];
+            }
+            if (!Array.isArray(rmdata)) rmdata = [];
 
-            const m_id = mdata.map((u) => u.i);
-            const m_offset = mdata.map((u) => u.o);
-            const m_length = mdata.map((u) => u.l);
+            const rm_id = rmdata.map((u) => u.i);
+            const rm_offset = rmdata.map((u) => u.o);
+            const rm_length = rmdata.map((u) => u.l);
 
             const rmentions = {};
-            for (let i = 0; i < m_id.length; i++) {
-              rmentions[m_id[i]] = (delta.deltaMessageReply.repliedToMessage.body || '').substring(m_offset[i], m_offset[i] + m_length[i]);
+            for (let i = 0; i < rm_id.length; i++) {
+              rmentions[rm_id[i]] = (delta.deltaMessageReply.repliedToMessage?.body || '').substring(rm_offset[i], rm_offset[i] + rm_length[i]);
             }
 
+            const rMsgMeta = delta.deltaMessageReply.repliedToMessage?.messageMetadata || {};
+            const rThreadKey = rMsgMeta.threadKey || {};
+            const rThreadIdStr = (rThreadKey.threadFbId ? rThreadKey.threadFbId : rThreadKey.otherUserFbId || "").toString();
+            const rActorFbIdStr = (rMsgMeta.actorFbId || "").toString();
+
             callbackToReturn.messageReply = {
-              threadID: (delta.deltaMessageReply.repliedToMessage.messageMetadata.threadKey.threadFbId ? delta.deltaMessageReply.repliedToMessage.messageMetadata.threadKey.threadFbId : delta.deltaMessageReply.repliedToMessage.messageMetadata.threadKey.otherUserFbId).toString(),
-              messageID: delta.deltaMessageReply.repliedToMessage.messageMetadata.messageId,
-              senderID: delta.deltaMessageReply.repliedToMessage.messageMetadata.actorFbId.toString(),
-              attachments: delta.deltaMessageReply.repliedToMessage.attachments
+              threadID: rThreadIdStr,
+              messageID: rMsgMeta.messageId || "",
+              senderID: rActorFbIdStr,
+              attachments: (delta.deltaMessageReply.repliedToMessage?.attachments || [])
               .map((att) => {
-                let mercury;
-                try {
-                  mercury = JSON.parse(att.mercuryJSON);
-                  Object.assign(att, mercury);
-                } catch (ex) {
-                  mercury = {};
+                if (att && att.mercuryJSON) {
+                  try {
+                    const mercury = JSON.parse(att.mercuryJSON);
+                    Object.assign(att, mercury);
+                  } catch (_) {}
                 }
                 return att;
               })
@@ -720,12 +719,12 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, {
                 }
                 return x;
               }),
-              args: (delta.deltaMessageReply.repliedToMessage.body || '').trim().split(/\s+/),
-              body: delta.deltaMessageReply.repliedToMessage.body || '',
-              isGroup: !!delta.deltaMessageReply.repliedToMessage.messageMetadata.threadKey.threadFbId,
+              args: (delta.deltaMessageReply.repliedToMessage?.body || '').trim().split(/\s+/),
+              body: delta.deltaMessageReply.repliedToMessage?.body || '',
+              isGroup: !!rThreadKey.threadFbId,
               mentions: rmentions,
-              timestamp: parseInt(delta.deltaMessageReply.repliedToMessage.messageMetadata.timestamp),
-              participantIDs: (delta.deltaMessageReply.repliedToMessage.participants || []).map((e) => e.toString()),
+              timestamp: parseInt(rMsgMeta.timestamp || Date.now()),
+              participantIDs: (delta.deltaMessageReply.repliedToMessage?.participants || []).map((e) => e.toString()),
             };
           } else if (delta.deltaMessageReply.replyToMessageId) {
             return defaultFuncs
@@ -1060,6 +1059,9 @@ module.exports = function(defaultFuncs, api, ctx) {
   };
 
   return function(callback) {
+    if (global.Fca?.Data) {
+      global.Fca.Data.StopListening = false;
+    }
     class MessageEmitter extends EventEmitter {
       stopListening(callback) {
         callback = callback || (() => {});

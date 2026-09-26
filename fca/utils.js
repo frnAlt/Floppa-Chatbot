@@ -823,31 +823,52 @@ function formatAttachment(attachments, attachmentIds, attachmentMap, shareMap) {
  */
 
 function formatDeltaMessage(m) {
-    var md = m.messageMetadata;
-    var mdata =
-        m.data === undefined ? [] :
-        m.data.prng === undefined ? [] :
-        JSON.parse(m.data.prng);
-    var m_id = mdata.map((/** @type {{ i: any; }} */u) => u.i);
-    var m_offset = mdata.map((/** @type {{ o: any; }} */u) => u.o);
-    var m_length = mdata.map((/** @type {{ l: any; }} */u) => u.l);
+    var delta = m.delta || m;
+    var md = delta.messageMetadata || {};
+    var mdata = [];
+    try {
+        mdata = delta.data === undefined ? [] :
+            delta.data.prng === undefined ? [] :
+            JSON.parse(delta.data.prng);
+    } catch (_) {
+        mdata = [];
+    }
+    var m_id = Array.isArray(mdata) ? mdata.map((u) => u.i) : [];
+    var m_offset = Array.isArray(mdata) ? mdata.map((u) => u.o) : [];
+    var m_length = Array.isArray(mdata) ? mdata.map((u) => u.l) : [];
     var mentions = {};
-    var body = m.body || "";
+    var body = delta.body || "";
     var args = body == "" ? [] : body.trim().split(/\s+/);
-    for (var i = 0; i < m_id.length; i++) mentions[m_id[i]] = m.body.substring(m_offset[i], m_offset[i] + m_length[i]);
+    for (var i = 0; i < m_id.length; i++) mentions[m_id[i]] = body.substring(m_offset[i], m_offset[i] + m_length[i]);
+
+    var senderID = md.actorFbId != null ? formatID(md.actorFbId.toString()) : (delta.actorFbId != null ? formatID(delta.actorFbId.toString()) : (delta.senderID != null ? formatID(delta.senderID.toString()) : "0"));
+    var threadKey = md.threadKey || delta.threadKey || {};
+    var rawThread = threadKey.threadFbId || threadKey.otherUserFbId || delta.threadID;
+    var threadID = rawThread != null ? formatID(rawThread.toString()) : "0";
+
+    var messageReply = delta.messageReply ? {
+        messageID: delta.messageReply.messageID,
+        senderID: formatID(delta.messageReply.senderID ? delta.messageReply.senderID.toString() : "0"),
+        body: delta.messageReply.body || "",
+        attachments: delta.messageReply.attachments || [],
+        timestamp: delta.messageReply.timestamp,
+        isReply: true
+    } : null;
 
     return {
         type: "message",
-        senderID: formatID(md.actorFbId.toString()),
-        threadID: formatID((md.threadKey.threadFbId || md.threadKey.otherUserFbId).toString()),
-        messageID: md.messageId,
+        senderID: senderID,
+        threadID: threadID,
+        messageID: md.messageId || delta.messageId || delta.messageID,
+        offlineThreadingId: md.offlineThreadingId,
         args: args,
         body: body,
-        attachments: (m.attachments || []).map((/** @type {any} */v) => _formatAttachment(v)),
+        attachments: (delta.attachments || []).map((v) => _formatAttachment(v)),
         mentions: mentions,
-        timestamp: md.timestamp,
-        isGroup: !!md.threadKey.threadFbId,
-        participantIDs: m.participants || []
+        timestamp: md.timestamp || delta.timestamp || Date.now(),
+        isGroup: !!threadKey.threadFbId,
+        participantIDs: delta.participants || [],
+        messageReply: messageReply
     };
 }
 
@@ -2317,126 +2338,151 @@ function formatDeltaEvent(m) {
     var logMessageType;
     var logMessageData;
 
-switch (m.class) {
-    case "AdminTextMessage":
-        logMessageType = getAdminTextMessageType(m);
+    switch (m.class) {
+        case "AdminTextMessage":
+            logMessageType = getAdminTextMessageType(m);
             logMessageData = m.untypedData;
-        break;
-    case "ThreadName":
-        logMessageType = "log:thread-name";
+            break;
+        case "ThreadName":
+            logMessageType = "log:thread-name";
             logMessageData = { name: m.name };
-        break;
-    case "ParticipantsAddedToGroupThread":
-        logMessageType = "log:subscribe";
+            break;
+        case "ParticipantsAddedToGroupThread":
+            logMessageType = "log:subscribe";
             logMessageData = { addedParticipants: m.addedParticipants };
-        break;
-    case "ParticipantLeftGroupThread":
-        logMessageType = "log:unsubscribe";
-        logMessageData = { leftParticipantFbId: m.leftParticipantFbId };
-    break;
-    case "UserLocation": {
-        logMessageType = "log:user-location";
-        logMessageData = {
-            Image: m.attachments[0].mercury.extensible_attachment.story_attachment.media.image,
-            Location: m.attachments[0].mercury.extensible_attachment.story_attachment.target.location_title,
-            coordinates: m.attachments[0].mercury.extensible_attachment.story_attachment.target.coordinate,
-            url: m.attachments[0].mercury.extensible_attachment.story_attachment.url
-        };
+            break;
+        case "ParticipantLeftGroupThread":
+            logMessageType = "log:unsubscribe";
+            logMessageData = { leftParticipantFbId: m.leftParticipantFbId };
+            break;
+        case "UserLocation": {
+            logMessageType = "log:user-location";
+            logMessageData = {
+                Image: m.attachments?.[0]?.mercury?.extensible_attachment?.story_attachment?.media?.image,
+                Location: m.attachments?.[0]?.mercury?.extensible_attachment?.story_attachment?.target?.location_title,
+                coordinates: m.attachments?.[0]?.mercury?.extensible_attachment?.story_attachment?.target?.coordinate,
+                url: m.attachments?.[0]?.mercury?.extensible_attachment?.story_attachment?.url
+            };
+            break;
+        }
+        default:
+            logMessageType = m.class;
+            logMessageData = m;
     }
-}
-switch (hasData(formatID((m.messageMetadata.threadKey.threadFbId || m.messageMetadata.threadKey.otherUserFbId).toString()))) {
-    case true: {
-        switch (logMessageType) {
-            case "log:thread-color": {
-                let x = getData(formatID((m.messageMetadata.threadKey.threadFbId || m.messageMetadata.threadKey.otherUserFbId).toString()));
-                x.emoji = (logMessageData.theme_emoji || x.emoji);
-                x.color = (logMessageData['theme_color'] || x.color);
-                updateData(formatID((m.messageMetadata.threadKey.threadFbId || m.messageMetadata.threadKey.otherUserFbId).toString()),x);
-            }
-                break;
-            case "log:thread-icon": {
-                let x = getData(formatID((m.messageMetadata.threadKey.threadFbId || m.messageMetadata.threadKey.otherUserFbId).toString()));
-                x.emoji = (logMessageData['thread_icon'] || x.emoji);
-                updateData(formatID((m.messageMetadata.threadKey.threadFbId || m.messageMetadata.threadKey.otherUserFbId).toString()),x);
-            }
-                break;
-            case "log:user-nickname": {
-                let x = getData(formatID((m.messageMetadata.threadKey.threadFbId || m.messageMetadata.threadKey.otherUserFbId).toString()));
-                x.nicknames[logMessageData.participant_id] = (logMessageData.nickname.length == 0 ? x.userInfo.find(i => i.id == String(logMessageData.participant_id)).name : logMessageData.nickname);
-                updateData(formatID((m.messageMetadata.threadKey.threadFbId || m.messageMetadata.threadKey.otherUserFbId).toString()),x);
-            }
-                break;
-            case "log:thread-admins": {
-                let x = getData(formatID((m.messageMetadata.threadKey.threadFbId || m.messageMetadata.threadKey.otherUserFbId).toString()));
-                switch (logMessageData.ADMIN_EVENT) {
-                    case "add_admin": {
-                        x.adminIDs.push({ id: logMessageData.TARGET_ID });
-                    }
-                        break;
-                    case "remove_admin": {
-                        x.adminIDs = x.adminIDs.filter(item => item.id != logMessageData.TARGET_ID);
+
+    const meta = m.messageMetadata || {};
+    const threadKey = meta.threadKey || m.threadKey || {};
+    const rawThreadId = threadKey.threadFbId || threadKey.otherUserFbId || m.threadID;
+    const threadID = rawThreadId != null ? formatID(rawThreadId.toString()) : "0";
+
+    try {
+        if (threadID !== "0" && hasData(threadID)) {
+            switch (logMessageType) {
+                case "log:thread-color": {
+                    let x = getData(threadID);
+                    if (x && logMessageData) {
+                        x.emoji = (logMessageData.theme_emoji || x.emoji);
+                        x.color = (logMessageData['theme_color'] || x.color);
+                        updateData(threadID, x);
                     }
                     break;
                 }
-                updateData(formatID((m.messageMetadata.threadKey.threadFbId || m.messageMetadata.threadKey.otherUserFbId).toString()),x);
-            }
-                break;
-            case "log:thread-approval-mode": {
-                let x = getData(formatID((m.messageMetadata.threadKey.threadFbId || m.messageMetadata.threadKey.otherUserFbId).toString()));
-                if (x.approvalMode == true) { 
-                    x.approvalMode = false;
-                }
-                else {
-                    x.approvalMode = true;
-                }
-                updateData(formatID((m.messageMetadata.threadKey.threadFbId || m.messageMetadata.threadKey.otherUserFbId).toString()),x);
-            }
-                break;
-            case "log:thread-name": {
-                let x = getData(formatID((m.messageMetadata.threadKey.threadFbId || m.messageMetadata.threadKey.otherUserFbId).toString()));
-                x.threadName = (logMessageData.name || formatID((m.messageMetadata.threadKey.threadFbId || m.messageMetadata.threadKey.otherUserFbId).toString()));
-                updateData(formatID((m.messageMetadata.threadKey.threadFbId || m.messageMetadata.threadKey.otherUserFbId).toString()),x);
-            }
-                break;
-            case "log:subscribe": {
-                let x = getData(formatID((m.messageMetadata.threadKey.threadFbId || m.messageMetadata.threadKey.otherUserFbId).toString()));
-                for (let o of logMessageData.addedParticipants) {
-                    if (x.userInfo.some(i => i.id == o.userFbId)) continue; 
-                    else {
-                        x.userInfo.push({
-                            id: o.userFbId,
-                            name: o.fullName,
-                            gender: getGenderByPhysicalMethod(o.fullName)
-                        });
-                        x.participantIDs.push(o.userFbId);
+                case "log:thread-icon": {
+                    let x = getData(threadID);
+                    if (x && logMessageData) {
+                        x.emoji = (logMessageData['thread_icon'] || x.emoji);
+                        updateData(threadID, x);
                     }
+                    break;
                 }
-                updateData(formatID((m.messageMetadata.threadKey.threadFbId || m.messageMetadata.threadKey.otherUserFbId).toString()),x);
-            }
-                break;
-            case "log:unsubscribe": {
-                let x = getData(formatID((m.messageMetadata.threadKey.threadFbId || m.messageMetadata.threadKey.otherUserFbId).toString()));
-                x.participantIDs = x.participantIDs.filter(item => item != logMessageData.leftParticipantFbId);
-                x.userInfo = x.userInfo.filter(item => item.id != logMessageData.leftParticipantFbId);
-                    if (x.adminIDs.some(i => i.id == logMessageData.leftParticipantFbId)) {
-                        x.adminIDs = x.adminIDs.filter(item => item.id != logMessageData.leftParticipantFbId);
+                case "log:user-nickname": {
+                    let x = getData(threadID);
+                    if (x && x.nicknames && logMessageData) {
+                        x.nicknames[logMessageData.participant_id] = (logMessageData.nickname?.length == 0 ? (x.userInfo?.find(i => i.id == String(logMessageData.participant_id))?.name || "") : logMessageData.nickname);
+                        updateData(threadID, x);
                     }
-                updateData(formatID((m.messageMetadata.threadKey.threadFbId || m.messageMetadata.threadKey.otherUserFbId).toString()),x);      
+                    break;
+                }
+                case "log:thread-admins": {
+                    let x = getData(threadID);
+                    if (x && Array.isArray(x.adminIDs) && logMessageData) {
+                        switch (logMessageData.ADMIN_EVENT) {
+                            case "add_admin": {
+                                x.adminIDs.push({ id: logMessageData.TARGET_ID });
+                                break;
+                            }
+                            case "remove_admin": {
+                                x.adminIDs = x.adminIDs.filter(item => item.id != logMessageData.TARGET_ID);
+                                break;
+                            }
+                        }
+                        updateData(threadID, x);
+                    }
+                    break;
+                }
+                case "log:thread-approval-mode": {
+                    let x = getData(threadID);
+                    if (x) {
+                        x.approvalMode = !x.approvalMode;
+                        updateData(threadID, x);
+                    }
+                    break;
+                }
+                case "log:thread-name": {
+                    let x = getData(threadID);
+                    if (x) {
+                        x.threadName = (logMessageData?.name || threadID);
+                        updateData(threadID, x);
+                    }
+                    break;
+                }
+                case "log:subscribe": {
+                    let x = getData(threadID);
+                    if (x && Array.isArray(logMessageData?.addedParticipants) && Array.isArray(x.userInfo)) {
+                        for (let o of logMessageData.addedParticipants) {
+                            if (x.userInfo.some(i => i.id == o.userFbId)) continue;
+                            else {
+                                x.userInfo.push({
+                                    id: o.userFbId,
+                                    name: o.fullName,
+                                    gender: getGenderByPhysicalMethod(o.fullName)
+                                });
+                                if (Array.isArray(x.participantIDs)) x.participantIDs.push(o.userFbId);
+                            }
+                        }
+                        updateData(threadID, x);
+                    }
+                    break;
+                }
+                case "log:unsubscribe": {
+                    let x = getData(threadID);
+                    if (x && logMessageData?.leftParticipantFbId) {
+                        if (Array.isArray(x.participantIDs)) x.participantIDs = x.participantIDs.filter(item => item != logMessageData.leftParticipantFbId);
+                        if (Array.isArray(x.userInfo)) x.userInfo = x.userInfo.filter(item => item.id != logMessageData.leftParticipantFbId);
+                        if (Array.isArray(x.adminIDs) && x.adminIDs.some(i => i.id == logMessageData.leftParticipantFbId)) {
+                            x.adminIDs = x.adminIDs.filter(item => item.id != logMessageData.leftParticipantFbId);
+                        }
+                        updateData(threadID, x);
+                    }
+                    break;
+                }
             }
-            break;
         }
-    }
-}
+    } catch (_) {}
 
-return {
-    type: "event",
-    threadID: formatID((m.messageMetadata.threadKey.threadFbId || m.messageMetadata.threadKey.otherUserFbId).toString()),
-    logMessageType: logMessageType,
-    logMessageData: logMessageData,
-    logMessageBody: m.messageMetadata.adminText,
-    author: m.messageMetadata.actorFbId,
-    participantIDs: m.participants || []
-    };  
+    const author = meta.actorFbId != null ? meta.actorFbId.toString() : (m.actorFbId != null ? m.actorFbId.toString() : (m.leftParticipantFbId ? m.leftParticipantFbId.toString() : "0"));
+
+    return {
+        type: "event",
+        threadID: threadID,
+        messageID: meta.messageId != null ? meta.messageId.toString() : "",
+        logMessageType: logMessageType,
+        logMessageData: logMessageData,
+        logMessageBody: meta.adminText || "",
+        timestamp: meta.timestamp || m.timestamp || Date.now(),
+        author: author,
+        participantIDs: m.participants || []
+    };
 }
 
 /**
@@ -2461,12 +2507,13 @@ return {
  */
 
 function formatDeltaReadReceipt(delta) {
-    // otherUserFbId seems to be used as both the readerID and the threadID in a 1-1 chat.
-    // In a group chat actorFbId is used for the reader and threadFbId for the thread.
+    const tk = delta.threadKey || {};
+    const reader = (tk.otherUserFbId || delta.actorFbId);
+    const threadRaw = tk.otherUserFbId || tk.threadFbId;
     return {
-        reader: (delta.threadKey.otherUserFbId || delta.actorFbId).toString(),
-        time: delta.actionTimestampMs,
-        threadID: formatID((delta.threadKey.otherUserFbId || delta.threadKey.threadFbId).toString()),
+        reader: reader != null ? reader.toString() : "0",
+        time: delta.actionTimestampMs || Date.now(),
+        threadID: threadRaw != null ? formatID(threadRaw.toString()) : "0",
         type: "read_receipt"
     };
 }

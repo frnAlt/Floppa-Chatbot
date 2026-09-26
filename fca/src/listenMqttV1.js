@@ -27,90 +27,49 @@ var topics = ["/ls_req","/ls_resp","/legacy_web","/webrtc","/rtc_multi","/onevc"
     * => Will receive /sr_res right here.
   */
 
-var WebSocket_Global;
-
-function buildProxy() {
-    var Proxy = new Transform({
-        objectMode: false
+function buildMqttStream(host, options) {
+    const socket = new Websocket(host, options.wsOptions);
+    const stream = Websocket.createWebSocketStream(socket, options.wsOptions);
+    stream.url = host;
+    stream.socket = socket;
+    socket.once('error', (error) => {
+        if (!stream.destroyed) stream.destroy(error);
     });
-
-    Proxy._write = function socketWriteNode(chunk, enc, next) {
-        if (WebSocket_Global.readyState !== WebSocket_Global.OPEN) {
-            return next();
-        }
-    
-        if (typeof chunk === 'string') {
-            chunk = new Buffer.from(chunk, 'utf8');
-        }
-        WebSocket_Global.send(chunk, next);
-    };
-
-    Proxy._flush = function(done) {
-        WebSocket_Global.close();
-        done();
-    };
-
-    Proxy._writev = function(chunks, cb) {
-        var buffers = new Array(chunks.length);
-        for (var i = 0; i < chunks.length; i++) {
-            if (typeof chunks[i].chunk === 'string') {
-                buffers[i] = new Buffer.from(chunks[i], 'utf8');
-            } else {
-                buffers[i] = chunks[i].chunk;
-            }
-        }
-        this._write(new Buffer.concat(buffers), 'binary', cb);
-    };
-
-    return Proxy;
-}
-
-function buildStream(options, WebSocket, Proxy) {
-    const Stream = Duplexify(undefined, undefined, options);
-    Stream.socket = WebSocket;
-    
-    WebSocket 
-        .onclose = function() {
-            Stream.end();
-            Stream.destroy();
-        };
-    WebSocket
-        .onerror = function(err) {
-            Stream.destroy(err);
-        };
-    WebSocket
-        .onmessage = function(event) {
-            var data = event.data;
-            if (data instanceof ArrayBuffer) data = new Buffer.from(data);
-            else data = new Buffer.from(data, 'utf8');
-            Stream.push(data);
-        };
-    WebSocket
-        .onopen = function() {
-            Stream.setReadable(Proxy);
-            Stream.setWritable(Proxy);
-            Stream.emit('connect');
-        };
-    WebSocket_Global = WebSocket;
-    Proxy.on('close', function() { WebSocket.close(); });
-    return Stream;
+    socket.once('close', () => {
+        if (!stream.destroyed) stream.destroy();
+    });
+    return stream;
 }
 
 
 function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
     //Don't really know what this does but I think it's for the act`ive state?
     //TODO: Move to ctx when implemented
-    var chatOn = ctx.globalOptions.online;
-    var foreground = false;
+    var chatOn = ctx.globalOptions.online !== false;
+    var foreground = true;
 
     var sessionID = Math.floor((Math.random() * Number.MAX_SAFE_INTEGER)+1);
-    var username = {u: ctx.userID,s: sessionID,chat_on: chatOn,fg: foreground,d: utils.getGUID(),ct: "websocket",aid: "219994525426954", mqtt_sid: "",cp: 3,ecp: 10,st: [],pm: [],dc: "",no_auto_fg: true,gas: null,pack: []};
+    var GUID = ctx.clientID || (ctx.clientID = utils.getGUID());
+    var cachedUA = ctx.globalOptions.cachedUserAgent || ctx.globalOptions.userAgent;
+    var username = {u: ctx.userID,s: sessionID,chat_on: chatOn,fg: foreground,d: GUID,ct: "websocket",aid: "219994525426954", mqtt_sid: "",cp: 3,ecp: 10,st: [],pm: [],dc: "",no_auto_fg: true,gas: null,pack: [], a: cachedUA};
     var cookies = ctx.jar.getCookies('https://www.facebook.com').join("; ");
 
     var host;
-    if (ctx.mqttEndpoint) host = `${ctx.mqttEndpoint}&sid=${sessionID}`;
-    else if (ctx.region) host = `wss://edge-chat.facebook.com/chat?region=${ctx.region.toLocaleLowerCase()}&sid=${sessionID}`;
-    else host = `wss://edge-chat.facebook.com/chat?sid=${sessionID}`;
+    if (ctx.mqttEndpoint) {
+        try {
+            const endpoint = new URL(ctx.mqttEndpoint);
+            endpoint.searchParams.set("sid", String(sessionID));
+            endpoint.searchParams.set("cid", String(GUID));
+            host = endpoint.toString();
+        } catch (_) {
+            const separator = ctx.mqttEndpoint.includes("?") ? "&" : "?";
+            host = `${ctx.mqttEndpoint}${separator}sid=${sessionID}&cid=${GUID}`;
+        }
+    } else if (ctx.region) {
+        host = `wss://edge-chat.facebook.com/chat?region=${ctx.region.toLocaleLowerCase()}&sid=${sessionID}&cid=${GUID}`;
+    } else {
+        host = `wss://edge-chat.facebook.com/chat?sid=${sessionID}&cid=${GUID}`;
+    }
 
     var options = { 
         clientId: "mqttwsclient",
@@ -122,17 +81,18 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
             headers: {
                 'Cookie': cookies,
                 'Origin': 'https://www.facebook.com',
-                'User-Agent': (ctx.globalOptions.userAgent || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.64 Safari/537.36'),
+                'User-Agent': (cachedUA || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.64 Safari/537.36'),
                 'Referer': 'https://www.facebook.com/',
-                'Host': new URL(host).hostname //'edge-chat.facebook.com'
+                'Host': new URL(host).hostname
             },
             origin: 'https://www.facebook.com',
             protocolVersion: 13,
             binaryType: 'arraybuffer',
         },
-        keepalive: 60,
-        reschedulePings: true,
-        reconnectPeriod: 3,
+        keepalive: Number(ctx.globalOptions.mqttKeepalive) > 0 ? Math.floor(ctx.globalOptions.mqttKeepalive) : 10,
+        reschedulePings: false,
+        connectTimeout: 15000,
+        reconnectPeriod: 0,
         incomingStore: new SafeMqttStore(),
         outgoingStore: new SafeMqttStore()
     };
@@ -141,7 +101,7 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
         var agent = new HttpsProxyAgent(ctx.globalOptions.proxy);
         options.wsOptions.agent = agent;
     }
-    ctx.mqttClient = new mqtt.Client(_ => buildStream(options, new Websocket(host, options.wsOptions), buildProxy()), options);
+    ctx.mqttClient = new mqtt.Client(() => buildMqttStream(host, options), options);
     global.mqttClient = ctx.mqttClient;
 
     global.mqttClient.on('error', function (err) {
@@ -220,7 +180,7 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
             process.env.OnStatus = true;
         }
         
-        topics.forEach(topicsub => global.mqttClient.subscribe(topicsub));
+        global.mqttClient.subscribe(topics, { qos: 1 });
 
         var topic;
         var queue = {
@@ -229,25 +189,34 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
             delta_batch_size: 500,
             encoding: "JSON",
             entity_fbid: ctx.userID,
+            initial_titan_sequence_id: ctx.lastSeqId,
+            device_params: null
         };
 
-        topic = "/messenger_sync_create_queue";
-        queue.initial_titan_sequence_id = ctx.lastSeqId;
-        queue.device_params = null;
+        if (ctx.syncToken) {
+            topic = "/messenger_sync_get_diffs";
+            queue.last_seq_id = ctx.lastSeqId;
+            queue.sync_token = ctx.syncToken;
+        } else {
+            topic = "/messenger_sync_create_queue";
+        }
 
         try {
             if (ctx.mqttClient && ctx.mqttClient.connected && !ctx.mqttClient.disconnected && !ctx.mqttClient.disconnecting) {
                 global.mqttClient.publish(topic, JSON.stringify(queue), { qos: 1, retain: false });
+                global.mqttClient.publish("/foreground_state", JSON.stringify({ foreground: chatOn }), { qos: 1 });
+                global.mqttClient.publish("/set_client_settings", JSON.stringify({ make_user_available_when_in_foreground: true }), { qos: 1 });
             }
         } catch (_) {}
 
         var rTimeout = setTimeout(function () {
-            if (!ctx.mqttClient || ctx.mqttClient.disconnected || ctx.mqttClient.disconnecting) return;
+            if (!ctx.mqttClient || ctx.mqttClient.disconnected || ctx.mqttClient.disconnecting || !ctx.mqttClient.connected) return;
+            if (ctx._tmsReceived) return;
             try {
-                ctx.mqttClient.removeAllListeners();
-                ctx.mqttClient.end(true);
+                global.mqttClient.publish("/foreground_state", JSON.stringify({ foreground: chatOn }), { qos: 1 });
+                global.mqttClient.publish("/set_client_settings", JSON.stringify({ make_user_available_when_in_foreground: true }), { qos: 1 });
+                global.mqttClient.publish(topic, JSON.stringify(queue), { qos: 1, retain: false });
             } catch (_) {}
-            getSeqID();
         }, 15000);
 
         ctx.tmsWait = function () {
@@ -255,6 +224,7 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
                 clearTimeout(rTimeout);
                 rTimeout = null;
             }
+            ctx._tmsReceived = true;
             if (ctx.globalOptions.emitReady && !ctx._readyEmitted) {
                 ctx._readyEmitted = true;
                 globalCallback(null, { type: "ready", error: null });
@@ -264,8 +234,14 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
     });
 
     global.mqttClient.on('message', function (topic, message, _packet) {
-        const jsonMessage = JSON.parse(message.toString());
-        console.log(message.toString())
+        if (!message) return;
+        let jsonMessage;
+        try {
+            jsonMessage = JSON.parse(message.toString());
+        } catch (_) {
+            return;
+        }
+        if (!jsonMessage || typeof jsonMessage !== "object") return;
         if (topic === "/t_ms") {
             if (ctx.tmsWait && typeof ctx.tmsWait == "function") ctx.tmsWait();
 
@@ -823,6 +799,9 @@ module.exports = function (defaultFuncs, api, ctx) {
     };
 
     return function (callback) {
+        if (global.Fca?.Data) {
+            global.Fca.Data.StopListening = false;
+        }
         class MessageEmitter extends EventEmitter {
             stopListening(callback) {
                 callback = callback || (() => { });

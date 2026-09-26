@@ -1543,8 +1543,10 @@ async function startBot(loginWithEmail) {
                                                         
                                                         callbackListenTime[key] = callBackListen;
                                                         return function (error, event) {
-                                                                if (callbackListenTime[key]) {
+                                                                if (typeof callbackListenTime[key] === "function") {
                                                                         callbackListenTime[key](error, event);
+                                                                } else {
+                                                                        callBackListen(error, event);
                                                                 }
                                                         };
                                                 }
