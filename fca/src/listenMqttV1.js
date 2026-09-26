@@ -5,16 +5,29 @@ const log = require("npmlog");
 const mqtt = require('mqtt');
 // Relax mqtt-packet header flag bit constraints for Facebook Edge-Chat MQTT broker compatibility
 try {
+  const mqttPath = require.resolve('mqtt');
+  const constantsPath = require.resolve('mqtt-packet/constants', { paths: [mqttPath] });
+  const constants = require(constantsPath);
+  if (constants && constants.requiredHeaderFlags) {
+    delete constants.requiredHeaderFlags[4]; // puback (FB returns 0x2)
+    delete constants.requiredHeaderFlags[5]; // pubrec
+    delete constants.requiredHeaderFlags[6]; // pubrel
+    delete constants.requiredHeaderFlags[7]; // pubcomp
+    delete constants.requiredHeaderFlags[9]; // suback
+    delete constants.requiredHeaderFlags[11]; // unsuback
+  }
+} catch (_) {}
+try {
   for (const k of Object.keys(require.cache)) {
     if (k.includes('mqtt-packet/constants.js') || k.includes('mqtt-packet\\constants.js')) {
       const constants = require.cache[k]?.exports;
       if (constants && constants.requiredHeaderFlags) {
-        delete constants.requiredHeaderFlags[4]; // puback (FB returns 0x2)
-        delete constants.requiredHeaderFlags[5]; // pubrec
-        delete constants.requiredHeaderFlags[6]; // pubrel
-        delete constants.requiredHeaderFlags[7]; // pubcomp
-        delete constants.requiredHeaderFlags[9]; // suback
-        delete constants.requiredHeaderFlags[11]; // unsuback
+        delete constants.requiredHeaderFlags[4];
+        delete constants.requiredHeaderFlags[5];
+        delete constants.requiredHeaderFlags[6];
+        delete constants.requiredHeaderFlags[7];
+        delete constants.requiredHeaderFlags[9];
+        delete constants.requiredHeaderFlags[11];
       }
     }
   }

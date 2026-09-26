@@ -519,7 +519,7 @@ function pushI_user(appState, value) {
 let spin;
 async function getAppStateToLogin(loginWithEmail) {
         let appState = [];
-        if (loginWithEmail)
+        if (loginWithEmail && facebookAccount && facebookAccount.email && facebookAccount.password)
                 return await getAppStateFromEmail(undefined, facebookAccount);
         let accountText = "";
         if (existsSync(dirAccount)) {
@@ -840,7 +840,8 @@ async function startBot(loginWithEmail) {
                                         
                                         setTimeout(() => {
                                                 log.info("SINGLE ACCOUNT", "Retrying login with same account...");
-                                                startBot(true);
+                                                const canUseEmail = Boolean(facebookAccount?.email && facebookAccount?.password);
+                                                startBot(canUseEmail);
                                         }, retryDelay);
                                         return; // Don't exit, retry scheduled
                                 }
@@ -1360,7 +1361,8 @@ async function startBot(loginWithEmail) {
                                                                         global.GoatBot.Listening = api.listenMqtt(createCallBackListen());
                                                                 } else {
                                                                         // Cookie still invalid, try full re-login
-                                                                        startBot(true);
+                                                                        const canUseEmail = Boolean(facebookAccount?.email && facebookAccount?.password);
+                                                                        startBot(canUseEmail);
                                                                 }
                                                         }, retryDelay);
                                                         return;
@@ -1655,4 +1657,6 @@ async function startBot(loginWithEmail) {
 
 global.GoatBot.reLoginBot = startBot;
 global.switchToNextAccount = switchToNextAccount; // Export for manual account switching
-startBot();
+startBot().catch(err => {
+        log.err("START_BOT", err?.message || err);
+});

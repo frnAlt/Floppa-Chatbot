@@ -14,6 +14,21 @@ if (process.stderr._handle && typeof process.stderr._handle.setBlocking === 'fun
 	process.stderr._handle.setBlocking(true);
 }
 
+// Relax mqtt-packet header flag bit constraints for Facebook Edge-Chat MQTT broker compatibility
+try {
+	const mqttPath = require.resolve("mqtt");
+	const constantsPath = require.resolve("mqtt-packet/constants", { paths: [mqttPath] });
+	const constants = require(constantsPath);
+	if (constants && constants.requiredHeaderFlags) {
+		delete constants.requiredHeaderFlags[4]; // puback (FB returns 0x2)
+		delete constants.requiredHeaderFlags[5]; // pubrec
+		delete constants.requiredHeaderFlags[6]; // pubrel
+		delete constants.requiredHeaderFlags[7]; // pubcomp
+		delete constants.requiredHeaderFlags[9]; // suback
+		delete constants.requiredHeaderFlags[11]; // unsuback
+	}
+} catch (_) {}
+
 global.systemMemoryDB = require("./func/systemMemoryDB.js");
 
 process.on('unhandledRejection', (error, promise) => {
