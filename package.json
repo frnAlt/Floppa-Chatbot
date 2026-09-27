@@ -143,5 +143,12 @@
 		"npm-size": "^1.3.0",
 		"prettier": "^2.7.1",
 		"terser": "^5.15.0"
+	},
+	"allowScripts": {
+		"bcrypt@5.1.1": true,
+		"canvas@3.2.3": true,
+		"esbuild@0.28.2": true,
+		"sqlite3@6.0.1": true,
+		"@ffmpeg-installer/linux-x64@4.1.0": true
 	}
 }

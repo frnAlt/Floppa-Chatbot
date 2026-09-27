@@ -3,10 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CanvCass = void 0;
 let canvas_1;
 try {
-    const nodeMajor = parseInt(process.versions.node.split('.')[0], 10);
-    if (nodeMajor < 23) {
-        canvas_1 = require("@napi-rs/canvas");
-    }
+    canvas_1 = require("@napi-rs/canvas");
 } catch (_) {}
 
 if (!canvas_1) {
