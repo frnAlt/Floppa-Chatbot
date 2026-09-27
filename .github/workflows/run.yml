@@ -8,9 +8,11 @@ on:
         required: false
         type: choice
         options:
+          - '24'
+          - '26'
           - '22'
           - '20'
-        default: '22'
+        default: '24'
 
 jobs:
   build-and-run:
@@ -27,7 +29,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ inputs.node_version || '20' }}
+          node-version: ${{ inputs.node_version || '24' }}
 
       - name: Install System Native Build Dependencies
         run: |
