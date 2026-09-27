@@ -83,7 +83,7 @@ module.exports = async function (cookie, userAgent) {
 		}
 
 		// Extract c_user from cookie string to check if the response acknowledges this user
-		const cUserMatch = cookie.match(/c_user=(\d+)/);
+		const cUserMatch = cookieString.match(/c_user=(\d+)/);
 		const currentUserId = cUserMatch ? cUserMatch[1] : "";
 
 		const isLoggedOut =
