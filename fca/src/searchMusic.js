@@ -152,6 +152,9 @@ module.exports = function (defaultFuncs, api, ctx) {
                 }),
                 server_timestamps: "true"
             };
+            if (ctx.fb_dtsg) form.fb_dtsg = ctx.fb_dtsg;
+            if (ctx.ttstamp) form.ttstamp = ctx.ttstamp;
+            if (ctx.jazoest) form.jazoest = ctx.jazoest;
 
             defaultFuncs
                 .post(GRAPHQL_URL, ctx.jar, form)

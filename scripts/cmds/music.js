@@ -1,17 +1,17 @@
 /**
  * @author Neoaz 🐊 & frnAlt (Gtajisan)
- * Music search and player powered by Facebook Stories music catalog (RelayModern)
- * Inspired by lazyneoaz/Insta-Bot & Floppa Engine
+ * High-Speed Music Player & Catalog Search powered by Facebook Stories (RelayModern)
+ * Optimized for low-latency direct streaming without disk I/O bottlenecks.
  */
 
 "use strict";
 
 const axios = require("axios");
-const fs = require("fs-extra");
-const path = require("path");
-const os = require("os");
 
+// In-memory caches for zero-latency retrieval
 const userSearchCache = new Map();
+const queryCache = new Map();
+const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
 function formatDuration(ms) {
 	if (!Number.isFinite(ms) || ms <= 0) return "0:00";
@@ -21,34 +21,45 @@ function formatDuration(ms) {
 	return `${minutes}:${seconds}`;
 }
 
-async function searchTracks(api, query, count = 10) {
+async function searchTracks(api, query, count = 6) {
+	const cacheKey = `${query.toLowerCase().trim()}_${count}`;
+	const cached = queryCache.get(cacheKey);
+	if (cached && (Date.now() - cached.time) < CACHE_TTL_MS) {
+		return cached.tracks;
+	}
+
+	let tracks = [];
 	if (typeof api?.searchMusic === "function") {
 		const res = await api.searchMusic(query, { count });
-		return res?.tracks || [];
-	}
-	if (typeof api?.music?.search === "function") {
+		tracks = res?.tracks || [];
+	} else if (typeof api?.music?.search === "function") {
 		const res = await api.music.search(query, { count });
-		return res?.tracks || [];
-	}
-	if (typeof global.GoatBot?.fcaApi?.searchMusic === "function") {
+		tracks = res?.tracks || [];
+	} else if (typeof global.GoatBot?.fcaApi?.searchMusic === "function") {
 		const res = await global.GoatBot.fcaApi.searchMusic(query, { count });
-		return res?.tracks || [];
+		tracks = res?.tracks || [];
+	} else {
+		try {
+			const searchMusicFactory = require("../../fca/src/searchMusic");
+			const defaultFuncs = api?.__defaultFuncs || api?.defaultFuncs || {
+				post: (url, jar, form) => axios.post(url, new URLSearchParams(form).toString(), {
+					headers: { "Content-Type": "application/x-www-form-urlencoded" },
+					jar,
+					withCredentials: true
+				}).then(r => r.data)
+			};
+			const fn = searchMusicFactory(defaultFuncs, api, api?.ctx || {});
+			const res = await fn(query, { count });
+			tracks = res?.tracks || [];
+		} catch (e) {
+			throw new Error(`searchMusic query failed: ${e.message}`);
+		}
 	}
-	try {
-		const searchMusicFactory = require("../../fca/src/searchMusic");
-		const defaultFuncs = api?.__defaultFuncs || api?.defaultFuncs || {
-			post: (url, jar, form) => axios.post(url, new URLSearchParams(form).toString(), {
-				headers: { "Content-Type": "application/x-www-form-urlencoded" },
-				jar,
-				withCredentials: true
-			}).then(r => r.data)
-		};
-		const fn = searchMusicFactory(defaultFuncs, api, api?.ctx || {});
-		const res = await fn(query, { count });
-		return res?.tracks || [];
-	} catch (e) {
-		throw new Error(`searchMusic query failed: ${e.message}`);
+
+	if (tracks.length > 0) {
+		queryCache.set(cacheKey, { tracks, time: Date.now() });
 	}
+	return tracks;
 }
 
 async function sendTrack(message, event, api, track) {
@@ -60,40 +71,62 @@ async function sendTrack(message, event, api, track) {
 		api.setMessageReaction("⏳", event.messageID, () => {}, true);
 	}
 
-	const tempFilePath = path.join(os.tmpdir(), `music_${Date.now()}_${Math.random().toString(36).substring(7)}.mp3`);
+	let statusMsg = null;
 	try {
-		const response = await axios({
-			method: "GET",
-			url: track.audioUrl,
-			responseType: "arraybuffer",
-			timeout: 20000,
-			headers: {
-				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-			}
-		});
+		statusMsg = await message.reply(`⏳ Streaming "${track.title || "Song"}" by ${track.artist || "Artist"}...`);
+	} catch (_) {}
 
-		await fs.writeFile(tempFilePath, Buffer.from(response.data));
+	try {
+		const safeTitle = (track.title || "track").replace(/[^\w.-]+/g, "_").slice(0, 30);
+		const fileName = `${safeTitle}.mp3`;
+		let stream;
 
-		const bodyText = `🎵 Track: ${track.title || "Unknown"}\n`
+		// Stream directly into FCA uploader without saving to disk first
+		if (global.utils && typeof global.utils.getStreamFromURL === "function") {
+			stream = await global.utils.getStreamFromURL(track.audioUrl, fileName, {
+				timeout: 25000,
+				headers: {
+					"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+				}
+			});
+		} else {
+			const res = await axios({
+				method: "GET",
+				url: track.audioUrl,
+				responseType: "stream",
+				timeout: 25000,
+				headers: {
+					"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+				}
+			});
+			res.data.path = fileName;
+			stream = res.data;
+		}
+
+		const bodyText = `🎵 ${track.title || "Unknown"}\n`
 			+ `👤 Artist: ${track.artist || "Unknown"}\n`
 			+ `${track.album ? `💿 Album: ${track.album}\n` : ""}`
 			+ `⏱️ Duration: ${track.duration || formatDuration(track.durationMs)}\n`
-			+ `📻 Source: Facebook Stories Music Catalog`;
+			+ `📻 Facebook Music Catalog`;
+
+		if (statusMsg?.messageID && api && typeof api.unsendMessage === "function") {
+			api.unsendMessage(statusMsg.messageID).catch(() => {});
+		}
 
 		if (api && typeof api.setMessageReaction === "function") {
-			api.setMessageReaction("👍", event.messageID, () => {}, true);
+			api.setMessageReaction("🎵", event.messageID, () => {}, true);
 		}
 
 		return message.reply({
 			body: bodyText,
-			attachment: fs.createReadStream(tempFilePath)
-		}, () => {
-			fs.remove(tempFilePath).catch(() => {});
+			attachment: stream
 		});
 	} catch (error) {
-		fs.remove(tempFilePath).catch(() => {});
+		if (statusMsg?.messageID && api && typeof api.unsendMessage === "function") {
+			api.unsendMessage(statusMsg.messageID).catch(() => {});
+		}
 		if (api && typeof api.setMessageReaction === "function") {
-			api.setMessageReaction("👎", event.messageID, () => {}, true);
+			api.setMessageReaction("❌", event.messageID, () => {}, true);
 		}
 		return message.reply(`❌ Failed to stream track: ${error.message || "Network timeout"}`);
 	}
@@ -103,9 +136,9 @@ module.exports = {
 	config: {
 		name: "music",
 		aliases: ["fca-music", "fbmusic", "track", "stickermusic"],
-		version: "1.0.0",
+		version: "1.2.0",
 		author: "Neoaz 🐊 & frnAlt",
-		countDown: 5,
+		countDown: 1, // Minimal cooldown to eliminate command delay
 		role: 0,
 		description: {
 			en: "Search Facebook Stories music catalog and send playable audio track"
@@ -129,9 +162,11 @@ module.exports = {
 			);
 		}
 
-		const cached = userSearchCache.get(event.senderID);
-		if (/^\d+$/.test(rawQuery) && cached && Array.isArray(cached.tracks) && cached.tracks.length) {
-			const index = parseInt(rawQuery, 10) - 1;
+		const cached = userSearchCache.get(event.senderID) || userSearchCache.get(event.threadID);
+		const numberMatch = rawQuery.match(/^(?:#|pick\s+)?(\d+)$/i);
+
+		if (numberMatch && cached && Array.isArray(cached.tracks) && cached.tracks.length) {
+			const index = parseInt(numberMatch[1], 10) - 1;
 			const track = cached.tracks[index];
 			if (!track) {
 				return message.reply(`❌ Please pick a number between 1 and ${cached.tracks.length}.`);
@@ -139,12 +174,16 @@ module.exports = {
 			return sendTrack(message, event, api, track);
 		}
 
-		const playTopDirectly = args.includes("--top");
-		const cleanQuery = rawQuery.replace(/--top/gi, "").trim();
+		const playTopDirectly = args.includes("--top") || args.includes("-t");
+		const cleanQuery = rawQuery.replace(/--(?:top|t)\b/gi, "").trim();
+
+		if (api && typeof api.setMessageReaction === "function") {
+			api.setMessageReaction("🔍", event.messageID, () => {}, true);
+		}
 
 		let tracks = [];
 		try {
-			tracks = await searchTracks(api, cleanQuery, 10);
+			tracks = await searchTracks(api, cleanQuery, 6);
 		} catch (err) {
 			return message.reply(`❌ Music catalog error: ${err.message || String(err)}`);
 		}
@@ -153,8 +192,10 @@ module.exports = {
 			return message.reply(`❌ No songs found in the Facebook catalog for "${cleanQuery}".`);
 		}
 
-		const top = tracks.slice(0, 10);
-		userSearchCache.set(event.senderID, { query: cleanQuery, tracks: top });
+		const top = tracks.slice(0, 6);
+		const cacheEntry = { query: cleanQuery, tracks: top, time: Date.now() };
+		userSearchCache.set(event.senderID, cacheEntry);
+		userSearchCache.set(event.threadID, cacheEntry);
 
 		if (top.length === 1 || playTopDirectly) {
 			return sendTrack(message, event, api, top[0]);
@@ -205,7 +246,7 @@ module.exports = {
 		}
 
 		if (api && typeof api.unsendMessage === "function" && event.messageReply?.messageID) {
-			api.unsendMessage(event.messageReply.messageID, event.threadID).catch(() => {});
+			api.unsendMessage(event.messageReply.messageID).catch(() => {});
 		}
 
 		return sendTrack(message, event, api, selected);
