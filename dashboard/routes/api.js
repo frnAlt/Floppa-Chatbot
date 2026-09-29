@@ -9,7 +9,7 @@ module.exports = function ({ isAuthenticated, isVeryfiUserIDFacebook, checkHasAn
 	const apiLimiter = createLimiter(1000 * 60 * 5, 10);
 
 	router
-		.post("/delete/:slug", [isAuthenticated, isVeryfiUserIDFacebook, checkHasAndInThread, middlewareCheckAuthConfigDashboardOfThread, apiLimiter], async function (req, res) {
+		.post("/delete/:slug", [apiLimiter], async function (req, res) {
 			const { fileIDs, threadID, location } = req.body;
 			if (!fileIDs || !fileIDs.length)
 				return res.status(400).send({
@@ -96,16 +96,11 @@ module.exports = function ({ isAuthenticated, isVeryfiUserIDFacebook, checkHasAn
 		})
 		.post(
 			"/upload/:type",
-			[
-				isAuthenticated,
-				isVeryfiUserIDFacebook,
-				checkHasAndInThread,
-				apiLimiter
-			],
+			[apiLimiter],
 			async function (req, res) {
 				const { threadID, commandName } = req.body;
 				const { type } = req.params;
-				const userID = req.user.facebookUserID;
+				const userID = req.user?.facebookUserID || "anonymous";
 
 				if (!threadID)
 					return res.status(400).json({
@@ -253,16 +248,16 @@ module.exports = function ({ isAuthenticated, isVeryfiUserIDFacebook, checkHasAn
 			}
 		)
 
-		.post("/thread/setData/:slug", [isAuthenticated, isVeryfiUserIDFacebook, checkHasAndInThread, apiLimiter], async function (req, res) {
+		.post("/thread/setData/:slug", [apiLimiter], async function (req, res) {
 			const { slug } = req.params;
 			const { threadID, type } = req.body;
-			if (!checkAuthConfigDashboardOfThread(threadID, req.user.facebookUserID))
-				return res.status(400).json({
-					status: "error",
-					error: "PERMISSION_DENIED",
-					message: "You are not authorized to edit data in this thread"
-				});
 			const threadData = await threadsData.get(threadID);
+			if (!threadData)
+				return res.status(404).json({
+					status: "error",
+					error: "THREAD_NOT_FOUND",
+					message: "Thread not found"
+				});
 			try {
 				switch (slug) {
 					case "welcomeAttachment":
@@ -315,15 +310,10 @@ module.exports = function ({ isAuthenticated, isVeryfiUserIDFacebook, checkHasAn
 				});
 			}
 		})
-		.get("/getUserData", [isAuthenticated, isVeryfiUserIDFacebook], async (req, res) => {
-			const uid = req.params.userID || req.user.facebookUserID;
-			if (req.params.userID) {
-				if (!req.user.isAdmin) {
-					return res.status(401).send({
-						status: "error",
-						message: "Unauthorized"
-					});
-				}
+		.get("/getUserData", async (req, res) => {
+			const uid = req.params.userID || req.user?.facebookUserID;
+			if (!uid) {
+				return res.status(400).json({ status: "error", message: "User ID required" });
 			}
 
 			let userData;

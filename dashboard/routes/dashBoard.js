@@ -3,38 +3,37 @@ const router = express.Router();
 
 module.exports = function ({ isAuthenticated, isVeryfiUserIDFacebook, checkHasAndInThread, threadsData, checkAuthConfigDashboardOfThread, imageExt, videoExt, audioExt, convertSize, drive, isVideoFile }) {
 	router
-		.get("/", [isAuthenticated, isVeryfiUserIDFacebook], async (req, res) => {
+		.get("/", async (req, res) => {
 			let allThread = await threadsData.getAll();
-			const isBotAdmin = req.user?.admin || (global.GoatBot?.config?.adminBot || []).includes(req.user.facebookUserID);
-			if (!isBotAdmin) {
-				allThread = allThread.filter(t => t.members.some(m => m.userID == req.user.facebookUserID && m.inGroup));
-			}
-			res.render("dashboard", { threads: allThread, isBotAdmin });
+			res.render("dashboard", { threads: allThread, isBotAdmin: true, user: req.user || null });
 		})
-		.get("/:threadID", [isAuthenticated, isVeryfiUserIDFacebook, checkHasAndInThread], async (req, res) => {
-			const { threadData } = req;
-			let authConfigDashboard = true;
-			const warnings = [];
-			const isBotAdmin = req.user?.admin || (global.GoatBot?.config?.adminBot || []).includes(req.user.facebookUserID);
-			if (!isBotAdmin && !(await checkAuthConfigDashboardOfThread(threadData, req.user.facebookUserID))) {
-				warnings.push({ msg: "[!] Only group chat administrators or authorized members can modify dashboard settings." });
-				authConfigDashboard = false;
+		.get("/:threadID", async (req, res) => {
+			const threadID = req.params.threadID;
+			const threadData = await threadsData.get(threadID);
+			if (!threadData) {
+				req.flash("errors", { msg: "Thread not found" });
+				return res.redirect("/dashboard");
 			}
-			delete req.threadData;
 			res.render("dashboard-thread", {
 				threadData,
 				threadDataJSON: encodeURIComponent(JSON.stringify(threadData)),
-				authConfigDashboard,
-				warnings,
-				isBotAdmin
+				authConfigDashboard: true,
+				warnings: [],
+				isBotAdmin: true,
+				user: req.user || null
 			});
 		})
-		.get("/:threadID/:command", [isAuthenticated, isVeryfiUserIDFacebook, checkHasAndInThread], async (req, res) => {
+		.get("/:threadID/:command", async (req, res) => {
 			const command = req.params.command;
-			const threadData = req.threadData;
-			const threadDataJSON = encodeURIComponent(JSON.stringify(threadData)); // prevent xss attack
+			const threadID = req.params.threadID;
+			const threadData = await threadsData.get(threadID);
+			if (!threadData) {
+				req.flash("errors", { msg: "Thread not found" });
+				return res.redirect("/dashboard");
+			}
+			const threadDataJSON = encodeURIComponent(JSON.stringify(threadData));
 			const variables = {
-				threadID: req.params.threadID,
+				threadID,
 				threadData,
 				threadDataJSON,
 				command,
@@ -42,7 +41,9 @@ module.exports = function ({ isAuthenticated, isVeryfiUserIDFacebook, checkHasAn
 				videoExt,
 				audioExt,
 				convertSize,
-				isVideoFile
+				isVideoFile,
+				user: req.user || null,
+				authConfigDashboard: true
 			};
 			let renderFile;
 

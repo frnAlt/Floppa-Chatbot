@@ -59,31 +59,6 @@
             <span class="d-md-none">Switch to <span id="switch-mode-text">light</span> mode</span>
           </a>
         </li>
-
-        <% if (user) { %>
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle px-2" data-bs-toggle="dropdown" href="#" role="button" id="userDropdown" aria-expanded="false">
-            <i class="fas fa-user"></i>
-            <%= user.name %>
-          </a>
-          <ul class="dropdown-menu mb-2" aria-labelledby="userDropdown">
-            <% if (!user.facebookUserID) { %>
-            <a href="/verifyfbid" class="dropdown-item">
-              <i class="fas fa-user-check"></i> Verify Facebook ID
-            </a>
-            <% } %>
-            <a href="/profile" class="dropdown-item">
-              <i class="fas fa-user-circle"></i> Profile
-            </a>
-            <a href="/change-password" class="dropdown-item">
-              <i class="fas fa-key"></i> Change Password
-            </a>
-            <a href="/logout" class="dropdown-item">
-              <i class="fas fa-sign-out-alt"></i> Logout
-            </a>
-          </ul>
-        </li>
-        <% } %>
       </ul>
     </div>
   </div>
