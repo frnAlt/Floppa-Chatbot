@@ -1738,6 +1738,25 @@ async function runDiagnostics() {
     } catch (_) {}
     logTest("DEPLOY_BANNER", "Deployment banners credit all original developers (Priyansh, NTKhang, Neoaz, DongDev, frnAlt)", deployCreditsValid);
 
+    // 9. gen.js (NKX GEN multi-model AI) command loaded with proper schema
+    let genCmdValid = false;
+    try {
+      const genCmd = require("./cmds/gen.js");
+      genCmdValid = genCmd?.config?.name === "gen" &&
+        Array.isArray(genCmd?.config?.aliases) &&
+        typeof genCmd?.onStart === "function";
+    } catch (_) {}
+    logTest("FCA_COMMANDS", "scripts/cmds/gen.js (NKX multi-model AI) loaded with proper schema", genCmdValid);
+
+    // 10. alldl.js contains Instagram video source unwrap resolver
+    let alldlIgResolverValid = false;
+    try {
+      const alldlContent = fs.readFileSync(path.join(cwd, "scripts/cmds/alldl.js"), "utf8");
+      alldlIgResolverValid = alldlContent.includes("resolveMediaSource") &&
+        alldlContent.includes("decodeJwtPayload");
+    } catch (_) {}
+    logTest("FCA_COMMANDS", "scripts/cmds/alldl.js incorporates Instagram JWT media unwrap fix", alldlIgResolverValid);
+
   } catch (err) {
     logTest("FCA_ENGINES", "Section 10 tests encountered failure", false, err.message);
   }

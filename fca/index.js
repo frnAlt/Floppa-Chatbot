@@ -429,6 +429,9 @@ try {
 try {
     const searchMusicModule = require("./src/searchMusic");
     module.exports.searchMusic = searchMusicModule;
+    const musicDomainModule = require("./src/domains/music");
+    module.exports.createMusicDomain = musicDomainModule.createMusicDomain;
+    module.exports.MusicDomain = musicDomainModule.MusicDomain;
 } catch (_) {}
 
 try {

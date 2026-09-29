@@ -58,6 +58,58 @@ module.exports = {
       );
     }
 
+    if (sub === "on") {
+      config.whiteListMode.enable = true;
+      writeFileSync(dirConfig, JSON.stringify(config, null, 2));
+      return message.reply("✅ User whitelist mode has been enabled.");
+    }
+    if (sub === "off") {
+      config.whiteListMode.enable = false;
+      writeFileSync(dirConfig, JSON.stringify(config, null, 2));
+      return message.reply("❌ User whitelist mode has been disabled.");
+    }
+    if (sub === "add") {
+      let targetID = args[1];
+      if (event.mentions && Object.keys(event.mentions).length > 0) {
+        targetID = Object.keys(event.mentions)[0];
+      } else if (event.messageReply) {
+        targetID = event.messageReply.senderID;
+      }
+      if (!targetID) return message.reply("⚠️ Please provide a UID, mention someone, or reply to a message.");
+      if (config.whiteListMode.whiteListIds.includes(targetID)) {
+        return message.reply(`⚠️ User ${targetID} is already in the whitelist.`);
+      }
+      config.whiteListMode.whiteListIds.push(targetID);
+      writeFileSync(dirConfig, JSON.stringify(config, null, 2));
+      return message.reply(`✅ Added user ${targetID} to the whitelist.`);
+    }
+    if (sub === "remove" || sub === "rm" || sub === "del") {
+      let targetID = args[1];
+      if (event.mentions && Object.keys(event.mentions).length > 0) {
+        targetID = Object.keys(event.mentions)[0];
+      } else if (event.messageReply) {
+        targetID = event.messageReply.senderID;
+      }
+      if (!targetID) return message.reply("⚠️ Please provide a UID, mention someone, or reply to a message.");
+      const idx = config.whiteListMode.whiteListIds.indexOf(targetID);
+      if (idx === -1) {
+        return message.reply(`⚠️ User ${targetID} is not in the whitelist.`);
+      }
+      config.whiteListMode.whiteListIds.splice(idx, 1);
+      writeFileSync(dirConfig, JSON.stringify(config, null, 2));
+      return message.reply(`✅ Removed user ${targetID} from the whitelist.`);
+    }
+    if (sub === "list" || sub === "-l") {
+      const ids = config.whiteListMode.whiteListIds || [];
+      if (ids.length === 0) return message.reply("📋 User whitelist is currently empty.");
+      return message.reply(`📋 Whitelisted Users (${ids.length}):\n${ids.map((id, i) => `${i + 1}. ${id}`).join("\n")}`);
+    }
+    if (sub === "listthread" || sub === "listt") {
+      const ids = config.threadWhiteListMode.whiteListIds || [];
+      if (ids.length === 0) return message.reply("📋 Thread whitelist is currently empty.");
+      return message.reply(`📋 Whitelisted Threads (${ids.length}):\n${ids.map((id, i) => `${i + 1}. ${id}`).join("\n")}`);
+    }
+
     if (sub === "user") {
       const action = (args[1] || "").toLowerCase();
       if (action === "on") {

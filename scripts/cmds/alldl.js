@@ -22,6 +22,32 @@ async function unshortenUrl(rawUrl) {
   }
 }
 
+function decodeJwtPayload(token) {
+  try {
+    const parts = token.split(".");
+    if (parts.length < 2) return null;
+    return JSON.parse(Buffer.from(parts[1], "base64").toString("utf-8"));
+  } catch (e) {
+    return null;
+  }
+}
+
+function resolveMediaSource(rawUrl) {
+  if (!rawUrl || typeof rawUrl !== "string")
+    return { url: null, isVideo: false, headers: null };
+  const token = (rawUrl.match(/[?&]token=([^&]+)/) || [])[1];
+  if (token) {
+    const payload = decodeJwtPayload(decodeURIComponent(token));
+    if (payload && payload.url) {
+      const inner = payload.url;
+      const isVideo = /\.(mp4|mov|m4v|webm)(?:[?#]|$)/i.test(inner)
+        || /video|reels|dash|progressive|xpv|clip/i.test(inner);
+      return { url: inner, isVideo, headers: payload.headers || null };
+    }
+  }
+  return { url: rawUrl, isVideo: /\.(mp4|mov|m4v|webm)(?:[?#]|$)/i.test(rawUrl), headers: null };
+}
+
 function extractMediaUrlFromEvent(args, event) {
   // 1. Check direct args
   for (const arg of args) {
@@ -247,7 +273,8 @@ module.exports = {
             const res = await withTimeout(btch.igdl(url), 6000);
             if (res && res.status !== false && Array.isArray(res.result) && res.result.length > 0) {
               title = "Instagram Media";
-              downloadUrl = res.result[0].url;
+              const media = resolveMediaSource(res.result[0].url);
+              downloadUrl = media.url || res.result[0].url;
             }
           } else if (/twitter\.com|x\.com/i.test(url)) {
             const res = await withTimeout(btch.twitter(url), 6000);
