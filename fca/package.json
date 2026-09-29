@@ -1,7 +1,7 @@
 {
   "name": "@floppa/fca-native",
-  "version": "5.1.0",
-  "description": "High-Performance Facebook Chat API Engine for GoatBot v2 with Priyansh Core Logic, Anti-Suspension, IP Spoofing, and Modern Messenger Automation",
+  "version": "5.2.0",
+  "description": "High-Performance Facebook Chat API Engine for GoatBot v2 with Priyansh Core Logic, Anti-Suspension, IP Spoofing, Stories Music Catalog Search, and Modern Messenger Automation",
   "main": "index.js",
   "types": "src/types/index.d.ts",
   "exports": {
@@ -53,7 +53,9 @@
     "lazyneoaz",
     "metachat",
     "automation",
-    "mqtt"
+    "mqtt",
+    "xtreme-fca",
+    "music-search"
   ],
   "author": {
     "name": "Gtajisan (Farhan Muh Tasim)",

@@ -27,7 +27,7 @@
 **Floppa-Chatbot** is built upon the solid foundation of the **Goat Bot V2** base engine, completely modernized, hardened, and expanded with:
 
 - ⚡ **Rebuilt Core Engine (`Floppa.js`)**: Memory leak mitigation, aggressive V8 garbage collection heuristics, auto-healing watchdog, and high-concurrency event loops.
-- 📦 **Native FCA API Engine (`fca/`)**: Bundled directly into `@floppa/fca-native`, supporting Netscape & Cookie-Editor cookie formats, MQTT LightSpeed task 46 dispatch, and auto-reconnect loops.
+- 📦 **Dual & Native FCA API Engines (`fca/` & `xtreme-fca`)**: Bundled directly with `@floppa/fca-native` v5.2.0 (with Priyansh core, residential IP spoofing, anti-suspension warmup, and Facebook Stories music catalog search `api.searchMusic`), with full interoperability and linking to [`xtreme-fca`](https://www.npmjs.com/package/xtreme-fca).
 - 💬 **Native 1-on-1 Direct Message (DM) Engine**: First-class direct messaging to the bot account ID with zero forced group redirects, unthreaded retry fallback, and interactive typing indicators.
 - 🧠 **Centralized 11+ LLM AI Core (`system/ai-core.js`)**: Multi-LLM provider routing (`openai`, `gemini`, `claude`, `deepseek`, `ollama`, `groq`, `moonshot`, `glm`, `qwen`, `oneapi`, `sillytavern`) with real-time web search, sandboxed code execution, and automatic public API fallbacks.
 - 💾 **Real-Time System Memory DB (`func/systemMemoryDB.js`)**: Persistent event tracking, crash capturing, error diagnosis, and automated self-healing snapshots.

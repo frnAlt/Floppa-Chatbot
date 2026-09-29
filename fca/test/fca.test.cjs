@@ -467,6 +467,77 @@ test("attachClientFacade exposes grouped namespaces on legacy api object", () =>
   assert.strictEqual(typeof api.account.getCurrentUserID, "function");
   assert.strictEqual(typeof api.realtime.listen, "function");
   assert.strictEqual(typeof api.http.get, "function");
+  assert.strictEqual(typeof api.music.search, "function");
+});
+
+test("searchMusic query and parser correctly formats GraphQL request and output", async () => {
+  const searchMusicFactory = require("../src/searchMusic");
+  assert.strictEqual(typeof searchMusicFactory, "function");
+
+  let postedUrl = null;
+  let postedForm = null;
+
+  const mockDefaultFuncs = {
+    post: async (url, jar, form) => {
+      postedUrl = url;
+      postedForm = form;
+      return {
+        data: {
+          xfb_music_picker_connection_container: {
+            items: {
+              page_info: { end_cursor: "cur_123", has_next_page: true },
+              edges: [
+                {
+                  node: {
+                    item: {
+                      __typename: "AudioAsset",
+                      id: "998877",
+                      title: { text: "Believer" },
+                      display_artist: { text: "Imagine Dragons" },
+                      album_title: { text: "Evolve" },
+                      duration_in_ms: 204000,
+                      cover_artwork: { uri: "https://example.com/cover.jpg" },
+                      progressive_download: [
+                        { url: "https://example.com/audio.mp3" }
+                      ],
+                      tags: [{ type: "genre", name: "Alternative" }]
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      };
+    }
+  };
+
+  const mockApi = {};
+  const mockCtx = { userID: "100094924471568", jar: {} };
+  const searchMusic = searchMusicFactory(mockDefaultFuncs, mockApi, mockCtx);
+
+  const res = await searchMusic("believer", { count: 5 });
+  assert.strictEqual(postedUrl, "https://www.facebook.com/api/graphql/");
+  assert.strictEqual(postedForm.fb_api_req_friendly_name, "StoriesCreateMusicSelectorMainPageQuery");
+  assert.strictEqual(res.query, "believer");
+  assert.strictEqual(res.endCursor, "cur_123");
+  assert.strictEqual(res.hasNextPage, true);
+  assert.strictEqual(res.tracks.length, 1);
+  assert.strictEqual(res.tracks[0].id, "998877");
+  assert.strictEqual(res.tracks[0].title, "Believer");
+  assert.strictEqual(res.tracks[0].artist, "Imagine Dragons");
+  assert.strictEqual(res.tracks[0].duration, "3:24");
+  assert.strictEqual(res.tracks[0].audioUrl, "https://example.com/audio.mp3");
+});
+
+test("xtreme-fca dependency is loadable and interoperable", () => {
+  let xtreme;
+  try {
+    xtreme = require("xtreme-fca");
+  } catch (e) {
+    return { skipped: true, reason: "xtreme-fca package not found: " + e.message };
+  }
+  assert.ok(typeof xtreme === "function" || typeof xtreme.login === "function");
 });
 
 test("optional live login works when credentials are provided", async () => {

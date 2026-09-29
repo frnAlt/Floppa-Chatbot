@@ -11,7 +11,7 @@
 **High-Performance Facebook Chat API Engine ported from Priyansh Rajput (fca-priyansh) with Native GoatBot v2 & Floppa-Chatbot Resilience**  
 *Priyansh Core Logic • 24/7 Session Stability • Adaptive Rate Limiter • Anti-Suspension Warmup • MQTT Realtime*
 
-[![Version](https://img.shields.io/badge/Version-5.1.0-38bdf8.svg?style=for-the-badge)](https://github.com/frnAlt/fca)
+[![Version](https://img.shields.io/badge/Version-5.2.0-38bdf8.svg?style=for-the-badge)](https://github.com/frnAlt/fca)
 [![Priyansh Core](https://img.shields.io/badge/Priyansh%20Core-v19.0.0%20Port-a855f7.svg?style=for-the-badge&logo=facebook)](https://github.com/priyanshufsdev)
 [![License](https://img.shields.io/badge/License-Apache%202.0-34d399.svg?style=for-the-badge)](LICENSE)
 [![Engine](https://img.shields.io/badge/Node.js-%3E%3D18.0.0-f59e0b?style=for-the-badge&logo=node.js)](https://nodejs.org/)
@@ -120,6 +120,10 @@ To make Priyansh's core engine seamlessly drive modern bot frameworks like **Goa
    3-state circuit breakers (`CLOSED`, `OPEN`, `HALF_OPEN`) prevent bot freezes during transient Facebook outages.
 6. **Node 24 Compatibility**:  
    Added native crypto fallbacks for legacy `aes-js`, UUID v4 compatibility hooks, and automatic local `node_modules` path resolution.
+7. **Facebook Stories Music Catalog Search (`api.searchMusic`)**:  
+   Query Facebook's RelayModern music catalog (`StoriesCreateMusicSelectorMainPageQuery`) for playable tracks, artwork, artist information, and durations.
+8. **Multi-Engine Interoperability & Linking**:  
+   Interoperable with [`xtreme-fca`](https://www.npmjs.com/package/xtreme-fca) (`lazyneoaz/xtreme-fca`) while keeping all Floppa native extensions and security layers intact.
 
 ---
 

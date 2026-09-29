@@ -109,6 +109,34 @@ function extendFCA(api) {
     return resolvePhotoUrl(api, fbid, callback);
   };
 
+  // ─── 4b. Stories Music Search ─────────────────────────────────────────────
+  if (typeof api.searchMusic !== "function") {
+    try {
+      const searchMusicFactory = require("../fca/src/searchMusic.js");
+      const defaultFuncs = api.__defaultFuncs || api.defaultFuncs || {
+        post: (url, jar, form) => axios.post(url, new URLSearchParams(form).toString(), {
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          jar,
+          withCredentials: true
+        }).then(r => r.data)
+      };
+      api.searchMusic = searchMusicFactory(defaultFuncs, api, ctx);
+    } catch (_) {}
+  }
+  if (!api.music) {
+    api.music = {
+      search: (query, options, callback) => {
+        if (typeof api.searchMusic === "function") {
+          return api.searchMusic(query, options, callback);
+        }
+        const cb = typeof options === "function" ? options : callback;
+        const err = new Error("searchMusic is not supported on this engine");
+        if (typeof cb === "function") return cb(err);
+        return Promise.reject(err);
+      }
+    };
+  }
+
   // ─── 5. High-Level Domain Namespaces ───────────────────────────────────────
   const domainApis = createDomainNamespaces(api, queue, cache);
   api.messages = domainApis.messages;

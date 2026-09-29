@@ -206,7 +206,7 @@ if (!global.Fca) {
         isUser: [],
         startTime: Date.now(),
         Setting: new Map(),
-        Version: require("./package.json").version || "5.1.0",
+        Version: require("./package.json").version || "5.2.0",
         Require: {
             fs: fs,
             Fetch: null,
@@ -424,6 +424,11 @@ try {
     module.exports.RealtimeDomain = clientApp.RealtimeDomain;
     module.exports.CapabilityResolver = clientApp.CapabilityResolver;
     module.exports.MqttRealtimeManager = clientApp.MqttRealtimeManager;
+} catch (_) {}
+
+try {
+    const searchMusicModule = require("./src/searchMusic");
+    module.exports.searchMusic = searchMusicModule;
 } catch (_) {}
 
 try {

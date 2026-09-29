@@ -492,8 +492,33 @@ declare module "@lazyneoaz/metachat" {
             decrypt(threadID: ThreadID, armored: string): string | null;
         };
 
+    export interface MusicTrack {
+        id: string | null;
+        title: string;
+        artist: string;
+        album: string;
+        durationMs: number;
+        duration: string;
+        coverArtwork: string | null;
+        audioUrl: string;
+        tags: Array<{ type: string; name: string }>;
+    }
+
+    export interface MusicSearchResult {
+        tracks: MusicTrack[];
+        endCursor: string | null;
+        hasNextPage: boolean;
+        query: string;
+    }
+
+    export interface API {
+        // ... existing properties ...
         getBotInfo(callback?: Callback): Promise<any>;
         getUserInfoV2(userID: UserID, callback?: Callback<UserInfo>): Promise<UserInfo>;
+        searchMusic(query: string, options?: { count?: number; cursor?: string; product?: string } | Callback<MusicSearchResult>, callback?: Callback<MusicSearchResult>): Promise<MusicSearchResult>;
+        music?: {
+            search(query: string, options?: { count?: number; cursor?: string; product?: string } | Callback<MusicSearchResult>, callback?: Callback<MusicSearchResult>): Promise<MusicSearchResult>;
+        };
 
         [key: string]: any;
     }
@@ -527,6 +552,7 @@ declare module "@lazyneoaz/metachat" {
         stealthMode?: boolean;
         persona?: "desktop" | "android" | "mobile";
         logging?: boolean;
+        fcaEngine?: "floppa-native" | "xtreme-fca" | "auto";
     }
 
     export function login(
@@ -536,4 +562,16 @@ declare module "@lazyneoaz/metachat" {
     ): Promise<API> | void;
 
     export function getVersion(): string;
+}
+
+declare module "@floppa/fca-native" {
+    export * from "@lazyneoaz/metachat";
+}
+
+declare module "@floppa/fca" {
+    export * from "@lazyneoaz/metachat";
+}
+
+declare module "xtreme-fca" {
+    export * from "@lazyneoaz/metachat";
 }

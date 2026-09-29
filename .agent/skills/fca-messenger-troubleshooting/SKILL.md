@@ -38,6 +38,20 @@ FCA includes built-in anti-suspension warmup and adaptive circuit breakers:
 * **Circuit Breaker**: Automatically pauses outbound requests if Facebook returns checkpoint or security challenge responses to prevent account locks.
 * **Presence Keepalive**: Lightweight ping to `ajax/presence/reconnect.php` verifies session health without loading heavy web pages.
 
+## Multi-Engine Support & Interoperability
+
+Floppa-Chatbot supports multiple interchangeable FCA engines:
+* **`floppa-native`** (default): Bundled local engine in `fca/` (`@floppa/fca-native`), featuring Priyansh core logic, residential IP spoofing, Stories music catalog search (`api.searchMusic`), and adaptive anti-suspension warmup.
+* **`xtreme-fca`**: Modern community fork by Neoaz (`lazyneoaz/xtreme-fca`), fully linked and supported with Floppa extensions (`extendFCA`) applied automatically.
+
+To configure the active engine in `config.json`:
+```json
+"optionsFca": {
+  "fcaEngine": "floppa-native"
+}
+```
+Available values: `"floppa-native"`, `"xtreme-fca"`, or `"auto"`.
+
 ## Troubleshooting Common Errors
 * **`CHECKPOINT_ERROR`**: Complete the verification in a web browser, export fresh cookies, and update `account.txt`.
 * **`MQTT Disconnected / Reconnecting`**: The MQTT watchdog automatically retries with exponential backoff and jitter. Verify internet connectivity and proxy settings.

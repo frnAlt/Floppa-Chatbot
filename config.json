@@ -138,6 +138,7 @@
     "duration": 0
   },
   "optionsFca": {
+    "fcaEngine": "floppa-native",
     "online": true,
     "selfListen": true,
     "selfListenEvent": true,

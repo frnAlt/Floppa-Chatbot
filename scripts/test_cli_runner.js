@@ -1657,6 +1657,58 @@ async function runDiagnostics() {
     logTest("ADMIN_DISPATCH", "Section 9 tests encountered failure", false, err.message);
   }
 
+  // ──────────────── 10. Multi-FCA Engine Interoperability & Music Search Tests ────────────────
+  console.log("\n\x1b[34m--- 10. Multi-FCA Engine Interoperability & Music Search Tests ---\x1b[0m");
+  try {
+    // 1. xtreme-fca package is requireable
+    let xtremePackageLoaded = false;
+    try {
+      const xtreme = require("xtreme-fca");
+      xtremePackageLoaded = typeof xtreme === "function" || typeof xtreme?.login === "function";
+    } catch (_) {}
+    logTest("FCA_ENGINES", "xtreme-fca package is linked and callable", xtremePackageLoaded);
+
+    // 2. Native FCA has searchMusic query method
+    let nativeSearchMusicLoaded = false;
+    try {
+      const searchMusicFactory = require("../fca/src/searchMusic");
+      nativeSearchMusicLoaded = typeof searchMusicFactory === "function";
+    } catch (_) {}
+    logTest("FCA_ENGINES", "Native FCA includes searchMusic GraphQL query module", nativeSearchMusicLoaded);
+
+    // 3. extendFCA equips any instance with searchMusic & music.search
+    let extensionSearchMusicAttached = false;
+    try {
+      const mockApiForExtension = { getCurrentUserID: () => "12345" };
+      global.utils.extendFCA(mockApiForExtension);
+      extensionSearchMusicAttached = typeof mockApiForExtension.searchMusic === "function" &&
+        typeof mockApiForExtension.music?.search === "function";
+    } catch (_) {}
+    logTest("FCA_ENGINES", "extendFCA guarantees searchMusic and api.music.search on any FCA instance", extensionSearchMusicAttached);
+
+    // 4. selflisten.js command config loaded with proper schema
+    let selfListenValid = false;
+    try {
+      const selfListenCmd = require("./cmds/selflisten.js");
+      selfListenValid = selfListenCmd?.config?.name === "selflisten" &&
+        Array.isArray(selfListenCmd?.config?.aliases) &&
+        typeof selfListenCmd?.onStart === "function";
+    } catch (_) {}
+    logTest("FCA_COMMANDS", "scripts/cmds/selflisten.js loaded with proper schema", selfListenValid);
+
+    // 5. wl.js has whitelist and whitelistmode aliases
+    let wlAliasesValid = false;
+    try {
+      const wlCmd = require("./cmds/wl.js");
+      wlAliasesValid = wlCmd?.config?.aliases?.includes("whitelist") &&
+        wlCmd?.config?.aliases?.includes("whitelistmode");
+    } catch (_) {}
+    logTest("FCA_COMMANDS", "scripts/cmds/wl.js exposes whitelist and whitelistmode aliases", wlAliasesValid);
+
+  } catch (err) {
+    logTest("FCA_ENGINES", "Section 10 tests encountered failure", false, err.message);
+  }
+
   // Restore original tracked files so diagnostic execution does not dirty repo state or reset botOff
   restoreSnapshots();
 

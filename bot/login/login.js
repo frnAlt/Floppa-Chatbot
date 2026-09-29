@@ -18,17 +18,71 @@ const readline = defaultRequire("readline");
 const fs = defaultRequire("fs-extra");
 const toptp = defaultRequire("totp-generator");
 let login;
-try {
-	const localFca = defaultRequire(path.join(process.cwd(), "fca"));
-	login = typeof localFca === "function" ? localFca : (localFca.login || localFca.default || localFca);
-} catch (e) {
+let activeFcaEngine = "floppa-native (local v5.2.0)";
+
+function resolveFcaEngine(requestedEngine) {
+	const preferred = (requestedEngine || process.env.FCA_ENGINE || "").toLowerCase().trim();
+
+	// 1. If xtreme-fca is explicitly requested
+	if (preferred === "xtreme-fca" || preferred === "xtreme") {
+		try {
+			const xtremePkg = defaultRequire("xtreme-fca");
+			const fn = typeof xtremePkg === "function" ? xtremePkg : (xtremePkg.login || xtremePkg.default || xtremePkg);
+			if (typeof fn === "function") {
+				activeFcaEngine = "xtreme-fca";
+				return fn;
+			}
+		} catch (e) {
+			console.warn("[FCA Loader] Failed to load requested 'xtreme-fca', falling back to floppa-native:", e.message);
+		}
+	}
+
+	// 2. Default / Local floppa-native
+	try {
+		const localFca = defaultRequire(path.join(process.cwd(), "fca"));
+		const fn = typeof localFca === "function" ? localFca : (localFca.login || localFca.default || localFca);
+		if (typeof fn === "function") {
+			activeFcaEngine = "floppa-native (local v5.2.0)";
+			return fn;
+		}
+	} catch (_) {}
+
+	// 3. @floppa/fca-native
 	try {
 		const nativeFca = defaultRequire("@floppa/fca-native");
-		login = typeof nativeFca === "function" ? nativeFca : (nativeFca.login || nativeFca.default || nativeFca);
-	} catch (err) {
-		login = defaultRequire("./fca");
-	}
+		const fn = typeof nativeFca === "function" ? nativeFca : (nativeFca.login || nativeFca.default || nativeFca);
+		if (typeof fn === "function") {
+			activeFcaEngine = "@floppa/fca-native";
+			return fn;
+		}
+	} catch (_) {}
+
+	// 4. @floppa/fca
+	try {
+		const floppaFca = defaultRequire("@floppa/fca");
+		const fn = typeof floppaFca === "function" ? floppaFca : (floppaFca.login || floppaFca.default || floppaFca);
+		if (typeof fn === "function") {
+			activeFcaEngine = "@floppa/fca";
+			return fn;
+		}
+	} catch (_) {}
+
+	// 5. xtreme-fca fallback
+	try {
+		const xtremePkg = defaultRequire("xtreme-fca");
+		const fn = typeof xtremePkg === "function" ? xtremePkg : (xtremePkg.login || xtremePkg.default || xtremePkg);
+		if (typeof fn === "function") {
+			activeFcaEngine = "xtreme-fca";
+			return fn;
+		}
+	} catch (_) {}
+
+	// 6. Local relative fallback
+	activeFcaEngine = "floppa-native (fallback)";
+	return defaultRequire("./fca");
 }
+
+login = resolveFcaEngine();
 let parseUniversalCookies;
 try {
 	parseUniversalCookies = require(path.join(process.cwd(), "fca/src/utils/formatters/value/formatCookie")).parseUniversalCookies;
@@ -790,6 +844,12 @@ async function startBot(loginWithEmail) {
 
                 let isSendNotiErrorMessage = false;
 
+                const requestedEngine = global.GoatBot?.config?.optionsFca?.fcaEngine || global.GoatBot?.config?.fcaEngine;
+                if (requestedEngine) {
+                        login = resolveFcaEngine(requestedEngine);
+                }
+                global.GoatBot.fcaEngineName = activeFcaEngine;
+
                 login({ appState }, global.GoatBot.config.optionsFca, async function (error, api) {
                         if (!isNaN(facebookAccount.intervalGetNewCookie) && facebookAccount.intervalGetNewCookie > 0)
                                 if (facebookAccount.email && facebookAccount.password) {
@@ -892,7 +952,7 @@ async function startBot(loginWithEmail) {
                         logColor("#f5ab00", createLine("FLOPPA BOT INFO"));
                         log.info("PROJECT", `Floppa-Chatbot v${currentVersion}`);
                         log.info("NODE RUNTIME", process.version);
-                        log.info("FCA ENGINE", `floppa-native v5.1.0`);
+                        log.info("FCA ENGINE", `${global.GoatBot.fcaEngineName || activeFcaEngine}`);
                         log.info("DEVELOPER", "frnAlt (https://github.com/frnAlt)");
                         log.info("BOT ID", `${global.botID}${botName ? ` (${botName})` : ""}`);
                         log.info("BOT NICKNAME", global.GoatBot.config.nickNameBot || "Floppa Bot 🐱");

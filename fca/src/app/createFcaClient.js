@@ -113,6 +113,20 @@ function buildFallbackScheduler(api) {
     };
 }
 
+function buildFallbackMusic(api) {
+    return {
+        search: (query, options, callback) => {
+            if (typeof api.searchMusic === "function") {
+                return api.searchMusic(query, options, callback);
+            }
+            const cb = typeof options === "function" ? options : callback;
+            const err = new Error("searchMusic is not implemented on this API instance.");
+            if (typeof cb === "function") return cb(err);
+            return Promise.reject(err);
+        }
+    };
+}
+
 function createFcaClient(api, options = {}) {
     const raw = api || {};
 
@@ -123,6 +137,7 @@ function createFcaClient(api, options = {}) {
     const existingRealtime = typeof raw.realtime === "object" && raw.realtime !== null ? raw.realtime : null;
     const existingHttp = typeof raw.http === "object" && raw.http !== null ? raw.http : null;
     const existingScheduler = typeof raw.scheduler === "object" && raw.scheduler !== null ? raw.scheduler : null;
+    const existingMusic = typeof raw.music === "object" && raw.music !== null ? raw.music : null;
 
     const fallbackMessages = compactNamespace(buildFallbackMessages(raw));
     const fallbackThreads = compactNamespace(buildFallbackThreads(raw));
@@ -131,6 +146,7 @@ function createFcaClient(api, options = {}) {
     const fallbackRealtime = compactNamespace(buildFallbackRealtime(raw));
     const fallbackHttp = compactNamespace(buildFallbackHttp(raw));
     const fallbackScheduler = compactNamespace(buildFallbackScheduler(raw));
+    const fallbackMusic = compactNamespace(buildFallbackMusic(raw));
 
     const messages = Object.assign({}, fallbackMessages, existingMessages);
     const threads = Object.assign({}, fallbackThreads, existingThreads);
@@ -139,6 +155,7 @@ function createFcaClient(api, options = {}) {
     const realtime = Object.assign({}, fallbackRealtime, existingRealtime);
     const http = Object.assign({}, fallbackHttp, existingHttp);
     const scheduler = Object.assign({}, fallbackScheduler, existingScheduler);
+    const music = Object.assign({}, fallbackMusic, existingMusic);
 
     let domainsManager = null;
     let capabilities = null;
@@ -163,6 +180,7 @@ function createFcaClient(api, options = {}) {
         realtime: existingRealtime ? realtime : (domainsManager?.realtime || realtime),
         http,
         scheduler,
+        music,
     };
 
     if (domainsManager) {
@@ -191,6 +209,7 @@ function attachClientFacade(api, options = {}) {
     if (!api.realtime) api.realtime = client.realtime;
     if (!api.http) api.http = client.http;
     if (!api.scheduler) api.scheduler = client.scheduler;
+    if (!api.music) api.music = client.music;
     
     // Attach domain manager if available
     if (client.domains) {
