@@ -18,16 +18,19 @@ if (process.stderr._handle && typeof process.stderr._handle.setBlocking === 'fun
 }
 
 function printDeployBanner() {
-	const border = "─".repeat(Math.min(process.stdout.columns || 64, 64));
-	console.log("\x1b[38;2;245;175;25m" + border + "\x1b[0m");
-	console.log("\x1b[1m\x1b[38;2;250;139;255m  🐱 FLOPPA-CHATBOT \x1b[0m\x1b[38;2;43;210;255mv" + pkg.version + "\x1b[0m \x1b[90m— Intelligent Facebook Messenger Bot\x1b[0m");
-	console.log("\x1b[38;2;245;175;25m" + border + "\x1b[0m");
-	console.log(`  \x1b[36m•\x1b[0m \x1b[1mEnvironment:\x1b[0m   ${process.env.NODE_ENV || "production"}`);
-	console.log(`  \x1b[36m•\x1b[0m \x1b[1mRuntime:\x1b[0m       Node ${process.version} on ${os.platform()} (${os.arch()})`);
-	console.log(`  \x1b[36m•\x1b[0m \x1b[1mMemory Cap:\x1b[0m    400 MB old-space (V8 GC exposed)`);
-	console.log(`  \x1b[36m•\x1b[0m \x1b[1mSupervisor PID:\x1b[0m${process.pid}`);
-	console.log(`  \x1b[36m•\x1b[0m \x1b[1mRepository:\x1b[0m    https://github.com/frnAlt/Floppa-Chatbot`);
-	console.log("\x1b[38;2;245;175;25m" + border + "\x1b[0m\n");
+	const border = "═".repeat(Math.min(process.stdout.columns || 68, 68));
+	console.log("\x1b[38;2;43;210;255m" + border + "\x1b[0m");
+	console.log("\x1b[1m\x1b[38;2;250;139;255m  🐱 FLOPPA-CHATBOT \x1b[0m\x1b[38;2;43;210;255mv" + pkg.version + "\x1b[0m \x1b[90m— High-Performance Messenger Microservice\x1b[0m");
+	console.log("\x1b[38;2;43;210;255m" + border + "\x1b[0m");
+	console.log(`  \x1b[36m•\x1b[0m \x1b[1mEnvironment    :\x1b[0m  ${process.env.NODE_ENV || "production"}`);
+	console.log(`  \x1b[36m•\x1b[0m \x1b[1mNode Runtime   :\x1b[0m  Node ${process.version} on ${os.platform()} (${os.arch()})`);
+	console.log(`  \x1b[36m•\x1b[0m \x1b[1mMemory Cap     :\x1b[0m  400 MB Old-Space (V8 exposed GC active)`);
+	console.log(`  \x1b[36m•\x1b[0m \x1b[1mSupervisor PID :\x1b[0m  ${process.pid}`);
+	console.log(`  \x1b[36m•\x1b[0m \x1b[1mDefault Engine :\x1b[0m  floppa-native (v5.2.0) [Multi-Account & Xtreme-FCA linked]`);
+	console.log(`  \x1b[36m•\x1b[0m \x1b[1mLead Architect :\x1b[0m  Gtajisan (frnAlt)`);
+	console.log(`  \x1b[36m•\x1b[0m \x1b[1mEcosystem OG   :\x1b[0m  Priyansh Rajput • NTKhang • Neoaz (xtreme-fca) • DongDev`);
+	console.log(`  \x1b[36m•\x1b[0m \x1b[1mRepository     :\x1b[0m  https://github.com/frnAlt/Floppa-Chatbot`);
+	console.log("\x1b[38;2;43;210;255m" + border + "\x1b[0m\n");
 }
 
 let isFirstStart = true;

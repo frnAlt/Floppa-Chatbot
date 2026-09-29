@@ -6,6 +6,7 @@ const { createThreadsDomain } = require("./threads");
 const { createUsersDomain } = require("./users");
 const { createAccountDomain } = require("./account");
 const { createRealtimeDomain } = require("./realtime");
+const { createMusicDomain } = require("./music");
 
 /**
  * Domains Manager - Orchestrates all domains
@@ -45,6 +46,11 @@ class DomainsManager {
         this.realtime = this.factory.create("realtime", createRealtimeDomain, {
             cacheEnabled: this.options.realtimeCacheEnabled !== false,
             cacheTTL: this.options.realtimeCacheTTL || 60000
+        });
+
+        this.music = this.factory.create("music", createMusicDomain, {
+            cacheEnabled: this.options.musicCacheEnabled !== false,
+            cacheTTL: this.options.musicCacheTTL || 60000
         });
     }
 

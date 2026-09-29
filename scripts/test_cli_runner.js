@@ -1705,6 +1705,39 @@ async function runDiagnostics() {
     } catch (_) {}
     logTest("FCA_COMMANDS", "scripts/cmds/wl.js exposes whitelist and whitelistmode aliases", wlAliasesValid);
 
+    // 6. music.js command loaded with proper schema & interactive reply handler
+    let musicCmdValid = false;
+    try {
+      const musicCmd = require("./cmds/music.js");
+      musicCmdValid = musicCmd?.config?.name === "music" &&
+        Array.isArray(musicCmd?.config?.aliases) &&
+        typeof musicCmd?.onStart === "function" &&
+        typeof musicCmd?.onReply === "function";
+    } catch (_) {}
+    logTest("FCA_COMMANDS", "scripts/cmds/music.js exposes onStart and interactive onReply handlers", musicCmdValid);
+
+    // 7. DomainsManager exposes music domain
+    let domainsMusicValid = false;
+    try {
+      const { DomainsManager } = require("../fca/src/domains");
+      const mockApi = { searchMusic: async () => ({ tracks: [] }) };
+      const dm = new DomainsManager(mockApi);
+      domainsMusicValid = Boolean(dm.music && typeof dm.music.search === "function");
+    } catch (_) {}
+    logTest("FCA_DOMAINS", "DomainsManager initializes music domain with search method", domainsMusicValid);
+
+    // 8. Deploy banners credit all original developers (Priyansh, NTKhang, Neoaz, DongDev, Gtajisan)
+    let deployCreditsValid = false;
+    try {
+      const loginJsContent = fs.readFileSync(path.join(cwd, "bot/login/login.js"), "utf8");
+      const indexJsContent = fs.readFileSync(path.join(cwd, "index.js"), "utf8");
+      const requiredNames = ["Priyansh", "NTKhang", "Neoaz", "DongDev", "frnAlt"];
+      deployCreditsValid = requiredNames.every(name =>
+        loginJsContent.includes(name) && indexJsContent.includes(name)
+      );
+    } catch (_) {}
+    logTest("DEPLOY_BANNER", "Deployment banners credit all original developers (Priyansh, NTKhang, Neoaz, DongDev, frnAlt)", deployCreditsValid);
+
   } catch (err) {
     logTest("FCA_ENGINES", "Section 10 tests encountered failure", false, err.message);
   }

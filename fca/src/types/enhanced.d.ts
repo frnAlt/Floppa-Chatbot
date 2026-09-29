@@ -185,6 +185,7 @@ declare namespace MetaChat {
         users: UsersDomain;
         account: AccountDomain;
         realtime: RealtimeDomain;
+        music: MusicDomain;
         http?: { get?: Function; post?: Function; postFormData?: Function };
         scheduler?: { schedule?: Function };
         useMiddleware?: (fn: (context: any, next: () => Promise<void>, domain: Domain) => Promise<void>) => FCAClient;
@@ -236,6 +237,7 @@ declare namespace MetaChat {
         users: UsersDomain;
         account: AccountDomain;
         realtime: RealtimeDomain;
+        music: MusicDomain;
 
         constructor(api: any, options?: DomainsManagerOptions);
         initializeDomains(): void;
@@ -407,6 +409,11 @@ declare namespace MetaChat {
         getStatus(): any;
     }
 
+    // Music Domain Class
+    class MusicDomain extends Domain {
+        search(query: string, options?: { count?: number; [key: string]: any }, callback?: Function): Promise<any>;
+    }
+
     // Factory Functions
     function createFcaClient(api: any, options?: FCAClientOptions): FCAClient;
     function attachClientFacade(api: any, options?: FCAClientOptions): FCAClient;
@@ -415,6 +422,7 @@ declare namespace MetaChat {
     function createUsersDomain(api: any, options?: DomainOptions): UsersDomain;
     function createAccountDomain(api: any, options?: DomainOptions): AccountDomain;
     function createRealtimeDomain(api: any, options?: DomainOptions): RealtimeDomain;
+    function createMusicDomain(api: any, options?: DomainOptions): MusicDomain;
     function createHttpDomain(api: any): any;
     function createSchedulerDomain(api: any): any;
 }

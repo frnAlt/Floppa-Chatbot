@@ -178,7 +178,8 @@ if (subTitle.length > maxWidth) {
 else {
 	subTitleArray.push(subTitle);
 }
-const author = ("Developer: Gtajisan (Farhan Muh Tasim)");
+const author = ("Lead Architect: Gtajisan (Farhan Muh Tasim / frnAlt)");
+const fcaCredits = ("Ecosystem Credits: Priyansh Rajput • NTKhang • Neoaz (xtreme-fca) • DongDev");
 const srcUrl = ("Source code: https://github.com/frnAlt/Floppa-Chatbot");
 const releaseInfo = ("FLOPPA CHATBOT ENGINE - OFFICIAL REPO");
 for (const t of subTitleArray) {
@@ -186,6 +187,7 @@ for (const t of subTitleArray) {
 	centerText(textColor2, t.length);
 }
 centerText(gradient("#9F98E8", "#AFF6CF")(author), author.length);
+centerText(gradient("#FA8BFF", "#2BD2FF")(fcaCredits), fcaCredits.length);
 centerText(gradient("#9F98E8", "#AFF6CF")(srcUrl), srcUrl.length);
 centerText(gradient("#f5af19", "#f12711")(releaseInfo), releaseInfo.length);
 
@@ -210,6 +212,63 @@ function createLine(content, isMaxWidth = false) {
 }
 
 const character = createLine();
+
+function printBackendTelemetryCard(data) {
+	const termCols = process.stdout.columns || 70;
+	const width = Math.min(Math.max(termCols, 56), 72);
+	const innerWidth = width - 4;
+
+	const stripAnsi = (str) => String(str).replace(/\x1b\[[0-9;]*m/g, "");
+
+	const pad = (text, targetLen) => {
+		const visibleLen = stripAnsi(text).length;
+		const diff = targetLen - visibleLen;
+		return diff > 0 ? text + " ".repeat(diff) : text;
+	};
+
+	const center = (text) => {
+		const visibleLen = stripAnsi(text).length;
+		const left = Math.max(0, Math.floor((innerWidth - visibleLen) / 2));
+		const right = Math.max(0, innerWidth - left - visibleLen);
+		return " ".repeat(left) + text + " ".repeat(right);
+	};
+
+	const cBorder = (s) => `\x1b[38;2;60;140;255m${s}\x1b[0m`;
+	const cTitle = (s) => `\x1b[1m\x1b[38;2;250;139;255m${s}\x1b[0m`;
+	const cSub = (s) => `\x1b[38;2;43;210;255m${s}\x1b[0m`;
+	const cKey = (s) => `\x1b[1m\x1b[38;2;160;185;225m${s}\x1b[0m`;
+	const cVal = (s) => `\x1b[38;2;140;240;180m${s}\x1b[0m`;
+	const cCreditKey = (s) => `\x1b[38;2;245;175;25m${s}\x1b[0m`;
+	const cCreditVal = (s) => `\x1b[38;2;220;225;255m${s}\x1b[0m`;
+
+	const top = `┌${"─".repeat(width - 2)}┐`;
+	const mid = `├${"─".repeat(width - 2)}┤`;
+	const bot = `└${"─".repeat(width - 2)}┘`;
+
+	console.log(cBorder(top));
+	console.log(cBorder("│ ") + center(cTitle(`FLOPPA-CHATBOT BACKEND SERVICE v${data.version || currentVersion}`)) + cBorder(" │"));
+	console.log(cBorder("│ ") + center(cSub("DEPLOYMENT TELEMETRY & RUNTIME STATUS")) + cBorder(" │"));
+	console.log(cBorder(mid));
+	console.log(cBorder("│ ") + pad(`${cKey("Instance ID    :")} ${cVal(data.botID || "Unknown")}${data.botName ? ` (${data.botName})` : ""}`, innerWidth) + cBorder(" │"));
+	console.log(cBorder("│ ") + pad(`${cKey("Bot Nickname   :")} ${cVal(data.botNickname || "Floppa Bot 🐱")}`, innerWidth) + cBorder(" │"));
+	console.log(cBorder("│ ") + pad(`${cKey("Command Prefix :")} ${cVal(data.prefix || "!")}`, innerWidth) + cBorder(" │"));
+	console.log(cBorder("│ ") + pad(`${cKey("FCA Engine     :")} ${cVal(data.fcaEngine || activeFcaEngine)}`, innerWidth) + cBorder(" │"));
+	console.log(cBorder("│ ") + pad(`${cKey("Node Runtime   :")} ${cVal(`Node ${process.version} (${process.platform}-${process.arch})`)}`, innerWidth) + cBorder(" │"));
+	console.log(cBorder("│ ") + pad(`${cKey("Process / PID  :")} ${cVal(`PID ${process.pid} • Heap: ${data.heapUsed || 0} MB • RSS: ${data.rss || 0} MB`)}`, innerWidth) + cBorder(" │"));
+	console.log(cBorder("│ ") + pad(`${cKey("Environment    :")} ${cVal(`${process.env.NODE_ENV || "production"} • Locale: ${data.language || "en"}`)}`, innerWidth) + cBorder(" │"));
+	if (data.adminCount !== undefined) {
+		console.log(cBorder("│ ") + pad(`${cKey("Active Admins  :")} ${cVal(`${data.adminCount} administrator(s) registered`)}`, innerWidth) + cBorder(" │"));
+	}
+	console.log(cBorder(mid));
+	console.log(cBorder("│ ") + pad(`\x1b[1m\x1b[38;2;255;215;0mORIGINAL DEVELOPER & ECOSYSTEM CREDITS:\x1b[0m`, innerWidth) + cBorder(" │"));
+	console.log(cBorder("│ ") + pad(` ${cCreditKey("• Lead Architect    :")} ${cCreditVal("Gtajisan / frnAlt (Floppa-Chatbot)")}`, innerWidth) + cBorder(" │"));
+	console.log(cBorder("│ ") + pad(` ${cCreditKey("• FCA Engine Origin :")} ${cCreditVal("Priyansh Rajput (fca-priyansh)")}`, innerWidth) + cBorder(" │"));
+	console.log(cBorder("│ ") + pad(` ${cCreditKey("• Framework Origin  :")} ${cCreditVal("NTKhang (GoatBot-V2 Foundation)")}`, innerWidth) + cBorder(" │"));
+	console.log(cBorder("│ ") + pad(` ${cCreditKey("• Xtreme Engine     :")} ${cCreditVal("Neoaz / lazyneoaz (xtreme-fca & music)")}`, innerWidth) + cBorder(" │"));
+	console.log(cBorder("│ ") + pad(` ${cCreditKey("• Protocol Research :")} ${cCreditVal("DongDev (fca-unofficial)")}`, innerWidth) + cBorder(" │"));
+	console.log(cBorder(bot));
+	console.log();
+}
 
 const clearLines = (n) => {
         for (let i = 0; i < n; i++) {
@@ -949,6 +1008,23 @@ async function startBot(loginWithEmail) {
                         let hasBanned = false;
                         global.botID = api.getCurrentUserID();
                         const botName = await getName(global.botID);
+
+                        try {
+                                const mem = process.memoryUsage();
+                                printBackendTelemetryCard({
+                                        botID: global.botID,
+                                        botName: botName,
+                                        botNickname: global.GoatBot.config.nickNameBot,
+                                        prefix: global.GoatBot.config.prefix,
+                                        fcaEngine: global.GoatBot.fcaEngineName || activeFcaEngine,
+                                        version: currentVersion,
+                                        language: global.GoatBot.config.language,
+                                        adminCount: global.GoatBot.config.adminBot?.length || 0,
+                                        heapUsed: (mem.heapUsed / 1024 / 1024).toFixed(1),
+                                        rss: (mem.rss / 1024 / 1024).toFixed(1)
+                                });
+                        } catch (_) {}
+
                         logColor("#f5ab00", createLine("FLOPPA BOT INFO"));
                         log.info("PROJECT", `Floppa-Chatbot v${currentVersion}`);
                         log.info("NODE RUNTIME", process.version);

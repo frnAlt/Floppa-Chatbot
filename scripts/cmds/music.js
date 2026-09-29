@@ -1,204 +1,213 @@
+/**
+ * @author Neoaz 🐊 & frnAlt (Gtajisan)
+ * Music search and player powered by Facebook Stories music catalog (RelayModern)
+ * Inspired by lazyneoaz/Insta-Bot & Floppa Engine
+ */
+
+"use strict";
+
 const axios = require("axios");
-const yts = require("yt-search");
-const fs = require("fs");
+const fs = require("fs-extra");
 const path = require("path");
+const os = require("os");
+
+const userSearchCache = new Map();
+
+function formatDuration(ms) {
+	if (!Number.isFinite(ms) || ms <= 0) return "0:00";
+	const total = Math.round(ms / 1000);
+	const minutes = Math.floor(total / 60);
+	const seconds = String(total % 60).padStart(2, "0");
+	return `${minutes}:${seconds}`;
+}
+
+async function searchTracks(api, query, count = 10) {
+	if (typeof api?.searchMusic === "function") {
+		const res = await api.searchMusic(query, { count });
+		return res?.tracks || [];
+	}
+	if (typeof api?.music?.search === "function") {
+		const res = await api.music.search(query, { count });
+		return res?.tracks || [];
+	}
+	if (typeof global.GoatBot?.fcaApi?.searchMusic === "function") {
+		const res = await global.GoatBot.fcaApi.searchMusic(query, { count });
+		return res?.tracks || [];
+	}
+	try {
+		const searchMusicFactory = require("../../fca/src/searchMusic");
+		const defaultFuncs = api?.__defaultFuncs || api?.defaultFuncs || {
+			post: (url, jar, form) => axios.post(url, new URLSearchParams(form).toString(), {
+				headers: { "Content-Type": "application/x-www-form-urlencoded" },
+				jar,
+				withCredentials: true
+			}).then(r => r.data)
+		};
+		const fn = searchMusicFactory(defaultFuncs, api, api?.ctx || {});
+		const res = await fn(query, { count });
+		return res?.tracks || [];
+	} catch (e) {
+		throw new Error(`searchMusic query failed: ${e.message}`);
+	}
+}
+
+async function sendTrack(message, event, api, track) {
+	if (!track || !track.audioUrl) {
+		return message.reply("❌ This audio track is no longer available or stream link has expired.");
+	}
+
+	if (api && typeof api.setMessageReaction === "function") {
+		api.setMessageReaction("⏳", event.messageID, () => {}, true);
+	}
+
+	const tempFilePath = path.join(os.tmpdir(), `music_${Date.now()}_${Math.random().toString(36).substring(7)}.mp3`);
+	try {
+		const response = await axios({
+			method: "GET",
+			url: track.audioUrl,
+			responseType: "arraybuffer",
+			timeout: 20000,
+			headers: {
+				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+			}
+		});
+
+		await fs.writeFile(tempFilePath, Buffer.from(response.data));
+
+		const bodyText = `🎵 Track: ${track.title || "Unknown"}\n`
+			+ `👤 Artist: ${track.artist || "Unknown"}\n`
+			+ `${track.album ? `💿 Album: ${track.album}\n` : ""}`
+			+ `⏱️ Duration: ${track.duration || formatDuration(track.durationMs)}\n`
+			+ `📻 Source: Facebook Stories Music Catalog`;
+
+		if (api && typeof api.setMessageReaction === "function") {
+			api.setMessageReaction("👍", event.messageID, () => {}, true);
+		}
+
+		return message.reply({
+			body: bodyText,
+			attachment: fs.createReadStream(tempFilePath)
+		}, () => {
+			fs.remove(tempFilePath).catch(() => {});
+		});
+	} catch (error) {
+		fs.remove(tempFilePath).catch(() => {});
+		if (api && typeof api.setMessageReaction === "function") {
+			api.setMessageReaction("👎", event.messageID, () => {}, true);
+		}
+		return message.reply(`❌ Failed to stream track: ${error.message || "Network timeout"}`);
+	}
+}
 
 module.exports = {
-  config: {
-    name: "music",
-    aliases: [],
-    version: "2.4.78",
-    author: "frnAlt",
-    role: 0,
-    category: "music"
-  },
+	config: {
+		name: "music",
+		aliases: ["fca-music", "fbmusic", "track", "stickermusic"],
+		version: "1.0.0",
+		author: "Neoaz 🐊 & frnAlt",
+		countDown: 5,
+		role: 0,
+		description: {
+			en: "Search Facebook Stories music catalog and send playable audio track"
+		},
+		category: "media",
+		guide: {
+			en: "   {pn} <song name | artist>: Search music\n"
+				+ "   {pn} <number>: Play track from last search\n"
+				+ "   {pn} <song name> --top: Play top match instantly\n"
+				+ "   Reply with <number> to search results to stream that song"
+		}
+	},
 
-  ST: async function ({ message, args, event, usersData }) {
-    const stapi = new global.utils.STBotApis();
+	onStart: async function ({ message, args, event, api }) {
+		const rawQuery = args.join(" ").trim();
+		if (!rawQuery) {
+			return message.reply(
+				"⚠️ Please enter a song name or artist to search.\n"
+				+ "Example: !music believer\n"
+				+ "         !music shape of you --top"
+			);
+		}
 
-    if (!args[0]) return message.reply("🎵 Enter song name");
+		const cached = userSearchCache.get(event.senderID);
+		if (/^\d+$/.test(rawQuery) && cached && Array.isArray(cached.tracks) && cached.tracks.length) {
+			const index = parseInt(rawQuery, 10) - 1;
+			const track = cached.tracks[index];
+			if (!track) {
+				return message.reply(`❌ Please pick a number between 1 and ${cached.tracks.length}.`);
+			}
+			return sendTrack(message, event, api, track);
+		}
 
-    let showList = false;
+		const playTopDirectly = args.includes("--top");
+		const cleanQuery = rawQuery.replace(/--top/gi, "").trim();
 
-    if (args[0] === "-s") {
-      showList = true;
-      args.shift();
-    }
+		let tracks = [];
+		try {
+			tracks = await searchTracks(api, cleanQuery, 10);
+		} catch (err) {
+			return message.reply(`❌ Music catalog error: ${err.message || String(err)}`);
+		}
 
-    const query = args.join(" ");
-    if (!query) return message.reply("❌ Enter song name");
+		if (!tracks.length) {
+			return message.reply(`❌ No songs found in the Facebook catalog for "${cleanQuery}".`);
+		}
 
-    const processing = await message.reply(`⏳ Searching "${query}"...`);
+		const top = tracks.slice(0, 10);
+		userSearchCache.set(event.senderID, { query: cleanQuery, tracks: top });
 
-    try {
-      const search = await yts(query);
-      if (!search.videos.length) {
-        await message.unsend(processing.messageID);
-        return message.reply("❌ No results found");
-      }
+		if (top.length === 1 || playTopDirectly) {
+			return sendTrack(message, event, api, top[0]);
+		}
 
-      // ================= SINGLE AUTO DOWNLOAD =================
-      if (!showList) {
-        const v = search.videos[0];
+		const lines = top.map((t, idx) =>
+			`${idx + 1}. ${t.title || "Unknown"} — ${t.artist || "Unknown"} (${t.duration || formatDuration(t.durationMs)})`
+		);
 
-        await message.unsend(processing.messageID);
-        const dlMsg = await message.reply(`⬇️ Processing: ${v.title}`);
+		const replyHeader = `🎧 Facebook Music Search: "${cleanQuery}"\n`
+			+ `━━━━━━━━━━━━━━━━━━━━━━━━━━\n`
+			+ `${lines.join("\n")}\n`
+			+ `━━━━━━━━━━━━━━━━━━━━━━━━━━\n`
+			+ `👉 Reply with a number (1-${top.length}) to stream that song.`;
 
-        // STEP 1: GET FORMATS
-        const step1 = await axios.post(`${stapi.baseURL}/st/ytviddl`, {
-          url: v.url
-        });
+		return message.reply(replyHeader, (err, info) => {
+			if (err || !info?.messageID) return;
+			const replyMap = global.GoatBot?.onReply || global.FloppaBot?.onReply;
+			if (replyMap && typeof replyMap.set === "function") {
+				replyMap.set(info.messageID, {
+					commandName: "music",
+					messageID: info.messageID,
+					author: event.senderID,
+					tracks: top
+				});
+			}
+		});
+	},
 
-        console.log("STEP 1:", step1.data);
+	onReply: async function ({ message, event, Reply, api }) {
+		if (!Reply || !Reply.tracks) return;
+		if (Reply.author && String(event.senderID) !== String(Reply.author)) {
+			return;
+		}
 
-        const formats = step1.data?.formats || [];
+		const match = String(event.body || "").trim().match(/\d+/);
+		const choice = match ? parseInt(match[0], 10) : NaN;
 
-        // FIND MP3 OR FALLBACK AUDIO
-        let selected =
-          formats.find(f => f.ext === "MP3") ||
-          formats.find(f => f.type === "Audio");
+		if (isNaN(choice) || choice < 1 || choice > Reply.tracks.length) {
+			return message.reply(`❌ Invalid choice. Please reply with a number between 1 and ${Reply.tracks.length}.`);
+		}
 
-        if (!selected) {
-          await message.unsend(dlMsg.messageID);
-          return message.reply("❌ No audio format found");
-        }
+		const selected = Reply.tracks[choice - 1];
 
-        // STEP 2: FINAL DOWNLOAD URL
-        const step2 = await axios.post(`${stapi.baseURL}/st/ytviddl`, {
-          url: v.url,
-          formatUrl: selected.url
-        });
+		const replyMap = global.GoatBot?.onReply || global.FloppaBot?.onReply;
+		if (replyMap && typeof replyMap.delete === "function" && Reply.messageID) {
+			replyMap.delete(Reply.messageID);
+		}
 
-        console.log("STEP 2:", step2.data);
+		if (api && typeof api.unsendMessage === "function" && event.messageReply?.messageID) {
+			api.unsendMessage(event.messageReply.messageID, event.threadID).catch(() => {});
+		}
 
-        if (!step2.data?.downloadUrl) {
-          await message.unsend(dlMsg.messageID);
-          return message.reply("❌ Download failed");
-        }
-
-        // DOWNLOAD FILE
-        const audio = await axios.get(step2.data.downloadUrl, {
-          responseType: "arraybuffer"
-        });
-
-        const file = path.join(__dirname, "cache", `audio_${Date.now()}.mp3`);
-        fs.mkdirSync(path.dirname(file), { recursive: true });
-        fs.writeFileSync(file, Buffer.from(audio.data));
-
-        await message.unsend(dlMsg.messageID);
-
-        await message.reply({
-          body:
-            `🎶 ${v.title}\n` +
-            `👤 ${v.author.name}\n` +
-            `⏱ ${v.timestamp}`,
-          attachment: fs.createReadStream(file)
-        });
-
-        fs.unlinkSync(file);
-        return;
-      }
-
-      // ================= SHOW LIST =================
-      const top = search.videos.slice(0, 6);
-
-      let msg = `🔍 Results for "${query}"\n\n`;
-
-      top.forEach((v, i) => {
-        msg += `${i + 1}. ${v.title}\n⏱ ${v.timestamp}\n\n`;
-      });
-
-      msg += "👉 Reply with number";
-
-      await message.unsend(processing.messageID);
-
-      return message.reply(msg, (err, info) => {
-        global.GoatBot.onReply.set(info.messageID, {
-          commandName: module.exports.config.name,
-          author: event.senderID,
-          videos: top
-        });
-      });
-
-    } catch (e) {
-      console.error(e);
-      await message.unsend(processing.messageID);
-      return message.reply("❌ Error: " + e.message);
-    }
-  },
-
-  // ================= REPLY HANDLER =================
-  onReply: async function ({ message, event, Reply, usersData }) {
-    if (event.senderID !== Reply.author)
-      return message.reply("⚠️ Not your request");
-
-    const choice = parseInt(event.body);
-    if (isNaN(choice) || choice < 1 || choice > Reply.videos.length)
-      return message.reply("❌ Invalid choice");
-
-    const stapi = new global.utils.STBotApis();
-    const video = Reply.videos[choice - 1];
-
-    const userName = await usersData.getName(event.senderID);
-    const dlMsg = await message.reply(`⬇️ Processing: ${video.title}`);
-
-    try {
-      // STEP 1
-      const step1 = await axios.post(`${stapi.baseURL}/st/ytviddl`, {
-        url: video.url
-      });
-
-      console.log("STEP 1:", step1.data);
-
-      const formats = step1.data?.formats || [];
-
-      let selected =
-        formats.find(f => f.ext === "MP3") ||
-        formats.find(f => f.type === "Audio");
-
-      if (!selected) {
-        await message.unsend(dlMsg.messageID);
-        return message.reply("❌ No audio format found");
-      }
-
-      // STEP 2
-      const step2 = await axios.post(`${stapi.baseURL}/st/ytviddl`, {
-        url: video.url,
-        formatUrl: selected.url
-      });
-
-      console.log("STEP 2:", step2.data);
-
-      if (!step2.data?.downloadUrl) {
-        await message.unsend(dlMsg.messageID);
-        return message.reply("❌ Download failed");
-      }
-
-      // DOWNLOAD
-      const audio = await axios.get(step2.data.downloadUrl, {
-        responseType: "arraybuffer"
-      });
-
-      const file = path.join(__dirname, "cache", `audio_${Date.now()}.mp3`);
-      fs.mkdirSync(path.dirname(file), { recursive: true });
-      fs.writeFileSync(file, Buffer.from(audio.data));
-
-      await message.unsend(dlMsg.messageID);
-
-      await message.reply({
-        body:
-          `🎶 ${video.title}\n` +
-          `👤 Requested by: ${userName}`,
-        attachment: fs.createReadStream(file)
-      });
-
-      fs.unlinkSync(file);
-
-    } catch (err) {
-      console.error(err);
-      await message.unsend(dlMsg.messageID);
-      return message.reply("❌ Download error");
-    }
-  }
+		return sendTrack(message, event, api, selected);
+	}
 };
-module.exports.onStart = module.exports.ST;
