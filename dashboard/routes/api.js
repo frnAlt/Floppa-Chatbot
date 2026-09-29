@@ -338,15 +338,20 @@ module.exports = function ({ isAuthenticated, isVeryfiUserIDFacebook, checkHasAn
 			const allUsers = await usersData.getAll();
 			const botObj = global.FloppaBot || global.GoatBot || {};
 			const botConfig = botObj.config || {};
+			const isVercel = Boolean(process.env.VERCEL || process.env.VERCEL_URL);
+			const vercelUrl = process.env.VERCEL_URL ? (process.env.VERCEL_URL.startsWith("http") ? process.env.VERCEL_URL : `https://${process.env.VERCEL_URL}`) : (process.env.VERCEL ? "https://floppa-chatbot.vercel.app" : null);
 			const isRender = Boolean(process.env.RENDER || process.env.RENDER_EXTERNAL_URL);
-			const renderUrl = process.env.RENDER_EXTERNAL_URL || null;
+			const renderUrl = process.env.RENDER_EXTERNAL_URL || vercelUrl || null;
+			const environment = isVercel ? "Vercel Cloud" : (isRender ? "Render Cloud" : (process.env.NODE_ENV === "production" ? "Production Cloud" : "Local Engine"));
 
 			res.json({
 				status: "success",
 				botName: botConfig.nickNameBot || "Floppa-Chatbot",
 				developer: "Gtajisan (Farhan Muh Tasim / frnAlt)",
-				environment: isRender ? "Render Cloud" : (process.env.NODE_ENV === "production" ? "Production Cloud" : "Local Engine"),
+				environment,
 				isRender,
+				isVercel,
+				vercelUrl,
 				renderUrl,
 				uptime: process.uptime(),
 				uptimeFormatted: global.utils.convertTime(process.uptime() * 1000),

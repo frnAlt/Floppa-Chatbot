@@ -786,7 +786,11 @@ async function updateDashboard() {
 			// Environment badge
 			const badge = document.getElementById('badgeEnv');
 			const badgeText = document.getElementById('badgeEnvText');
-			if (data.isRender) {
+			if (data.isVercel) {
+				badgeText.innerText = "Vercel Cloud";
+				badge.style.borderColor = "rgba(255, 255, 255, 0.4)";
+				badge.style.color = "#ffffff";
+			} else if (data.isRender) {
 				badgeText.innerText = "Render Cloud";
 				badge.style.borderColor = "rgba(0, 242, 254, 0.4)";
 				badge.style.color = "#00f2fe";

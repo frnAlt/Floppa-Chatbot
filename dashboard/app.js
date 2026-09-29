@@ -331,13 +331,14 @@ module.exports = async (api) => {
                 });
         });
 
-        // Health check endpoint for Render/Railway/Docker liveness probes
+        // Health check endpoint for Render/Vercel/Railway/Docker liveness probes
         app.get(["/health", "/ping"], (req, res) => {
+                const isVercel = Boolean(process.env.VERCEL || process.env.VERCEL_URL);
                 const isRender = Boolean(process.env.RENDER || process.env.RENDER_EXTERNAL_URL);
                 res.status(200).json({
                         status: "ok",
                         service: "Floppa-Chatbot Web Analytics & Console",
-                        environment: isRender ? "Render Cloud" : (process.env.NODE_ENV === "production" ? "Production Cloud" : "Local Engine"),
+                        environment: isVercel ? "Vercel Cloud" : (isRender ? "Render Cloud" : (process.env.NODE_ENV === "production" ? "Production Cloud" : "Local Engine")),
                         uptime: process.uptime(),
                         timestamp: new Date().toISOString()
                 });
@@ -369,8 +370,10 @@ module.exports = async (api) => {
 
         const PORT = process.env.PORT || config.dashBoard?.port || config.serverUptime?.port || 5000;
         const HOST = process.env.HOST || "0.0.0.0";
+        const isVercel = Boolean(process.env.VERCEL || process.env.VERCEL_URL);
+        const vercelUrl = process.env.VERCEL_URL ? (process.env.VERCEL_URL.startsWith("http") ? process.env.VERCEL_URL : `https://${process.env.VERCEL_URL}`) : (process.env.VERCEL ? "https://floppa-chatbot.vercel.app" : null);
         const isRender = Boolean(process.env.RENDER || process.env.RENDER_EXTERNAL_URL);
-        const renderUrl = process.env.RENDER_EXTERNAL_URL;
+        const renderUrl = process.env.RENDER_EXTERNAL_URL || vercelUrl;
         const replitDomain = process.env.REPLIT_DOMAINS?.split(",")[0];
         const dashBoardUrl = renderUrl || (
                 replitDomain
@@ -396,31 +399,37 @@ module.exports = async (api) => {
                 });
         }
 
-        let actualPort = PORT;
-        try {
-                actualPort = await startServer(PORT, HOST);
-        } catch (err) {
-                if (err.code === 'EACCES' || err.code === 'EADDRINUSE') {
-                        utils.log.warn("DASHBOARD", `Cannot bind to port ${PORT} (${err.code}). Trying fallback port 5000...`);
-                        try {
-                                actualPort = await startServer(5000, HOST);
-                        } catch (fallbackErr) {
-                                utils.log.warn("DASHBOARD", `Fallback port 5000 unavailable (${fallbackErr.code}). Trying random port...`);
+        if (!isVercel && !process.env.NO_SERVER_LISTEN) {
+                let actualPort = PORT;
+                try {
+                        actualPort = await startServer(PORT, HOST);
+                } catch (err) {
+                        if (err.code === 'EACCES' || err.code === 'EADDRINUSE') {
+                                utils.log.warn("DASHBOARD", `Cannot bind to port ${PORT} (${err.code}). Trying fallback port 5000...`);
                                 try {
-                                        actualPort = await startServer(0, HOST);
-                                        actualPort = server.address().port;
-                                } catch (finalErr) {
-                                        utils.log.warn("DASHBOARD", `Could not start dashboard server: ${finalErr.message}`);
+                                        actualPort = await startServer(5000, HOST);
+                                } catch (fallbackErr) {
+                                        utils.log.warn("DASHBOARD", `Fallback port 5000 unavailable (${fallbackErr.code}). Trying random port...`);
+                                        try {
+                                                actualPort = await startServer(0, HOST);
+                                                actualPort = server.address().port;
+                                        } catch (finalErr) {
+                                                utils.log.warn("DASHBOARD", `Could not start dashboard server: ${finalErr.message}`);
+                                        }
                                 }
+                        } else {
+                                utils.log.warn("DASHBOARD", `Dashboard server error: ${err.message}`);
                         }
-                } else {
-                        utils.log.warn("DASHBOARD", `Dashboard server error: ${err.message}`);
                 }
+                const activeDashboardUrl = renderUrl || dashBoardUrl.replace(new RegExp(`:${PORT}$`), `:${actualPort}`);
+                utils.log.info("DASHBOARD", `Dashboard is running on [${HOST}:${actualPort}] (${isRender ? "Render Cloud" : "Local/Container"}): ${activeDashboardUrl}`);
+                if (config.serverUptime?.socket?.enable === true)
+                        require("../bot/login/socketIO.js")(server);
+        } else {
+                utils.log.info("DASHBOARD", `Dashboard running in Serverless Mode (${vercelUrl || "floppa-chatbot.vercel.app"})`);
         }
-        const activeDashboardUrl = renderUrl || dashBoardUrl.replace(new RegExp(`:${PORT}$`), `:${actualPort}`);
-        utils.log.info("DASHBOARD", `Dashboard is running on [${HOST}:${actualPort}] (${isRender ? "Render Cloud" : "Local/Container"}): ${activeDashboardUrl}`);
-        if (config.serverUptime?.socket?.enable === true)
-                require("../bot/login/socketIO.js")(server);
+
+        return app;
 };
 
 

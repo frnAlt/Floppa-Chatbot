@@ -1,9 +1,24 @@
 module.exports = async function () {
 	const { Sequelize } = require("sequelize");
-	const path = __dirname + "/../data/data.sqlite";
+	const fs = require("fs-extra");
+	const path = require("path");
+	let storagePath = path.join(__dirname, "../data/data.sqlite");
+
+	if (process.env.VERCEL) {
+		const tmpPath = "/tmp/data.sqlite";
+		try {
+			if (!fs.existsSync(tmpPath) && fs.existsSync(storagePath)) {
+				fs.copyFileSync(storagePath, tmpPath);
+			}
+			storagePath = tmpPath;
+		} catch (_) {
+			storagePath = ":memory:";
+		}
+	}
+
 	const sequelize = new Sequelize({
 		dialect: "sqlite",
-		host: path,
+		storage: storagePath,
 		logging: false
 	});
 
