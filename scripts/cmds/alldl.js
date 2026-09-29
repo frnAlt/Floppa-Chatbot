@@ -24,9 +24,10 @@ async function unshortenUrl(rawUrl) {
 
 function decodeJwtPayload(token) {
   try {
-    const parts = token.split(".");
-    if (parts.length < 2) return null;
-    return JSON.parse(Buffer.from(parts[1], "base64").toString("utf-8"));
+    const part = String(token).split(".")[1];
+    if (!part) return null;
+    const padded = part.replace(/-/g, "+").replace(/_/g, "/") + "=".repeat((4 - (part.length % 4)) % 4);
+    return JSON.parse(Buffer.from(padded, "base64").toString("utf-8"));
   } catch (e) {
     return null;
   }

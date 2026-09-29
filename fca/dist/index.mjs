@@ -827,6 +827,7 @@ var require_delta = __commonJS({
             coordinates: m.attachments[0].mercury.extensible_attachment.story_attachment.target.coordinate,
             url: m.attachments[0].mercury.extensible_attachment.story_attachment.url
           };
+          break;
         }
         case "ApprovalQueue":
           logMessageType = "log:approval-queue";
@@ -1518,7 +1519,7 @@ function sanitizeHeaderValue(value) {
     } catch {
     }
   }
-  str = str.replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F\r\n\[\]]/g, "").trim();
+  str = str.replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F\r\n]/g, "").trim();
   return str;
 }
 function sanitizeHeaderName(name) {
@@ -1532,6 +1533,8 @@ function getHeaders(url2, options, ctx, customHeader) {
   const origin = referer.replace(/\/+$/, "");
   const contentType = options?.contentType || "application/x-www-form-urlencoded";
   const acceptLang = options?.acceptLanguage || "en-US,en;q=0.9,vi;q=0.8";
+  const chromeVersion = /Chrome\/(\d+)/.exec(ua)?.[1] || "139";
+  const platform = /Macintosh|Mac OS X/.test(ua) ? '"macOS"' : /Linux/.test(ua) ? '"Linux"' : '"Windows"';
   const headers = {
     Host: sanitizeHeaderValue(u.host),
     Origin: sanitizeHeaderValue(origin),
@@ -1544,9 +1547,9 @@ function getHeaders(url2, options, ctx, customHeader) {
     Connection: "keep-alive",
     DNT: "1",
     "Upgrade-Insecure-Requests": "1",
-    "sec-ch-ua": '"Chromium";v="139", "Not;A=Brand";v="24", "Google Chrome";v="139"',
+    "sec-ch-ua": `"Chromium";v="${chromeVersion}", "Not;A=Brand";v="24", "Google Chrome";v="${chromeVersion}"`,
     "sec-ch-ua-mobile": "?0",
-    "sec-ch-ua-platform": '"Windows"',
+    "sec-ch-ua-platform": platform,
     "sec-ch-ua-arch": '"x86"',
     "sec-ch-ua-bitness": '"64"',
     "sec-ch-ua-full-version-list": '"Chromium";v="139.0.0.0", "Not;A=Brand";v="24.0.0.0", "Google Chrome";v="139.0.0.0"',

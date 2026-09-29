@@ -290,18 +290,217 @@ async function getNormalSpeechBuffer(text, lang = "en") {
   throw new Error("Unable to synthesize speech audio from any provider");
 }
 
+// ─── 4. NeoKEX / GoatBot v2 Celebrity & Character Voice Engine ─────────────────
+const BASE_TTS_URL = "https://tts.neokex.xyz";
+const DEFAULT_NEO_VOICE = "Donald Trump";
+const DEFAULT_LANG = "en";
+const MAX_CHARS = 500;
+
+const ttsJson = axios.create({
+  baseURL: BASE_TTS_URL,
+  timeout: 30000,
+  headers: { "User-Agent": "Floppa-Goatbot/say" }
+});
+
+const ttsAudio = axios.create({
+  baseURL: BASE_TTS_URL,
+  timeout: 45000,
+  responseType: "arraybuffer",
+  headers: { "User-Agent": "Floppa-Goatbot/say" }
+});
+
+const searchCache = new Map();
+const CACHE_TTL = 5 * 60 * 1000;
+
+const LANGUAGES = {
+  en: "en", eng: "en", english: "en",
+  ja: "ja", jp: "ja", jpn: "ja", japanese: "ja", jap: "ja",
+  es: "es", spa: "es", spanish: "es", espanol: "es",
+  zh: "zh", cn: "zh", chi: "zh", chinese: "zh", mandarin: "zh",
+  ko: "ko", kr: "ko", kor: "ko", korean: "ko",
+  pt: "pt", por: "pt", portuguese: "pt",
+  fr: "fr", fra: "fr", french: "fr",
+  de: "de", ger: "de", deu: "de", german: "de",
+  ru: "ru", rus: "ru", russian: "ru",
+  ar: "ar", ara: "ar", arabic: "ar",
+  hi: "hi", hin: "hi", hindi: "hi",
+  id: "id", ind: "id", indonesian: "id",
+  th: "th", tha: "th", thai: "th",
+  vi: "vi", vie: "vi", vietnamese: "vi",
+  tr: "tr", tur: "tr", turkish: "tr",
+  it: "it", ita: "it", italian: "it",
+  nl: "nl", dut: "nl", dutch: "nl",
+  pl: "pl", pol: "pl", polish: "pl",
+  uk: "uk", ukr: "uk", ukrainian: "uk",
+  tl: "tl", fil: "tl", filipino: "tl", tagalog: "tl",
+  cy: "cy", welsh: "cy",
+  la: "la", latin: "la",
+  km: "km", khmer: "km"
+};
+
+const LANG_NAMES = {
+  en: "English", ja: "Japanese", es: "Spanish", zh: "Chinese",
+  ko: "Korean", pt: "Portuguese", fr: "French", de: "German",
+  ru: "Russian", ar: "Arabic", hi: "Hindi", id: "Indonesian",
+  th: "Thai", vi: "Vietnamese", tr: "Turkish", it: "Italian",
+  nl: "Dutch", pl: "Polish", uk: "Ukrainian", tl: "Filipino",
+  cy: "Welsh", la: "Latin", km: "Khmer"
+};
+
+function normalize(str) {
+  return String(str || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "")
+    .trim();
+}
+
+function resolveLanguage(input) {
+  const key = String(input || "").toLowerCase().replace(/[^a-z]/g, "");
+  if (!key) return null;
+  return LANGUAGES[key] || null;
+}
+
+function relevanceRank(name, query) {
+  const n = normalize(name);
+  const q = normalize(query);
+  if (!q) return 3;
+  if (n === q) return 0;
+  if (n.startsWith(q)) return 1;
+  if (n.includes(q)) return 2;
+  return 3;
+}
+
+async function searchVoices(query, langCode) {
+  const params = { q: query, min_likes: 5 };
+  const code = langCode || DEFAULT_LANG;
+  if (code) params.language = code;
+  const key = normalize(query + "|" + (code || ""));
+  const cached = searchCache.get(key);
+  if (cached && Date.now() - cached.at < CACHE_TTL) return cached.items;
+  const res = await ttsJson.get("/v1/search", { params });
+  const raw = res.data || {};
+  let items = (Array.isArray(raw) ? raw : raw.items || []).filter(v => v && v.name);
+  items.sort((a, b) =>
+    relevanceRank(a.name, query) - relevanceRank(b.name, query) ||
+    (b.likes || 0) - (a.likes || 0)
+  );
+  searchCache.set(key, { items, at: Date.now() });
+  if (searchCache.size > 40) searchCache.delete(searchCache.keys().next().value);
+  return items;
+}
+
+async function resolveByTitle(title, langCode) {
+  const params = { q: title, min_likes: 0, all: "true" };
+  const code = langCode || DEFAULT_LANG;
+  if (code) params.language = code;
+  const res = await ttsJson.get("/v1/search", { params });
+  const raw = res.data || {};
+  const items = (Array.isArray(raw) ? raw : raw.items || []).filter(v => v && v.name);
+  const exact = items.find(v => normalize(v.name) === normalize(title));
+  return exact || items[0] || null;
+}
+
+function parseNumber(token) {
+  const m = /^#?(\d{1,2})$/.exec(String(token || "").trim());
+  if (!m) return null;
+  const n = Number(m[1]);
+  if (n < 1) return null;
+  return n;
+}
+
+function parseFlags(args) {
+  const text = [];
+  let voice = null;
+  let lang = null;
+  let badLang = null;
+  let pick = null;
+  let pendingVoice = false;
+  const voiceWords = [];
+  const isFlag = (s) => /^(--?v|--?lang|--?language)(=|$)/i.test(s);
+  for (let i = 0; i < args.length; i++) {
+    const arg = String(args[i] == null ? "" : args[i]);
+    const lower = arg.toLowerCase();
+    if (lower === "--lang" || lower === "--language" || lower === "-lang" || lower === "-l") {
+      if (i + 1 < args.length) {
+        const rawLang = args[++i];
+        lang = resolveLanguage(rawLang);
+        if (!lang) badLang = rawLang;
+      }
+      continue;
+    }
+    if (/^(--lang|--language|-lang|-l)=/i.test(arg)) {
+      const rawLang = arg.split("=").slice(1).join("=");
+      lang = resolveLanguage(rawLang);
+      if (!lang) badLang = rawLang;
+      continue;
+    }
+    if (lower === "--v" || lower === "-v") {
+      pendingVoice = true;
+      continue;
+    }
+    if (/^(--v|-v)=/i.test(arg)) {
+      pendingVoice = true;
+      voiceWords.push(arg.split("=").slice(1).join("="));
+      continue;
+    }
+    const n = parseNumber(arg);
+    if (n !== null && (pendingVoice || voiceWords.length)) {
+      pick = n;
+      pendingVoice = false;
+      continue;
+    }
+    if (pendingVoice || voiceWords.length) {
+      if (isFlag(arg)) {
+        pendingVoice = false;
+        text.push(arg);
+        continue;
+      }
+      voiceWords.push(arg);
+      continue;
+    }
+    if (n !== null && i === args.length - 1 && args.length > 1) {
+      pick = n;
+      continue;
+    }
+    text.push(arg);
+  }
+  if (voiceWords.length) voice = voiceWords.join(" ").trim();
+  if (pick !== null && !voice && text.length) {
+    const words = text.slice();
+    voice = words.pop();
+    return { text: words.join(" ").trim(), voice, lang, badLang, pick, hasFlags: true };
+  }
+  const hasFlags = voice !== null || lang !== null || badLang !== null || pick !== null;
+  return { text: text.join(" ").trim(), voice, lang, badLang, pick, hasFlags };
+}
+
+function formatList(list, query, langCode) {
+  const lines = [];
+  list.forEach((v, i) => {
+    const langs = (v.languages || []).join("/");
+    lines.push(`${i + 1}. ${v.name} ❤️${v.likes || 0}${langs ? " [" + langs + "]" : ""}`);
+  });
+  const code = langCode || DEFAULT_LANG;
+  const scope = code ? ` · ${LANG_NAMES[code] || code}` : "";
+  return `🔍 "${query}"${scope} — ${list.length} result(s):\n${lines.join("\n")}`;
+}
+
 module.exports = {
   config: {
     name: "say",
-    aliases: ["tts", "speak", "voice"],
-    version: "2.0.0",
-    author: "frnAlt",
+    aliases: ["tts", "speak", "voice", "vocal"],
+    version: "2.1.0",
+    author: "frnAlt & Neoaz 🐊",
     countDown: 3,
     role: 0,
     category: "tts",
-    description: "Convert text to speech with normal voice or famous anime and character voices.",
+    description: "Convert text to speech with normal voice, famous anime characters, or celebrity voices.",
     guide: {
       en: "{pn} <text> — speaks in normal voice (or your switched character)\n" +
+          "{pn} <text> --v <voice> — speaks with famous character / celebrity voice\n" +
+          "{pn} search <voice> -l <lang> — search celebrity voices (e.g. !say search aizen -l jp)\n" +
           "{pn} <text> | <lang> — speaks in normal voice with language code (e.g. !say hi | bn)\n" +
           "{pn} model <character> <text> — speaks with famous anime/character voice\n" +
           "{pn} <character> <text> — quick shortcut to speak with character\n" +
@@ -315,6 +514,58 @@ module.exports = {
     const prefix = global.GoatBot?.config?.prefix || "!";
     const firstArg = (args[0] || "").toLowerCase();
     const secondArg = (args[1] || "").toLowerCase();
+
+    // ─── Subcommand: Celebrity Voice Search (NeoKEX / GoatBot v2) ───────────
+    if (["search", "voices", "find"].includes(firstArg)) {
+      const { text: query, lang, badLang } = parseFlags(args.slice(1));
+      if (badLang) {
+        await safeReact(api, event, "❌");
+        return message.reply(`⚠️ Unknown language "${badLang}". Try en, jp, es, ko, zh, fr, de...`);
+      }
+      try {
+        await safeReact(api, event, "🔍");
+        const results = await searchVoices(query || "", lang);
+        if (!results || !results.length) {
+          await safeReact(api, event, "❌");
+          return message.reply(`❌ No voices matched "${query || "*"}". Try searching with another term.`);
+        }
+        const top = results.slice(0, 10);
+        await safeReact(api, event, "✅");
+        return message.reply(
+          formatList(top, query || "*", lang) +
+          `\nUse: ${prefix}say <text> --v "${query || top[0].name}"`
+        );
+      } catch (err) {
+        await safeReact(api, event, "❌");
+        return message.reply("❌ The voice server is currently unreachable. Please try again later.");
+      }
+    }
+
+    // ─── Subcommand: List by Language (NeoKEX) ──────────────────────────────
+    if (firstArg === "list" && (secondArg.startsWith("-") || args.slice(1).some(a => /^--?l/i.test(a)))) {
+      const { text: query, lang, badLang } = parseFlags(args.slice(1));
+      if (badLang) {
+        await safeReact(api, event, "❌");
+        return message.reply(`⚠️ Unknown language "${badLang}". Try en, jp, es, ko, zh, fr, de...`);
+      }
+      try {
+        await safeReact(api, event, "🔍");
+        const results = await searchVoices(query || "", lang);
+        if (!results || !results.length) {
+          await safeReact(api, event, "❌");
+          return message.reply(`❌ No voices found for language "${lang || "en"}".`);
+        }
+        const top = results.slice(0, 10);
+        await safeReact(api, event, "✅");
+        return message.reply(
+          formatList(top, query || "*", lang) +
+          `\nUse: ${prefix}say <text> --v "${top[0].name}"`
+        );
+      } catch (err) {
+        await safeReact(api, event, "❌");
+        return message.reply("❌ The voice server is currently unreachable. Please try again later.");
+      }
+    }
 
     // ─── Subcommand: Model Directory & List ──────────────────────────────────
     if (
@@ -344,12 +595,15 @@ module.exports = {
         `🎙️ AVAILABLE VOICE MODELS\n\n` +
         `🌟 Famous Anime Characters:\n${animeList}\n\n` +
         `🎭 Pop-Culture & Character Voices:\n${tiktokList}\n\n` +
+        `🔍 Celebrity & Public Voices:\n` +
+        `• Type: ${prefix}say search <name> (e.g. ${prefix}say search trump)\n\n` +
         `💡 How to use:\n` +
-        `1. Direct voice: ${prefix}say model naruto Dattebayo!\n` +
-        `2. Quick shortcut: ${prefix}say ghostface Hello Sidney\n` +
-        `3. Switch your voice: ${prefix}say model naruto\n` +
-        `4. Normal default: ${prefix}say hello how are you\n` +
-        `5. Reset voice: ${prefix}say model reset`;
+        `1. Celebrity voice: ${prefix}say Yare yare --v aizen\n` +
+        `2. Direct anime voice: ${prefix}say model naruto Dattebayo!\n` +
+        `3. Quick shortcut: ${prefix}say ghostface Hello Sidney\n` +
+        `4. Switch your voice: ${prefix}say model naruto\n` +
+        `5. Normal default: ${prefix}say hello how are you\n` +
+        `6. Reset voice: ${prefix}say model reset`;
 
       return message.reply(listMsg);
     }
@@ -403,6 +657,8 @@ module.exports = {
     let text = "";
     let lang = "en";
     let requestedModel = null;
+    let celebrityVoice = null;
+    let celebrityNotice = null;
 
     // Check if the user has a saved voice in database
     let savedVoiceKey = null;
@@ -412,22 +668,61 @@ module.exports = {
       } catch (_) {}
     }
 
+    // Check flags (--v, -v, --lang, -l, #N)
+    const flagData = parseFlags(args);
+    if (flagData.badLang) {
+      await safeReact(api, event, "❌");
+      return message.reply(`⚠️ Unknown language "${flagData.badLang}". Try en, jp, es, ko, zh, fr, de...`);
+    }
+
+    if (flagData.hasFlags && (flagData.voice || flagData.pick !== null)) {
+      const voiceQuery = flagData.voice || (flagData.pick !== null ? DEFAULT_NEO_VOICE : null);
+      if (flagData.lang) lang = flagData.lang;
+      if (flagData.text) text = flagData.text;
+
+      if (voiceQuery) {
+        let selected = null;
+        try {
+          if (flagData.pick !== null) {
+            const results = await searchVoices(voiceQuery, flagData.lang);
+            if (results && results.length) {
+              const idx = Math.min(Math.max(1, flagData.pick), results.length) - 1;
+              selected = results[idx];
+            }
+          } else {
+            selected = await resolveByTitle(voiceQuery, flagData.lang);
+            if (!selected) {
+              const results = await searchVoices(voiceQuery, flagData.lang);
+              selected = results?.[0] || null;
+            }
+          }
+        } catch (_) {}
+
+        if (selected) {
+          celebrityVoice = selected;
+        } else {
+          const localCheck = findModel(voiceQuery);
+          if (localCheck) requestedModel = localCheck;
+        }
+      }
+    }
+
     // A. User replied to a message
     if (event.type === "message_reply") {
-      text = event.messageReply?.body || "";
+      if (!text) text = event.messageReply?.body || "";
 
       if (["model", "voice"].includes(firstArg) && secondArg) {
         requestedModel = findModel(secondArg);
-      } else if (firstArg) {
+      } else if (firstArg && !celebrityVoice) {
         requestedModel = findModel(firstArg);
       }
 
       // If user also supplied text in the reply command, append or use it
-      const inlineText = ["model", "voice"].includes(firstArg) ? args.slice(2).join(" ").trim() : (requestedModel ? args.slice(1).join(" ").trim() : args.join(" ").trim());
+      const inlineText = ["model", "voice"].includes(firstArg) ? args.slice(2).join(" ").trim() : (requestedModel ? args.slice(1).join(" ").trim() : (flagData.text || args.join(" ").trim()));
       if (inlineText) {
         text = inlineText;
       }
-    } else {
+    } else if (!celebrityVoice) {
       // B. Normal message
       if (["model", "voice"].includes(firstArg) && secondArg) {
         requestedModel = findModel(secondArg);
@@ -436,6 +731,9 @@ module.exports = {
         // Quick shortcut: !say naruto believe it! or !say ghostface hello
         requestedModel = findModel(firstArg);
         text = args.slice(1).join(" ").trim();
+      } else if (flagData.hasFlags && flagData.text) {
+        text = flagData.text;
+        if (flagData.lang) lang = flagData.lang;
       } else {
         // Default say syntax: !say <text> or !say <text> | <lang>
         const fullInput = args.join(" ").trim();
@@ -476,8 +774,40 @@ module.exports = {
     let mp3Buffer = null;
 
     try {
+      // ─── 0. Celebrity Voice Synthesis (NeoKEX / GoatBot v2) ──────────────────
+      if (celebrityVoice) {
+        try {
+          const res = await ttsAudio.post("/v1/tts", {
+            voice: celebrityVoice.id || celebrityVoice.name,
+            text: text,
+            format: "mp3"
+          });
+          if (res.data && res.data.length > 0) {
+            mp3Buffer = Buffer.from(res.data);
+          }
+        } catch (celebErr) {
+          console.warn(`[SAY] NeoKEX TTS (${celebrityVoice.name}) unavailable: ${celebErr.message}, falling back...`);
+          const localFallback = findModel(celebrityVoice.name);
+          if (localFallback && localFallback.kind === "anime") {
+            try {
+              mp3Buffer = await getAnimeAudioBuffer(text, localFallback.speaker, cacheDir);
+            } catch (_) {
+              mp3Buffer = await getNormalSpeechBuffer(text, lang);
+            }
+          } else if (localFallback && localFallback.kind === "tiktok") {
+            try {
+              mp3Buffer = await getTikTokAudioBuffer(text, localFallback.code);
+            } catch (_) {
+              mp3Buffer = await getNormalSpeechBuffer(text, lang);
+            }
+          } else {
+            celebrityNotice = `⚠️ Notice: NeoKEX celebrity voice server for "${celebrityVoice.name}" is temporarily busy or out of credits. Delivered using fallback speech engine.`;
+            mp3Buffer = await getNormalSpeechBuffer(text, lang);
+          }
+        }
+      }
       // ─── 1. Anime Model Synthesis ──────────────────────────────────────────
-      if (requestedModel && requestedModel.kind === "anime") {
+      else if (requestedModel && requestedModel.kind === "anime") {
         try {
           mp3Buffer = await getAnimeAudioBuffer(text, requestedModel.speaker, cacheDir);
         } catch (animeErr) {
@@ -521,10 +851,14 @@ module.exports = {
       // React with success emoji (👍)
       await safeReact(api, event, "👍");
 
-      // Reply with ONLY the mp3 audio attachment (NO text body)
-      await message.reply({
+      // Reply with mp3 audio attachment (and optional notice if fallback was used)
+      const replyPayload = {
         attachment: audioStream
-      });
+      };
+      if (celebrityNotice) {
+        replyPayload.body = celebrityNotice;
+      }
+      await message.reply(replyPayload);
     } catch (err) {
       console.error("[SAY COMMAND ERROR]:", err);
       await safeReact(api, event, "👎");
