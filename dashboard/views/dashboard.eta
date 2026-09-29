@@ -15,17 +15,22 @@
 
 <div class="container">
 
-  <h3>Danh sách nhóm mà bạn quản lý</h3>
+  <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
+    <h3 class="mb-0"><i class="fas fa-comments text-primary me-2"></i>Managed Groups & Conversations</h3>
+    <% if (it.isBotAdmin) { %>
+      <span class="badge bg-phoenix-primary p-2 fs--1"><i class="fas fa-shield-halved me-1"></i>Bot Administrator (All Threads Access)</span>
+    <% } %>
+  </div>
 
   <div class="d-sm-flex d-block align-items-center my-3">
-    <div class="search-box me-2">
-      <input class="form-control search-input search" type="search" placeholder="Type to search" aria-label="Search" id="search-input">
+    <div class="search-box me-2 flex-grow-1">
+      <input class="form-control search-input search" type="search" placeholder="Search by Thread ID or Thread Name..." aria-label="Search" id="search-input">
       <span class="fas fa-search search-box-icon" aria-hidden="true"></span>
     </div>
     <div class="d-flex">
       <select class="form-select w-auto me-2 mt-2 mt-sm-0" id="searchBy" aria-label="Search By">
-        <option value="thread_id" selected="selected">Box Id</option>
-        <option value="thread_name">Box Name</option>
+        <option value="thread_id" selected="selected">Thread ID</option>
+        <option value="thread_name">Thread Name</option>
       </select>
       <button class="btn btn-phoenix-primary text-nowrap mt-2 mt-sm-0" id="reset-button">
         <i class="fas fa-sync"></i>
@@ -38,32 +43,40 @@
     <table class="table table-bordered table-striped align-middle">
       <thead>
         <tr>
-          <th></th>
-          <th class="sort" data-sort="thread_id">Box ID</th>
-          <th class="sort" data-sort="thread_name">Box Name</th>
-          <th class="sort" data-sort="members">Members</th>
-          <th>Action</th>
+          <th style="width: 50px;">#</th>
+          <th class="sort" data-sort="thread_id">Thread ID</th>
+          <th class="sort" data-sort="thread_name">Thread Name</th>
+          <th class="sort" data-sort="members">Active Members</th>
+          <th style="width: 100px;">Settings</th>
         </tr>
       </thead>
 
       <tbody class="list">
+        <% if (threads.length === 0) { %>
+        <tr>
+          <td colspan="5" class="text-center text-muted py-4">
+            <i class="fas fa-inbox fa-2x mb-2 d-block opacity-50"></i>
+            No managed conversations found. Add the bot to your Messenger group or verify your Facebook ID.
+          </td>
+        </tr>
+        <% } %>
         <% for (let i=0; i < threads.length; i++) { %>
         <tr>
           <td class="ps-2">
             <%= i + 1 %>
           </td>
-          <td class="thread_id">
+          <td class="thread_id fw-semibold">
             <%= threads[i].threadID %>
           </td>
           <td class="thread_name">
-            <%= threads[i].threadName || "null" %>
+            <%= threads[i].threadName || (threads[i].isGroup === false ? "Direct Message" : `Group ${threads[i].threadID}`) %>
           </td>
           <td class="members">
-            <%= threads[i].members.filter(m=> m.inGroup).length %>
+            <span class="badge bg-secondary-subtle text-secondary-emphasis"><%= threads[i].members.filter(m=> m.inGroup).length %> members</span>
           </td>
           <td>
-            <a href='/dashboard/<%=threads[i].threadID %>' class='btn btn-phoenix-primary'>
-              <i class="fa-solid fa-wrench"></i>
+            <a href='/dashboard/<%=threads[i].threadID %>' class='btn btn-sm btn-phoenix-primary' title="Manage Settings">
+              <i class="fa-solid fa-wrench me-1"></i> Configure
             </a>
           </td>
         </tr>

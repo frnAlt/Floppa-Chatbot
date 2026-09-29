@@ -146,7 +146,13 @@ module.exports = async (api) => {
                         if (cb) cb(null);
                 }
         }
-        const sessionStore = new FloppaSessionStore();
+        let sessionStore;
+        try {
+                const FileStore = require("./scripts/sessionStore.js");
+                sessionStore = new FileStore();
+        } catch (_) {
+                sessionStore = new FloppaSessionStore();
+        }
 
         app.use(session({
                 secret: sessionSecret,
@@ -200,9 +206,10 @@ module.exports = async (api) => {
         // ————————————————————————————————————————————— //
 
         async function checkAuthConfigDashboardOfThread(threadData, userID) {
+                if ((global.GoatBot?.config?.adminBot || []).includes(userID)) return true;
                 if (!isNaN(threadData))
                         threadData = await threadsData.get(threadData);
-                return threadData.adminIDs?.includes(userID) || threadData.members?.some(m => m.userID == userID && m.permissionConfigDashboard == true) || false;
+                return threadData?.adminIDs?.includes(userID) || threadData?.members?.some(m => m.userID == userID && m.permissionConfigDashboard == true) || false;
         }
 
         const isVideoFile = (mimeType) => videoExt.includes(mimeDB[mimeType]?.extensions?.[0]);
@@ -245,7 +252,7 @@ module.exports = async (api) => {
         const verifyFbidRoute = require("./routes/verifyfbid.js")(paramsForRoutes);
         const apiRouter = require("./routes/api.js")(paramsForRoutes);
 
-        app.get(["/", "/home", "/dashboard"], (req, res) => {
+        app.get(["/", "/home"], (req, res) => {
                 res.render("home");
         });
 
@@ -317,12 +324,23 @@ module.exports = async (api) => {
                 if (typeof global.responseUptimeCurrent === "function") {
                         return global.responseUptimeCurrent(req, res, next);
                 }
-                return res.status(200).send({ status: "ok", uptime: process.uptime() });
+                return res.status(200).send({
+                        status: "ok",
+                        uptime: process.uptime(),
+                        service: "Floppa-Chatbot Web Analytics & Console"
+                });
         });
 
-        // Health check endpoint for Render/Railway
-        app.get("/health", (req, res) => {
-                res.status(200).json({ status: "ok", uptime: process.uptime() });
+        // Health check endpoint for Render/Railway/Docker liveness probes
+        app.get(["/health", "/ping"], (req, res) => {
+                const isRender = Boolean(process.env.RENDER || process.env.RENDER_EXTERNAL_URL);
+                res.status(200).json({
+                        status: "ok",
+                        service: "Floppa-Chatbot Web Analytics & Console",
+                        environment: isRender ? "Render Cloud" : (process.env.NODE_ENV === "production" ? "Production Cloud" : "Local Engine"),
+                        uptime: process.uptime(),
+                        timestamp: new Date().toISOString()
+                });
         });
 
         app.get("/changefbstate", isAuthenticated, isVeryfiUserIDFacebook, isAdmin, (req, res) => {
@@ -349,15 +367,20 @@ module.exports = async (api) => {
                         return res.status(500).send(getText("app", "serverError"));
         });
 
-        const PORT = process.env.PORT || config.dashBoard.port || config.serverUptime.port || 3001;
+        const PORT = process.env.PORT || config.dashBoard?.port || config.serverUptime?.port || 5000;
+        const HOST = process.env.HOST || "0.0.0.0";
+        const isRender = Boolean(process.env.RENDER || process.env.RENDER_EXTERNAL_URL);
+        const renderUrl = process.env.RENDER_EXTERNAL_URL;
         const replitDomain = process.env.REPLIT_DOMAINS?.split(",")[0];
-        const dashBoardUrl = replitDomain
-                ? `https://${replitDomain}`
-                : process.env.API_SERVER_EXTERNAL == "https://api.glitch.com"
-                        ? `https://${process.env.PROJECT_DOMAIN}.glitch.me`
-                        : `http://localhost:${PORT}`;
+        const dashBoardUrl = renderUrl || (
+                replitDomain
+                        ? `https://${replitDomain}`
+                        : process.env.API_SERVER_EXTERNAL == "https://api.glitch.com"
+                                ? `https://${process.env.PROJECT_DOMAIN}.glitch.me`
+                                : `http://localhost:${PORT}`
+        );
 
-        function startServer(targetPort) {
+        function startServer(targetPort, targetHost = HOST) {
                 return new Promise((resolve, reject) => {
                         const errorHandler = (err) => {
                                 server.removeListener('listening', listenHandler);
@@ -369,22 +392,22 @@ module.exports = async (api) => {
                         };
                         server.once('error', errorHandler);
                         server.once('listening', listenHandler);
-                        server.listen(targetPort);
+                        server.listen(targetPort, targetHost);
                 });
         }
 
         let actualPort = PORT;
         try {
-                actualPort = await startServer(PORT);
+                actualPort = await startServer(PORT, HOST);
         } catch (err) {
                 if (err.code === 'EACCES' || err.code === 'EADDRINUSE') {
                         utils.log.warn("DASHBOARD", `Cannot bind to port ${PORT} (${err.code}). Trying fallback port 5000...`);
                         try {
-                                actualPort = await startServer(5000);
+                                actualPort = await startServer(5000, HOST);
                         } catch (fallbackErr) {
                                 utils.log.warn("DASHBOARD", `Fallback port 5000 unavailable (${fallbackErr.code}). Trying random port...`);
                                 try {
-                                        actualPort = await startServer(0);
+                                        actualPort = await startServer(0, HOST);
                                         actualPort = server.address().port;
                                 } catch (finalErr) {
                                         utils.log.warn("DASHBOARD", `Could not start dashboard server: ${finalErr.message}`);
@@ -394,9 +417,9 @@ module.exports = async (api) => {
                         utils.log.warn("DASHBOARD", `Dashboard server error: ${err.message}`);
                 }
         }
-        const activeDashboardUrl = dashBoardUrl.replace(new RegExp(`:${PORT}$`), `:${actualPort}`);
-        utils.log.info("DASHBOARD", `Dashboard is running: ${activeDashboardUrl}`);
-        if (config.serverUptime.socket.enable == true)
+        const activeDashboardUrl = renderUrl || dashBoardUrl.replace(new RegExp(`:${PORT}$`), `:${actualPort}`);
+        utils.log.info("DASHBOARD", `Dashboard is running on [${HOST}:${actualPort}] (${isRender ? "Render Cloud" : "Local/Container"}): ${activeDashboardUrl}`);
+        if (config.serverUptime?.socket?.enable === true)
                 require("../bot/login/socketIO.js")(server);
 };
 

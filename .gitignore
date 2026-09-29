@@ -1,19 +1,70 @@
+# ==============================================================================
+# Floppa-Chatbot Secure .gitignore
+# Protects bot credentials, Facebook cookies, environment secrets, and databases
+# ==============================================================================
+
+# Node.js dependencies
 node_modules/
+*/node_modules/
+fca/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Facebook Messenger Credentials, Cookies, and Appstate
+account*.txt
+appstate*.json
+cookie*.txt
+cookie*.json
+cookies*.txt
+cookies*.json
+fbstate*.json
+fbstate*.txt
+.session_secret
+sessions/
+database/data/sessions/
+*.session
+
+# Environment variables & Private Keys
 .env
+.env.*
+*.pem
+*.key
+*.cert
+*.crt
+
+# Database runtime files & backups
+database/data/*.sqlite
+database/data/*.sqlite-journal
+database/data/*.db
+database/data/*.bak
+database/data/test_atomic*
+Horizon_Database/
+
+# Logs, Dumps & Diagnostics
 *.log
 *.tmp
 *.bak
 *.dump
 core.*
-.DS_Store
-account.txt
-account2.txt
-account3.txt
-fca/node_modules/
 TEST_LOGS.txt
+
+# Caches & Temporary File Storage
+cache/
+*/cache/
+scripts/cmds/cache/
 temp/*
 !temp/.gitkeep
+scripts/cmds/tmp/*
+!scripts/cmds/tmp/.gitkeep
+scripts/events/tmp/*
+!scripts/events/tmp/.gitkeep
 scratch/
-scripts/cmds/cache/
-appstate.json
-Horizon_Database/
+
+# OS and Editor Configurations
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/settings.json

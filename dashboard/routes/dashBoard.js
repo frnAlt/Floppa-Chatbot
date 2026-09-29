@@ -5,15 +5,19 @@ module.exports = function ({ isAuthenticated, isVeryfiUserIDFacebook, checkHasAn
 	router
 		.get("/", [isAuthenticated, isVeryfiUserIDFacebook], async (req, res) => {
 			let allThread = await threadsData.getAll();
-			allThread = allThread.filter(t => t.members.some(m => m.userID == req.user.facebookUserID && m.inGroup)/* && (api ? t.members.some(m => m.userID == api.getCurrentUserID()) : true)*/);
-			res.render("dashboard", { threads: allThread });
+			const isBotAdmin = req.user?.admin || (global.GoatBot?.config?.adminBot || []).includes(req.user.facebookUserID);
+			if (!isBotAdmin) {
+				allThread = allThread.filter(t => t.members.some(m => m.userID == req.user.facebookUserID && m.inGroup));
+			}
+			res.render("dashboard", { threads: allThread, isBotAdmin });
 		})
 		.get("/:threadID", [isAuthenticated, isVeryfiUserIDFacebook, checkHasAndInThread], async (req, res) => {
 			const { threadData } = req;
 			let authConfigDashboard = true;
 			const warnings = [];
-			if (!checkAuthConfigDashboardOfThread(threadData, req.user.facebookUserID)) {
-				warnings.push({ msg: "[!] Chỉ quản trị viên của nhóm chat hoặc những thành viên được cho phép mới có thể chỉnh sửa dashboard" });
+			const isBotAdmin = req.user?.admin || (global.GoatBot?.config?.adminBot || []).includes(req.user.facebookUserID);
+			if (!isBotAdmin && !(await checkAuthConfigDashboardOfThread(threadData, req.user.facebookUserID))) {
+				warnings.push({ msg: "[!] Only group chat administrators or authorized members can modify dashboard settings." });
 				authConfigDashboard = false;
 			}
 			delete req.threadData;
@@ -21,7 +25,8 @@ module.exports = function ({ isAuthenticated, isVeryfiUserIDFacebook, checkHasAn
 				threadData,
 				threadDataJSON: encodeURIComponent(JSON.stringify(threadData)),
 				authConfigDashboard,
-				warnings
+				warnings,
+				isBotAdmin
 			});
 		})
 		.get("/:threadID/:command", [isAuthenticated, isVeryfiUserIDFacebook, checkHasAndInThread], async (req, res) => {

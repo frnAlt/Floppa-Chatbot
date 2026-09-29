@@ -59,7 +59,7 @@
         return $.createToast({
           type: "error",
           title: "Error",
-          message: "Vui lòng xác nhận captcha",
+          message: "Please complete the CAPTCHA verification",
           time: 5000
         });
       const btnLogin = this;

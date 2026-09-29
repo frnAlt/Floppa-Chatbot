@@ -20,7 +20,7 @@
 
 		changeFbstate.addEventListener("click", function() {
 			changeFbstate.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-    		<span class="visually-hidden">Đang tải...</span>`;
+    		<span class="visually-hidden">Saving state...</span>`;
 			changeFbstate.disabled = true;
 
 			$.ajax({
@@ -33,14 +33,14 @@
 					if (data.status == "success") {
 						$.createToast({
 							title: "Success",
-							message: "Đã thay đổi fbstate thành công, bắt đầu khởi động lại bot",
+							message: "Facebook appstate saved successfully! Restarting bot engine...",
 							type: "success",
 							time: 3000
 						})
 					} else {
 						$.createToast({
 							title: "Error",
-							message: "Đã có lỗi xảy ra, vui lòng thử lại sau",
+							message: "An error occurred while saving appstate, please try again.",
 							type: "error",
 							time: 3000
 						})
@@ -49,7 +49,7 @@
 				error: function(err) {
 					$.createToast({
 						title: "Error",
-						message: "Đã có lỗi xảy ra, vui lòng thử lại sau",
+						message: "An error occurred while saving appstate, please try again.",
 						type: "error",
 						time: 3000
 					})

@@ -31,13 +31,13 @@
 							</div>
               <div class="alert alert-info mt-3">
                 <p>
-                  <i class="fas fa-info-circle"></i> Chúng tôi sẽ gửi một tin nhắn kèm mã xác minh đến id facebook bạn điền vào ở phía trên để xác minh bạn là chủ của tài khoản đó
+                  <i class="fas fa-info-circle"></i> A verification code will be sent to the Facebook account associated with the ID entered above to verify account ownership.
                 </p>
               </div>
               <% if (global.statusAccountBot != 'good') {%>
               <div class="alert alert-danger mt-3">
                 <p>
-                  <i class="fas fa-exclamation-triangle"></i> Hiện tại bot đang offline, không thể thực hiện chức năng này
+                  <i class="fas fa-exclamation-triangle"></i> Bot session is currently offline. Verification is temporarily unavailable.
                 </p>
               </div>
               <% } %>

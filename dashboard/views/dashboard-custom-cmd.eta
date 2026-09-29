@@ -21,10 +21,10 @@
 <script type="text/javascript">
   (function() {
     $.createToast({
-      title: "Comming soon",
-      message: "Tính năng này đang được phát triển. Vui lòng quay lại sau.",
-      type: "warning",
-      time: 10000
+      title: "Coming Soon",
+      message: "Custom command management is currently under development. Please check back soon.",
+      type: "info",
+      time: 6000
     });
   })();
 </script>

@@ -20,7 +20,7 @@
       <a class="navbar-brand" href="/">
         <div class="d-flex align-items-center">
           <img src="/images/logo-non-bg.png" height="40px" width="40px" class="d-inline-block align-top rounded" alt="logo">
-          <span class="h4 mb-0 text-uppercase d-sm-block ms-2">GoatBot</span>
+          <span class="h4 mb-0 text-uppercase d-sm-block ms-2">Floppa</span>
         </div>
       </a>
     </div>
@@ -40,7 +40,7 @@
         <li class="nav-item">
           <a href="/stats" class="nav-link px-2">
             <i class="fas fa-chart-bar"></i>
-            Bot stats
+            Bot Stats
           </a>
         </li>
 
@@ -69,32 +69,19 @@
           <ul class="dropdown-menu mb-2" aria-labelledby="userDropdown">
             <% if (!user.facebookUserID) { %>
             <a href="/verifyfbid" class="dropdown-item">
-              <i class="fas fa-user-check"></i> Xác thực id facebook
+              <i class="fas fa-user-check"></i> Verify Facebook ID
             </a>
             <% } %>
             <a href="/profile" class="dropdown-item">
               <i class="fas fa-user-circle"></i> Profile
             </a>
             <a href="/change-password" class="dropdown-item">
-              <i class="fas fa-key"></i> Đổi mật khẩu
+              <i class="fas fa-key"></i> Change Password
             </a>
             <a href="/logout" class="dropdown-item">
               <i class="fas fa-sign-out-alt"></i> Logout
             </a>
           </ul>
-        </li>
-        <% } else { %>
-        <li class="nav-item">
-          <a href="/login" class="nav-link px-2">
-            <i class="fas fa-sign-in-alt"></i>
-            Login
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="/register" class="nav-link px-2">
-            <i class="fas fa-user-plus"></i>
-            Register
-          </a>
         </li>
         <% } %>
       </ul>

@@ -346,11 +346,18 @@ module.exports = function ({ isAuthenticated, isVeryfiUserIDFacebook, checkHasAn
 			const mem = process.memoryUsage();
 			const allThreads = await threadsData.getAll();
 			const allUsers = await usersData.getAll();
+			const botObj = global.FloppaBot || global.GoatBot || {};
+			const botConfig = botObj.config || {};
+			const isRender = Boolean(process.env.RENDER || process.env.RENDER_EXTERNAL_URL);
+			const renderUrl = process.env.RENDER_EXTERNAL_URL || null;
 
 			res.json({
 				status: "success",
-				botName: "Floppa-Chatbot",
-				developer: "Gtajisan (Farhan Muh Tasim)",
+				botName: botConfig.nickNameBot || "Floppa-Chatbot",
+				developer: "Gtajisan (Farhan Muh Tasim / frnAlt)",
+				environment: isRender ? "Render Cloud" : (process.env.NODE_ENV === "production" ? "Production Cloud" : "Local Engine"),
+				isRender,
+				renderUrl,
 				uptime: process.uptime(),
 				uptimeFormatted: global.utils.convertTime(process.uptime() * 1000),
 				memoryUsedMB: (mem.heapUsed / 1024 / 1024).toFixed(2),
@@ -358,13 +365,17 @@ module.exports = function ({ isAuthenticated, isVeryfiUserIDFacebook, checkHasAn
 				systemRamUsedGB: ((os.totalmem() - os.freemem()) / 1024 / 1024 / 1024).toFixed(2),
 				systemRamTotalGB: (os.totalmem() / 1024 / 1024 / 1024).toFixed(2),
 				cpuLoad: (os.loadavg()[0] || 0.15).toFixed(2),
+				cpuCores: os.cpus().length,
+				platform: `${os.platform()} (${os.arch()})`,
 				nodeVersion: process.version,
 				botID: global.botID || "Active Session",
-				prefix: global.FloppaBot?.config?.prefix || "~",
+				prefix: botConfig.prefix || "-",
+				botOff: Boolean(botConfig.botOff),
+				botMode: botConfig.botOff ? "Admin-Only Mode" : "Public Online",
 				totalThreads: allThreads.length,
 				totalUsers: allUsers.length,
-				totalCommands: global.FloppaBot?.commands?.size || 125,
-				fcaEngine: "Native Repo FCA Module (@floppa/fca-native v5.0.0)"
+				totalCommands: global.GoatBot?.commands?.size || botObj.commands?.size || 125,
+				fcaEngine: global.activeFcaEngine || "Native Floppa FCA Engine (@floppa/fca-native v5.2.0)"
 			});
 		})
 		.get("/chat-logs", async (req, res) => {
@@ -377,13 +388,69 @@ module.exports = function ({ isAuthenticated, isVeryfiUserIDFacebook, checkHasAn
 			const threads = await threadsData.getAll();
 			res.json({
 				status: "success",
-				threads: threads.slice(0, 50).map(t => ({
+				total: threads.length,
+				threads: threads.slice(0, 100).map(t => ({
 					threadID: t.threadID,
-					threadName: t.threadName || "Direct Message / Group Chat",
-					membersCount: t.members?.length || 0,
-					isGroup: t.isGroup
+					threadName: t.threadName || (t.isGroup === false ? "Direct Message" : `Group ${t.threadID}`),
+					membersCount: Array.isArray(t.members) ? t.members.filter(m => m.inGroup !== false).length : 0,
+					totalMembers: Array.isArray(t.members) ? t.members.length : 0,
+					adminCount: Array.isArray(t.adminIDs) ? t.adminIDs.length : 0,
+					adminIDs: t.adminIDs || [],
+					approvalMode: Boolean(t.approvalMode),
+					emoji: t.emoji || "👍",
+					imageSrc: t.imageSrc || null,
+					isGroup: t.isGroup !== false && String(t.threadID).length > 14
 				}))
 			});
+		})
+		.get("/users-list", async (req, res) => {
+			try {
+				const users = await usersData.getAll();
+				const adminBots = global.GoatBot?.config?.adminBot || [];
+				const devBots = global.GoatBot?.config?.developerBot || [];
+
+				res.json({
+					status: "success",
+					total: users.length,
+					users: users.slice(0, 100).map(u => {
+						const exp = typeof u.data?.exp === "number" ? u.data.exp : (typeof u.exp === "number" ? u.exp : 0);
+						const money = typeof u.data?.money === "number" ? u.data.money : (typeof u.money === "number" ? u.money : 0);
+						const level = Math.floor((1 + Math.sqrt(1 + 8 * exp / 5)) / 2);
+						const isAdmin = adminBots.includes(u.userID) || devBots.includes(u.userID);
+
+						return {
+							userID: u.userID,
+							name: u.name || "Facebook User",
+							gender: u.gender || "UNKNOWN",
+							money,
+							exp,
+							level,
+							isAdmin,
+							role: isAdmin ? "Bot Admin" : "Standard User"
+						};
+					})
+				});
+			} catch (err) {
+				res.status(500).json({ status: "error", message: err.message });
+			}
+		})
+		.post("/control/toggle-bot-mode", async (req, res) => {
+			try {
+				const botObj = global.FloppaBot || global.GoatBot;
+				if (botObj?.config) {
+					botObj.config.botOff = !botObj.config.botOff;
+					const configPath = global.client?.dirConfig || path.join(process.cwd(), "config.json");
+					await fs.writeJSON(configPath, botObj.config, { spaces: 2 });
+					return res.json({
+						status: "success",
+						botOff: botObj.config.botOff,
+						message: botObj.config.botOff ? "Bot set to Admin-Only mode." : "Bot set to Public Online mode."
+					});
+				}
+				res.status(400).json({ status: "error", message: "Bot configuration unavailable" });
+			} catch (err) {
+				res.status(500).json({ status: "error", message: err.message });
+			}
 		})
 		.post("/control/reload-commands", async (req, res) => {
 			try {
@@ -395,7 +462,8 @@ module.exports = function ({ isAuthenticated, isVeryfiUserIDFacebook, checkHasAn
 					delete require.cache[require.resolve(p)];
 					const cmdMod = require(p);
 					if (cmdMod?.config?.name) {
-						global.FloppaBot?.commands?.set(cmdMod.config.name, cmdMod);
+						if (global.GoatBot?.commands) global.GoatBot.commands.set(cmdMod.config.name, cmdMod);
+						if (global.FloppaBot?.commands) global.FloppaBot.commands.set(cmdMod.config.name, cmdMod);
 						reloadedCount++;
 					}
 				}

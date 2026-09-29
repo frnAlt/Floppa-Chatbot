@@ -22,7 +22,7 @@
 	<div class="bg-300 rounded-5 py-4 px-4 mt-2" role="button" onclick="window.location.href='/dashboard/<%= threadID %>/welcome'">
 		<div class="row justify-content-between">
 			<div class="col-auto">
-				<h4>👋 Welcome</h4>
+				<h4>👋 Welcome Message</h4>
 			</div>
 			<div class="col-auto">
 				<label class="switch">
@@ -33,13 +33,13 @@
 				</label>
 			</div>
 		</div>
-		<p class="text-700 lead fs-1 ms-2 mb-0">Gửi tin nhắn chào mừng thành viên mới!</p>
+		<p class="text-700 lead fs-1 ms-2 mb-0">Send greeting messages when new members join the group!</p>
 	</div>
 
 	<div class="bg-300 rounded-5 py-4 px-4 mt-2" role="button" onclick="window.location.href='/dashboard/<%= threadID %>/leave'">
 		<div class="row justify-content-between">
 			<div class="col-auto">
-				<h4>🤧 Leave</h4>
+				<h4>🤧 Farewell & Leave</h4>
 			</div>
 			<div class="col-auto">
 				<label class="switch">
@@ -50,13 +50,13 @@
 				</label>
 			</div>
 		</div>
-		<p class="text-700 lead fs-1 ms-2 mb-0">Gửi tin nhắn tạm biệt thành viên rời khỏi nhóm!</p>
+		<p class="text-700 lead fs-1 ms-2 mb-0">Send goodbye messages when members leave or are removed from the group!</p>
 	</div>
 
 	<div class="bg-300 rounded-5 py-4 px-4 mt-2" role="button" onclick="window.location.href='/dashboard/<%= threadID %>/rankup'">
 		<div class="row justify-content-between">
 			<div class="col-auto">
-				<h4>🏆 Rankup</h4>
+				<h4>🏆 Level & Rankup</h4>
 			</div>
 			<div class="col-auto">
 				<label class="switch">
@@ -67,13 +67,13 @@
 				</label>
 			</div>
 		</div>
-		<p class="text-700 lead fs-1 ms-2 mb-0">Gửi tin nhắn thông báo thăng cấp!</p>
+		<p class="text-700 lead fs-1 ms-2 mb-0">Send celebratory announcements when members level up their activity rank!</p>
 	</div>
 
 	<div class="bg-300 rounded-5 py-4 px-4 mt-2" role="button" onclick="window.location.href='/dashboard/<%= threadID %>/custom-cmd'">
 		<div class="row justify-content-between">
 			<div class="col-auto">
-				<h4>⚙️ Custom command</h4>
+				<h4>⚙️ Custom Commands</h4>
 			</div>
 			<div class="col-auto">
 				<label class="switch">
@@ -84,11 +84,13 @@
 				</label>
 			</div>
 		</div>
-		<p class="text-700 lead fs-1 ms-2 mb-0">Tùy chỉnh lệnh của bot!</p>
+		<p class="text-700 lead fs-1 ms-2 mb-0">Configure group-specific command triggers, aliases, and permissions!</p>
 	</div>
 
 	<input type="hidden" name="threadID" value="<%= threadID %>">
-	<button type="submit" id="save" class="mt-2 btn btn-primary btn-block" <%=authConfigDashboard ? '' : 'disabled'%>>Lưu</button>
+	<button type="submit" id="save" class="mt-3 btn btn-primary btn-block w-100" <%=authConfigDashboard ? '' : 'disabled'%>>
+		<i class="fas fa-floppy-disk me-1"></i> Save Changes
+	</button>
 
 </form>
 
@@ -114,29 +116,29 @@
           $.createToast({
             title: "Success",
             type: "success",
-            message: "Cập nhật thành công!"
+            message: "Group settings updated successfully!"
           })
         },
         error: function(err) {
           $.createToast({
-            title: "Lỗi",
+            title: "Error",
             type: "error",
-            message: "Đã xảy ra lỗi!"
+            message: "An error occurred while saving settings!"
           })
         }
       });
       '<% } else { %>'
       e.preventDefault();
       $.createToast({
-        title: "Warnig",
-        message: "[!] Chỉ quản trị viên của nhóm chat hoặc những thành viên được cho phép mới có thể chỉnh sửa dashboard",
+        title: "Warning",
+        message: "[!] Only group chat administrators or authorized members can modify dashboard settings.",
         type: "warning",
       })
       '<% } %>'
     });
   })();
 
-	// kiểm tra nếu click vào input thì không chuyển trang
+	// Prevent navigation when toggling switches
 	$("[type='checkbox']").on("click", function(e) {
 		e.stopPropagation();
 	});
