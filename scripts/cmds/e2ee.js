@@ -33,9 +33,15 @@ module.exports = {
         await api.setMessageReaction("🔒", event.messageID, () => {}, true).catch(() => {});
 
         // 2. Show typing indicator for 5 seconds
-        await api.sendTypingIndicator(true, event.threadID, () => {}).catch(() => {});
+        try {
+            const t1 = api.sendTypingIndicator(true, event.threadID, () => {});
+            if (t1 && typeof t1.catch === "function") t1.catch(() => {});
+        } catch (_) {}
         await new Promise(resolve => setTimeout(resolve, 5000));
-        await api.sendTypingIndicator(false, event.threadID, () => {}).catch(() => {});
+        try {
+            const t2 = api.sendTypingIndicator(false, event.threadID, () => {});
+            if (t2 && typeof t2.catch === "function") t2.catch(() => {});
+        } catch (_) {}
 
         // 3. Send the interactive test message
         const sentInfo = await message.reply(getLang("testMsg"));

@@ -107,6 +107,9 @@ module.exports = {
 				+ '\n   {pn} <uid>: Fetch profile picture from UID'
 				+ '\n   {pn} <profile_link>: Fetch profile picture from Facebook link'
 				+ '\n   (Or reply to someone\'s message and type {pn})'
+		},
+		envConfig: {
+			enable: false
 		}
 	},
 
@@ -269,15 +272,25 @@ module.exports = {
 				return s;
 			};
 
+			const pfpEnv = global.GoatBot?.configCommands?.envCommands?.pfp;
+			const showExtraText = pfpEnv?.enable === true || pfpEnv?.showText === true;
+
+			const replyPayload = {
+				attachment: createStream()
+			};
+			if (showExtraText) {
+				replyPayload.body = getLang("success", userName);
+			}
+
 			const replyAction = async () => {
 				try {
-					return await message.reply({
-						body: getLang("success", userName),
-						attachment: createStream()
-					});
+					return await message.reply(replyPayload);
 				} catch (sendErr) {
-					console.warn("[PFP] Attachment send failed, falling back to text reply:", sendErr.message);
-					return await message.reply(getLang("success", userName));
+					console.warn("[PFP] Attachment send failed:", sendErr.message);
+					if (showExtraText) {
+						return await message.reply(getLang("success", userName));
+					}
+					throw sendErr;
 				}
 			};
 
@@ -286,8 +299,12 @@ module.exports = {
 				if (t.unref) t.unref();
 			});
 
-			await Promise.race([replyAction(), timeoutPromise]).catch(async () => {
-				await message.reply(getLang("success", userName)).catch(() => {});
+			await Promise.race([replyAction(), timeoutPromise]).catch(async (e) => {
+				if (showExtraText) {
+					await message.reply(getLang("success", userName)).catch(() => {});
+				} else {
+					await message.reply(getLang("error", "Attachment upload timed out or failed")).catch(() => {});
+				}
 			});
 
 			if (api?.setMessageReaction) {

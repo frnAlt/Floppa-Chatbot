@@ -1,24 +1,26 @@
 const axios = require("axios");
 const fs = require("fs-extra");
 const path = require("path");
+const aiCore = require("../../system/ai-core.js");
 
 module.exports = {
   config: {
     name: "metaai",
-    aliases: ["meta", "llama", "ai"],
-    version: "2.5pro",
+    aliases: ["meta", "llama", "meta-ai"],
+    version: "2.6pro",
     author: "frnAlt",
     countDown: 5,
     role: 0,
-    shortDescription: { en: "Advanced Meta AI" },
-    longDescription: { en: "Chat with Meta AI and edit/generate images." },
+    noPrefix: "both",
+    shortDescription: { en: "Meta AI Assistant" },
+    longDescription: { en: "Chat with Meta LLaMA / Meta AI assistant with multi-engine failover." },
     category: "ai",
-    guide: { en: "{pn} <prompt> or reply to an image" }
+    guide: { en: "{pn} <prompt> or reply to an image with {pn} <prompt>" }
   },
 
   onStart: async function ({ message, args, event, api, commandName }) {
-    const { type, messageReply } = event;
-    let prompt = args.join(" ");
+    const { messageReply } = event;
+    let prompt = args.join(" ").trim();
     let imageUrl = null;
 
     if (global.utils && typeof global.utils.extractImageUrl === "function") {
@@ -41,7 +43,7 @@ module.exports = {
     if (!prompt) return;
 
     if (prompt.toLowerCase() === "clear") {
-      api.setMessageReaction("🧹", event.messageID);
+      if (api && api.setMessageReaction) api.setMessageReaction("🧹", event.messageID, () => {}, true);
       return message.reply("Context cleared.");
     }
 
@@ -60,41 +62,69 @@ module.exports = {
   },
 
   handleMetaChat: async function ({ message, event, api, prompt, imageUrl, commandName, history }) {
-    api.setMessageReaction("⏳", event.messageID);
+    if (api && api.setMessageReaction) {
+      api.setMessageReaction("⏳", event.messageID, () => {}, true);
+    }
     const cacheDir = path.join(__dirname, "cache");
     await fs.ensureDir(cacheDir);
     const paths = [];
 
     try {
-      const params = {
-        message: prompt || "Analyze this image",
-        new_conversation: history ? "false" : "true"
-      };
+      let replyText = "";
+      let image_urls = [];
+      let conversation_id = history || `meta_${event.senderID}`;
 
-      if (history) params.conversation_id = history;
-      if (imageUrl) params.img_url = imageUrl;
+      // 1. Try Meta endpoint if online
+      try {
+        const params = {
+          message: prompt || "Analyze this image",
+          new_conversation: history ? "false" : "true"
+        };
+        if (history) params.conversation_id = history;
+        if (imageUrl) params.img_url = imageUrl;
 
-      const response = await axios.get("https://metakexbyneokex.vercel.app/chat", { params });
-      const { success, message: replyText, image_urls, conversation_id } = response.data;
+        const response = await axios.get("https://metakexbyneokex.vercel.app/chat", { params, timeout: 8000 });
+        if (response.data && response.data.success) {
+          replyText = response.data.message;
+          image_urls = response.data.image_urls || [];
+          conversation_id = response.data.conversation_id || conversation_id;
+        }
+      } catch (_) {
+        // Fallback to AI Core
+      }
 
-      if (!success) throw new Error("API process failed");
+      // 2. High-speed AI Core Failover
+      if (!replyText) {
+        const contextId = `meta_${event.threadID}_${event.senderID}`;
+        replyText = await aiCore.generateCompletion({
+          prompt: imageUrl ? `${prompt || "Analyze this"}\nImage: ${imageUrl}` : prompt,
+          contextId,
+          image: imageUrl
+        });
+      }
 
-      let sendData = { body: replyText };
+      if (!replyText) {
+        throw new Error("Could not retrieve a response from Meta AI services.");
+      }
+
+      let sendData = { body: `🤖 [Meta AI]\n\n${replyText}` };
 
       if (image_urls && image_urls.length > 0) {
         const attachment = [];
         for (let i = 0; i < image_urls.length; i++) {
-          const imgPath = path.join(cacheDir, `meta_${Date.now()}_${i}.png`);
-          const imgRes = await axios.get(image_urls[i], { responseType: "arraybuffer" });
-          await fs.writeFile(imgPath, Buffer.from(imgRes.data));
-          attachment.push(fs.createReadStream(imgPath));
-          paths.push(imgPath);
+          try {
+            const imgPath = path.join(cacheDir, `meta_${Date.now()}_${i}.png`);
+            const imgRes = await axios.get(image_urls[i], { responseType: "arraybuffer", timeout: 8000 });
+            await fs.writeFile(imgPath, Buffer.from(imgRes.data));
+            attachment.push(fs.createReadStream(imgPath));
+            paths.push(imgPath);
+          } catch (_) {}
         }
-        sendData.attachment = attachment;
+        if (attachment.length > 0) sendData.attachment = attachment;
       }
 
       message.reply(sendData, (err, info) => {
-        if (!err) {
+        if (!err && info?.messageID) {
           global.GoatBot.onReply.set(info.messageID, {
             commandName,
             messageID: info.messageID,
@@ -105,11 +135,15 @@ module.exports = {
         paths.forEach(p => fs.remove(p).catch(() => {}));
       });
 
-      api.setMessageReaction("👍", event.messageID);
+      if (api && api.setMessageReaction) {
+        api.setMessageReaction("👍", event.messageID, () => {}, true);
+      }
 
     } catch (error) {
-      api.setMessageReaction("👎", event.messageID);
-      message.reply(`❌ Error: ${error.message}`);
+      if (api && api.setMessageReaction) {
+        api.setMessageReaction("👎", event.messageID, () => {}, true);
+      }
+      message.reply(`❌ Meta AI Error: ${error.message}`);
       paths.forEach(p => fs.remove(p).catch(() => {}));
     }
   }

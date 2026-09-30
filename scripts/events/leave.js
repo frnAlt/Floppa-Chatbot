@@ -44,6 +44,10 @@ module.exports = {
 			if (String(leftParticipantFbId) === botID)
 				return;
 
+			const getTime = global.utils?.getTime || (() => String(new Date().getHours()));
+			const getStreamFromURL = global.utils?.getStreamFromURL;
+			const drive = global.utils?.drive;
+
 			const hours = +getTime("HH");
 			const session =
 				hours < 10 ? getLang("session1") :
@@ -106,8 +110,11 @@ module.exports = {
 					}
 				} catch (_) {}
 			}
-
-			message.send(form);
+			try {
+				await message.send(form);
+			} catch (e) {
+				console.warn("[LEAVE_EVENT] Failed to send leave message:", e.message || e);
+			}
 		};
 	}
 };

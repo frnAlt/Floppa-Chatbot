@@ -393,7 +393,12 @@ function message(api, event) {
                                 const typingConfig = global.GoatBot?.config?.typingIndicator;
                                 const typingEnabled = !resolvedIsGroup || typingConfig === true || (typeof typingConfig === 'object' && typingConfig?.enable === true);
                                 if (typingEnabled && (typeof form === 'string' || form?.body) && typeof api?.sendTypingIndicator === 'function') {
-                                        api.sendTypingIndicator(true, event.threadID).catch(() => {});
+                                        try {
+                                                const typingRes = api.sendTypingIndicator(true, event.threadID);
+                                                if (typingRes && typeof typingRes.catch === 'function') {
+                                                        typingRes.catch(() => {});
+                                                }
+                                        } catch (_) {}
                                 }
 
                                 const cb = typeof callback === 'function' ? callback : undefined;
@@ -468,7 +473,12 @@ function message(api, event) {
                                 const typingConfig = global.GoatBot?.config?.typingIndicator;
                                 const typingEnabled = !resolvedIsGroup || typingConfig === true || (typeof typingConfig === 'object' && typingConfig?.enable === true);
                                 if (typingEnabled && (typeof form === 'string' || form?.body) && typeof api?.sendTypingIndicator === 'function') {
-                                        api.sendTypingIndicator(true, event.threadID).catch(() => {});
+                                        try {
+                                                const typingRes = api.sendTypingIndicator(true, event.threadID);
+                                                if (typingRes && typeof typingRes.catch === 'function') {
+                                                        typingRes.catch(() => {});
+                                                }
+                                        } catch (_) {}
                                 }
 
                                 const cb = typeof callback === 'function' ? callback : undefined;
@@ -1245,6 +1255,8 @@ const utils = {
         shortenURL,
         uploadZippyshare,
         uploadImgbb,
+        getAvatarUrl: require("./func/canvasHelper.js").getAvatarUrl,
+        fetchAvatarBuffer: require("./func/canvasHelper.js").fetchAvatarBuffer,
 
         GoatBotApis,
         sendMessageToUser: async (api, targetUID, form, callback) => {

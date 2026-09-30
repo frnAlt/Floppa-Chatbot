@@ -224,6 +224,25 @@ module.exports = async function (databaseType, userModel, api, fakeGraphql) {
                         return "https://i.ibb.co/bBSpr5v/143086968-2856368904622192-1959732218791162458-n.png";
                 }
                 const cleanID = String(userID).replace(/(fb)?id[:.]/, "").trim();
+                if (!cleanID || isNaN(cleanID) || cleanID === "0") {
+                        return "https://i.ibb.co/bBSpr5v/143086968-2856368904622192-1959732218791162458-n.png";
+                }
+                const existing = global.db?.allUserData?.find(u => u.userID == cleanID);
+                if (existing?.avatar && !existing.avatar.includes("graph.facebook.com") && !existing.avatar.includes("UlIqmHJn-SK.gif")) {
+                        return existing.avatar;
+                }
+                if (api && typeof api.getUserInfo === "function") {
+                        try {
+                                const fetchPromise = api.getUserInfo(cleanID);
+                                const timeoutPromise = new Promise((_, rej) => setTimeout(() => rej(new Error("Timeout")), 1500));
+                                const info = await Promise.race([fetchPromise, timeoutPromise]);
+                                const directUrl = info?.[cleanID]?.thumbSrc || info?.[cleanID]?.profilePicUrl;
+                                if (directUrl && !directUrl.includes("graph.facebook.com") && !directUrl.includes("UlIqmHJn-SK.gif")) {
+                                        if (existing) existing.avatar = directUrl;
+                                        return directUrl;
+                                }
+                        } catch (_) {}
+                }
                 return `https://graph.facebook.com/${cleanID}/picture?width=720&height=720&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`;
         }
 

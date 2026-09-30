@@ -1,80 +1,92 @@
 const axios = require("axios");
-const fs = require("fs");
-const path = require("path");
-
-const mahmhd = async () => {
-  const base = await axios.get("https://raw.githubusercontent.com/mahmudx7/exe/main/baseApiUrl.json");
-  return base.data.mahmud;
-};
+const { getAvatarUrl } = require("../../func/canvasHelper.js");
 
 module.exports = {
   config: {
     name: "fakechat",
-    aliases: ["fc", "fake"],
-    version: "2.4.70",
+    aliases: ["fc", "fake", "fakemsg"],
+    version: "3.0.0",
     author: "frnAlt",
     role: 0,
     category: "fun",
-    description: "Generate fake chat via reply, mention, or user uid",
+    description: "Generate realistic fake chat / prank message for reply, mention, or UID",
+    guide: "{p}fakechat @mention <text>\n{p}fakechat (reply) <text>\n{p}fakechat <uid> <text>",
     countDown: 5,
   },
-  
-  ST: async ({ event, message, args, usersData, api }) => {
-    const obfuscatedAuthor = String.fromCharCode(77, 97, 104, 77, 85, 68); // "MahMUD"
-    if (module.exports.config.author !== obfuscatedAuthor) {
-      return api.sendMessage(
-        "❌ | You are not authorized to change the author name.",
-        event.threadID,
-        event.messageID
-      );
-    }
-    
+
+  onStart: async ({ event, message, args, usersData, api }) => {
     try {
-      let targetId;
+      if (api?.setMessageReaction) {
+        api.setMessageReaction("💬", event.messageID, () => {}, true);
+      }
+
+      let targetId = null;
       let userText = args.join(" ").trim();
-      
-      if (event.messageReply) {
-        targetId = event.messageReply.senderID || event.messageReply.sender?.id;
-      } else if (event.mentions && Object.keys(event.mentions).length > 0) {
+
+      if (event.mentions && Object.keys(event.mentions).length > 0) {
         targetId = Object.keys(event.mentions)[0];
         const mentionName = event.mentions[targetId];
         userText = args.join(" ").replace(new RegExp(`@?${mentionName}`, "gi"), "").trim();
+      } else if (event.messageReply) {
+        targetId = event.messageReply.senderID || event.messageReply.sender?.id;
       } else if (args.length > 0 && /^\d+$/.test(args[0])) {
         targetId = args[0];
         userText = args.slice(1).join(" ").trim();
       } else {
-        return message.reply("❌ Please reply, mention, or provide user uid.");
+        targetId = event.senderID;
       }
-      
-      if (!userText) return message.reply("❌ Please provide the text for the fake chat.");
-      
-      let userName = "Unknown";
+
+      if (!userText) {
+        if (event.messageReply?.body) {
+          userText = event.messageReply.body;
+        } else {
+          return message.reply("❌ Please provide text for the fake chat!\nUsage: fakechat @mention <text>");
+        }
+      }
+
+      let userName = "Facebook User";
       try {
-        userName = (await usersData.getName(targetId)) || targetId;
-      } catch {
-        userName = targetId;
-      }
-      
-      const baseApi = await mahmhd();
-      const apiUrl = `${baseApi}/api/fakechat?id=${targetId}&name=${encodeURIComponent(
-        userName
-      )}&text=${encodeURIComponent(userText)}`;
-      
-      const response = await axios.get(apiUrl, { responseType: "arraybuffer" });
-      const filePath = path.join(__dirname, `fakechat_${Date.now()}.png`);
-      fs.writeFileSync(filePath, Buffer.from(response.data, "binary"));
-      
+        if (usersData?.getName) {
+          userName = (await usersData.getName(targetId).catch(() => null)) || userName;
+        }
+        if (userName === "Facebook User" && api?.getUserInfo) {
+          const info = await api.getUserInfo(targetId);
+          if (info?.[targetId]?.name) userName = info[targetId].name;
+        }
+      } catch (_) {}
+
+      const avatar = getAvatarUrl(targetId);
+
+      // Render via Toshiro high-accuracy canvas API
+      const params = new URLSearchParams({
+        text: userText,
+        name: userName,
+        avatar: avatar,
+        verified: "false",
+        time: "5m",
+        likes: "128",
+        comments: "14",
+        shares: "2",
+        theme: "dark"
+      }).toString();
+
+      const apiUrl = `https://toshiro-api-editz6t9.vercel.app/api/canvas/fbpost?${params}`;
+      const stream = await global.utils.getStreamFromURL(apiUrl, `fakechat_${targetId}.png`, { timeout: 25000 });
+
       await message.reply({
-        body: `🗨️ Fake chat generated for: ${userName}`,
-        attachment: fs.createReadStream(filePath),
+        body: `🗨️ Fake chat / post generated for: ${userName}`,
+        attachment: stream
       });
-      
-      setTimeout(() => {
-        try { fs.unlinkSync(filePath); } catch {}
-      }, 5000);
-    } catch {
-      await message.reply("🥹error, contact MahMUD.");
+
+      if (api?.setMessageReaction) {
+        api.setMessageReaction("👍", event.messageID, () => {}, true);
+      }
+    } catch (err) {
+      console.error("[FAKECHAT ERROR]:", err);
+      if (api?.setMessageReaction) {
+        api.setMessageReaction("👎", event.messageID, () => {}, true);
+      }
+      return message.reply(`❌ Failed to generate fake chat: ${err.message || err}`);
     }
-  },
+  }
 };
-module.exports.onStart = module.exports.ST;

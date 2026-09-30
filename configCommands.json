@@ -25,6 +25,9 @@
     },
     "dhbc": {
       "reward": 1000
+    },
+    "pfp": {
+      "enable": false
     }
   },
   "envEvents": {
@@ -32,7 +35,5 @@
       "allow": true
     }
   },
-  "commandUnload": [
-    "alldl.js"
-  ]
+  "commandUnload": []
 }

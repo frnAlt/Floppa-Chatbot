@@ -129,9 +129,97 @@ async function renderJailEffect(imageSource) {
   return canvas.toBuffer("image/png");
 }
 
+const FB_CLIENT_TOKEN = "6628568379%7Cc1e620fa708a1d5696fb991c1bde5662";
+const DEFAULT_AVATAR = "https://i.ibb.co/bBSpr5v/143086968-2856368904622192-1959732218791162458-n.png";
+
+function getAvatarUrl(uid, options = {}) {
+  const cleanID = String(uid || "").replace(/(fb)?id[:.]/, "").trim();
+  if (!cleanID || isNaN(cleanID) || cleanID === "0") {
+    return DEFAULT_AVATAR;
+  }
+  const cached = global.db?.allUserData?.find(u => u.userID == cleanID);
+  if (cached?.avatar && !cached.avatar.includes("graph.facebook.com") && !cached.avatar.includes("UlIqmHJn-SK.gif")) {
+    return cached.avatar;
+  }
+  const token = options.token || FB_CLIENT_TOKEN;
+  const size = options.size || 720;
+  return `https://graph.facebook.com/${cleanID}/picture?width=${size}&height=${size}&access_token=${token}`;
+}
+
+async function fetchAvatarBuffer(uid, options = {}) {
+  const axios = require("axios");
+  const cleanID = String(uid || "").replace(/(fb)?id[:.]/, "").trim();
+  if (!cleanID || isNaN(cleanID) || cleanID === "0") {
+    try {
+      const res = await axios.get(DEFAULT_AVATAR, { responseType: "arraybuffer", timeout: 5000 });
+      return Buffer.from(res.data);
+    } catch (_) {
+      return Buffer.alloc(0);
+    }
+  }
+
+  // 1. Try FCA getUserInfo if api is available
+  const api = options.api || global.api;
+  if (api && typeof api.getUserInfo === "function") {
+    try {
+      const info = await api.getUserInfo(cleanID);
+      const directUrl = info?.[cleanID]?.thumbSrc || info?.[cleanID]?.profilePicUrl;
+      if (directUrl && !directUrl.includes("UlIqmHJn-SK.gif")) {
+        const res = await axios.get(directUrl, {
+          responseType: "arraybuffer",
+          timeout: 5000,
+          validateStatus: s => s === 200
+        });
+        const buf = Buffer.from(res.data);
+        if (buf.length > 1000) return buf;
+      }
+    } catch (_) {}
+  }
+
+  // 2. Try Graph API endpoints
+  const urls = [
+    `https://graph.facebook.com/${cleanID}/picture?width=720&height=720&access_token=${FB_CLIENT_TOKEN}`,
+    `https://graph.facebook.com/${cleanID}/picture?width=720&height=720`,
+    `https://graph.facebook.com/${cleanID}/picture?type=large`
+  ];
+
+  for (const u of urls) {
+    try {
+      const res = await axios.get(u, {
+        responseType: "arraybuffer",
+        maxRedirects: 5,
+        timeout: 5000,
+        validateStatus: s => s === 200,
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36"
+        }
+      });
+      const buf = Buffer.from(res.data);
+      const finalUrl = res.request?.res?.responseUrl || "";
+      const contentType = (res.headers["content-type"] || "").toLowerCase();
+      if (buf.length <= 1000) continue;
+      if (finalUrl.includes("static.xx.fbcdn.net/rsrc.php")) continue;
+      if (contentType.includes("image/gif") && buf.length < 5000) continue;
+      return buf;
+    } catch (_) {}
+  }
+
+  // 3. Fallback to default avatar image
+  try {
+    const res = await axios.get(DEFAULT_AVATAR, { responseType: "arraybuffer", timeout: 5000 });
+    return Buffer.from(res.data);
+  } catch (_) {
+    return Buffer.alloc(0);
+  }
+}
+
 module.exports = {
   createCanvas,
   loadImage,
   isCanvasAvailable,
-  renderJailEffect
+  renderJailEffect,
+  getAvatarUrl,
+  fetchAvatarBuffer,
+  FB_CLIENT_TOKEN,
+  DEFAULT_AVATAR
 };
