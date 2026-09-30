@@ -6,7 +6,7 @@ const { createCanvas, loadImage, isCanvasAvailable, fetchAvatarBuffer, getAvatar
 module.exports = {
   config: {
     name: "hack",
-    aliases: ["fbhack", "hacked", "hackprank"],
+    aliases: ["fbhack", "hacked", "hck"],
     version: "2.0.0",
     author: "frnAlt",
     description: "Create a fake hacked image / canvas prank for mentioned user or sender",
