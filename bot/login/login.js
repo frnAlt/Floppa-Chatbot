@@ -271,6 +271,8 @@ function printBackendTelemetryCard(data) {
 }
 
 const clearLines = (n) => {
+        if (typeof process.stdout.moveCursor !== "function" || typeof process.stdout.clearLine !== "function" || typeof process.stdout.cursorTo !== "function")
+                return;
         for (let i = 0; i < n; i++) {
                 const y = i === 0 ? null : -1;
                 process.stdout.moveCursor(0, y);
@@ -1755,7 +1757,7 @@ async function startBot(loginWithEmail) {
                                         }
                                         try {
                                                 await stopListening();
-                                                await sleep(1000);
+                                                await sleep(Number(restartListenMqtt.delayAfterStopListening) > 0 ? Number(restartListenMqtt.delayAfterStopListening) : 1000);
                                                 global.GoatBot.Listening = api.listenMqtt(createCallBackListen());
                                                 log.info("LISTEN_MQTT", getText('login', 'restartListenMessage2'));
                                         }

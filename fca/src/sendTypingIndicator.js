@@ -54,27 +54,51 @@ module.exports = function (defaultFuncs, api, ctx) {
     }
   }
 
-  return function sendTypingIndicator(threadID, callback, isGroup) {
+  return function sendTypingIndicator(arg1, arg2, arg3, arg4) {
+    var typ = true;
+    var threadID = arg1;
+    var callback = arg2;
+    var isGroup = arg3;
+
+    if (typeof arg1 === "boolean") {
+      typ = arg1;
+      threadID = arg2;
+      callback = typeof arg3 === "function" ? arg3 : () => {};
+      isGroup = arg4;
+    } else if (typeof arg2 === "boolean") {
+      threadID = arg1;
+      typ = arg2;
+      callback = typeof arg3 === "function" ? arg3 : () => {};
+      isGroup = arg4;
+    }
+
     if (
       utils.getType(callback) !== "Function" &&
       utils.getType(callback) !== "AsyncFunction"
     ) {
-      if (callback) log.warn("sendTypingIndicator", "callback is not a function - ignoring.");
-      callback = () => { };
+      callback = () => {};
     }
 
-    makeTypingIndicator(true, threadID, callback, isGroup);
+    makeTypingIndicator(typ, threadID, callback, isGroup);
 
-    return function end(cb) {
+    function end(cb) {
       if (
         utils.getType(cb) !== "Function" &&
         utils.getType(cb) !== "AsyncFunction"
       ) {
-        if (cb) log.warn("sendTypingIndicator", "callback is not a function - ignoring.");
-        cb = () => { };
+        cb = () => {};
       }
-
       makeTypingIndicator(false, threadID, cb, isGroup);
+    }
+
+    end.then = function (resolve) {
+      if (typeof resolve === "function") resolve(end);
+      return end;
     };
+    end.catch = function () {
+      return end;
+    };
+
+    return end;
   };
 };

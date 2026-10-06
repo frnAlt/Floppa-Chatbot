@@ -283,7 +283,31 @@ module.exports = async function (databaseType, threadModel, api, fakeGraphql) {
                                 resolve_(_.cloneDeep(threadData));
                         }
                         catch (err) {
-                                reject_(err);
+                                if (err && (err.name == "SequelizeUniqueConstraintError" || (err.name == "MongoServerError" && err.code == 11000))) {
+                                        let existing = null;
+                                        try {
+                                                if (threadModel && typeof threadModel.findOne == "function") {
+                                                        const row = await threadModel.findOne({ where: { threadID } });
+                                                        if (row) {
+                                                                existing = row.get ? row.get({ plain: true }) : row;
+                                                                if (!global.db.allThreadData.some(t => t.threadID == threadID))
+                                                                        global.db.allThreadData.push(existing);
+                                                        }
+                                                }
+                                        }
+                                        catch (_) {
+                                                existing = null;
+                                        }
+                                        if (existing)
+                                                resolve_(_.cloneDeep(existing));
+                                        else
+                                                reject_(new CustomError({
+                                                        name: "DATA_ALREADY_EXISTS",
+                                                        message: `Thread with id "${threadID}" already exists in the data`
+                                                }));
+                                }
+                                else
+                                        reject_(err);
                         }
                         creatingThreadData.splice(creatingThreadData.findIndex(t => t.threadID == threadID), 1);
                 });

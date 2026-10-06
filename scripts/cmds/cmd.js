@@ -326,11 +326,11 @@ function loadScripts(folder, fileName, log, configCommands, api, threadModel, us
 							}, 80);
 							execSync(`npm install ${packageName} --save`, { stdio: "pipe" });
 							clearInterval(wating);
-							process.stderr.clearLine();
+							if (typeof process.stderr.clearLine === "function") process.stderr.clearLine();
 						}
 						catch (error) {
 							clearInterval(wating);
-							process.stderr.clearLine();
+							if (typeof process.stderr.clearLine === "function") process.stderr.clearLine();
 							throw new Error(`Can't install package ${packageName}`);
 						}
 					}

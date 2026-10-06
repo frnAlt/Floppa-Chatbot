@@ -290,7 +290,31 @@ module.exports = async function (databaseType, userModel, api, fakeGraphql) {
                                 resolve_(_.cloneDeep(userData));
                         }
                         catch (err) {
-                                reject_(err);
+                                if (err && (err.name == "SequelizeUniqueConstraintError" || (err.name == "MongoServerError" && err.code == 11000))) {
+                                        let existing = null;
+                                        try {
+                                                if (userModel && typeof userModel.findOne == "function") {
+                                                        const row = await userModel.findOne({ where: { userID } });
+                                                        if (row) {
+                                                                existing = row.get ? row.get({ plain: true }) : row;
+                                                                if (!global.db.allUserData.some(u => u.userID == userID))
+                                                                        global.db.allUserData.push(existing);
+                                                        }
+                                                }
+                                        }
+                                        catch (_) {
+                                                existing = null;
+                                        }
+                                        if (existing)
+                                                resolve_(_.cloneDeep(existing));
+                                        else
+                                                reject_(new CustomError({
+                                                        name: "DATA_ALREADY_EXISTS",
+                                                        message: `User with id "${userID}" already exists in the data`
+                                                }));
+                                }
+                                else
+                                        reject_(err);
                         }
                         creatingUserData.splice(creatingUserData.findIndex(u => u.userID == userID), 1);
                 });

@@ -390,8 +390,10 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         global.db.receivedTheFirstMessage[threadID] = true;
                 }
                 else {
+                        const isMessageEvent = event.type === "message" || event.type === "message_reply";
                         if (
                                 autoRefreshThreadInfoFirstTime === true
+                                && isMessageEvent
                                 && !global.db.receivedTheFirstMessage[threadID]
                                 && Boolean(isGroup)
                         ) {
@@ -923,15 +925,23 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                         global.systemMemoryDB.recordCommand(commandName, event, Date.now() - dateNow);
                                 }
 
-                                // React 👍 emoji ONLY on image and media-type commands / medialike output commands
-                                const isReactOff = global.GoatBot?.reactOff ?? (global.GoatBot?.config?.reactOff ?? false);
+                                // React emoji on issued commands based on config.json and bot.js settings
+                                const conf = global.GoatBot?.config || {};
+                                const cmdReaction = global.GoatBot?.commandReaction || conf.commandReaction || {};
+                                const isReactOff = global.GoatBot?.reactOff ?? (conf.reactOff ?? false);
+                                const isReactionEnabled = (cmdReaction.enable !== undefined ? Boolean(cmdReaction.enable) : !isReactOff) && !isReactOff;
+                                const reactionMode = (cmdReaction.mode || conf.commandReactionMode || "media").toLowerCase();
+                                const reactionEmoji = cmdReaction.emoji || conf.commandReactionEmoji || "👍";
+
                                 const isMedia = outputtedMedia || isMediaCommand(command, commandName);
-                                if (isMedia && !isReactOff && !message?._syntaxErrorCalled) {
+                                const shouldReact = isReactionEnabled && !message?._syntaxErrorCalled && (reactionMode === "all" || (reactionMode === "media" && isMedia));
+
+                                if (shouldReact) {
                                         try {
                                                 if (typeof message?.reaction === "function") {
-                                                        await message.reaction("👍", event.messageID);
+                                                        await message.reaction(reactionEmoji, event.messageID);
                                                 } else if (typeof api?.setMessageReaction === "function" && event?.messageID) {
-                                                        api.setMessageReaction("👍", event.messageID, () => {}, true);
+                                                        api.setMessageReaction(reactionEmoji, event.messageID, () => {}, true);
                                                 }
                                         } catch (_) {}
                                 }

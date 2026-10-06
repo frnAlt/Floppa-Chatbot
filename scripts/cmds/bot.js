@@ -18,7 +18,7 @@ module.exports = {
       en: "Control bot state, group events & reactions (ON/OFF/STATE)"
     },
     longDescription: {
-      en: "Toggle overall bot availability, group event triggers (welcome, leave, join), or reaction feedback.\n• When Bot is OFF: Only Bot Admins can use commands. Non-admin commands are silently ignored.\n• When Events are OFF (-offeve): Group join, welcome, leave, and update event commands remain completely silent.\n• When Reactions are OFF (-offreact): The bot will not send reactions (👍/👎) to messages."
+      en: "Toggle overall bot availability, group event triggers (welcome, leave, join), or reaction feedback.\n• When Bot is OFF: Only Bot Admins can use commands. Non-admin commands are silently ignored.\n• When Events are OFF (-offeve): Group join, welcome, leave, and update event commands remain completely silent.\n• When Reactions are OFF (-offreact): The bot will not send reactions to messages.\n• You can customize the reaction emoji (e.g. 👍, ❤️, 🔥) and trigger mode (media only vs all commands)."
     },
     category: "admin",
     guide: {
@@ -28,6 +28,9 @@ module.exports = {
         + "• {pn} -oneve / {pn} event on : Turn group events ON (Enables welcome, leave & group triggers)\n"
         + "• {pn} -offreact / {pn} react off : Turn bot reactions OFF\n"
         + "• {pn} -onreact / {pn} react on : Turn bot reactions ON\n"
+        + "• {pn} react emoji <emoji> / {pn} react <emoji> : Set custom reaction emoji (e.g. {pn} react ❤️)\n"
+        + "• {pn} react mode <media|all> : Set reaction trigger mode (media = media commands only, all = all commands)\n"
+        + "• {pn} react reset : Reset reaction settings to defaults (ON, 👍, media)\n"
         + "• {pn} state : View live bot status, event status, reaction status, memory & uptime\n"
         + "\n💡 Shortcut commands:\n"
         + "• !on / !off : Directly toggle bot operational mode\n"
@@ -91,9 +94,11 @@ module.exports = {
       const eventStatus = (global.GoatBot?.eventsOff ?? config.eventsOff)
         ? "👎 OFF (Disabled by config)"
         : "👍 ON (Active)";
-      const reactStatus = (global.GoatBot?.reactOff ?? config.reactOff)
+      const cmdReact = global.GoatBot?.commandReaction || config.commandReaction || {};
+      const isReactOffCurrent = Boolean(global.GoatBot?.reactOff ?? config.reactOff);
+      const reactStatus = isReactOffCurrent
         ? "👎 OFF (Disabled by config)"
-        : "👍 ON (Hand emojis 👍/👎 active)";
+        : `👍 ON (Emoji: ${cmdReact.emoji || "👍"} | Mode: ${cmdReact.mode || "media"})`;
 
       const prefix = global.GoatBot?.config?.prefix || "!";
       const report =
@@ -126,65 +131,206 @@ System & Performance
     // ─── Bot Reactions Control ───────────────────────────────────────────────
     if (
       isOffReact ||
-      (firstArg === "react" && secondArg === "off") ||
-      (firstArg === "reaction" && secondArg === "off") ||
-      (firstArg === "reactions" && secondArg === "off") ||
-      (firstArg === "off" && ["react", "reaction", "reactions"].includes(secondArg))
-    ) {
-      await reactEmoji("👎");
-      global.GoatBot.reactOff = true;
-      if (global.GoatBot.config) global.GoatBot.config.reactOff = true;
-      if (global.FloppaBot) {
-        global.FloppaBot.reactOff = true;
-        if (global.FloppaBot.config) global.FloppaBot.config.reactOff = true;
-      }
-      try {
-        const conf = fs.readJsonSync(configPath);
-        conf.reactOff = true;
-        fs.writeJsonSync(configPath, conf, { spaces: 2 });
-      } catch (_) {}
-      return message.reply("👎 Bot reactions have been turned OFF.");
-    }
-
-    if (
       isOnReact ||
-      (firstArg === "react" && secondArg === "on") ||
-      (firstArg === "reaction" && secondArg === "on") ||
-      (firstArg === "reactions" && secondArg === "on") ||
+      ["react", "reaction", "reactions", "botreact"].includes(firstArg) ||
+      (firstArg === "off" && ["react", "reaction", "reactions"].includes(secondArg)) ||
       (firstArg === "on" && ["react", "reaction", "reactions"].includes(secondArg))
     ) {
-      global.GoatBot.reactOff = false;
-      if (global.GoatBot.config) global.GoatBot.config.reactOff = false;
-      if (global.FloppaBot) {
-        global.FloppaBot.reactOff = false;
-        if (global.FloppaBot.config) global.FloppaBot.config.reactOff = false;
+      // 1. Reset command reactions: !bot react reset
+      if (secondArg === "reset") {
+        const defaultReact = { enable: true, emoji: "👍", mode: "media" };
+        global.GoatBot.reactOff = false;
+        global.GoatBot.commandReaction = { ...defaultReact };
+        if (global.GoatBot.config) {
+          global.GoatBot.config.reactOff = false;
+          global.GoatBot.config.commandReaction = { ...defaultReact };
+        }
+        if (global.FloppaBot) {
+          global.FloppaBot.reactOff = false;
+          global.FloppaBot.commandReaction = { ...defaultReact };
+          if (global.FloppaBot.config) {
+            global.FloppaBot.config.reactOff = false;
+            global.FloppaBot.config.commandReaction = { ...defaultReact };
+          }
+        }
+        try {
+          const conf = fs.readJsonSync(configPath);
+          conf.reactOff = false;
+          conf.commandReaction = {
+            enable: true,
+            emoji: "👍",
+            mode: "media",
+            notes: "Controls bot reactions on issued commands. 'enable': true/false; 'emoji': reaction emoji (e.g. 👍, ❤️, 🔥, ✨); 'mode': 'media' (react only on image/media commands) or 'all' (react on all commands)."
+          };
+          fs.writeJsonSync(configPath, conf, { spaces: 2 });
+        } catch (_) {}
+        await reactEmoji("👍");
+        return message.reply("🔄 Bot command reactions have been reset to defaults:\n• Status: ON\n• Emoji: 👍\n• Mode: media (reacts to media/image commands only)");
       }
-      try {
-        const conf = fs.readJsonSync(configPath);
-        conf.reactOff = false;
-        fs.writeJsonSync(configPath, conf, { spaces: 2 });
-      } catch (_) {}
-      await reactEmoji("👍");
-      return message.reply("👍 Bot reactions have been turned ON.");
-    }
 
-    if (["react", "reaction", "reactions", "botreact"].includes(firstArg) && !secondArg) {
-      const currentReactOff = Boolean(global.GoatBot?.reactOff ?? global.GoatBot?.config?.reactOff);
-      const nextReactOff = !currentReactOff;
-      if (nextReactOff) await reactEmoji("👎");
-      global.GoatBot.reactOff = nextReactOff;
-      if (global.GoatBot.config) global.GoatBot.config.reactOff = nextReactOff;
-      if (global.FloppaBot) {
-        global.FloppaBot.reactOff = nextReactOff;
-        if (global.FloppaBot.config) global.FloppaBot.config.reactOff = nextReactOff;
+      // 2. Set Mode: !bot react mode <media|all> or !bot react all / !bot react media
+      if (secondArg === "mode" || ["all", "media", "image", "images"].includes(secondArg)) {
+        const rawMode = secondArg === "mode" ? (args[2] || "").toLowerCase() : secondArg;
+        const targetMode = ["all", "every", "always"].includes(rawMode) ? "all" : "media";
+
+        const currentCmdReact = global.GoatBot?.commandReaction || global.GoatBot?.config?.commandReaction || { enable: true, emoji: "👍", mode: "media" };
+        currentCmdReact.mode = targetMode;
+        currentCmdReact.enable = true;
+        global.GoatBot.reactOff = false;
+        global.GoatBot.commandReaction = currentCmdReact;
+        if (global.GoatBot.config) {
+          global.GoatBot.config.reactOff = false;
+          global.GoatBot.config.commandReaction = currentCmdReact;
+        }
+        if (global.FloppaBot) {
+          global.FloppaBot.reactOff = false;
+          global.FloppaBot.commandReaction = currentCmdReact;
+          if (global.FloppaBot.config) {
+            global.FloppaBot.config.reactOff = false;
+            global.FloppaBot.config.commandReaction = currentCmdReact;
+          }
+        }
+        try {
+          const conf = fs.readJsonSync(configPath);
+          conf.reactOff = false;
+          conf.commandReaction = conf.commandReaction || {};
+          conf.commandReaction.mode = targetMode;
+          conf.commandReaction.enable = true;
+          fs.writeJsonSync(configPath, conf, { spaces: 2 });
+        } catch (_) {}
+        const activeEmoji = currentCmdReact.emoji || "👍";
+        await reactEmoji(activeEmoji);
+        return message.reply(`⚙️ Bot command reaction mode set to: ${targetMode.toUpperCase()}\n• ${targetMode === "all" ? "Reacts to all successful commands" : "Reacts to media/image commands only"}\n• Reaction Emoji: ${activeEmoji}`);
       }
-      try {
-        const conf = fs.readJsonSync(configPath);
-        conf.reactOff = nextReactOff;
-        fs.writeJsonSync(configPath, conf, { spaces: 2 });
-      } catch (_) {}
-      if (!nextReactOff) await reactEmoji("👍");
-      return message.reply(nextReactOff ? "👎 Bot reactions have been turned OFF." : "👍 Bot reactions have been turned ON.");
+
+      // 3. Set Emoji: !bot react emoji <emoji> OR !bot react <emoji> (e.g. !bot react ❤️)
+      const isEmojiExplicit = secondArg === "emoji";
+      const isCustomEmojiArg = secondArg && !["on", "off", "mode", "all", "media", "reset", "status", "state"].includes(secondArg);
+      if (isEmojiExplicit || isCustomEmojiArg) {
+        const newEmoji = isEmojiExplicit ? (args[2] || "").trim() : (args[1] || "").trim();
+        if (!newEmoji) {
+          return message.reply("⚠️ Please provide an emoji to use as command reaction (e.g. !bot react emoji ❤️ or !bot react 🔥)");
+        }
+
+        const currentCmdReact = global.GoatBot?.commandReaction || global.GoatBot?.config?.commandReaction || { enable: true, emoji: "👍", mode: "media" };
+        currentCmdReact.emoji = newEmoji;
+        currentCmdReact.enable = true;
+        global.GoatBot.reactOff = false;
+        global.GoatBot.commandReaction = currentCmdReact;
+        if (global.GoatBot.config) {
+          global.GoatBot.config.reactOff = false;
+          global.GoatBot.config.commandReaction = currentCmdReact;
+        }
+        if (global.FloppaBot) {
+          global.FloppaBot.reactOff = false;
+          global.FloppaBot.commandReaction = currentCmdReact;
+          if (global.FloppaBot.config) {
+            global.FloppaBot.config.reactOff = false;
+            global.FloppaBot.config.commandReaction = currentCmdReact;
+          }
+        }
+        try {
+          const conf = fs.readJsonSync(configPath);
+          conf.reactOff = false;
+          conf.commandReaction = conf.commandReaction || {};
+          conf.commandReaction.emoji = newEmoji;
+          conf.commandReaction.enable = true;
+          fs.writeJsonSync(configPath, conf, { spaces: 2 });
+        } catch (_) {}
+        await reactEmoji(newEmoji);
+        return message.reply(`✨ Bot command reaction emoji set to: ${newEmoji}\n• Status: ON\n• Mode: ${(currentCmdReact.mode || "media").toUpperCase()}`);
+      }
+
+      // 4. Turn OFF: !bot react off / !bot -offreact / !offreact / !bot off react
+      if (
+        isOffReact ||
+        secondArg === "off" ||
+        (firstArg === "off" && ["react", "reaction", "reactions"].includes(secondArg))
+      ) {
+        await reactEmoji("👎");
+        global.GoatBot.reactOff = true;
+        if (global.GoatBot.commandReaction) global.GoatBot.commandReaction.enable = false;
+        if (global.GoatBot.config) {
+          global.GoatBot.config.reactOff = true;
+          if (global.GoatBot.config.commandReaction) global.GoatBot.config.commandReaction.enable = false;
+        }
+        if (global.FloppaBot) {
+          global.FloppaBot.reactOff = true;
+          if (global.FloppaBot.commandReaction) global.FloppaBot.commandReaction.enable = false;
+          if (global.FloppaBot.config) {
+            global.FloppaBot.config.reactOff = true;
+            if (global.FloppaBot.config.commandReaction) global.FloppaBot.config.commandReaction.enable = false;
+          }
+        }
+        try {
+          const conf = fs.readJsonSync(configPath);
+          conf.reactOff = true;
+          if (conf.commandReaction) conf.commandReaction.enable = false;
+          fs.writeJsonSync(configPath, conf, { spaces: 2 });
+        } catch (_) {}
+        return message.reply("👎 Bot reactions have been turned OFF.");
+      }
+
+      // 5. Turn ON: !bot react on / !bot -onreact / !onreact / !bot on react
+      if (
+        isOnReact ||
+        secondArg === "on" ||
+        (firstArg === "on" && ["react", "reaction", "reactions"].includes(secondArg))
+      ) {
+        global.GoatBot.reactOff = false;
+        if (global.GoatBot.commandReaction) global.GoatBot.commandReaction.enable = true;
+        if (global.GoatBot.config) {
+          global.GoatBot.config.reactOff = false;
+          if (global.GoatBot.config.commandReaction) global.GoatBot.config.commandReaction.enable = true;
+        }
+        if (global.FloppaBot) {
+          global.FloppaBot.reactOff = false;
+          if (global.FloppaBot.commandReaction) global.FloppaBot.commandReaction.enable = true;
+          if (global.FloppaBot.config) {
+            global.FloppaBot.config.reactOff = false;
+            if (global.FloppaBot.config.commandReaction) global.FloppaBot.config.commandReaction.enable = true;
+          }
+        }
+        try {
+          const conf = fs.readJsonSync(configPath);
+          conf.reactOff = false;
+          if (conf.commandReaction) conf.commandReaction.enable = true;
+          fs.writeJsonSync(configPath, conf, { spaces: 2 });
+        } catch (_) {}
+        await reactEmoji("👍");
+        const activeEmoji = global.GoatBot?.commandReaction?.emoji || global.GoatBot?.config?.commandReaction?.emoji || "👍";
+        return message.reply(`👍 Bot reactions have been turned ON (Emoji: ${activeEmoji}).`);
+      }
+
+      // 6. Toggle: !bot react (without sub-arguments)
+      if (!secondArg) {
+        const currentReactOff = Boolean(global.GoatBot?.reactOff ?? global.GoatBot?.config?.reactOff);
+        const nextReactOff = !currentReactOff;
+        if (nextReactOff) await reactEmoji("👎");
+        global.GoatBot.reactOff = nextReactOff;
+        if (global.GoatBot.commandReaction) global.GoatBot.commandReaction.enable = !nextReactOff;
+        if (global.GoatBot.config) {
+          global.GoatBot.config.reactOff = nextReactOff;
+          if (global.GoatBot.config.commandReaction) global.GoatBot.config.commandReaction.enable = !nextReactOff;
+        }
+        if (global.FloppaBot) {
+          global.FloppaBot.reactOff = nextReactOff;
+          if (global.FloppaBot.commandReaction) global.FloppaBot.commandReaction.enable = !nextReactOff;
+          if (global.FloppaBot.config) {
+            global.FloppaBot.config.reactOff = nextReactOff;
+            if (global.FloppaBot.config.commandReaction) global.FloppaBot.config.commandReaction.enable = !nextReactOff;
+          }
+        }
+        try {
+          const conf = fs.readJsonSync(configPath);
+          conf.reactOff = nextReactOff;
+          if (conf.commandReaction) conf.commandReaction.enable = !nextReactOff;
+          fs.writeJsonSync(configPath, conf, { spaces: 2 });
+        } catch (_) {}
+        const activeEmoji = global.GoatBot?.commandReaction?.emoji || global.GoatBot?.config?.commandReaction?.emoji || "👍";
+        if (!nextReactOff) await reactEmoji(activeEmoji);
+        return message.reply(nextReactOff ? "👎 Bot reactions have been turned OFF." : `👍 Bot reactions have been turned ON (Emoji: ${activeEmoji}).`);
+      }
     }
 
     // ─── Group Events Control ────────────────────────────────────────────────

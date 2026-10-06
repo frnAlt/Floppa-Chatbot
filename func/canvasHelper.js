@@ -9,24 +9,22 @@ let createCanvas = null;
 let loadImage = null;
 let isCanvasAvailable = false;
 
-// 1. Try @napi-rs/canvas
+// 1. Try napiCanvasShim adapter
 try {
-  const napi = require("@napi-rs/canvas");
-  const cFunc = napi.createCanvas || napi.default?.createCanvas;
-  const lFunc = napi.loadImage || napi.default?.loadImage;
-  if (typeof cFunc === "function" && typeof lFunc === "function") {
-    createCanvas = cFunc;
-    loadImage = lFunc;
+  const shim = require("./napiCanvasShim.js");
+  if (shim?.createCanvas && shim?.loadImage) {
+    createCanvas = shim.createCanvas;
+    loadImage = shim.loadImage;
     isCanvasAvailable = true;
   }
 } catch (_) {}
 
-// 2. Try node-canvas (canvas)
+// 2. Fallback to @napi-rs/canvas or canvas direct
 if (!isCanvasAvailable) {
   try {
-    const nodeCanvas = require("canvas");
-    const cFunc = nodeCanvas.createCanvas || nodeCanvas.default?.createCanvas;
-    const lFunc = nodeCanvas.loadImage || nodeCanvas.default?.loadImage;
+    const napi = require("@napi-rs/canvas");
+    const cFunc = napi.createCanvas || napi.default?.createCanvas;
+    const lFunc = napi.loadImage || napi.default?.loadImage;
     if (typeof cFunc === "function" && typeof lFunc === "function") {
       createCanvas = cFunc;
       loadImage = lFunc;

@@ -144,7 +144,7 @@ async function makeRankCard(userID, usersData, threadsData, threadID, delta = 5,
 		ctx.fillStyle = "#1e293b";
 		ctx.fillRect(avatarX - avatarR, avatarY - avatarR, avatarR * 2, avatarR * 2);
 		ctx.fillStyle = "#ffffff";
-		ctx.font = "bold 44px sans-serif";
+		ctx.font = "bold 44px 'Noto Sans', sans-serif";
 		ctx.textAlign = "center";
 		ctx.textBaseline = "middle";
 		ctx.fillText(name.charAt(0).toUpperCase() || "U", avatarX, avatarY);
@@ -154,7 +154,7 @@ async function makeRankCard(userID, usersData, threadsData, threadID, delta = 5,
 	// 5. User Name
 	ctx.save();
 	ctx.fillStyle = "#ffffff";
-	ctx.font = "bold 32px sans-serif";
+	ctx.font = "bold 32px 'Noto Sans', sans-serif";
 	ctx.textAlign = "left";
 	ctx.textBaseline = "alphabetic";
 	ctx.shadowColor = "rgba(0, 0, 0, 0.6)";
@@ -178,7 +178,7 @@ async function makeRankCard(userID, usersData, threadsData, threadID, delta = 5,
 	ctx.fillStyle = rankGrad;
 	ctx.fill();
 	ctx.fillStyle = "#ffffff";
-	ctx.font = "bold 16px sans-serif";
+	ctx.font = "bold 16px 'Noto Sans', sans-serif";
 	ctx.textAlign = "center";
 	ctx.textBaseline = "middle";
 	ctx.fillText(`🏆 RANK #${rank}`, 712, 72);
@@ -191,7 +191,7 @@ async function makeRankCard(userID, usersData, threadsData, threadID, delta = 5,
 	ctx.fillStyle = lvlGrad;
 	ctx.fill();
 	ctx.fillStyle = "#ffffff";
-	ctx.font = "bold 16px sans-serif";
+	ctx.font = "bold 16px 'Noto Sans', sans-serif";
 	ctx.textAlign = "center";
 	ctx.textBaseline = "middle";
 	ctx.fillText(`⚡ LEVEL ${levelUser}`, 875, 72);
@@ -200,12 +200,12 @@ async function makeRankCard(userID, usersData, threadsData, threadID, delta = 5,
 	ctx.textBaseline = "alphabetic";
 	ctx.textAlign = "left";
 	ctx.fillStyle = "#94a3b8";
-	ctx.font = "600 16px sans-serif";
+	ctx.font = "600 16px 'Noto Sans', sans-serif";
 	ctx.fillText(`EXP: ${currentExp.toLocaleString()} / ${expNextLevel.toLocaleString()}`, 245, 178);
 
 	ctx.textAlign = "right";
 	ctx.fillStyle = "#00f2fe";
-	ctx.font = "bold 17px sans-serif";
+	ctx.font = "bold 17px 'Noto Sans', sans-serif";
 	ctx.fillText(`${percent}%`, 950, 178);
 
 	// 8. Progress Bar

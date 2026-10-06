@@ -90,7 +90,7 @@ function setErrorUptime() {
         global.statusAccountBot = 'block spam';
         global.responseUptimeCurrent = global.responseUptimeError;
 }
-const defaultStderrClearLine = process.stderr.clearLine;
+const defaultStderrClearLine = typeof process.stderr.clearLine === "function" ? process.stderr.clearLine : () => {};
 
 
 function convertTime(miliSeconds, replaceSeconds = "s", replaceMinutes = "m", replaceHours = "h", replaceDays = "d", replaceMonths = "M", replaceYears = "y", notShowZero = false) {

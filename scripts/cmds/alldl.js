@@ -497,12 +497,7 @@ module.exports = {
 
       await fs.writeFile(tmpFile, fileBuffer);
 
-      const caption = isAudio
-        ? `🎵 ${title}${author ? `\n👤 Artist: ${author}` : ""}`
-        : `🎬 ${title}${author ? `\n👤 Creator: ${author}` : ""}`;
-
       await message.reply({
-        body: caption,
         attachment: fs.createReadStream(tmpFile)
       });
 

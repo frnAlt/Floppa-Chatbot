@@ -143,7 +143,7 @@ module.exports = {
       ctx.arc(centerX, centerY, 100, 0, Math.PI * 2);
       ctx.stroke();
 
-      ctx.font = '500 40px sans-serif';
+      ctx.font = '500 40px "Noto Sans", sans-serif';
       
       const startY = infoBoxY + 120;
 
@@ -166,7 +166,10 @@ module.exports = {
       });
 
       const out = fs.createWriteStream(imagePath);
-      const stream = canvas.createPNGStream();
+      const { Readable } = require("stream");
+      const stream = typeof canvas.createPNGStream === "function"
+        ? canvas.createPNGStream()
+        : Readable.from(canvas.toBuffer("image/png"));
       stream.pipe(out);
 
       out.on('finish', () => {
@@ -180,8 +183,10 @@ module.exports = {
       });
 
     } catch (error) {
+      console.error("[UPTIME ERROR]:", error);
       api.setMessageReaction("👎", event.messageID, () => {}, true);
       if (fs.existsSync(imagePath)) fs.unlink(imagePath, () => {});
+      api.sendMessage(`❌ Failed to render uptime card: ${error.message || error}`, threadID, messageID);
     }
   }
 };

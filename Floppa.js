@@ -123,6 +123,11 @@ global.FloppaBot = {
 	botOff: typeof config.botOff !== "undefined" ? Boolean(config.botOff) : false,
 	eventsOff: typeof config.eventsOff !== "undefined" ? Boolean(config.eventsOff) : (typeof config.events !== "undefined" ? !config.events : false),
 	reactOff: typeof config.reactOff !== "undefined" ? Boolean(config.reactOff) : (typeof config.botReact !== "undefined" ? !config.botReact : false),
+	commandReaction: config.commandReaction || {
+		enable: typeof config.reactOff !== "undefined" ? !Boolean(config.reactOff) : true,
+		emoji: config.commandReactionEmoji || "👍",
+		mode: config.commandReactionMode || "media"
+	},
 	envCommands: {},
 	envEvents: {},
 	envGlobal: {},

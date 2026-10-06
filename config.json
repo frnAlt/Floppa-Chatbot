@@ -24,6 +24,12 @@
   "events": false,
   "eventsOff": true,
   "reactOff": false,
+  "commandReaction": {
+    "enable": true,
+    "emoji": "👍",
+    "mode": "media",
+    "notes": "Controls bot reactions on issued commands. 'enable': true/false; 'emoji': reaction emoji (e.g. 👍, ❤️, 🔥, ✨); 'mode': 'media' (react only on image/media commands) or 'all' (react on all commands)."
+  },
   "adminBot": [
     "100094924471568",
     "61593675886067",

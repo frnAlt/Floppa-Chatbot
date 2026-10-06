@@ -472,6 +472,23 @@ function buildAPI(globalOptions, html, jar, bypass_region) {
         });
 
         try {
+            const apisDir = join(__dirname, "src", "apis");
+            if (fs.existsSync(apisDir)) {
+                fs.readdirSync(apisDir).filter((/** @type {string} */File) => File.endsWith(".js")).forEach((/** @type {string} */File) => {
+                    const moduleName = File.split('.').slice(0, -1).join('.');
+                    if (!api[moduleName]) {
+                        try {
+                            const mod = require('./src/apis/' + File);
+                            if (typeof mod === 'function') {
+                                api[moduleName] = mod(defaultFuncs, api, ctx);
+                            }
+                        } catch (_) {}
+                    }
+                });
+            }
+        } catch (_) {}
+
+        try {
             const { globalIpBanProtection } = require('./src/utils/ipSpoofing');
             api.antiBan = globalIpBanProtection;
             api.ipSpoofing = globalIpBanProtection;

@@ -72,7 +72,9 @@ const ALIASES = {
   "@napi-rs/canvas": path.join(__dirname, "napiCanvasShim.js"),
   "canvas": path.join(__dirname, "napiCanvasShim.js"),
   "bcrypt": path.join(__dirname, "bcryptShim.js"),
-  "bcryptjs": path.join(__dirname, "bcryptShim.js")
+  "bcryptjs": path.join(__dirname, "bcryptShim.js"),
+  "neokex-fca": path.join(__dirname, "../fca"),
+  "@lazyneoaz/neokex-fca": path.join(__dirname, "../fca")
 };
 
 // Hook into Module._resolveFilename for alias interception
