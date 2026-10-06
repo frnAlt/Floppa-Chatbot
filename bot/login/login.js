@@ -637,12 +637,16 @@ async function getAppStateToLogin(loginWithEmail) {
         if (loginWithEmail && facebookAccount && facebookAccount.email && facebookAccount.password)
                 return await getAppStateFromEmail(undefined, facebookAccount);
         let accountText = "";
-        if (existsSync(dirAccount)) {
-                accountText = readFileSync(dirAccount, "utf8");
-        }
-        if (!accountText.trim() && (process.env.FB_STATE || process.env.ACCOUNT_TXT || process.env.COOKIES)) {
+        if (process.env.FB_STATE || process.env.ACCOUNT_TXT || process.env.COOKIES) {
                 accountText = (process.env.FB_STATE || process.env.ACCOUNT_TXT || process.env.COOKIES).trim();
-                log.info("LOGIN FACEBOOK", "Loaded credentials from environment secrets (FB_STATE / ACCOUNT_TXT)");
+                log.info("LOGIN FACEBOOK", "Loaded credentials from environment secrets (FB_STATE / ACCOUNT_TXT / COOKIES)");
+                try {
+                        if (!existsSync(dirAccount) || readFileSync(dirAccount, "utf8") !== accountText) {
+                                writeFileSync(dirAccount, accountText, "utf8");
+                        }
+                } catch (_) {}
+        } else if (existsSync(dirAccount)) {
+                accountText = readFileSync(dirAccount, "utf8");
         }
         if (!accountText.trim())
                 return log.error("LOGIN FACEBOOK", getText('login', 'notFoundDirAccount', colors.green(dirAccount)));
@@ -732,7 +736,7 @@ async function getAppStateToLogin(loginWithEmail) {
                 if (!email || !password) {
                         if (!process.stdin.isTTY) {
                                 log.err("LOGIN FACEBOOK", "Cannot prompt for credentials in non-interactive environment (TTY unavailable).");
-                                log.err("LOGIN FACEBOOK", "Please set the FB_STATE secret in GitHub Actions or provide a valid account.txt file.");
+                                log.err("LOGIN FACEBOOK", "Please set the workflow input cookie, FB_STATE secret in GitHub Actions, or provide a valid account.txt file.");
                                 process.exit(1);
                         }
                         log.warn("LOGIN FACEBOOK", getText('login', 'cannotFindAccount'));

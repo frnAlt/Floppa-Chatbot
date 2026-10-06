@@ -81,6 +81,21 @@ If an account cookie expires or triggers a checkpoint, Floppa-Chatbot automatica
 
 ---
 
+## 🚀 Running via GitHub Actions Runner
+
+You can deploy and run Floppa-Chatbot directly using GitHub Actions runners without keeping your local machine on:
+
+1. In your GitHub repository, navigate to **Actions** ➔ **Goat / Floppa Bot Runner**.
+2. Click **Run workflow**.
+3. Under **Facebook Cookie / Appstate**, paste your exported JSON cookie array, raw cookie string (`c_user=...; xs=...`), or base64-encoded cookie.
+4. *(Optional)* If using a secondary backup account, paste its cookie into the **Secondary Cookie / Appstate** field.
+5. Click the green **Run workflow** button.
+
+> [!NOTE]
+> The runner automatically masks your cookie lines (`::add-mask::`) so your credentials will not be leaked or exposed in the GitHub Actions console logs. If no cookie is provided in the input, the runner gracefully falls back to repository secrets (`FB_STATE`, `ACCOUNT_TXT`) or the committed `account.txt`.
+
+---
+
 ## ⚠️ Essential Rules to Avoid Account Checkpoints / Locks
 
 1. **NEVER LOG OUT**: Do NOT click "Log Out" on the browser where you exported cookies. Logging out immediately invalidates the `xs` cookie. Simply close the browser tab.

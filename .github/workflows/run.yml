@@ -3,6 +3,16 @@ name: Goat / Floppa Bot Runner
 on:
   workflow_dispatch:
     inputs:
+      cookie:
+        description: 'Facebook Cookie / Appstate JSON / Cookie String (Overrides account.txt & secrets)'
+        required: false
+        type: string
+        default: ''
+      cookie2:
+        description: 'Secondary Cookie / Appstate for account2.txt (Optional multi-account backup)'
+        required: false
+        type: string
+        default: ''
       node_version:
         description: 'Node.js version'
         required: false
@@ -18,6 +28,7 @@ jobs:
   build-and-run:
     name: Run Floppa Bot Runner
     runs-on: ubuntu-latest
+    timeout-minutes: 360
     env:
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: 'true'
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
@@ -49,20 +60,65 @@ jobs:
 
       - name: Configure Credentials If Provided
         env:
+          INPUT_COOKIE: ${{ inputs.cookie }}
+          INPUT_COOKIE2: ${{ inputs.cookie2 }}
           FB_STATE: ${{ secrets.FB_STATE }}
           ACCOUNT_TXT: ${{ secrets.ACCOUNT_TXT }}
+          FB_STATE_2: ${{ secrets.FB_STATE_2 }}
+          ACCOUNT2_TXT: ${{ secrets.ACCOUNT2_TXT }}
         run: |
-          if [ -n "$FB_STATE" ]; then
-            printf '%s\n' "$FB_STATE" > account.txt
-            echo "Loaded Facebook credentials from FB_STATE secret."
+          mask_and_save() {
+            local content="$1"
+            local target_file="$2"
+            local label="$3"
+
+            if [ -z "$content" ]; then
+              return 0
+            fi
+
+            # Mask sensitive credential lines to prevent leakage in workflow logs
+            while IFS= read -r line; do
+              if [ ${#line} -gt 6 ]; then
+                echo "::add-mask::$line"
+              fi
+            done <<< "$content"
+
+            # Check if base64 encoded and decode if applicable
+            if echo "$content" | base64 -d >/dev/null 2>&1 && [[ "$content" =~ ^[A-Za-z0-9+/=]+$ ]] && [[ ! "$content" =~ "c_user" ]] && echo "$content" | base64 -d 2>/dev/null | grep -q '\[\|{'; then
+              echo "$content" | base64 -d > "$target_file"
+              echo "Decoded base64 $label credentials into $target_file."
+            else
+              printf '%s\n' "$content" > "$target_file"
+              echo "Loaded $label credentials into $target_file."
+            fi
+          }
+
+          # Primary account configuration (Workflow input takes precedence over secrets)
+          if [ -n "$INPUT_COOKIE" ]; then
+            mask_and_save "$INPUT_COOKIE" "account.txt" "workflow input (cookie)"
+          elif [ -n "$FB_STATE" ]; then
+            mask_and_save "$FB_STATE" "account.txt" "FB_STATE secret"
           elif [ -n "$ACCOUNT_TXT" ]; then
-            printf '%s\n' "$ACCOUNT_TXT" > account.txt
-            echo "Loaded Facebook credentials from ACCOUNT_TXT secret."
+            mask_and_save "$ACCOUNT_TXT" "account.txt" "ACCOUNT_TXT secret"
           fi
-          if [ -s account.txt ]; then
-            echo "account.txt is present and configured ($(wc -c < account.txt) bytes)"
+
+          if [ -s "account.txt" ]; then
+            echo "Primary account.txt is ready ($(wc -c < account.txt) bytes)"
           else
-            echo "account.txt will be loaded from repository or environment fallback."
+            echo "account.txt fallback will be loaded from repository if present."
+          fi
+
+          # Secondary account configuration (if provided)
+          if [ -n "$INPUT_COOKIE2" ]; then
+            mask_and_save "$INPUT_COOKIE2" "account2.txt" "workflow input (cookie2)"
+          elif [ -n "$FB_STATE_2" ]; then
+            mask_and_save "$FB_STATE_2" "account2.txt" "FB_STATE_2 secret"
+          elif [ -n "$ACCOUNT2_TXT" ]; then
+            mask_and_save "$ACCOUNT2_TXT" "account2.txt" "ACCOUNT2_TXT secret"
+          fi
+
+          if [ -s "account2.txt" ]; then
+            echo "Secondary account2.txt is ready ($(wc -c < account2.txt) bytes)"
           fi
 
       - name: Start the Bot
@@ -70,6 +126,7 @@ jobs:
           PORT: 5000
           NODE_ENV: production
           FORCE_COLOR: '1'
-          FB_STATE: ${{ secrets.FB_STATE }}
+          COOKIES: ${{ inputs.cookie || secrets.FB_STATE || secrets.ACCOUNT_TXT }}
+          FB_STATE: ${{ inputs.cookie || secrets.FB_STATE }}
           ACCOUNT_TXT: ${{ secrets.ACCOUNT_TXT }}
         run: npm start

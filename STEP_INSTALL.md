@@ -27,6 +27,11 @@ npm install
 npm start
 ```
 
+### 5. Running on GitHub Actions (Optional 24/7 Cloud Runner)
+* Go to repository **Actions** tab ➔ **Goat / Floppa Bot Runner** ➔ **Run workflow**.
+* Paste your Facebook cookie array or string into the `Facebook Cookie / Appstate` field.
+* Click **Run workflow** to run the bot on GitHub Actions runner.
+
 ---
 
 <h1 align="center"><b>INTEGRATED FCA ENGINE</b></h1>
