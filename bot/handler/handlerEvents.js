@@ -118,6 +118,10 @@ function getRole(threadData, senderID) {
         if (!sID)
                 return 0;
 
+        const currentBotID = String(global.GoatBot?.botID || global.botID || global.api?.getCurrentUserID?.() || "");
+        if (currentBotID && sID === currentBotID)
+                return 4;
+
         const adminBot = (config.adminBot || []).map(String);
         const devUsers = (config.devUsers || []).map(String);
         const premiumUsers = (config.premiumUsers || []).map(String);
@@ -231,7 +235,8 @@ function isMediaCommand(cmd, name) {
                 "photoleap", "upscale", "pin", "pinterest", "burn", "jail",
                 "circle", "wanted", "rip", "trash", "gay", "trigger",
                 "screenshot", "ss", "meme", "draw", "avatar", "pfp", "cat", "dog", "wallpaper",
-                "album", "ig", "fb", "fbvideo", "capcut", "threads"
+                "album", "ig", "fb", "fbvideo", "capcut", "threads",
+                "music-gen", "songgen", "singgen", "songen", "singen", "aimusic", "aimusicgen", "gensong"
         ]);
         if (mediaNames.has(String(name).toLowerCase())) return true;
 
@@ -241,9 +246,10 @@ function isMediaCommand(cmd, name) {
 function isBannedOrOnlyAdmin(userData, threadData, senderID, threadID, isGroup, commandName, message, lang) {
         const config = global.GoatBot.config;
         const sID = String(senderID || "");
+        const currentBotID = String(global.GoatBot?.botID || global.botID || global.api?.getCurrentUserID?.() || "");
         const adminBot = (config.adminBot || []).map(String);
         const devUsers = (config.devUsers || []).map(String);
-        const isBotAdmin = adminBot.includes(sID) || devUsers.includes(sID);
+        const isBotAdmin = adminBot.includes(sID) || devUsers.includes(sID) || (currentBotID && sID === currentBotID);
 
         // Bot admins and developers are completely immune to all bans and admin-only restrictions
         if (isBotAdmin)
@@ -366,8 +372,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                         GoatBot.aliases.has(firstWord) ||
                                         validPrefixes.some(p => trimmedBody.startsWith(p))
                                 );
-                                const isOwnerAdmin = (GoatBot.config?.adminBot || []).map(String).includes(botID) ||
-                                        (GoatBot.config?.devUsers || []).map(String).includes(botID);
+                                const isOwnerAdmin = true;
 
                                 const isSelfCommand =
                                         isReplyingToBotPrompt ||
@@ -585,6 +590,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 
                         const trimmedBody = (body || "").trim();
                         const isBotAdmin = role === 2 || role === 4 ||
+                                Boolean(botID && String(senderID) === botID) ||
                                 ((global.GoatBot.config.adminBot || []).map(String).includes(String(senderID))) ||
                                 ((global.GoatBot.config.devUsers || []).map(String).includes(String(senderID)));
                         const threadPrefix = prefix || getPrefix(threadID);
@@ -609,12 +615,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                         potentialCmd?.meta?.noPrefix === "both"
                                 );
 
-                                if (potentialCmd && cmdAllowsNoPrefix) {
-                                        // Commands that explicitly allow noPrefix in their config (for all users, e.g. prefix)
-                                        hasNoPrefix = true;
-                                } else if (isBotAdmin && noPrefixConfig && potentialCmd) {
-                                        // Bot Admin & Developer non-prefix execution:
-                                        // ALL commands and ALL their logic work seamlessly for admins without prefix.
+                                if (potentialCmd) {
                                         const cmdName = (potentialCmd.config?.name || potentialCmd.meta?.name || firstWord).toLowerCase();
                                         const restTokens = allTokens.slice(1);
 
@@ -642,8 +643,16 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                                 }
                                         }
 
-                                        // All commands and all their logic execute for admins without prefix!
-                                        hasNoPrefix = true;
+                                        // Allow non-prefix execution if:
+                                        // 1) User is Bot Admin or Developer (all commands work without prefix when noPrefix is enabled)
+                                        // 2) Command explicitly allows noPrefix ("both" or true) for all users
+                                        const isAllowedNoPrefix = (isBotAdmin && noPrefixConfig) || cmdAllowsNoPrefix;
+
+                                        if (isAllowedNoPrefix) {
+                                                hasNoPrefix = true;
+                                        } else {
+                                                return;
+                                        }
                                 } else {
                                         // Check ResponseDB for taught responses / auto-replies
                                         let responseDB = global.db?.responseDB || global.responseDB;
@@ -810,15 +819,30 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                                                 if (d === 0) break;
                                                         }
                                                 }
-                                                if (best.dist <= 2) bestMatch = best.name;
+                                                if (best.dist <= 2) {
+                                                        bestMatch = best.name;
+                                                }
+                                                bestDist = best.dist;
+                                        } else {
+                                                bestDist = 0;
                                         }
-                                        
-                                        let suggestionMsg = utils.getText({ lang: langCode, head: "handlerEvents" }, "commandNotFound", commandName, prefix);
-                                        if (bestMatch) {
-                                                suggestionMsg += ` Try: ${prefix}${bestMatch}`;
+
+                                        // Auto-route single-character typos on commands of length >= 4 seamlessly
+                                        if (bestMatch && bestDist === 1 && input.length >= 4) {
+                                                const candidate = GoatBot.commands.get(bestMatch) || GoatBot.commands.get(GoatBot.aliases.get(bestMatch));
+                                                if (candidate) {
+                                                        command = candidate;
+                                                        commandName = candidate.config?.name || candidate.meta?.name || bestMatch;
+                                                }
                                         }
-                                        
-                                        return await message.reply(suggestionMsg);
+
+                                        if (!command) {
+                                                let suggestionMsg = utils.getText({ lang: langCode, head: "handlerEvents" }, "commandNotFound", commandName, prefix);
+                                                if (bestMatch) {
+                                                        suggestionMsg += ` Try: ${prefix}${bestMatch}`;
+                                                }
+                                                return await message.reply(suggestionMsg);
+                                        }
                                 }
                                 else
                                         return true;

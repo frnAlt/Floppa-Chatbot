@@ -392,6 +392,7 @@ module.exports = {
     author: "frnAlt",
     countDown: 5,
     role: 0,
+    noPrefix: "both",
     shortDescription: { en: "Search, compress and download YouTube audio as MP3" },
     longDescription: { en: "Search YouTube or Spotify songs and download high-quality MP3 audio with automatic compression for large files to fit Facebook Messenger limits. Media-only output." },
     category: "media",

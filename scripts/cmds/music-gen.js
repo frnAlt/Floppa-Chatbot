@@ -109,16 +109,33 @@ async function getAudioStream(audioUrl) {
 module.exports = {
   config: {
     name: "music-gen",
-    aliases: ["aimusic", "musicgen", "songgen", "songen", "aimusicgen", "gensong"],
-    version: "1.3.0",
+    aliases: [
+      "aimusic",
+      "musicgen",
+      "songgen",
+      "songen",
+      "singgen",
+      "singen",
+      "aimusicgen",
+      "gensong",
+      "genmusic",
+      "songai",
+      "aisong",
+      "sing-gen",
+      "song-gen",
+      "music-ai",
+      "aimusic-gen"
+    ],
+    version: "1.3.1",
     author: "frnAlt",
     countDown: 1, // Minimal cooldown to eliminate command delay
     role: 0,
+    noPrefix: "both",
     shortDescription: {
       en: "Generate AI music from prompt"
     },
     longDescription: {
-      en: "Generate realistic songs and audio tracks using AI with a custom prompt or lyrics description"
+      en: "Generate realistic songs and audio tracks using AI with a custom prompt or lyrics description. Supports both prefix and non-prefix execution."
     },
     category: "ai",
     guide: {

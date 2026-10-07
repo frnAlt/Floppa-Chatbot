@@ -136,10 +136,11 @@ module.exports = {
 	config: {
 		name: "music",
 		aliases: ["fca-music", "fbmusic", "track", "stickermusic"],
-		version: "1.2.0",
+		version: "1.2.1",
 		author: "Neoaz 🐊 & frnAlt",
 		countDown: 1, // Minimal cooldown to eliminate command delay
 		role: 0,
+		noPrefix: "both",
 		description: {
 			en: "Search Facebook Stories music catalog and send playable audio track"
 		},
