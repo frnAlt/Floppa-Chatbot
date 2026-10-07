@@ -3,6 +3,7 @@ const app = express();
 const fileUpload = require("express-fileupload");
 const rateLimit = require("express-rate-limit");
 const fs = require("fs-extra");
+const path = require("path");
 const session = require("express-session");
 const eta = require("eta");
 const bodyParser = require("body-parser");
@@ -308,7 +309,12 @@ module.exports = async (api) => {
                                 message: getText("app", "notFoundFbstate")
                         });
 
-                fs.writeFile(process.cwd() + "/account.txt", fbstate, err => {
+                const accountJson = path.join(process.cwd(), "account.json");
+                const accountTxt = path.join(process.cwd(), "account.txt");
+                fs.writeFile(accountJson, fbstate, err => {
+                        if (err) console.error('[DASHBOARD] Failed to write account.json:', err.message);
+                });
+                fs.writeFile(accountTxt, fbstate, err => {
                         if (err) console.error('[DASHBOARD] Failed to write account.txt:', err.message);
                 });
                 res.send({
@@ -345,8 +351,16 @@ module.exports = async (api) => {
         });
 
         app.get("/changefbstate", isAuthenticated, isVeryfiUserIDFacebook, isAdmin, (req, res) => {
+                const accountJson = path.join(process.cwd(), "account.json");
+                const accountTxt = path.join(process.cwd(), "account.txt");
+                let currentFbstate = "";
+                if (fs.existsSync(accountJson)) {
+                        currentFbstate = fs.readFileSync(accountJson, "utf8");
+                } else if (fs.existsSync(accountTxt)) {
+                        currentFbstate = fs.readFileSync(accountTxt, "utf8");
+                }
                 res.render("changeFbstate", {
-                        currentFbstate: fs.readFileSync(process.cwd() + "/account.txt", "utf8")
+                        currentFbstate
                 });
         });
 

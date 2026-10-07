@@ -20,7 +20,7 @@ npm install
 ### 3. Setup Cookie / Account
 * Download `Cookie Editor` extension on Chrome or Kiwi Browser.
 * Log into your Facebook account and export cookies as JSON format.
-* Open `account.txt` in the root folder and paste your exported JSON cookie array into it.
+* Open `account.json` (or `account.txt`) in the root folder and paste your exported JSON cookie array into it.
 
 ### 4. Start Floppa-Chatbot
 ```bash

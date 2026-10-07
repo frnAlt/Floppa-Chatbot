@@ -37,6 +37,7 @@ async function runDiagnostics() {
   const cwd = process.cwd();
 
   const trackedFilesToRestore = [
+    "account.json",
     "account.txt",
     "config.json",
     "database/data/system_memory.json",
@@ -200,7 +201,7 @@ async function runDiagnostics() {
   global.client = {
     dirConfig: path.join(cwd, "config.json"),
     dirConfigCommands: path.join(cwd, "configCommands.json"),
-    dirAccount: path.join(cwd, "account.txt"),
+    dirAccount: fs.existsSync(path.join(cwd, "account.json")) ? path.join(cwd, "account.json") : path.join(cwd, "account.txt"),
     countDown: {},
     cache: {},
     database: {
@@ -1456,12 +1457,14 @@ async function runDiagnostics() {
   console.log("\n\x1b[33m--- 7. Live Session Cookie & Authentication Verification ---\x1b[0m");
   try {
     const checkLiveCookie = require(path.join(cwd, "bot/login/checkLiveCookie.js"));
-    const accountTxt = fs.readFileSync(path.join(cwd, "account.txt"), "utf8");
-    const isLive = await checkLiveCookie(accountTxt);
+    const accountFile = fs.existsSync(path.join(cwd, "account.json")) ? path.join(cwd, "account.json") : path.join(cwd, "account.txt");
+    const accountContent = fs.existsSync(accountFile) ? fs.readFileSync(accountFile, "utf8") : "";
+    const isLive = accountContent ? await checkLiveCookie(accountContent) : false;
+    const accountBaseName = path.basename(accountFile);
     if (isLive) {
-      logTest("SESSION", "account.txt session cookie is verified 100% LIVE against Facebook servers", true);
+      logTest("SESSION", `${accountBaseName} session cookie is verified 100% LIVE against Facebook servers`, true);
     } else {
-      logTest("SESSION", "checkLiveCookie accurately detected offline/expired Facebook session", true, "Offline session detected safely without false positive");
+      logTest("SESSION", `checkLiveCookie accurately detected offline/expired Facebook session in ${accountBaseName}`, true, "Offline session detected safely without false positive");
     }
   } catch (err) {
     if (err.name === "CHECKPOINT_ERROR") {

@@ -200,8 +200,8 @@ cd Floppa-Chatbot
 npm install
 
 # Configure Facebook authentication cookies
-# Paste your exported JSON or Netscape cookies into account.txt
-cat << 'EOF' > account.txt
+# Paste your exported JSON or Netscape cookies into account.json (or account.txt)
+cat << 'EOF' > account.json
 [
   { "key": "c_user", "value": "YOUR_FB_UID", "domain": "facebook.com", "path": "/" },
   { "key": "xs", "value": "YOUR_XS_TOKEN", "domain": "facebook.com", "path": "/" }

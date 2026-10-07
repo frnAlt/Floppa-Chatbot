@@ -23,8 +23,8 @@ Traditional desktop sessions trigger Facebook security checkpoints when run on s
 1. Install **Cookie-Editor** on Chrome / Firefox / Kiwi Browser.
 2. Open [https://www.facebook.com](https://www.facebook.com) and log into your bot's Facebook account.
 3. Open **Cookie-Editor** extension and click **Export** ➔ **Export as JSON**.
-4. Create or open `account.txt` in your Floppa-Chatbot root folder.
-5. Paste the copied JSON array into `account.txt` and save:
+4. Create or open `account.json` (or `account.txt`) in your Floppa-Chatbot root folder.
+5. Paste the copied JSON array into `account.json` (or `account.txt`) and save:
 
 ```json
 [
@@ -73,9 +73,9 @@ datr=xxx; sb=xxx; c_user=1000xxxxxxxxx; xs=xxxxxxxxxxxx; fr=xxxxxxxxxxxx;
 
 Floppa-Chatbot supports seamless multi-account management:
 
-- `account.txt` ➔ Primary account
-- `account2.txt` ➔ Secondary backup account
-- `account3.txt` ➔ Business DM account
+- `account.json` (or `account.txt`) ➔ Primary account
+- `account2.json` (or `account2.txt`) ➔ Secondary backup account
+- `account3.json` (or `account3.txt`) ➔ Business DM account
 
 If an account cookie expires or triggers a checkpoint, Floppa-Chatbot automatically switches to the next healthy account without dropping ongoing bot operations!
 
@@ -92,7 +92,7 @@ You can deploy and run Floppa-Chatbot directly using GitHub Actions runners with
 5. Click the green **Run workflow** button.
 
 > [!NOTE]
-> The runner automatically masks your cookie lines (`::add-mask::`) so your credentials will not be leaked or exposed in the GitHub Actions console logs. If no cookie is provided in the input, the runner gracefully falls back to repository secrets (`FB_STATE`, `ACCOUNT_TXT`) or the committed `account.txt`.
+> The runner automatically masks your cookie lines (`::add-mask::`) so your credentials will not be leaked or exposed in the GitHub Actions console logs. If no cookie is provided in the input, the runner gracefully falls back to repository secrets (`FB_STATE`, `ACCOUNT_TXT`) or the committed `account.json` / `account.txt`.
 
 ---
 

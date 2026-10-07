@@ -21,47 +21,43 @@ class MultiAccountManager {
 	}
 
 	/**
-	 * Scan for available account files (account.txt, account2.txt, account3.txt, etc.)
+	 * Scan for available account files (account.json, account.txt, account2.json, account2.txt, etc.)
 	 */
 	scanAccounts() {
 		const baseDir = process.cwd();
 		this.accounts = [];
 
-		// Always check account.txt first
-		const primaryAccount = path.join(baseDir, "account.txt");
-		if (fs.existsSync(primaryAccount)) {
-			this.accounts.push(primaryAccount);
+		// Primary account: check account.json first, then account.txt
+		const primaryJson = path.join(baseDir, "account.json");
+		const primaryTxt = path.join(baseDir, "account.txt");
+		if (fs.existsSync(primaryJson)) {
+			this.accounts.push(primaryJson);
+		} else if (fs.existsSync(primaryTxt)) {
+			this.accounts.push(primaryTxt);
 		}
 
-		// Check for account2.txt, account3.txt, etc.
+		// Secondary accounts: check account{i}.json or account{i}.txt
 		let index = 2;
 		while (true) {
-			const accountFile = path.join(baseDir, `account${index}.txt`);
-			if (fs.existsSync(accountFile)) {
-				this.accounts.push(accountFile);
+			const jsonFile = path.join(baseDir, `account${index}.json`);
+			const txtFile = path.join(baseDir, `account${index}.txt`);
+			if (fs.existsSync(jsonFile)) {
+				this.accounts.push(jsonFile);
+				index++;
+			} else if (fs.existsSync(txtFile)) {
+				this.accounts.push(txtFile);
 				index++;
 			} else {
 				break;
 			}
 		}
 
-		// Also check account.json files
-		const primaryJson = path.join(baseDir, "account.json");
-		if (fs.existsSync(primaryJson) && !this.accounts.includes(primaryJson)) {
-			this.accounts.push(primaryJson);
-		}
-
-		let jsonIndex = 2;
-		while (true) {
-			const accountFile = path.join(baseDir, `account${jsonIndex}.json`);
-			if (fs.existsSync(accountFile)) {
-				if (!this.accounts.includes(accountFile)) {
-					this.accounts.push(accountFile);
-				}
-				jsonIndex++;
-			} else {
-				break;
-			}
+		// Backward-compatibility: if account.txt exists and was not selected because account.json took precedence,
+		// do not treat it as a second account (they represent the same primary identity).
+		// However, if neither was matched above, check both.
+		if (this.accounts.length === 0) {
+			if (fs.existsSync(primaryJson)) this.accounts.push(primaryJson);
+			else if (fs.existsSync(primaryTxt)) this.accounts.push(primaryTxt);
 		}
 
 		if (this.accounts.length === 0) {

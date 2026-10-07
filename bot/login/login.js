@@ -324,7 +324,31 @@ qr.readQrCode = async function (filePath) {
         return value.result;
 };
 
-const { dirAccount } = global.client;
+let { dirAccount } = global.client;
+if (!existsSync(dirAccount)) {
+        const altAccount = dirAccount.endsWith('.json')
+                ? dirAccount.replace(/\.json$/, '.txt')
+                : dirAccount.replace(/\.txt$/, '.json');
+        if (existsSync(altAccount)) {
+                dirAccount = altAccount;
+                global.client.dirAccount = altAccount;
+        }
+}
+
+function writeAccountState(filePath, content) {
+        try {
+                const str = typeof content === "string" ? content : JSON.stringify(content, null, 2);
+                writeFileSync(filePath, str, "utf8");
+                const siblingPath = filePath.endsWith('.json')
+                        ? filePath.replace(/\.json$/, '.txt')
+                        : filePath.replace(/\.txt$/, '.json');
+                if (existsSync(siblingPath) || filePath.includes("account")) {
+                        try { writeFileSync(siblingPath, str, "utf8"); } catch (_) {}
+                }
+        } catch (e) {
+                log.warn("ACCOUNT_SAVE", `Failed to save account state to ${filePath}:`, e.message);
+        }
+}
 // const { config, configCommands } = global.GoatBot;
 const { facebookAccount } = global.GoatBot.config;
 
@@ -384,7 +408,7 @@ global.responseUptimeError = responseUptimeError;
 
 global.statusAccountBot = 'good';
 let changeFbStateByCode = false;
-let latestChangeContentAccount = fs.statSync(dirAccount).mtimeMs;
+let latestChangeContentAccount = fs.existsSync(dirAccount) ? fs.statSync(dirAccount).mtimeMs : 0;
 let dashBoardIsRunning = false;
 
 // ——————————— MULTI-ACCOUNT SETUP ——————————— //
@@ -641,12 +665,21 @@ async function getAppStateToLogin(loginWithEmail) {
                 accountText = (process.env.FB_STATE || process.env.ACCOUNT_TXT || process.env.COOKIES).trim();
                 log.info("LOGIN FACEBOOK", "Loaded credentials from environment secrets (FB_STATE / ACCOUNT_TXT / COOKIES)");
                 try {
-                        if (!existsSync(dirAccount) || readFileSync(dirAccount, "utf8") !== accountText) {
-                                writeFileSync(dirAccount, accountText, "utf8");
-                        }
+                        writeAccountState(dirAccount, accountText);
                 } catch (_) {}
-        } else if (existsSync(dirAccount)) {
-                accountText = readFileSync(dirAccount, "utf8");
+        } else {
+                if (!existsSync(dirAccount)) {
+                        const altAccount = dirAccount.endsWith('.json')
+                                ? dirAccount.replace(/\.json$/, '.txt')
+                                : dirAccount.replace(/\.txt$/, '.json');
+                        if (existsSync(altAccount)) {
+                                dirAccount = altAccount;
+                                global.client.dirAccount = altAccount;
+                        }
+                }
+                if (existsSync(dirAccount)) {
+                        accountText = readFileSync(dirAccount, "utf8");
+                }
         }
         if (!accountText.trim())
                 return log.error("LOGIN FACEBOOK", getText('login', 'notFoundDirAccount', colors.green(dirAccount)));
@@ -736,7 +769,7 @@ async function getAppStateToLogin(loginWithEmail) {
                 if (!email || !password) {
                         if (!process.stdin.isTTY) {
                                 log.err("LOGIN FACEBOOK", "Cannot prompt for credentials in non-interactive environment (TTY unavailable).");
-                                log.err("LOGIN FACEBOOK", "Please set the workflow input cookie, FB_STATE secret in GitHub Actions, or provide a valid account.txt file.");
+                                log.err("LOGIN FACEBOOK", "Please set the workflow input cookie, FB_STATE secret in GitHub Actions, or provide a valid account.json or account.txt file.");
                                 process.exit(1);
                         }
                         log.warn("LOGIN FACEBOOK", getText('login', 'cannotFindAccount'));
@@ -802,15 +835,15 @@ async function getAppStateToLogin(loginWithEmail) {
                         }
                         else if (currentOption == 1) {
                                 const token = await input(getText('login', 'inputToken') + " ");
-                                writeFileSync(global.client.dirAccount, token);
+                                writeAccountState(global.client.dirAccount, token);
                         }
                         else if (currentOption == 2) {
                                 const cookie = await input(getText('login', 'inputCookieString') + " ");
-                                writeFileSync(global.client.dirAccount, cookie);
+                                writeAccountState(global.client.dirAccount, cookie);
                         }
                         else {
                                 const cookie = await input(getText('login', 'inputCookieArray') + " ");
-                                writeFileSync(global.client.dirAccount, JSON.stringify(JSON.parse(cookie), null, 2));
+                                writeAccountState(global.client.dirAccount, JSON.stringify(JSON.parse(cookie), null, 2));
                         }
                         return await getAppStateToLogin();
                 }
@@ -884,7 +917,7 @@ async function startBot(loginWithEmail) {
                 const filtered = filterKeysAppState(appState);
                 if (filtered && filtered.length > 0) {
                         appState = filtered;
-                        writeFileSync(dirAccount, JSON.stringify(appState, null, 2));
+                        writeAccountState(dirAccount, appState);
                 }
                 setTimeout(() => changeFbStateByCode = false, 1000);
         }
@@ -927,7 +960,7 @@ async function startBot(loginWithEmail) {
                                                         if (facebookAccount.i_user)
                                                                 pushI_user(appState, facebookAccount.i_user);
                                                         changeFbStateByCode = true;
-                                                        writeFileSync(dirAccount, JSON.stringify(filterKeysAppState(appState), null, 2));
+                                                        writeAccountState(dirAccount, filterKeysAppState(appState));
                                                         setTimeout(() => changeFbStateByCode = false, 1000);
                                                         log.info("REFRESH COOKIE", getText('login', 'refreshCookieSuccess'));
                                                         return startBot(appState);
@@ -1147,7 +1180,7 @@ async function startBot(loginWithEmail) {
                                         if (Array.isArray(currentAppState) && currentAppState.length > 0) {
                                                 const filtered = filterKeysAppState(currentAppState);
                                                 if (filtered && filtered.length > 0) {
-                                                        writeFileSync(dirAccount, JSON.stringify(filtered, null, 2));
+                                                        writeAccountState(dirAccount, filtered);
                                                         log.info("REFRESH FBSTATE", getText('login', 'refreshFbstateSuccess', path.basename(dirAccount)));
                                                 }
                                         }
@@ -1171,11 +1204,11 @@ async function startBot(loginWithEmail) {
                                                         const filtered = filterKeysAppState(currentAppState);
                                                         if (filtered && filtered.length > 0) {
                                                                 changeFbStateByCode = true;
-                                                                writeFileSync(dirAccount, JSON.stringify(filtered, null, 2));
+                                                                writeAccountState(dirAccount, filtered);
                                                                 try {
                                                                         writeFileSync(path.join(process.cwd(), "appstate.json"), JSON.stringify(filtered, null, 2));
                                                                 } catch (_) {}
-                                                                latestChangeContentAccount = fs.statSync(dirAccount).mtimeMs;
+                                                                latestChangeContentAccount = fs.existsSync(dirAccount) ? fs.statSync(dirAccount).mtimeMs : 0;
                                                                 setTimeout(() => { changeFbStateByCode = false; }, 1000);
                                                         }
                                                 }
@@ -1189,7 +1222,7 @@ async function startBot(loginWithEmail) {
                                                         if (Array.isArray(currentAppState) && currentAppState.length > 0) {
                                                                 const filtered = filterKeysAppState(currentAppState);
                                                                 if (filtered && filtered.length > 0) {
-                                                                        writeFileSync(dirAccount, JSON.stringify(filtered, null, 2));
+                                                                        writeAccountState(dirAccount, filtered);
                                                                         try { writeFileSync(path.join(process.cwd(), "appstate.json"), JSON.stringify(filtered, null, 2)); } catch (_) {}
                                                                 }
                                                         }
@@ -1783,16 +1816,28 @@ async function startBot(loginWithEmail) {
 
         if (global.GoatBot.config.autoReloginWhenChangeAccount) {
                 setTimeout(function () {
-                        watch(dirAccount, async (type) => {
-                                if (type == 'change' && changeFbStateByCode == false && latestChangeContentAccount != fs.statSync(dirAccount).mtimeMs) {
-                                        clearInterval(global.intervalRestartListenMqtt);
-                                        global.compulsoryStopLisening = true;
-                                        // await stopListening();
-                                        latestChangeContentAccount = fs.statSync(dirAccount).mtimeMs;
-                                        // process.exit(2);
-                                        startBot();
-                                }
-                        });
+                        const watchAccount = (targetPath) => {
+                                if (!existsSync(targetPath)) return;
+                                try {
+                                        watch(targetPath, async (type) => {
+                                                if (type == 'change' && changeFbStateByCode == false && existsSync(targetPath) && latestChangeContentAccount != fs.statSync(targetPath).mtimeMs) {
+                                                        clearInterval(global.intervalRestartListenMqtt);
+                                                        global.compulsoryStopLisening = true;
+                                                        // await stopListening();
+                                                        latestChangeContentAccount = fs.statSync(targetPath).mtimeMs;
+                                                        // process.exit(2);
+                                                        startBot();
+                                                }
+                                        });
+                                } catch (_) {}
+                        };
+                        watchAccount(dirAccount);
+                        const altAccount = dirAccount.endsWith('.json')
+                                ? dirAccount.replace(/\.json$/, '.txt')
+                                : dirAccount.replace(/\.txt$/, '.json');
+                        if (altAccount !== dirAccount) {
+                                watchAccount(altAccount);
+                        }
                 }, 10000);
         }
 }

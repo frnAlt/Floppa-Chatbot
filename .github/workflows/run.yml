@@ -4,12 +4,12 @@ on:
   workflow_dispatch:
     inputs:
       cookie:
-        description: 'Facebook Cookie / Appstate JSON / Cookie String (Overrides account.txt & secrets)'
+        description: 'Facebook Cookie / Appstate JSON / Cookie String (Overrides account.json / account.txt & secrets)'
         required: false
         type: string
         default: ''
       cookie2:
-        description: 'Secondary Cookie / Appstate for account2.txt (Optional multi-account backup)'
+        description: 'Secondary Cookie / Appstate for account2.json / account2.txt (Optional multi-account backup)'
         required: false
         type: string
         default: ''
@@ -91,34 +91,51 @@ jobs:
               printf '%s\n' "$content" > "$target_file"
               echo "Loaded $label credentials into $target_file."
             fi
+
+            # Sync dual-format accounts (both .json and .txt)
+            if [ "$target_file" = "account.json" ] || [ "$target_file" = "account.txt" ]; then
+              cp -f "$target_file" "account.json" 2>/dev/null || true
+              cp -f "$target_file" "account.txt" 2>/dev/null || true
+            fi
+            if [ "$target_file" = "account2.json" ] || [ "$target_file" = "account2.txt" ]; then
+              cp -f "$target_file" "account2.json" 2>/dev/null || true
+              cp -f "$target_file" "account2.txt" 2>/dev/null || true
+            fi
           }
 
           # Primary account configuration (Workflow input takes precedence over secrets)
           if [ -n "$INPUT_COOKIE" ]; then
-            mask_and_save "$INPUT_COOKIE" "account.txt" "workflow input (cookie)"
+            mask_and_save "$INPUT_COOKIE" "account.json" "workflow input (cookie)"
           elif [ -n "$FB_STATE" ]; then
-            mask_and_save "$FB_STATE" "account.txt" "FB_STATE secret"
+            mask_and_save "$FB_STATE" "account.json" "FB_STATE secret"
           elif [ -n "$ACCOUNT_TXT" ]; then
-            mask_and_save "$ACCOUNT_TXT" "account.txt" "ACCOUNT_TXT secret"
+            mask_and_save "$ACCOUNT_TXT" "account.json" "ACCOUNT_TXT secret"
           fi
 
-          if [ -s "account.txt" ]; then
-            echo "Primary account.txt is ready ($(wc -c < account.txt) bytes)"
+          # Ensure synchronization if either file was loaded or pre-exists
+          if [ -s "account.json" ] && [ ! -s "account.txt" ]; then cp -f "account.json" "account.txt"; fi
+          if [ -s "account.txt" ] && [ ! -s "account.json" ]; then cp -f "account.txt" "account.json"; fi
+
+          if [ -s "account.json" ] || [ -s "account.txt" ]; then
+            echo "Primary credentials are ready (account.json: $(wc -c < account.json 2>/dev/null || echo 0) bytes, account.txt: $(wc -c < account.txt 2>/dev/null || echo 0) bytes)"
           else
-            echo "account.txt fallback will be loaded from repository if present."
+            echo "Primary credentials fallback will be loaded from repository if present."
           fi
 
           # Secondary account configuration (if provided)
           if [ -n "$INPUT_COOKIE2" ]; then
-            mask_and_save "$INPUT_COOKIE2" "account2.txt" "workflow input (cookie2)"
+            mask_and_save "$INPUT_COOKIE2" "account2.json" "workflow input (cookie2)"
           elif [ -n "$FB_STATE_2" ]; then
-            mask_and_save "$FB_STATE_2" "account2.txt" "FB_STATE_2 secret"
+            mask_and_save "$FB_STATE_2" "account2.json" "FB_STATE_2 secret"
           elif [ -n "$ACCOUNT2_TXT" ]; then
-            mask_and_save "$ACCOUNT2_TXT" "account2.txt" "ACCOUNT2_TXT secret"
+            mask_and_save "$ACCOUNT2_TXT" "account2.json" "ACCOUNT2_TXT secret"
           fi
 
-          if [ -s "account2.txt" ]; then
-            echo "Secondary account2.txt is ready ($(wc -c < account2.txt) bytes)"
+          if [ -s "account2.json" ] && [ ! -s "account2.txt" ]; then cp -f "account2.json" "account2.txt"; fi
+          if [ -s "account2.txt" ] && [ ! -s "account2.json" ]; then cp -f "account2.txt" "account2.json"; fi
+
+          if [ -s "account2.json" ] || [ -s "account2.txt" ]; then
+            echo "Secondary credentials are ready (account2.json: $(wc -c < account2.json 2>/dev/null || echo 0) bytes, account2.txt: $(wc -c < account2.txt 2>/dev/null || echo 0) bytes)"
           fi
 
       - name: Start the Bot
