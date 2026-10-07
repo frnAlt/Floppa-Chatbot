@@ -1757,6 +1757,19 @@ async function runDiagnostics() {
     } catch (_) {}
     logTest("FCA_COMMANDS", "scripts/cmds/alldl.js incorporates Instagram JWT media unwrap fix", alldlIgResolverValid);
 
+    // 11. music-gen.js exposes songen alias, minimal cooldown and onStart handler
+    let musicGenCmdValid = false;
+    try {
+      const mgCmd = require("./cmds/music-gen.js");
+      musicGenCmdValid = mgCmd?.config?.name === "music-gen" &&
+        Array.isArray(mgCmd?.config?.aliases) &&
+        mgCmd.config.aliases.includes("songen") &&
+        mgCmd.config.aliases.includes("songgen") &&
+        mgCmd.config.countDown <= 1 &&
+        typeof mgCmd.onStart === "function";
+    } catch (_) {}
+    logTest("FCA_COMMANDS", "scripts/cmds/music-gen.js exposes songen alias with zero cooldown delay", musicGenCmdValid);
+
   } catch (err) {
     logTest("FCA_ENGINES", "Section 10 tests encountered failure", false, err.message);
   }
