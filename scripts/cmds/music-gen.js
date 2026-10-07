@@ -1,10 +1,25 @@
 const axios = require("axios");
 
-// In-memory zero-latency cache for generated tracks (TTL: 30 minutes)
+// In-memory zero-latency cache for generated tracks with automatic storage cleanup
 const audioCache = new Map();
 const CACHE_TTL_MS = 30 * 60 * 1000;
+const MAX_CACHE_ENTRIES = 50;
+
+function pruneCache() {
+  const now = Date.now();
+  for (const [key, item] of audioCache.entries()) {
+    if (now - item.time > CACHE_TTL_MS) {
+      audioCache.delete(key);
+    }
+  }
+  while (audioCache.size > MAX_CACHE_ENTRIES) {
+    const oldestKey = audioCache.keys().next().value;
+    audioCache.delete(oldestKey);
+  }
+}
 
 function getCached(key) {
+  pruneCache();
   const item = audioCache.get(key.toLowerCase().trim());
   if (item && Date.now() - item.time < CACHE_TTL_MS) {
     return item.audioUrl;
@@ -14,6 +29,7 @@ function getCached(key) {
 
 function setCached(key, audioUrl) {
   if (audioUrl) {
+    pruneCache();
     audioCache.set(key.toLowerCase().trim(), { audioUrl, time: Date.now() });
   }
 }
