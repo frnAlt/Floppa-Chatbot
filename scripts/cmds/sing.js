@@ -159,6 +159,22 @@ async function getFallbackRace(youtubeUrl, titleFallback = "") {
     throw new Error("alldl failed");
   })());
 
+  // Candidate D: smfahim YouTube MP3
+  providers.push((async () => {
+    const smfahimApi = `https://smfahim.xyz/download/youtube/mp3/v1?url=${encodeURIComponent(youtubeUrl)}`;
+    const res = await client.get(smfahimApi, { timeout: 7000 });
+    const dl = res.data?.download || res.data?.result?.download || res.data?.url || res.data?.mp3;
+    if (res.data?.status !== false && dl) {
+      return {
+        url: dl,
+        source: "smfahim",
+        title: res.data?.title || titleFallback,
+        author: res.data?.author || ""
+      };
+    }
+    throw new Error("smfahim failed");
+  })());
+
   return await Promise.any(providers);
 }
 

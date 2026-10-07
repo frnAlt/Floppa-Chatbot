@@ -26,10 +26,21 @@ module.exports = {
 		}
 	},
 
-	onStart: async function ({ message, event, api, args, getLang, commandName }) {
-		const botID = String(api.getCurrentUserID());
+	onStart: async function ({ message, event, api, args, role, getLang, commandName }) {
+		const botID = String(api?.getCurrentUserID?.() || global.GoatBot?.botID || global.botID || "");
+		const senderID = String(event.senderID || event.userID || "");
+		const isBotSelf = Boolean(botID && senderID === botID);
 
-		// Mode 1: Unsend N recent bot messages (e.g. !u 2)
+		// In group chats, only administrators (group admin role 1, bot admin role 2, dev role 4) can unsend
+		const isAdmin = isBotSelf || (role != null && role >= 1) ||
+			Boolean(global.GoatBot?.config?.adminBot && global.GoatBot.config.adminBot.map(String).includes(senderID)) ||
+			Boolean(global.GoatBot?.config?.devUsers && global.GoatBot.config.devUsers.map(String).includes(senderID));
+
+		if (event.isGroup && !isAdmin) {
+			return message.reply("❌ Only administrators can unsend bot messages in this group.");
+		}
+
+		// Mode 1: Unsend N recent bot messages (e.g. !unsend 2)
 		if (args[0] && /^\d+$/.test(args[0])) {
 			const count = parseInt(args[0], 10);
 			if (count <= 0) {
@@ -84,10 +95,10 @@ module.exports = {
 					const idx = threadBotMsgs.indexOf(event.messageReply.messageID);
 					if (idx !== -1) threadBotMsgs.splice(idx, 1);
 				}
-				if (api.setMessageReaction) {
+				if (api.setMessageReaction && !isBotSelf) {
 					api.setMessageReaction("👍", event.messageID, () => {}, true);
 				}
-				if (api.unsendMessage && event.messageID) {
+				if (api.unsendMessage && event.messageID && !isBotSelf) {
 					setTimeout(() => api.unsendMessage(event.messageID, event.threadID).catch(() => {}), 1500);
 				}
 			} catch (err) {
@@ -103,10 +114,10 @@ module.exports = {
 			const lastMID = threadBotMsgs.pop();
 			try {
 				await api.unsendMessage(lastMID, event.threadID);
-				if (api.setMessageReaction) {
+				if (api.setMessageReaction && !isBotSelf) {
 					api.setMessageReaction("👍", event.messageID, () => {}, true);
 				}
-				if (api.unsendMessage && event.messageID) {
+				if (api.unsendMessage && event.messageID && !isBotSelf) {
 					setTimeout(() => api.unsendMessage(event.messageID, event.threadID).catch(() => {}), 1500);
 				}
 				return;
@@ -120,20 +131,30 @@ module.exports = {
 
 	onReaction: async function ({ api, event, role, message }) {
 		const { reaction, messageID, threadID, userID, senderID } = event;
-		const uid = String(userID || senderID);
-		const handEmojis = ["✋", "🖐️", "🖐", "🤚", "👋", "👌", "👍", "👎", "✍️", "🤝", "🖕", "👊", "🤛", "🤜", "🤞", "🫰", "🤟", "🤘", "🤙", "👈", "👉", "👆", "👇", "☝️", "👏", "🙌", "👐", "🤲", "🙏"];
+		const uid = String(userID || senderID || "");
+		const botID = String(api?.getCurrentUserID?.() || global.GoatBot?.botID || global.botID || "");
+
+		// Never process bot's own reactions to prevent accidental self-unsending!
+		if (uid && botID && uid === botID) return;
+
+		// Strictly hand unsend emojis: ✋, 🖐️, 🖐, 🤚 (Thumbs up/down MUST NEVER unsend!)
+		const handEmojis = ["✋", "🖐️", "🖐", "🤚"];
 		if (!reaction || !handEmojis.some(h => reaction.includes(h) || reaction === h)) return;
 
-		const isAdmin = (role != null && role >= 1) || (global.GoatBot?.config?.adminBot && global.GoatBot.config.adminBot.includes(uid));
+		const isAdmin = (role != null && role >= 1) ||
+			Boolean(global.GoatBot?.config?.adminBot && global.GoatBot.config.adminBot.map(String).includes(uid)) ||
+			Boolean(global.GoatBot?.config?.devUsers && global.GoatBot.config.devUsers.map(String).includes(uid));
 		if (!isAdmin) return;
+
+		// Only unsend if message was sent by the bot!
+		const threadBotMsgs = global.botSentMessages?.get(String(threadID)) || [];
+		const isBotMsg = threadBotMsgs.includes(messageID) || (event.messageSenderID && String(event.messageSenderID) === botID);
+		if (threadBotMsgs.length > 0 && !isBotMsg) return;
 
 		try {
 			await api.unsendMessage(messageID, threadID);
-			const threadBotMsgs = global.botSentMessages?.get(String(threadID));
-			if (threadBotMsgs) {
-				const idx = threadBotMsgs.indexOf(messageID);
-				if (idx !== -1) threadBotMsgs.splice(idx, 1);
-			}
+			const idx = threadBotMsgs.indexOf(messageID);
+			if (idx !== -1) threadBotMsgs.splice(idx, 1);
 		} catch (err) {
 			// Failed to unsend
 		}
