@@ -110,16 +110,7 @@ module.exports = {
     }
   },
 
-  onStart: async function ({ api, event, args, message, getLang }) {
-    let prompt = args.join(" ").trim();
-    if (!prompt && event.messageReply && event.messageReply.body) {
-      prompt = event.messageReply.body.trim();
-    }
-
-    if (!prompt) {
-      return message.reply(getLang("missingPrompt"));
-    }
-
+  onStart: async function ({ api, event, args, message, getLang, commandName }) {
     const react = (emoji) => {
       try {
         if (typeof message.reaction === "function") {
@@ -130,7 +121,7 @@ module.exports = {
       } catch (_) {}
     };
 
-    // Instant acceptance reaction with zero delay
+    // Instant acceptance reaction like edit.js
     react("⏳");
 
     if (typeof message.typing === "function") {
@@ -139,19 +130,33 @@ module.exports = {
       api.sendTypingIndicator(event.threadID, () => {});
     }
 
+    let prompt = args.join(" ").trim();
+    if (!prompt && event.messageReply && event.messageReply.body) {
+      prompt = event.messageReply.body.trim();
+    }
+
+    if (!prompt) {
+      const prefix = global.GoatBot?.config?.prefix || global.FloppaBot?.config?.prefix || "";
+      return message.reply(
+        `🎵 Please provide a song name, style, or lyrics prompt.\n\n💡 Usage: ${prefix}${commandName || "songen"} <song prompt>\n💡 Examples:\n• ${prefix}${commandName || "songen"} believer\n• ${prefix}${commandName || "songen"} bangla romantic song\n• ${prefix}${commandName || "songen"} chill lofi beat`
+      );
+    }
+
     try {
       // 1. Check in-memory cache for instant 0ms return
       let audioUrl = getCached(prompt);
 
-      // 2. Try primary AI music generation
+      // 2. High-speed Facebook Stories Music Catalog first (resolves in ~250ms with direct CDN stream)
+      if (!audioUrl) {
+        audioUrl = await searchFacebookMusic(api, prompt);
+      }
+
+      // 3. AI music generation (if not in catalog or for custom lyrics)
       if (!audioUrl) {
         audioUrl = await fetchAiMusic(prompt);
       }
 
-      // 3. Ultra-fast fallbacks if AI generation is delayed, rate-limited or unavailable
-      if (!audioUrl) {
-        audioUrl = await searchFacebookMusic(api, prompt);
-      }
+      // 4. Ultra-fast fallbacks: SoundCloud & YouTube Audio
       if (!audioUrl) {
         audioUrl = await searchSoundCloud(prompt);
       }
@@ -190,14 +195,15 @@ module.exports = {
         stream = res.data;
       }
 
-      react("🎵");
+      // Success reaction matching edit.js (👍)
+      react("👍");
 
       // User requirement: ONLY MP3 audio output, without text
       return message.reply({
         attachment: stream
       });
     } catch (err) {
-      react("❌");
+      react("👎");
       return message.reply(getLang("error"));
     }
   }
