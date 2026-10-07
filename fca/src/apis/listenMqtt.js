@@ -444,8 +444,8 @@ async function listenMqtt(defaultFuncs, api, ctx, globalCallback, scheduleReconn
 
         const queue = { 
             sync_api_version: 11, 
-            max_deltas_able_to_process: 200, 
-            delta_batch_size: 200, 
+            max_deltas_able_to_process: 1000, 
+            delta_batch_size: 1000, 
             encoding: "JSON", 
             entity_fbid: ctx.userID,
             initial_titan_sequence_id: (!ctx.lastSeqId || ctx.lastSeqId === "-1") ? "0" : String(ctx.lastSeqId),
@@ -539,7 +539,7 @@ async function listenMqtt(defaultFuncs, api, ctx, globalCallback, scheduleReconn
                     actorFbId: jsonMessage.from.toString(), 
                     timestamp: Date.now().toString() 
                 });
-            } else if (topic === "/t_ms") {
+            } else if (topic === "/t_ms" || topic === "/messaging_events" || topic === "/mercury") {
                 if (ctx.tmsWait && typeof ctx.tmsWait === "function") ctx.tmsWait();
 
                 if (jsonMessage.firstDeltaSeqId && jsonMessage.syncToken) {
@@ -550,9 +550,19 @@ async function listenMqtt(defaultFuncs, api, ctx, globalCallback, scheduleReconn
                     ctx.lastSeqId = parseInt(jsonMessage.lastIssuedSeqId, 10);
                 }
 
-                if (jsonMessage.deltas) {
+                if (Array.isArray(jsonMessage.deltas)) {
                     for (const delta of jsonMessage.deltas) {
-                        parseDelta(defaultFuncs, api, ctx, callbackToUse, { delta });
+                        try {
+                            parseDelta(defaultFuncs, api, ctx, callbackToUse, { delta });
+                        } catch (err) {
+                            utils.warn("MQTT", `Failed to parse delta: ${err.message || err}`);
+                        }
+                    }
+                } else if (jsonMessage.delta && typeof jsonMessage.delta === "object") {
+                    try {
+                        parseDelta(defaultFuncs, api, ctx, callbackToUse, { delta: jsonMessage.delta });
+                    } catch (err) {
+                        utils.warn("MQTT", `Failed to parse single delta: ${err.message || err}`);
                     }
                 }
             } else if (topic === "/ls_resp") {

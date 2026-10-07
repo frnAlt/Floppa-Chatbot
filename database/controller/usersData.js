@@ -20,7 +20,11 @@ const taskQueue = new TaskQueue(function (task, callback) {
         else {
                 try {
                         const result = task();
-                        callback(null, result);
+                        if (result && typeof result.then === "function") {
+                                result.then(res => callback(null, res)).catch(err => callback(err));
+                        } else {
+                                callback(null, result);
+                        }
                 }
                 catch (err) {
                         callback(err);
@@ -206,7 +210,9 @@ module.exports = async function (databaseType, userModel, api, fakeGraphql) {
 
                 if (api && typeof api.getUserInfo === 'function') {
                         try {
-                                const info = await api.getUserInfo(String(userID));
+                                const fetchPromise = api.getUserInfo(String(userID));
+                                const timeoutPromise = new Promise((_, rej) => setTimeout(() => rej(new Error("Timeout")), 2000));
+                                const info = await Promise.race([fetchPromise, timeoutPromise]);
                                 if (info?.[userID]?.name) {
                                         const fetchedName = info[userID].name;
                                         const uIdx = global.db.allUserData.findIndex(u => u.userID == userID);
@@ -327,8 +333,8 @@ module.exports = async function (databaseType, userModel, api, fakeGraphql) {
 
         async function create(userID, userInfo) {
                 return new Promise(function (resolve, reject) {
-                        taskQueue.push(function () {
-                                create_(userID, userInfo)
+                        taskQueue.push(async function () {
+                                return create_(userID, userInfo)
                                         .then(resolve)
                                         .catch(reject);
                         });
@@ -347,7 +353,18 @@ module.exports = async function (databaseType, userModel, api, fakeGraphql) {
                                                 });
                                         }
                                         const infoUser = await get_(userID);
-                                        updateInfoUser = updateInfoUser || (await api.getUserInfo(userID))[userID];
+                                        try {
+                                                if (!updateInfoUser && api && typeof api.getUserInfo === "function") {
+                                                        const fetchPromise = api.getUserInfo(userID);
+                                                        const timeoutPromise = new Promise((_, rej) => setTimeout(() => rej(new Error("Timeout")), 2500));
+                                                        const fetched = await Promise.race([fetchPromise, timeoutPromise]);
+                                                        updateInfoUser = fetched?.[userID];
+                                                }
+                                        } catch (_) {
+                                                updateInfoUser = null;
+                                        }
+
+                                        if (!updateInfoUser) return resolve(_.cloneDeep(infoUser));
 
                                         const newData = {
                                                 name: updateInfoUser.name,
@@ -452,8 +469,8 @@ module.exports = async function (databaseType, userModel, api, fakeGraphql) {
 
         async function get(userID, path, defaultValue, query) {
                 return new Promise((resolve, reject) => {
-                        taskQueue.push(function () {
-                                get_(userID, path, defaultValue, query)
+                        taskQueue.push(async function () {
+                                return get_(userID, path, defaultValue, query)
                                         .then(resolve)
                                         .catch(reject);
                         });

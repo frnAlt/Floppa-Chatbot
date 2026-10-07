@@ -19,7 +19,11 @@ const taskQueue = new TaskQueue(function (task, callback) {
         else {
                 try {
                         const result = task();
-                        callback(null, result);
+                        if (result && typeof result.then === "function") {
+                                result.then(res => callback(null, res)).catch(err => callback(err));
+                        } else {
+                                callback(null, result);
+                        }
                 }
                 catch (err) {
                         callback(err);
@@ -341,7 +345,11 @@ module.exports = async function (databaseType, threadModel, api, fakeGraphql) {
                                         const threadInfo = await get_(threadID);
                                         if (!threadInfo) return resolve(null);
                                         try {
-                                                newThreadInfo = newThreadInfo || await api.getThreadInfo(threadID);
+                                                if (!newThreadInfo && api && typeof api.getThreadInfo === "function") {
+                                                        const fetchPromise = api.getThreadInfo(threadID);
+                                                        const timeoutPromise = new Promise((_, rej) => setTimeout(() => rej(new Error("Timeout")), 2500));
+                                                        newThreadInfo = await Promise.race([fetchPromise, timeoutPromise]);
+                                                }
                                         } catch (_) {
                                                 newThreadInfo = null;
                                         }
@@ -481,8 +489,8 @@ module.exports = async function (databaseType, threadModel, api, fakeGraphql) {
 
         async function get(threadID, path, defaultValue, query) {
                 return new Promise(async function (resolve, reject) {
-                        taskQueue.push(function () {
-                                get_(threadID, path, defaultValue, query)
+                        taskQueue.push(async function () {
+                                return get_(threadID, path, defaultValue, query)
                                         .then(resolve)
                                         .catch(reject);
                         });

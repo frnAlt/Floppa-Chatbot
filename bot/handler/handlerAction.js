@@ -69,7 +69,15 @@ module.exports = (api, threadModel, userModel, dashBoardModel, globalModel, user
                                 log.err("HANDLER", "Background DB check error:", err.message || err);
                         });
 
-                        const handlerChat = await handlerEvents(event, message);
+                        let handlerChat;
+                        try {
+                                const handlerEventsPromise = handlerEvents(event, message);
+                                const timeoutPromise = new Promise((_, rej) => setTimeout(() => rej(new Error("handlerEvents timeout (>20s)")), 20000));
+                                handlerChat = await Promise.race([handlerEventsPromise, timeoutPromise]);
+                        } catch (err) {
+                                log.err("HANDLER", `Error or timeout in handlerEvents:`, err.message || err);
+                                return;
+                        }
                         if (!handlerChat)
                                 return;
 

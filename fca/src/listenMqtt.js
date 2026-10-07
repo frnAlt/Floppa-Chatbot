@@ -347,8 +347,8 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
     let topic;
     const queue = {
       sync_api_version: 11,
-      max_deltas_able_to_process: 100,
-      delta_batch_size: 500,
+      max_deltas_able_to_process: 1000,
+      delta_batch_size: 1000,
       encoding: 'JSON',
       entity_fbid: ctx.userID,
       initial_titan_sequence_id: ctx.lastSeqId,
@@ -422,7 +422,7 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
       return;
     }
     if (!jsonMessage || typeof jsonMessage !== "object") return;
-    if (topic === "/t_ms") {
+    if (topic === "/t_ms" || topic === "/messaging_events" || topic === "/mercury") {
       if (ctx.tmsWait && typeof ctx.tmsWait == "function") ctx.tmsWait();
 
       if (jsonMessage.firstDeltaSeqId && jsonMessage.syncToken) {
@@ -434,10 +434,22 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
       //If it contains more than 1 delta
       if (Array.isArray(jsonMessage.deltas)) {
         for (var i in jsonMessage.deltas) {
-          var delta = jsonMessage.deltas[i];
+          try {
+            var delta = jsonMessage.deltas[i];
+            parseDelta(defaultFuncs, api, ctx, globalCallback, {
+              "delta": delta
+            });
+          } catch (err) {
+            logWarn(`Failed to parse delta [${i}]: ${err.message || err}`);
+          }
+        }
+      } else if (jsonMessage.delta && typeof jsonMessage.delta === "object") {
+        try {
           parseDelta(defaultFuncs, api, ctx, globalCallback, {
-            "delta": delta
+            "delta": jsonMessage.delta
           });
+        } catch (err) {
+          logWarn(`Failed to parse single delta: ${err.message || err}`);
         }
       }
     } else if (topic === "/ls_resp") {
@@ -611,7 +623,7 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, {
             markDelivery(ctx, api, fmtMsg.threadID, fmtMsg.messageID);
           }
 
-          if (!ctx.globalOptions.selfListen && fmtMsg.senderID === ctx.userID) return;
+          if (!ctx.globalOptions.selfListen && String(fmtMsg.senderID) === String(ctx.userID)) return;
           globalCallback(null, fmtMsg);
         }
       } else {

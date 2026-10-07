@@ -392,7 +392,9 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 
                 if (!userData && !isNaN(senderID)) {
                         try {
-                                userData = await usersData.create(senderID);
+                                const createPromise = usersData.create(senderID);
+                                const timeoutPromise = new Promise((_, rej) => setTimeout(() => rej(new Error("Timeout")), 3000));
+                                userData = await Promise.race([createPromise, timeoutPromise]);
                         } catch (err) {
                                 userData = { userID: String(senderID), name: `User ${senderID}`, money: 0, exp: 0, data: {} };
                         }
@@ -400,7 +402,9 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 
                 if (!threadData && !isNaN(threadID)) {
                         try {
-                                threadData = await threadsData.create(threadID, null, Boolean(isGroup));
+                                const createPromise = threadsData.create(threadID, null, Boolean(isGroup));
+                                const timeoutPromise = new Promise((_, rej) => setTimeout(() => rej(new Error("Timeout")), 3000));
+                                threadData = await Promise.race([createPromise, timeoutPromise]);
                         } catch (err) {
                                 threadData = {
                                         threadID: String(threadID),
@@ -1086,19 +1090,31 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                         };
                                 }
 
-                                command.onChat({
-                                        ...parameters,
-                                        isUserCallCommand,
-                                        args,
-                                        commandName,
-                                        getLang: getText2
-                                })
+                                const ON_CHAT_TIMEOUT = 30000;
+                                let onChatTimeoutId;
+                                const timeoutPromise = new Promise((_, rej) => {
+                                        onChatTimeoutId = setTimeout(() => rej(new Error(`onChat timeout for ${commandName}`)), ON_CHAT_TIMEOUT);
+                                });
+                                Promise.race([
+                                        command.onChat({
+                                                ...parameters,
+                                                isUserCallCommand,
+                                                args,
+                                                commandName,
+                                                getLang: getText2
+                                        }),
+                                        timeoutPromise
+                                ])
                                         .then(async (handler) => {
+                                                clearTimeout(onChatTimeoutId);
                                                 if (typeof handler == "function") {
                                                         if (isBannedOrOnlyAdmin(userData, threadData, senderID, threadID, isGroup, commandName, message, langCode))
                                                                 return;
                                                         try {
-                                                                await handler();
+                                                                await Promise.race([
+                                                                        handler(),
+                                                                        new Promise((_, rej) => setTimeout(() => rej(new Error(`onChat handler timeout for ${commandName}`)), 20000))
+                                                                ]);
                                                                 eventLogger.logOnChat({
                                                                         commandName,
                                                                         userName: userData?.name,
@@ -1123,6 +1139,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                                 }
                                         })
                                         .catch(err => {
+                                                clearTimeout(onChatTimeoutId);
                                                 log.err("onChat", `An error occurred when calling the command onChat ${commandName}`, err);
                                         });
                         }
@@ -1440,13 +1457,25 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                 createMessageSyntaxError(commandName);
                                 if (isBannedOrOnlyAdmin(userData, threadData, senderID, threadID, isGroup, commandName, message, langCode))
                                         return;
-                                await command.onReaction({
-                                        ...parameters,
-                                        Reaction,
-                                        args,
-                                        commandName,
-                                        getLang: getText2
+                                const ON_REACTION_TIMEOUT = 30000;
+                                let onReactionTimeoutId;
+                                const timeoutPromise = new Promise((_, rej) => {
+                                        onReactionTimeoutId = setTimeout(() => rej(new Error(`onReaction timeout for ${commandName}`)), ON_REACTION_TIMEOUT);
                                 });
+                                try {
+                                        await Promise.race([
+                                                command.onReaction({
+                                                        ...parameters,
+                                                        Reaction,
+                                                        args,
+                                                        commandName,
+                                                        getLang: getText2
+                                                }),
+                                                timeoutPromise
+                                        ]);
+                                } finally {
+                                        clearTimeout(onReactionTimeoutId);
+                                }
                                 eventLogger.logOnReaction({
                                         commandName,
                                         userName: userData?.name,

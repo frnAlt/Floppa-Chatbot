@@ -244,8 +244,11 @@ module.exports = function (defaultFuncs, api, ctx) {
       isSingleUser = true;
     }
     // 3. From global event context if threadID matches current event
-    else if (global.Fca?.Data?.event && typeof global.Fca.Data.event.isGroup === "boolean" && String(global.Fca.Data.event.threadID) === tID) {
-      isSingleUser = !global.Fca.Data.event.isGroup;
+    const eventData = (global.Fca?.Data?.event instanceof Map)
+      ? global.Fca.Data.event.get("Data")
+      : (typeof global.Fca?.Data?.event?.get === "function" ? global.Fca.Data.event.get("Data") : global.Fca?.Data?.event);
+    if (eventData && typeof eventData.isGroup === "boolean" && String(eventData.threadID) === tID) {
+      isSingleUser = !eventData.isGroup;
       if (isSingleUser) {
         if (!global.Fca.isUser.includes(tID)) global.Fca.isUser.push(tID);
       } else {

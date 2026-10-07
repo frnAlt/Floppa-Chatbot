@@ -173,11 +173,34 @@ class TaskQueue {
                 if (this.queue.length > 0) {
                         const task = this.queue[0];
                         this.running = task;
-                        this.callback(task, async (err, result) => {
+                        let settled = false;
+                        const timer = setTimeout(() => {
+                                if (!settled) {
+                                        settled = true;
+                                        this.running = null;
+                                        this.queue.shift();
+                                        this.next();
+                                }
+                        }, 5000);
+                        if (typeof timer.unref === "function") timer.unref();
+
+                        try {
+                                this.callback(task, async (err, result) => {
+                                        if (settled) return;
+                                        settled = true;
+                                        clearTimeout(timer);
+                                        this.running = null;
+                                        this.queue.shift();
+                                        this.next();
+                                });
+                        } catch (err) {
+                                if (settled) return;
+                                settled = true;
+                                clearTimeout(timer);
                                 this.running = null;
                                 this.queue.shift();
                                 this.next();
-                        });
+                        }
                 }
         }
         length() {
