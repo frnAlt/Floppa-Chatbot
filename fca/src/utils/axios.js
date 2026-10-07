@@ -422,7 +422,7 @@ async function get(url, reqJar, qs, options, ctx, customHeader) {
     const requestClient = getClientForJar(reqJar);
     const config = {
         headers: getHeaders(url, options, ctx, customHeader),
-        timeout: 60000,
+        timeout: options?.timeout || 25000,
         params: qs,
         ...getProxyConfig(options),
         validateStatus: (status) => status >= 200 && status < 600,
@@ -463,7 +463,7 @@ async function post(url, reqJar, form, options, ctx, customHeader) {
 
     const config = {
         headers,
-        timeout: 60000,
+        timeout: options?.timeout || 25000,
         ...getProxyConfig(options),
         validateStatus: (status) => status >= 200 && status < 600,
     };

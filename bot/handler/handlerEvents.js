@@ -1306,13 +1306,27 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                 createMessageSyntaxError(commandName);
                                 if (isBannedOrOnlyAdmin(userData, threadData, senderID, threadID, isGroup, commandName, message, langCode))
                                         return;
-                                await command.onReply({
-                                        ...parameters,
-                                        Reply,
-                                        args,
-                                        commandName,
-                                        getLang: getText2
+                                const REPLY_TIMEOUT_MS = 45000;
+                                let replyTimeoutId;
+                                const replyTimeoutPromise = new Promise((_, reject) => {
+                                        replyTimeoutId = setTimeout(() => {
+                                                reject(new Error(`Command "${commandName}" onReply timed out after ${REPLY_TIMEOUT_MS / 1000} seconds.`));
+                                        }, REPLY_TIMEOUT_MS);
                                 });
+                                try {
+                                        await Promise.race([
+                                                command.onReply({
+                                                        ...parameters,
+                                                        Reply,
+                                                        args,
+                                                        commandName,
+                                                        getLang: getText2
+                                                }),
+                                                replyTimeoutPromise
+                                        ]);
+                                } finally {
+                                        clearTimeout(replyTimeoutId);
+                                }
                                 eventLogger.logOnReply({
                                         commandName,
                                         userName: userData?.name,

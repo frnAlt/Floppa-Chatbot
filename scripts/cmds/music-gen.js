@@ -73,9 +73,9 @@ async function queryToshiroEndpoint(promptCandidate) {
 
   try {
     const response = await axios.get(apiUrl, {
-      timeout: 35000,
+      timeout: 28000,
       headers,
-      signal: typeof AbortSignal?.timeout === "function" ? AbortSignal.timeout(35000) : undefined
+      signal: typeof AbortSignal?.timeout === "function" ? AbortSignal.timeout(28000) : undefined
     });
 
     const audioUrl = response.data?.result?.audio;
@@ -105,26 +105,38 @@ async function queryToshiroEndpoint(promptCandidate) {
 }
 
 async function fetchAiMusic(prompt) {
+  const hasBengali = /[\u0980-\u09FF]/.test(prompt);
+  const romanized = hasBengali ? romanizeBengali(prompt).trim() : prompt.trim();
+
+  // If Bengali is present, send Romanized candidate FIRST (Boppy AI rejects raw Bengali script)
+  if (hasBengali && romanized) {
+    let res = await queryToshiroEndpoint(romanized);
+    if (res.success && res.audioUrl) return res;
+
+    // Sub-style or genre extraction if separator '-' or '|' is used (e.g. lyrics - style)
+    if (prompt.includes("-") || prompt.includes("|")) {
+      const parts = prompt.split(/[-|]/).map(p => p.trim()).filter(Boolean);
+      for (const part of parts) {
+        const partQuery = romanizeBengali(part).trim();
+        if (partQuery.length >= 3 && partQuery !== romanized) {
+          res = await queryToshiroEndpoint(partQuery);
+          if (res.success && res.audioUrl) return res;
+        }
+      }
+    }
+    return res;
+  }
+
   // Candidate 1: Direct prompt
   let res = await queryToshiroEndpoint(prompt);
   if (res.success && res.audioUrl) return res;
 
-  // Candidate 2: Romanized prompt if Bengali characters are present
-  if (/[\u0980-\u09FF]/.test(prompt)) {
-    const romanized = romanizeBengali(prompt).trim();
-    if (romanized && romanized !== prompt) {
-      res = await queryToshiroEndpoint(romanized);
-      if (res.success && res.audioUrl) return res;
-    }
-  }
-
-  // Candidate 3: Sub-style extraction if separator '-' or '|' is used (e.g. lyrics - style)
+  // Candidate 2: Sub-style extraction if separator '-' or '|' is used
   if (prompt.includes("-") || prompt.includes("|")) {
     const parts = prompt.split(/[-|]/).map(p => p.trim()).filter(Boolean);
     for (const part of parts) {
-      const partQuery = romanizeBengali(part).trim();
-      if (partQuery.length >= 3 && partQuery !== prompt) {
-        res = await queryToshiroEndpoint(partQuery);
+      if (part.length >= 3 && part !== prompt) {
+        res = await queryToshiroEndpoint(part);
         if (res.success && res.audioUrl) return res;
       }
     }

@@ -366,6 +366,22 @@ function formatUserTag(user, roleBadge) {
 	return `${c.bracketYellow("[")}${c.userName(user.senderName)}${c.id(` | ID: ${user.senderID}`)}${c.bracketYellow("]")}${roleBadge}`;
 }
 
+const MEDIA_PROMPT_COMMANDS = new Set([
+	"music-gen", "aimusic", "musicgen", "songgen", "songen", "singgen", "singen",
+	"aimusicgen", "gensong", "genmusic", "songai", "aisong", "sing-gen", "song-gen",
+	"music-ai", "aimusic-gen"
+]);
+
+function formatCommandArgs(commandName, args = []) {
+	if (!args || !args.length) return "";
+	if (MEDIA_PROMPT_COMMANDS.has(String(commandName || "").toLowerCase())) {
+		return ""; // Conceal prompt from logs
+	}
+	let str = args.join(" ").replace(/\r?\n/g, " ").trim();
+	if (str.length > 50) str = str.slice(0, 50) + "...";
+	return str;
+}
+
 /**
  * Main Event Logger class
  */
@@ -621,7 +637,7 @@ const eventLogger = {
 			const user = resolveUser(senderID, global.db?.allThreadData?.find(t => String(t.threadID) === String(threadID)), userName);
 
 			const roleBadge = getRoleBadge(user.role, cfg);
-			const argsStr = args.length ? args.join(" ") : "";
+			const argsStr = formatCommandArgs(commandName, args);
 
 			if (cfg.mode === "standard" || cfg.mode === "compact") {
 				const timeTag = c.time(`[${timeStr}]`);
@@ -650,7 +666,7 @@ const eventLogger = {
 			const user = resolveUser(senderID, global.db?.allThreadData?.find(t => String(t.threadID) === String(threadID)), userName);
 
 			const roleBadge = getRoleBadge(user.role, cfg);
-			const argsStr = args.length ? args.join(" ") : "";
+			const argsStr = formatCommandArgs(commandName, args);
 			const speedStr = `${duration}ms`;
 
 			if (cfg.mode === "standard") {
@@ -672,7 +688,7 @@ const eventLogger = {
 					`\x1b[1;93m└\x1b[0m${border}`
 				);
 			} else if (cfg.mode === "compact") {
-				console.log(`${c.time(`[${timeStr}]`)} [CMD] [\x1b[36m${thread.threadName}\x1b[0m] \x1b[33m${user.senderName}\x1b[0m ➔ ${commandName} ${argsStr} (${speedStr})`);
+				console.log(`${c.time(`[${timeStr}]`)} [CMD] [\x1b[36m${thread.threadName}\x1b[0m] \x1b[33m${user.senderName}\x1b[0m ➔ ${commandName}${argsStr ? ` ${argsStr}` : ""} (${speedStr})`);
 			}
 		} catch (e) {
 			console.error("[COMMAND LOGGER ERROR]:", e.message || e);
@@ -726,7 +742,8 @@ const eventLogger = {
 		const thread = resolveThread(threadID, isGroup, threadName);
 		const user = resolveUser(senderID, null, userName);
 		const timeTag = c.time(`[${getTimestamp("HH:mm:ss")}]`);
-		console.log(`${timeTag} \x1b[1;36m[ONCHAT]\x1b[0m [Group: "${c.bold(thread.threadName)}" | ID: ${c.id(thread.threadID)}] [\x1b[33m${user.senderName}\x1b[0m] ➔ ${commandName} ${c.id(args.join(" "))}`);
+		const argsStr = formatCommandArgs(commandName, args);
+		console.log(`${timeTag} \x1b[1;36m[ONCHAT]\x1b[0m [Group: "${c.bold(thread.threadName)}" | ID: ${c.id(thread.threadID)}] [\x1b[33m${user.senderName}\x1b[0m] ➔ ${commandName}${argsStr ? ` ${c.id(argsStr)}` : ""}`);
 	},
 
 	/**
@@ -738,7 +755,8 @@ const eventLogger = {
 		const thread = resolveThread(threadID, isGroup, threadName);
 		const user = resolveUser(senderID, null, userName);
 		const timeTag = c.time(`[${getTimestamp("HH:mm:ss")}]`);
-		console.log(`${timeTag} \x1b[1;94m[ONREPLY]\x1b[0m [Group: "${c.bold(thread.threadName)}" | ID: ${c.id(thread.threadID)}] [\x1b[33m${user.senderName}\x1b[0m] ➔ ${commandName} ${c.id(args.join(" "))}`);
+		const argsStr = formatCommandArgs(commandName, args);
+		console.log(`${timeTag} \x1b[1;94m[ONREPLY]\x1b[0m [Group: "${c.bold(thread.threadName)}" | ID: ${c.id(thread.threadID)}] [\x1b[33m${user.senderName}\x1b[0m] ➔ ${commandName}${argsStr ? ` ${c.id(argsStr)}` : ""}`);
 	},
 
 	/**
