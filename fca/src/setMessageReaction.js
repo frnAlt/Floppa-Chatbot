@@ -1,6 +1,6 @@
 "use strict";
 
-const utils = require('../utils');
+const utils = Object.assign({}, require('../utils'), require('./utils'));
 
 module.exports = function (defaultFuncs, api, ctx) {
   return async function setMessageReaction(reaction, messageID, callback, extra) {

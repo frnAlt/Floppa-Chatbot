@@ -467,8 +467,12 @@ function buildAPI(globalOptions, html, jar, bypass_region) {
         var defaultFuncs = utils.makeDefaults(html, userID, ctx);
 
         fs.readdirSync(__dirname + "/src").filter((/** @type {string} */File) => File.endsWith(".js") && !File.includes('Dev_')).map((/** @type {string} */File) => { 
-            if (File == 'getThreadInfo.js' && global.Fca.Require.Priyansh.AntiGetInfo.AntiGetThreadInfo != true || File == 'getUserInfo.js'  && global.Fca.Require.Priyansh.AntiGetInfo.AntiGetUserInfo != true) api[File.split('.').slice(0, -1).join('.')] = require('./src/' + (File.includes('getThreadInfo') ? 'getThreadMain.js' : 'getUserInfoMain.js'))(defaultFuncs, api, ctx)
-            else api[File.split('.').slice(0, -1).join('.')] = require('./src/' + File)(defaultFuncs, api, ctx)
+            try {
+                if (File == 'getThreadInfo.js' && global.Fca.Require.Priyansh.AntiGetInfo.AntiGetThreadInfo != true || File == 'getUserInfo.js'  && global.Fca.Require.Priyansh.AntiGetInfo.AntiGetUserInfo != true) api[File.split('.').slice(0, -1).join('.')] = require('./src/' + (File.includes('getThreadInfo') ? 'getThreadMain.js' : 'getUserInfoMain.js'))(defaultFuncs, api, ctx)
+                else api[File.split('.').slice(0, -1).join('.')] = require('./src/' + File)(defaultFuncs, api, ctx)
+            } catch (err) {
+                log.warn("FCA", `Failed to load module ./src/${File}: ${err.message}`);
+            }
         });
 
         try {

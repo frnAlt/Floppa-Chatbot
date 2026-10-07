@@ -1,7 +1,7 @@
 "use strict";
 
-const utils = require('../utils');
-const { globalAntiSuspension } = require('../utils/antiSuspension');
+const utils = Object.assign({}, require('../utils'), require('./utils'));
+const { globalAntiSuspension } = require('./utils/antiSuspension');
 
 const allowedProperties = {
   attachment: true,

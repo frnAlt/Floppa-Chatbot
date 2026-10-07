@@ -1,6 +1,6 @@
 "use strict";
 
-const utils = require('../utils');
+const utils = Object.assign({}, require('../utils'), require('./utils'));
 
 module.exports = function (defaultFuncs, api, ctx) {
   return function unsendMessage(messageID, threadID, callback) {

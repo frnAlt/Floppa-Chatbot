@@ -3245,5 +3245,8 @@ module.exports = {
     getAppState,
     getAdminTextMessageType,
     setProxy,
-    getFroms
+    getFroms,
+    error: (lbl, ...args) => log.error(lbl, ...args),
+    warn: (lbl, ...args) => log.warn(lbl, ...args),
+    log: (lbl, ...args) => log.info(lbl, ...args)
 };
