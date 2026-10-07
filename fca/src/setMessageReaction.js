@@ -1,87 +1,124 @@
 "use strict";
 
-const utils = Object.assign({}, require('../utils'), require('./utils'));
+var utils = require("../utils");
+var log = require("npmlog");
 
 module.exports = function (defaultFuncs, api, ctx) {
-  return async function setMessageReaction(reaction, messageID, callback, extra) {
-    let threadID = null;
-    let actualCallback = callback;
-    if (typeof callback === "string" && !isNaN(callback)) {
-      threadID = callback;
-      actualCallback = typeof extra === "function" ? extra : undefined;
-    } else if (typeof extra === "string" && !isNaN(extra)) {
-      threadID = extra;
-    }
-
-    let resolveFunc = () => {};
-    let rejectFunc = () => {};
-    const returnPromise = new Promise((resolve, reject) => {
+  return function setMessageReaction(reaction, messageID, callback, forceCustomReaction) {
+    var resolveFunc = function () { };
+    var rejectFunc = function () { };
+    var returnPromise = new Promise(function (resolve, reject) {
       resolveFunc = resolve;
       rejectFunc = reject;
     });
 
-    if (!actualCallback) {
-      actualCallback = (err, data) => {
+    if (!callback) {
+      callback = function (err, data) {
         if (err) return rejectFunc(err);
         resolveFunc(data);
       };
-    } else {
-      const _userCb = actualCallback;
-      actualCallback = (err, data) => {
-        if (err) { _userCb(err); return rejectFunc(err); }
-        _userCb(null, data);
-        resolveFunc(data);
-      };
     }
 
-    try {
-      if (reaction === undefined || reaction === null) {
-        throw new Error("Please enter a valid emoji.");
+    switch (reaction) {
+      case "\uD83D\uDE0D": //:heart_eyes:
+      case "\uD83D\uDE06": //:laughing:
+      case "\uD83D\uDE2E": //:open_mouth:
+      case "\uD83D\uDE22": //:cry:
+      case "\uD83D\uDE20": //:angry:
+      case "\uD83D\uDC4D": //:thumbsup:
+      case "\uD83D\uDC4E": //:thumbsdown:
+      case "\u2764": //:heart:
+      case "\uD83D\uDC97": //:glowingheart:
+      case "":
+        //valid
+        break;
+      case ":heart_eyes:":
+      case ":love:":
+        reaction = "\uD83D\uDE0D";
+        break;
+      case ":laughing:":
+      case ":haha:":
+        reaction = "\uD83D\uDE06";
+        break;
+      case ":open_mouth:":
+      case ":wow:":
+        reaction = "\uD83D\uDE2E";
+        break;
+      case ":cry:":
+      case ":sad:":
+        reaction = "\uD83D\uDE22";
+        break;
+      case ":angry:":
+        reaction = "\uD83D\uDE20";
+        break;
+      case ":thumbsup:":
+      case ":like:":
+        reaction = "\uD83D\uDC4D";
+        break;
+      case ":thumbsdown:":
+      case ":dislike:":
+        reaction = "\uD83D\uDC4E";
+        break;
+      case ":heart:":
+        reaction = "\u2764";
+        break;
+      case ":glowingheart:":
+        reaction = "\uD83D\uDC97";
+        break;
+      case "✅":
+      case ":white_check_mark:":
+        reaction = "\uD83D\uDC4D";
+        break;
+      case "❌":
+      case ":x:":
+        reaction = "\uD83D\uDC4E";
+        break;
+      default:
+        if (forceCustomReaction) break;
+        return callback({ error: "Reaction is not a valid emoji." });
+    }
+
+    var variables = {
+      data: {
+        client_mutation_id: ctx.clientMutationId++,
+        actor_id: ctx.userID,
+        action: reaction == "" ? "REMOVE_REACTION" : "ADD_REACTION",
+        message_id: messageID,
+        reaction: reaction
       }
+    };
 
-      if (reaction === "✅") reaction = "👍";
-      else if (reaction === "❌") reaction = "👎";
+    var qs = {
+      doc_id: "1491398900900362",
+      variables: JSON.stringify(variables),
+      dpr: 1
+    };
 
-      // 1. Try MQTT reaction first if threadID is available and MQTT is connected (sub-50ms delivery)
-      if (threadID && ctx.mqttClient && ctx.mqttClient.connected && typeof api.setMessageReactionMqtt === "function") {
-        try {
-          const mqttRes = await api.setMessageReactionMqtt(reaction, messageID, threadID);
-          actualCallback(null, mqttRes);
-          return returnPromise;
-        } catch (_) {}
-      }
-
-      const action = reaction === "" ? "REMOVE_REACTION" : "ADD_REACTION";
-
-      const defData = await defaultFuncs.postFormData(
+    defaultFuncs
+      .postFormData(
         "https://www.facebook.com/webgraphql/mutation/",
         ctx.jar,
         {},
-        {
-          doc_id: "1491398900900362",
-          variables: JSON.stringify({
-            data: {
-              client_mutation_id: ctx.clientMutationId++,
-              actor_id: ctx.userID,
-              action,
-              message_id: messageID,
-              reaction
-            }
-          }),
-          dpr: 1
+        qs
+      )
+      .then(utils.parseAndCheckLogin(ctx, defaultFuncs))
+      .then(function (resData) {
+        if (!resData) throw { error: "setReaction returned empty object." };
+        if (resData.error) {
+          if (resData.error === 368 || resData.error === 1357004) {
+            try {
+              const { globalIpBanProtection } = require("./utils/ipSpoofing");
+              if (globalIpBanProtection) globalIpBanProtection.handleBlock(resData, 1);
+            } catch (_) {}
+          }
+          throw resData;
         }
-      );
-
-      const resData = await utils.parseAndCheckLogin(ctx, defaultFuncs)(defData);
-      if (!resData) {
-        throw new Error("setMessageReaction returned empty object.");
-      }
-
-      actualCallback(null, { success: true, action, messageID });
-    } catch (err) {
-      utils.error("setMessageReaction", err);
-      actualCallback(err instanceof Error ? err : new Error(String(err)));
-    }
+        callback(null); 
+      })
+      .catch(function (err) {
+        log.error("setReaction", err);
+        return callback(err);
+      });
 
     return returnPromise;
   };

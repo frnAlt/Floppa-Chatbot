@@ -1,91 +1,48 @@
 "use strict";
 
-const utils = Object.assign({}, require('../utils'), require('./utils'));
+const Balancer = require('../Extra/Balancer.js');
+var utils = require("../utils");
+var log = require("npmlog");
 
 module.exports = function (defaultFuncs, api, ctx) {
-  return function unsendMessage(messageID, threadID, callback) {
-    if (typeof threadID === 'function') {
-      callback = threadID;
-      threadID = null;
-    }
-    let resolveFunc = () => {};
-    let rejectFunc = () => {};
-    const returnPromise = new Promise((resolve, reject) => {
+  //const BalancerInstance = new Balancer(api.unsendMessage, unsendMessage, 0.85);
+  
+  function unsendMessage(messageID, threadID, callback) {
+    var resolveFunc = function () { };
+    var rejectFunc = function () { };
+    var returnPromise = new Promise(function (resolve, reject) {
       resolveFunc = resolve;
       rejectFunc = reject;
     });
-
+  
     if (!callback) {
-      callback = (err, data) => {
+      callback = function (err, friendList) {
         if (err) return rejectFunc(err);
-        resolveFunc(data);
-      };
-    } else {
-      const _userCb = callback;
-      callback = (err, data) => {
-        if (err) { _userCb(err); return rejectFunc(err); }
-        _userCb(null, data);
-        resolveFunc(data);
+        resolveFunc(friendList);
       };
     }
 
-    // 1. Publish MQTT LS_REQ packet if connected for instant delta update
-    if (ctx.mqttClient && ctx.mqttClient.connected) {
-      try {
-        if (typeof ctx.wsReqNumber !== "number") ctx.wsReqNumber = 0;
-        if (typeof ctx.wsTaskNumber !== "number") ctx.wsTaskNumber = 0;
-
-        const requestId = ++ctx.wsReqNumber;
-        const taskId = ++ctx.wsTaskNumber;
-
-        const taskPayload = { message_id: messageID };
-        if (threadID) {
-          taskPayload.thread_key = String(threadID);
-          taskPayload.sync_group = 1;
-        }
-
-        const content = {
-          app_id: String(ctx.appID || ctx.mqttAppID || "2220391788200892"),
-          payload: JSON.stringify({
-            data_trace_id: null,
-            epoch_id: parseInt(utils.generateOfflineThreadingID()),
-            tasks: [
-              {
-                failure_count: null,
-                label: "33",
-                payload: JSON.stringify(taskPayload),
-                queue_name: "unsend_message",
-                task_id: taskId
-              }
-            ],
-            version_id: "25393437286970779"
-          }),
-          request_id: requestId,
-          type: 3
-        };
-
-        ctx.mqttClient.publish("/ls_req", JSON.stringify(content), { qos: 1, retain: false }, () => {});
-      } catch (_) {}
+    if (threadID && ctx.mqttClient && ctx.mqttClient.connected) return api.unsendMqttMessage(threadID, messageID, callback);
+    else {
+      var form = {
+        message_id: messageID
+      };
+    
+      defaultFuncs
+        .post("https://www.facebook.com/messaging/unsend_message/", ctx.jar, form)
+        .then(utils.parseAndCheckLogin(ctx, defaultFuncs))
+        .then(function (resData) {
+          if (resData.error) throw resData;
+          return callback();
+        })
+        .catch(function (err) {
+          log.error("unsendMessage", err);
+          return callback(err);
+        });
+    
+      return returnPromise;
     }
+  }
 
-    // 2. Perform authoritative HTTP unsend via Facebook web endpoint
-    defaultFuncs.post("https://www.facebook.com/messaging/unsend_message/", ctx.jar, {
-      message_id: messageID
-    })
-      .then(utils.parseAndCheckLogin(ctx, defaultFuncs))
-      .then((resData) => {
-        if (resData && resData.error) throw new Error(String(resData.error_msg || resData.error));
-        callback(null, { success: true, messageID });
-      })
-      .catch((err) => {
-        utils.error("unsendMessage (HTTP)", err);
-        // If MQTT client is connected, HTTP may fail for modern threads but MQTT succeeds
-        if (ctx.mqttClient && ctx.mqttClient.connected) {
-          return callback(null, { success: true, messageID });
-        }
-        callback(err instanceof Error ? err : new Error(String(err && err.message ? err.message : err)));
-      });
-
-    return returnPromise;
-  };
+  return unsendMessage;
 };
