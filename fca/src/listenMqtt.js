@@ -198,6 +198,15 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
     if (reconnecting) return;
     reconnecting = true;
     logWarn(`MQTT connection lost (${reason || 'unknown'}), re-establishing session...`);
+    if (/connection refused/i.test(String(reason || ''))) {
+      const fallbackRegions = ['prn', 'lla', 'vll', 'sin', 'frc'];
+      const currentReg = (ctx.region || 'prn').toLowerCase();
+      const nextIdx = (fallbackRegions.indexOf(currentReg) + 1) % fallbackRegions.length;
+      ctx.region = fallbackRegions[nextIdx];
+      delete ctx.mqttEndpoint;
+      ctx.lastSeqId = '-1';
+      logWarn(`Connection refused on '${currentReg}', rotating edge region to '${ctx.region}' and refreshing sequence ID`);
+    }
     if (ctx.tmsWait && typeof ctx.tmsWait === "function") {
       try { ctx.tmsWait(); } catch (_) {}
       delete ctx.tmsWait;

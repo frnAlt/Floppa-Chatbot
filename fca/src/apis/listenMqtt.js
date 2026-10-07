@@ -339,6 +339,16 @@ async function listenMqtt(defaultFuncs, api, ctx, globalCallback, scheduleReconn
 
         utils.error("MQTT error:", msg);
 
+        if (/connection refused/i.test(msg)) {
+            const fallbackRegions = ["prn", "lla", "vll", "sin", "frc"];
+            const currentReg = (ctx.region || "prn").toLowerCase();
+            const nextIdx = (fallbackRegions.indexOf(currentReg) + 1) % fallbackRegions.length;
+            ctx.region = fallbackRegions[nextIdx];
+            delete ctx.mqttEndpoint;
+            ctx.lastSeqId = "-1";
+            utils.warn("MQTT", `Connection refused on region '${currentReg}', rotating edge region to '${ctx.region}' and refreshing sequence ID`);
+        }
+
         if (ctx._ending || ctx._cycling) return;
 
         if (ctx.globalOptions.autoReconnect) {
@@ -922,7 +932,7 @@ module.exports = (defaultFuncs, api, ctx, opts) => {
     installPostGuard();
 
     const getSeqID = async (expectedGeneration = ctx._listenGeneration) => {
-        if (ctx.lastSeqId && ctx.lastSeqId !== "-1") {
+        if (ctx.lastSeqId && ctx.lastSeqId !== "-1" && (!ctx._reconnectAttempts || ctx._reconnectAttempts <= 2)) {
             utils.log("MQTT", `Using existing sequence ID: ${ctx.lastSeqId}`);
             return;
         }
