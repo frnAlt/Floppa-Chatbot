@@ -194,7 +194,7 @@ module.exports = async function (databaseType, userModel, api, fakeGraphql) {
                 }
 
                 try {
-                        const user = await axios.post(`https://www.facebook.com/api/graphql/?q=${`node(${userID}){name}`}`);
+                        const user = await axios.post(`https://www.facebook.com/api/graphql/?q=${`node(${userID}){name}`}`, null, { timeout: 2500 });
                         if (user.data?.[userID]?.name) {
                                 const fetchedName = user.data[userID].name;
                                 const uIdx = global.db.allUserData.findIndex(u => u.userID == userID);

@@ -943,7 +943,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                         role
                                 });
 
-                                const CMD_TIMEOUT_MS = 60000;
+                                const CMD_TIMEOUT_MS = 40000;
                                 let cmdTimeoutId;
                                 const cmdTimeoutPromise = new Promise((_, reject) => {
                                         cmdTimeoutId = setTimeout(() => {
@@ -1029,6 +1029,14 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                 });
                                 if (global.systemMemoryDB) {
                                         global.systemMemoryDB.recordCommand(commandName, event, Date.now() - dateNow, err);
+                                }
+                                const isTimedOut = err?.message && err.message.includes("timed out after");
+                                if (isTimedOut) {
+                                        try {
+                                                return await message.reply(
+                                                        `⚠️ Command "${commandName}" took too long to respond (>40s). Please try again with a simpler prompt or shorter input.`
+                                                );
+                                        } catch (_) {}
                                 }
                                 try {
                                         return await message.reply(

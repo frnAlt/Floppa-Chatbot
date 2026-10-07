@@ -469,7 +469,18 @@ async function listenMqtt(defaultFuncs, api, ctx, globalCallback, scheduleReconn
         mqttClient.publish("/foreground_state", JSON.stringify({ foreground: chatOn }), { qos: 1 });
         mqttClient.publish("/set_client_settings", JSON.stringify({ make_user_available_when_in_foreground: true }), { qos: 1 });
 
-        const tmsTimeoutDelay = 10000;
+        let rTimeout = setTimeout(() => {
+            if (mqttClient.disconnected || mqttClient.disconnecting || !mqttClient.connected) return;
+            if (ctx._tmsReceived) return;
+            utils.log("MQTT", "Initial sync wait elapsed; re-asserting foreground state and sync queue...");
+            try {
+                mqttClient.publish("/foreground_state", JSON.stringify({ foreground: chatOn }), { qos: 1 });
+                mqttClient.publish("/set_client_settings", JSON.stringify({ make_user_available_when_in_foreground: true }), { qos: 1 });
+                mqttClient.publish(topic, JSON.stringify(queue), { qos: 1, retain: false });
+            } catch (_) {}
+        }, 15000);
+
+        const tmsTimeoutDelay = 60000;
         ctx._tmsTimeout = setTimeout(() => {
             ctx._tmsTimeout = null;
             if (ctx._ending || ctx._cycling) return;
@@ -484,10 +495,15 @@ async function listenMqtt(defaultFuncs, api, ctx, globalCallback, scheduleReconn
         }, tmsTimeoutDelay);
 
         ctx.tmsWait = function() {
+            if (rTimeout) {
+                clearTimeout(rTimeout);
+                rTimeout = null;
+            }
             if (ctx._tmsTimeout) {
                 clearTimeout(ctx._tmsTimeout);
                 ctx._tmsTimeout = null;
             }
+            ctx._tmsReceived = true;
             if (ctx.globalOptions.emitReady) {
                 globalCallback(null, { type: "ready", timestamp: Date.now() });
             }
@@ -537,6 +553,21 @@ async function listenMqtt(defaultFuncs, api, ctx, globalCallback, scheduleReconn
                 if (jsonMessage.deltas) {
                     for (const delta of jsonMessage.deltas) {
                         parseDelta(defaultFuncs, api, ctx, callbackToUse, { delta });
+                    }
+                }
+            } else if (topic === "/ls_resp") {
+                let payload;
+                try {
+                    payload = typeof jsonMessage.payload === "string" ? JSON.parse(jsonMessage.payload) : jsonMessage.payload;
+                } catch (_) {
+                    payload = jsonMessage.payload;
+                }
+                const request_ID = jsonMessage.request_id;
+                if (ctx.callback_Task && ctx.callback_Task[request_ID] && ctx.callback_Task[request_ID].type) {
+                    const { callback, type } = ctx.callback_Task[request_ID];
+                    delete ctx.callback_Task[request_ID];
+                    if (typeof callback === "function") {
+                        callback(null, { type, payload });
                     }
                 }
             } else if (topic === "/thread_typing" || topic === "/orca_typing_notifications") {

@@ -617,10 +617,32 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, {
       } else {
         const attachment = delta.attachments[i];
         if (attachment && attachment.mercury && attachment.mercury.attach_type === 'photo') {
-          api.resolvePhotoUrl(attachment.fbid, (err, url) => {
-            if (!err && attachment.mercury && attachment.mercury.metadata) attachment.mercury.metadata.url = url;
-            resolveAttachmentUrl(i + 1);
-          });
+          let hasResolved = false;
+          const photoTimeout = setTimeout(() => {
+            if (!hasResolved) {
+              hasResolved = true;
+              resolveAttachmentUrl(i + 1);
+            }
+          }, 2000);
+          try {
+            api.resolvePhotoUrl(attachment.fbid, (err, url) => {
+              clearTimeout(photoTimeout);
+              if (!hasResolved) {
+                hasResolved = true;
+                if (!err && attachment.mercury) {
+                  if (!attachment.mercury.metadata) attachment.mercury.metadata = {};
+                  attachment.mercury.metadata.url = url;
+                }
+                resolveAttachmentUrl(i + 1);
+              }
+            });
+          } catch (_) {
+            clearTimeout(photoTimeout);
+            if (!hasResolved) {
+              hasResolved = true;
+              resolveAttachmentUrl(i + 1);
+            }
+          }
         } else {
           resolveAttachmentUrl(i + 1);
         }

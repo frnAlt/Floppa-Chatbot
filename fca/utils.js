@@ -785,15 +785,13 @@ function _formatAttachment(attachment1, attachment2) {
                 fileSize: -1
             };
         default:
-            throw new Error(
-                "unrecognized attach_file of type " +
-                type +
-                "`" +
-                JSON.stringify(attachment1, null, 4) +
-                " attachment2: " +
-                JSON.stringify(attachment2, null, 4) +
-                "`"
-            );
+            return {
+                type: (type || "unknown").toLowerCase(),
+                ID: blob?.legacy_attachment_id || blob?.id || blob?.fbid || null,
+                url: blob?.url || blob?.playable_url || blob?.preview_url || (blob?.preview_image && blob.preview_image.uri) || null,
+                name: blob?.filename || blob?.title || "attachment",
+                raw: attachment1
+            };
     }
 }
 
@@ -808,13 +806,17 @@ function formatAttachment(attachments, attachmentIds, attachmentMap, shareMap) {
     attachmentMap = shareMap || attachmentMap;
     return attachments ?
         attachments.map(function(/** @type {any} */val, /** @type {string | number} */i) {
-            if (!attachmentMap ||
-                !attachmentIds ||
-                !attachmentMap[attachmentIds[i]]
-            ) {
-                return _formatAttachment(val);
+            try {
+                if (!attachmentMap ||
+                    !attachmentIds ||
+                    !attachmentMap[attachmentIds[i]]
+                ) {
+                    return _formatAttachment(val);
+                }
+                return _formatAttachment(val, attachmentMap[attachmentIds[i]]);
+            } catch (_) {
+                return { type: "unknown", raw: val };
             }
-            return _formatAttachment(val, attachmentMap[attachmentIds[i]]);
         }) : [];
 }
 
@@ -855,6 +857,17 @@ function formatDeltaMessage(m) {
         isReply: true
     } : null;
 
+    var formattedAttachments = [];
+    if (Array.isArray(delta.attachments)) {
+        for (var att of delta.attachments) {
+            try {
+                formattedAttachments.push(_formatAttachment(att));
+            } catch (_) {
+                formattedAttachments.push({ type: "unknown", raw: att });
+            }
+        }
+    }
+
     return {
         type: "message",
         senderID: senderID,
@@ -863,7 +876,7 @@ function formatDeltaMessage(m) {
         offlineThreadingId: md.offlineThreadingId,
         args: args,
         body: body,
-        attachments: (delta.attachments || []).map((v) => _formatAttachment(v)),
+        attachments: formattedAttachments,
         mentions: mentions,
         timestamp: md.timestamp || delta.timestamp || Date.now(),
         isGroup: !!threadKey.threadFbId,

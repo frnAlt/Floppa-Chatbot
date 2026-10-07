@@ -64,6 +64,9 @@ function romanizeBengali(text) {
   return text.split("").map(c => map[c] !== undefined ? map[c] : c).join("");
 }
 
+const btch = require("btch-downloader");
+const crypto = require("crypto");
+
 async function queryToshiroEndpoint(promptCandidate) {
   const apiUrl = `https://toshiro-api-editz6t9.vercel.app/api/ai/ai-music?prompt=${encodeURIComponent(promptCandidate)}`;
   const headers = {
@@ -73,9 +76,9 @@ async function queryToshiroEndpoint(promptCandidate) {
 
   try {
     const response = await axios.get(apiUrl, {
-      timeout: 28000,
+      timeout: 18000,
       headers,
-      signal: typeof AbortSignal?.timeout === "function" ? AbortSignal.timeout(28000) : undefined
+      signal: typeof AbortSignal?.timeout === "function" ? AbortSignal.timeout(18000) : undefined
     });
 
     const audioUrl = response.data?.result?.audio;
@@ -106,74 +109,83 @@ async function queryToshiroEndpoint(promptCandidate) {
 
 async function fetchAiMusic(prompt) {
   const hasBengali = /[\u0980-\u09FF]/.test(prompt);
-  const romanized = hasBengali ? romanizeBengali(prompt).trim() : prompt.trim();
+  const candidate = hasBengali ? romanizeBengali(prompt).trim() : prompt.trim();
+  return await queryToshiroEndpoint(candidate);
+}
 
-  // If Bengali is present, send Romanized candidate FIRST (Boppy AI rejects raw Bengali script)
-  if (hasBengali && romanized) {
-    let res = await queryToshiroEndpoint(romanized);
-    if (res.success && res.audioUrl) return res;
-
-    // Sub-style or genre extraction if separator '-' or '|' is used (e.g. lyrics - style)
-    if (prompt.includes("-") || prompt.includes("|")) {
-      const parts = prompt.split(/[-|]/).map(p => p.trim()).filter(Boolean);
-      for (const part of parts) {
-        const partQuery = romanizeBengali(part).trim();
-        if (partQuery.length >= 3 && partQuery !== romanized) {
-          res = await queryToshiroEndpoint(partQuery);
-          if (res.success && res.audioUrl) return res;
-        }
-      }
-    }
-    return res;
+function decodeSavetube(enc) {
+  try {
+    const secretKey = "C5D58EF67A7584E4A29F6C35BBC4EB12";
+    const data = Buffer.from(enc, "base64");
+    const iv = data.slice(0, 16);
+    const content = data.slice(16);
+    const key = Buffer.from(secretKey, "hex");
+    const decipher = crypto.createDecipheriv("aes-128-cbc", key, iv);
+    const decrypted = Buffer.concat([decipher.update(content), decipher.final()]);
+    return JSON.parse(decrypted.toString());
+  } catch (_) {
+    return null;
   }
+}
 
-  // Candidate 1: Direct prompt
-  let res = await queryToshiroEndpoint(prompt);
-  if (res.success && res.audioUrl) return res;
+async function getSavetubeAudio(youtubeUrl) {
+  try {
+    const cdnRes = await axios.get("https://media.savetube.vip/api/random-cdn", { timeout: 3500 });
+    const cdn = cdnRes.data?.cdn;
+    if (!cdn) return null;
 
-  // Candidate 2: Sub-style extraction if separator '-' or '|' is used
-  if (prompt.includes("-") || prompt.includes("|")) {
-    const parts = prompt.split(/[-|]/).map(p => p.trim()).filter(Boolean);
-    for (const part of parts) {
-      if (part.length >= 3 && part !== prompt) {
-        res = await queryToshiroEndpoint(part);
-        if (res.success && res.audioUrl) return res;
-      }
-    }
+    const infoRes = await axios.post(`https://${cdn}/v2/info`, { url: youtubeUrl }, {
+      headers: { "Referer": "https://save-tube.com/" },
+      timeout: 4000
+    });
+    const info = decodeSavetube(infoRes.data?.data);
+    if (!info?.key) return null;
+
+    const dlRes = await axios.post(`https://${cdn}/download`, {
+      downloadType: "audio",
+      quality: "128",
+      key: info.key
+    }, {
+      headers: { "Referer": "https://save-tube.com/" },
+      timeout: 5000
+    });
+    return dlRes.data?.data?.downloadUrl || null;
+  } catch (_) {
+    return null;
   }
-
-  return res;
 }
 
 /**
- * Resilient fallback audio downloader if pure AI music service is busy or offline
+ * Resilient, fast fallback audio downloader if pure AI music service is busy or offline
  */
 async function fallbackAudioSearch(query) {
   try {
-    // 1. Try toshiro yta2 audio search
-    const searchApi = `https://toshiro-api-editz6t9.vercel.app/api/downloader/yta2?search=${encodeURIComponent(query)}`;
-    const sRes = await axios.get(searchApi, { timeout: 8000 }).catch(() => null);
-    const first = sRes?.data?.results?.[0];
-    if (first?.url) {
-      const yta2Api = `https://toshiro-api-editz6t9.vercel.app/api/downloader/yta2?url=${encodeURIComponent(first.url)}`;
-      const yRes = await axios.get(yta2Api, { timeout: 8000 }).catch(() => null);
-      const dl = yRes?.data?.result?.download_url || yRes?.data?.result?.preview;
-      if (dl && !dl.includes("onrender.com")) {
-        return dl;
-      }
-    }
+    const searchRes = await Promise.race([
+      yts(query),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 4000))
+    ]).catch(() => null);
 
-    // 2. Try smfahim youtube mp3
-    const ytsRes = await yts(query).catch(() => null);
-    const video = ytsRes?.videos?.[0];
-    if (video?.url) {
-      const smApi = `https://smfahim.xyz/download/youtube/mp3/v1?url=${encodeURIComponent(video.url)}`;
-      const smRes = await axios.get(smApi, { timeout: 8000 }).catch(() => null);
-      const smDl = smRes?.data?.download || smRes?.data?.result?.download || smRes?.data?.url || smRes?.data?.mp3;
-      if (smDl) return smDl;
-    }
-  } catch (_) {}
-  return null;
+    const video = searchRes?.videos?.[0];
+    if (!video?.url) return null;
+
+    const resolvers = [
+      getSavetubeAudio(video.url).then(url => {
+        if (url) return url;
+        throw new Error("Savetube empty");
+      }),
+      (async () => {
+        const bRes = await btch.youtube(video.url);
+        if (bRes?.status !== false && bRes?.mp3 && !bRes.mp3.includes("onrender.com")) {
+          return bRes.mp3;
+        }
+        throw new Error("btch empty");
+      })()
+    ];
+
+    return await Promise.any(resolvers).catch(() => null);
+  } catch (_) {
+    return null;
+  }
 }
 
 async function getAudioStream(audioUrl) {
