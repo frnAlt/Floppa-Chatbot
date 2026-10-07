@@ -947,7 +947,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                         role
                                 });
 
-                                const CMD_TIMEOUT_MS = 40000;
+                                const CMD_TIMEOUT_MS = 60000;
                                 let cmdTimeoutId;
                                 const cmdTimeoutPromise = new Promise((_, reject) => {
                                         cmdTimeoutId = setTimeout(() => {

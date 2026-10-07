@@ -76,9 +76,9 @@ async function queryToshiroEndpoint(promptCandidate) {
 
   try {
     const response = await axios.get(apiUrl, {
-      timeout: 18000,
+      timeout: 25000,
       headers,
-      signal: typeof AbortSignal?.timeout === "function" ? AbortSignal.timeout(18000) : undefined
+      signal: typeof AbortSignal?.timeout === "function" ? AbortSignal.timeout(25000) : undefined
     });
 
     const audioUrl = response.data?.result?.audio;
@@ -96,7 +96,7 @@ async function queryToshiroEndpoint(promptCandidate) {
     const status = err.response?.status;
     const msg = err.response?.data?.message || err.response?.data?.error || err.message || "";
     const isTimeout = err.code === "ECONNABORTED" || err.name === "AbortError" || msg.toLowerCase().includes("timeout");
-    const isRateLimited = status === 429 || msg.toLowerCase().includes("too many requests");
+    const isRateLimited = status === 429 || (status === 500 && msg.toLowerCase().includes("too many requests")) || msg.toLowerCase().includes("too many requests");
 
     return {
       success: false,
@@ -130,13 +130,13 @@ function decodeSavetube(enc) {
 
 async function getSavetubeAudio(youtubeUrl) {
   try {
-    const cdnRes = await axios.get("https://media.savetube.vip/api/random-cdn", { timeout: 3500 });
+    const cdnRes = await axios.get("https://media.savetube.vip/api/random-cdn", { timeout: 4000 });
     const cdn = cdnRes.data?.cdn;
     if (!cdn) return null;
 
     const infoRes = await axios.post(`https://${cdn}/v2/info`, { url: youtubeUrl }, {
       headers: { "Referer": "https://save-tube.com/" },
-      timeout: 4000
+      timeout: 6000
     });
     const info = decodeSavetube(infoRes.data?.data);
     if (!info?.key) return null;
@@ -147,7 +147,7 @@ async function getSavetubeAudio(youtubeUrl) {
       key: info.key
     }, {
       headers: { "Referer": "https://save-tube.com/" },
-      timeout: 5000
+      timeout: 7000
     });
     return dlRes.data?.data?.downloadUrl || null;
   } catch (_) {
@@ -160,29 +160,33 @@ async function getSavetubeAudio(youtubeUrl) {
  */
 async function fallbackAudioSearch(query) {
   try {
-    const searchRes = await Promise.race([
+    let searchRes = await Promise.race([
       yts(query),
-      new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 4000))
+      new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000))
     ]).catch(() => null);
 
-    const video = searchRes?.videos?.[0];
+    let video = searchRes?.videos?.[0];
+    if (!video?.url && (query.includes("-") || query.includes("|"))) {
+      const parts = query.split(/[-|]/).map(p => p.trim()).filter(Boolean);
+      for (const p of parts.reverse()) {
+        searchRes = await yts(p).catch(() => null);
+        video = searchRes?.videos?.[0];
+        if (video?.url) break;
+      }
+    }
     if (!video?.url) return null;
 
-    const resolvers = [
-      getSavetubeAudio(video.url).then(url => {
-        if (url) return url;
-        throw new Error("Savetube empty");
-      }),
-      (async () => {
-        const bRes = await btch.youtube(video.url);
-        if (bRes?.status !== false && bRes?.mp3 && !bRes.mp3.includes("onrender.com")) {
-          return bRes.mp3;
-        }
-        throw new Error("btch empty");
-      })()
-    ];
+    const savetubeUrl = await getSavetubeAudio(video.url);
+    if (savetubeUrl) return savetubeUrl;
 
-    return await Promise.any(resolvers).catch(() => null);
+    try {
+      const bRes = await btch.youtube(video.url);
+      if (bRes?.status !== false && bRes?.mp3 && !bRes.mp3.includes("onrender.com")) {
+        return bRes.mp3;
+      }
+    } catch (_) {}
+
+    return null;
   } catch (_) {
     return null;
   }
