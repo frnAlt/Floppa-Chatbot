@@ -61,6 +61,7 @@ scripts/cmds/tmp/*
 scripts/events/tmp/*
 !scripts/events/tmp/.gitkeep
 scratch/
+*CountTime.json
 
 # OS and Editor Configurations
 .DS_Store

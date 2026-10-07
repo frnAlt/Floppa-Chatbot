@@ -704,6 +704,14 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, {
             participantIDs: (delta.deltaMessageReply.message?.participants || []).map((e) => e.toString()),
           };
 
+          const dispatchReply = (cbData) => {
+            if (ctx.globalOptions.autoMarkDelivery) {
+              markDelivery(ctx, api, cbData.threadID, cbData.messageID);
+            }
+            if (!ctx.globalOptions.selfListen && cbData.senderID === ctx.userID) return;
+            globalCallback(null, cbData);
+          };
+
           if (delta.deltaMessageReply.repliedToMessage) {
             let rmdata = [];
             try {
@@ -761,8 +769,9 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, {
               timestamp: parseInt(rMsgMeta.timestamp || Date.now()),
               participantIDs: (delta.deltaMessageReply.repliedToMessage?.participants || []).map((e) => e.toString()),
             };
+            dispatchReply(callbackToReturn);
           } else if (delta.deltaMessageReply.replyToMessageId) {
-            return defaultFuncs
+            const fetchPromise = defaultFuncs
               .post('https://www.facebook.com/api/graphqlbatch/', ctx.jar, {
                 av: ctx.globalOptions.pageID,
                 queries: JSON.stringify({
@@ -804,26 +813,33 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, {
                   mentions: mobj,
                   timestamp: parseInt(fetchData.timestamp_precise),
                 };
-              })
+              });
 
-              .catch((err) => log.error('forcedFetch', err))
-              .finally(() => {
-                if (ctx.globalOptions.autoMarkDelivery) {
-                  markDelivery(ctx, api, callbackToReturn.threadID, callbackToReturn.messageID);
+            const timeoutPromise = new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('forcedFetch timeout')), 2500)
+            );
+
+            Promise.race([fetchPromise, timeoutPromise])
+              .catch((err) => {
+                if (!callbackToReturn.messageReply) {
+                  callbackToReturn.messageReply = {
+                    type: 'Message',
+                    threadID: callbackToReturn.threadID,
+                    messageID: delta.deltaMessageReply.replyToMessageId.id,
+                    senderID: "",
+                    body: "",
+                    attachments: [],
+                    args: []
+                  };
                 }
-
-                if (!ctx.globalOptions.selfListen && callbackToReturn.senderID === ctx.userID) return;
-                globalCallback(null, callbackToReturn);
+              })
+              .finally(() => {
+                dispatchReply(callbackToReturn);
               });
           } else {
             callbackToReturn.delta = delta;
+            dispatchReply(callbackToReturn);
           }
-          if (ctx.globalOptions.autoMarkDelivery) {
-            markDelivery(ctx, api, callbackToReturn.threadID, callbackToReturn.messageID);
-          }
-
-          if (!ctx.globalOptions.selfListen && callbackToReturn.senderID === ctx.userID) return;
-          globalCallback(null, callbackToReturn);
         }
       }
 

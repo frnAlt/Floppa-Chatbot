@@ -10,14 +10,6 @@ function normalizeKey(str) {
   return String(str || "").toLowerCase().replace(/\s+/g, " ").trim();
 }
 
-// Pre-seed known generated track for instant 0ms delivery
-const KNOWN_TRACKS = {
-  "কিরে বাচ্চা আরিক কি করিস কি বলিস মালু -bangladeshi rap song": "https://results.deapi.ai/22267225/YsXtrukogOVqFxHIqNehPbHfLgs2BeenIHhFRRyl.mp3?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=00352c2ff8087fa000000000b%2F20261007%2Feu-central-003%2Fs3%2Faws4_request&X-Amz-Date=20261007T044840Z&X-Amz-SignedHeaders=host&X-Amz-Expires=18000&X-Amz-Signature=ba0804751061f4ae0ff07b610ef7a877ad7a9a7a05fca49984aab6c53cf0529c"
-};
-
-for (const [k, url] of Object.entries(KNOWN_TRACKS)) {
-  audioCache.set(normalizeKey(k), { audioUrl: url, time: Date.now() });
-}
 
 function pruneCache() {
   const now = Date.now();

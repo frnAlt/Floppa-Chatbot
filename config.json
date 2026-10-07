@@ -136,7 +136,7 @@
     "message_reaction": true,
     "message_unsend": true,
     "event": true,
-    "read_receipt": false,
+    "read_receipt": true,
     "typ": false,
     "presence": false
   },

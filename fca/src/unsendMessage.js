@@ -22,7 +22,7 @@ module.exports = function (defaultFuncs, api, ctx) {
       };
     }
 
-    if (threadID) return api.unsendMqttMessage(threadID, messageID, callback);
+    if (threadID && ctx.mqttClient && ctx.mqttClient.connected) return api.unsendMqttMessage(threadID, messageID, callback);
     else {
       var form = {
         message_id: messageID

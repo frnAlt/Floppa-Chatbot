@@ -17,7 +17,7 @@ const threadCache = new Map();
 
 // Deduplication cache to prevent bursts of duplicate MQTT events (e.g. [REACT] and [MSG] duplicates)
 const recentEventsCache = new Map();
-const DEDUP_TTL_MS = 3000;
+const DEDUP_TTL_MS = 500;
 
 function isDuplicateEvent(type, event) {
 	if (!event || !type) return false;
@@ -606,6 +606,32 @@ const eventLogger = {
 			console.error("[EVENT LOGGER ERROR]:", err.message || err);
 			return null;
 		}
+	},
+
+	/**
+	 * Log immediate command execution start (eliminates deploy log silence during long running commands)
+	 */
+	logCommandStart({ commandName, userName, senderID, threadID, threadName, isGroup, args = [], role = 0 }) {
+		try {
+			const cfg = getLogConfig();
+			if (cfg.disableAll || !cfg.command) return;
+
+			const timeStr = getTimestamp("HH:mm:ss");
+			const thread = resolveThread(threadID, isGroup, threadName);
+			const user = resolveUser(senderID, global.db?.allThreadData?.find(t => String(t.threadID) === String(threadID)), userName);
+
+			const roleBadge = getRoleBadge(user.role, cfg);
+			const argsStr = args.length ? args.join(" ") : "";
+
+			if (cfg.mode === "standard" || cfg.mode === "compact") {
+				const timeTag = c.time(`[${timeStr}]`);
+				const badge = "\x1b[1;93m[CMD:START]\x1b[0m";
+				const chatTag = formatChatTag(thread);
+				const userTag = formatUserTag(user, roleBadge);
+
+				console.log(`${timeTag} ${badge} ${chatTag} ${userTag} ${c.arrow} \x1b[1;37m${commandName}\x1b[0m${argsStr ? ` ${c.id(argsStr)}` : ""}`);
+			}
+		} catch (_) {}
 	},
 
 	/**

@@ -178,8 +178,19 @@ module.exports = (defaultFuncs, api, ctx) => {
       if (utils.getType(msg.attachment) !== "Array") msg.attachment = [msg.attachment];
       const files = await uploadAttachment(msg.attachment, threadID);
       files.forEach(file => {
-        const type = Object.keys(file)[0];
-        form["" + type + "s"].push(file[type]);
+        if (!file || typeof file !== "object") return;
+        const key = Object.keys(file).find(k => k.endsWith("_id")) || Object.keys(file)[0];
+        const type = key ? key.replace(/_id$/, "") : "file";
+        let targetKey = type + "_ids";
+        if (!Array.isArray(form[targetKey])) {
+          if (file.audio_id || targetKey.includes("audio")) targetKey = "audio_ids";
+          else if (file.video_id || targetKey.includes("video")) targetKey = "video_ids";
+          else if (file.image_id || targetKey.includes("image")) targetKey = "image_ids";
+          else targetKey = "file_ids";
+        }
+        if (!Array.isArray(form[targetKey])) form[targetKey] = [];
+        const idVal = file[key] || file.fbid || Object.values(file)[0];
+        if (idVal) form[targetKey].push(idVal);
       });
       if (files.length === 0 && !msg.url && !msg.sticker) {
         form.has_attachment = false;

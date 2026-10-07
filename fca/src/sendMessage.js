@@ -348,11 +348,21 @@ module.exports = function (defaultFuncs, api, ctx) {
         catch (e) {}
       }
       uploadAttachment(msg.attachment, function (err, files) {
-      if (err) return callback(err);
+        if (err) return callback(err);
         files.forEach(function (file) {
-          var key = Object.keys(file);
-          var type = key[0]; // image_id, file_id, etc
-          form["" + type + "s"].push(file[type]); // push the id
+          if (!file || typeof file !== "object") return;
+          var key = Object.keys(file).find(k => k.endsWith("_id")) || Object.keys(file)[0];
+          var type = key ? key.replace(/_id$/, "") : "file";
+          var targetKey = type + "_ids";
+          if (!Array.isArray(form[targetKey])) {
+            if (file.audio_id || targetKey.includes("audio")) targetKey = "audio_ids";
+            else if (file.video_id || targetKey.includes("video")) targetKey = "video_ids";
+            else if (file.image_id || targetKey.includes("image")) targetKey = "image_ids";
+            else targetKey = "file_ids";
+          }
+          if (!Array.isArray(form[targetKey])) form[targetKey] = [];
+          var idVal = file[key] || file.fbid || Object.values(file)[0];
+          if (idVal) form[targetKey].push(idVal);
         });
         cb();
       });

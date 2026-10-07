@@ -62,10 +62,6 @@ module.exports = (api, threadModel, userModel, dashBoardModel, globalModel, user
                         const devUsers = (global.GoatBot?.config?.devUsers || []).map(String);
                         const isAdminOrDev = adminBot.includes(sID) || devUsers.includes(sID);
 
-                        if (loggedInfo?.isDuplicate && !isAdminOrDev) {
-                                return;
-                        }
-
                         const message = createFuncMessage(api, event);
 
                         // Run DB sanity check in background to prevent blocking command dispatch

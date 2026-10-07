@@ -52,14 +52,23 @@ module.exports = function (defaultFuncs, api, ctx) {
             type: 3
         });
 
-		ctx.mqttClient.publish('/ls_req', Form,{
-            qos: 1,
-            retain: false,
-        });
-        ctx.callback_Task[ctx.req_ID] = new Object({
-            callback,
-            type: "unsendMqttMessage",
-        });
+        if (!ctx.mqttClient || !ctx.mqttClient.connected) {
+            return api.unsendMessage(messageID, null, callback);
+        }
+
+        try {
+            ctx.mqttClient.publish('/ls_req', Form, {
+                qos: 1,
+                retain: false,
+            });
+            if (!ctx.callback_Task) ctx.callback_Task = {};
+            ctx.callback_Task[ctx.req_ID] = new Object({
+                callback,
+                type: "unsendMqttMessage",
+            });
+        } catch (err) {
+            return api.unsendMessage(messageID, null, callback);
+        }
         
 		return returnPromise;
 	};

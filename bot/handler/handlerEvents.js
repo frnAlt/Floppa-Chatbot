@@ -349,16 +349,36 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         if (!allowSelfListen) {
                                 return;
                         }
-                        const currentPrefix = getPrefix(threadID);
-                        const validPrefixes = Array.from(new Set([currentPrefix, "!"].filter(Boolean)));
-                        const firstWord = typeof body === "string" ? body.trim().split(/ +/)[0]?.toLowerCase() : "";
-                        const isSelfCommand = typeof body === "string" && (
-                                validPrefixes.some(p => body.trim().startsWith(p)) ||
-                                !isGroup ||
-                                Boolean(GoatBot.commands.has(firstWord) || GoatBot.aliases.has(firstWord))
-                        );
-                        if (!isSelfCommand) {
-                                return;
+
+                        // Non-message events (reactions, unsends, group events, typ, presence, read receipts)
+                        // should always pass through without requiring text command matching
+                        const isMessageEvent = event.type === "message" || event.type === "message_reply";
+                        if (isMessageEvent) {
+                                const currentPrefix = getPrefix(threadID);
+                                const globalPrefix = GoatBot?.config?.prefix || "!";
+                                const validPrefixes = Array.from(new Set([currentPrefix, globalPrefix, "!"].filter(Boolean)));
+                                const trimmedBody = typeof body === "string" ? body.trim() : "";
+                                const allTokens = trimmedBody.split(/\s+/).filter(Boolean);
+                                const firstWord = allTokens[0]?.toLowerCase() || "";
+                                const isReplyingToBotPrompt = Boolean(event.messageReply?.messageID && (GoatBot.onReply?.has(event.messageReply.messageID) || global.GoatBot?.onReply?.has(event.messageReply.messageID)));
+                                const isKnownCmd = Boolean(
+                                        GoatBot.commands.has(firstWord) ||
+                                        GoatBot.aliases.has(firstWord) ||
+                                        validPrefixes.some(p => trimmedBody.startsWith(p))
+                                );
+                                const isOwnerAdmin = (GoatBot.config?.adminBot || []).map(String).includes(botID) ||
+                                        (GoatBot.config?.devUsers || []).map(String).includes(botID);
+
+                                const isSelfCommand =
+                                        isReplyingToBotPrompt ||
+                                        validPrefixes.some(p => trimmedBody.startsWith(p)) ||
+                                        !isGroup ||
+                                        isKnownCmd ||
+                                        (isOwnerAdmin && GoatBot.config?.noPrefix !== false && allTokens.length > 0);
+
+                                if (!isSelfCommand) {
+                                        return;
+                                }
                         }
                 }
 
@@ -888,6 +908,16 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                                 return await originalSend.call(this, form, ...rest);
                                         };
                                 }
+                                eventLogger.logCommandStart({
+                                        commandName,
+                                        userName: userData?.name,
+                                        senderID,
+                                        threadID,
+                                        threadName: threadData?.threadName,
+                                        isGroup: Boolean(isGroup),
+                                        args,
+                                        role
+                                });
 
                                 await command.onStart({
                                         ...parameters,

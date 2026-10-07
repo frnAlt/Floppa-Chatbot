@@ -287,6 +287,7 @@ class MemoryManager {
 	_performCleanup() {
 		const { FloppaBot } = global;
 		let cleaned = 0;
+		const memUsage = process.memoryUsage();
 
 		if (FloppaBot.oldListening.length > this.options.maxOldListening) {
 			const toRemove = FloppaBot.oldListening.length - this.options.maxOldListening;
