@@ -3,7 +3,16 @@
 const utils = require('../utils');
 
 module.exports = function (defaultFuncs, api, ctx) {
-  return async function setMessageReaction(reaction, messageID, callback) {
+  return async function setMessageReaction(reaction, messageID, callback, extra) {
+    let threadID = null;
+    let actualCallback = callback;
+    if (typeof callback === "string" && !isNaN(callback)) {
+      threadID = callback;
+      actualCallback = typeof extra === "function" ? extra : undefined;
+    } else if (typeof extra === "string" && !isNaN(extra)) {
+      threadID = extra;
+    }
+
     let resolveFunc = () => {};
     let rejectFunc = () => {};
     const returnPromise = new Promise((resolve, reject) => {
@@ -11,14 +20,14 @@ module.exports = function (defaultFuncs, api, ctx) {
       rejectFunc = reject;
     });
 
-    if (!callback) {
-      callback = (err, data) => {
+    if (!actualCallback) {
+      actualCallback = (err, data) => {
         if (err) return rejectFunc(err);
         resolveFunc(data);
       };
     } else {
-      const _userCb = callback;
-      callback = (err, data) => {
+      const _userCb = actualCallback;
+      actualCallback = (err, data) => {
         if (err) { _userCb(err); return rejectFunc(err); }
         _userCb(null, data);
         resolveFunc(data);
@@ -32,6 +41,15 @@ module.exports = function (defaultFuncs, api, ctx) {
 
       if (reaction === "✅") reaction = "👍";
       else if (reaction === "❌") reaction = "👎";
+
+      // 1. Try MQTT reaction first if threadID is available and MQTT is connected (sub-50ms delivery)
+      if (threadID && ctx.mqttClient && ctx.mqttClient.connected && typeof api.setMessageReactionMqtt === "function") {
+        try {
+          const mqttRes = await api.setMessageReactionMqtt(reaction, messageID, threadID);
+          actualCallback(null, mqttRes);
+          return returnPromise;
+        } catch (_) {}
+      }
 
       const action = reaction === "" ? "REMOVE_REACTION" : "ADD_REACTION";
 
@@ -59,10 +77,10 @@ module.exports = function (defaultFuncs, api, ctx) {
         throw new Error("setMessageReaction returned empty object.");
       }
 
-      callback(null, { success: true, action, messageID });
+      actualCallback(null, { success: true, action, messageID });
     } catch (err) {
       utils.error("setMessageReaction", err);
-      callback(err instanceof Error ? err : new Error(String(err)));
+      actualCallback(err instanceof Error ? err : new Error(String(err)));
     }
 
     return returnPromise;

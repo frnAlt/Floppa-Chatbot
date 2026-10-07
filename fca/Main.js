@@ -476,14 +476,12 @@ function buildAPI(globalOptions, html, jar, bypass_region) {
             if (fs.existsSync(apisDir)) {
                 fs.readdirSync(apisDir).filter((/** @type {string} */File) => File.endsWith(".js")).forEach((/** @type {string} */File) => {
                     const moduleName = File.split('.').slice(0, -1).join('.');
-                    if (!api[moduleName]) {
-                        try {
-                            const mod = require('./src/apis/' + File);
-                            if (typeof mod === 'function') {
-                                api[moduleName] = mod(defaultFuncs, api, ctx);
-                            }
-                        } catch (_) {}
-                    }
+                    try {
+                        const mod = require('./src/apis/' + File);
+                        if (typeof mod === 'function') {
+                            api[moduleName] = mod(defaultFuncs, api, ctx);
+                        }
+                    } catch (_) {}
                 });
             }
         } catch (_) {}

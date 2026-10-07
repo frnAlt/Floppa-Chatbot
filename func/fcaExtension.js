@@ -164,21 +164,46 @@ function extendFCA(api) {
         replyTo = undefined;
       }
 
-      const wrappedCb = typeof cb === "function" ? (err, info) => {
-        if (!err && info) {
-          attachSentMessageHelpers(info, threadID, api);
-        }
-        cb(err, info);
-      } : undefined;
+      return new Promise((resolve, reject) => {
+        let settled = false;
+        const wrappedCb = (err, info) => {
+          if (!settled) {
+            settled = true;
+            if (cb) {
+              try { cb(err, info); } catch (_) {}
+            }
+            if (err) return reject(err);
+            if (info) attachSentMessageHelpers(info, threadID, api);
+            return resolve(info);
+          }
+        };
 
-      const result = originalSendMessage.call(api, msg, threadID, wrappedCb, replyTo, group);
-      if (result && typeof result.then === "function") {
-        return result.then(info => {
-          if (info) attachSentMessageHelpers(info, threadID, api);
-          return info;
-        });
-      }
-      return result;
+        try {
+          const result = originalSendMessage.call(api, msg, threadID, wrappedCb, replyTo, group);
+          if (result && typeof result.then === "function") {
+            result.then(info => {
+              if (!settled) {
+                settled = true;
+                if (cb) { try { cb(null, info); } catch (_) {} }
+                if (info) attachSentMessageHelpers(info, threadID, api);
+                resolve(info);
+              }
+            }).catch(err => {
+              if (!settled) {
+                settled = true;
+                if (cb) { try { cb(err, null); } catch (_) {} }
+                reject(err);
+              }
+            });
+          }
+        } catch (syncErr) {
+          if (!settled) {
+            settled = true;
+            if (cb) { try { cb(syncErr, null); } catch (_) {} }
+            reject(syncErr);
+          }
+        }
+      });
     };
   }
 

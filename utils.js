@@ -460,9 +460,10 @@ function message(api, event) {
                                 }
                                 if (JSON.stringify(err).includes('spam')) {
                                         setErrorUptime();
+                                        throw err;
                                 }
                                 log.err("MESSAGE_SEND", `Failed to send message to thread ${event.threadID}:`, err.message || err);
-                                throw err;
+                                return null;
                         }
                 },
                 reply: async (form, callback, options = {}) => {
@@ -541,9 +542,10 @@ function message(api, event) {
                                 }
                                 if (JSON.stringify(err).includes('spam')) {
                                         setErrorUptime();
+                                        throw err;
                                 }
                                 log.err("MESSAGE_REPLY", `Failed to reply in thread ${event.threadID}:`, err.message || err);
-                                throw err;
+                                return null;
                         }
                 },
                 sendDM: async (form, targetUIDOrCallback, maybeCallback, options = {}) => {

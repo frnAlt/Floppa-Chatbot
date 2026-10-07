@@ -943,14 +943,29 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                         role
                                 });
 
-                                await command.onStart({
-                                        ...parameters,
-                                        message,
-                                        args,
-                                        commandName,
-                                        getLang: getText2,
-                                        removeCommandNameFromBody
+                                const CMD_TIMEOUT_MS = 60000;
+                                let cmdTimeoutId;
+                                const cmdTimeoutPromise = new Promise((_, reject) => {
+                                        cmdTimeoutId = setTimeout(() => {
+                                                reject(new Error(`Command "${commandName}" timed out after ${CMD_TIMEOUT_MS / 1000} seconds.`));
+                                        }, CMD_TIMEOUT_MS);
                                 });
+
+                                try {
+                                        await Promise.race([
+                                                command.onStart({
+                                                        ...parameters,
+                                                        message,
+                                                        args,
+                                                        commandName,
+                                                        getLang: getText2,
+                                                        removeCommandNameFromBody
+                                                }),
+                                                cmdTimeoutPromise
+                                        ]);
+                                } finally {
+                                        clearTimeout(cmdTimeoutId);
+                                }
                                 
                                 // Set cooldown after successful execution
                                 cooldownManager.setCooldown(commandName, senderID);
@@ -1015,14 +1030,16 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                 if (global.systemMemoryDB) {
                                         global.systemMemoryDB.recordCommand(commandName, event, Date.now() - dateNow, err);
                                 }
-                                return await message.reply(
-                                        utils.getText({ lang: langCode, head: "handlerEvents" }, "errorOccurred", time, commandName, removeHomeDir(err.stack ? err.stack.split("\n").slice(0, 5).join("\n") : JSON.stringify(err, null, 2))),
-                                        (e, info) => {
-                                                if (!e && info?.messageID) {
-                                                        setTimeout(() => message.unsend(info.messageID), 8000);
+                                try {
+                                        return await message.reply(
+                                                utils.getText({ lang: langCode, head: "handlerEvents" }, "errorOccurred", time, commandName, removeHomeDir(err.stack ? err.stack.split("\n").slice(0, 5).join("\n") : JSON.stringify(err, null, 2))),
+                                                (e, info) => {
+                                                        if (!e && info?.messageID) {
+                                                                setTimeout(() => message.unsend(info.messageID), 8000);
+                                                        }
                                                 }
-                                        }
-                                );
+                                        );
+                                } catch (_) {}
                         }
                 }
 

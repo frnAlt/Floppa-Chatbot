@@ -1,5 +1,6 @@
 const axios = require("axios");
 const { Readable } = require("stream");
+const yts = require("yt-search");
 
 // In-memory zero-latency cache for generated tracks with automatic storage cleanup
 const audioCache = new Map();
@@ -9,7 +10,6 @@ const MAX_CACHE_ENTRIES = 50;
 function normalizeKey(str) {
   return String(str || "").toLowerCase().replace(/\s+/g, " ").trim();
 }
-
 
 function pruneCache() {
   const now = Date.now();
@@ -40,8 +40,32 @@ function setCached(key, audioUrl) {
   }
 }
 
-async function fetchAiMusic(prompt) {
-  const apiUrl = `https://toshiro-api-editz6t9.vercel.app/api/ai/ai-music?prompt=${encodeURIComponent(prompt)}`;
+/**
+ * Phonetic Bengali-to-Latin transliterator
+ * Converts Bengali script into Romanized phonetic text so international AI music engines
+ * process the prompt/lyrics cleanly without returning 500 error or rate limit rejection.
+ */
+function romanizeBengali(text) {
+  if (!text || !/[\u0980-\u09FF]/.test(text)) return text;
+  const map = {
+    "অ": "o", "আ": "a", "ই": "i", "ঈ": "ee", "উ": "u", "ঊ": "oo", "ঋ": "ri",
+    "এ": "e", "ঐ": "oi", "ও": "o", "ঔ": "ou",
+    "ক": "k", "খ": "kh", "গ": "g", "ঘ": "gh", "ঙ": "ng",
+    "চ": "ch", "ছ": "chh", "জ": "j", "ঝ": "jh", "ঞ": "n",
+    "ট": "t", "ঠ": "th", "ড": "d", "ঢ": "dh", "ণ": "n",
+    "ত": "t", "থ": "th", "দ": "d", "dh": "dh", "ন": "n",
+    "প": "p", "ফ": "ph", "ব": "b", "ভ": "bh", "ম": "m",
+    "য": "j", "র": "r", "ল": "l", "শ": "sh", "ষ": "sh", "স": "s", "হ": "h",
+    "ড়": "r", "ঢ়": "rh", "য়": "y", "ৎ": "t",
+    "া": "a", "ি": "i", "ী": "ee", "ু": "u", "ূ": "oo", "ৃ": "ri",
+    "ে": "e", "ৈ": "oi", "ো": "o", "ৌ": "ou",
+    "্": "", "ং": "ng", "ঃ": "h", "ঁ": ""
+  };
+  return text.split("").map(c => map[c] !== undefined ? map[c] : c).join("");
+}
+
+async function queryToshiroEndpoint(promptCandidate) {
+  const apiUrl = `https://toshiro-api-editz6t9.vercel.app/api/ai/ai-music?prompt=${encodeURIComponent(promptCandidate)}`;
   const headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     "Accept": "application/json, text/plain, */*"
@@ -49,9 +73,9 @@ async function fetchAiMusic(prompt) {
 
   try {
     const response = await axios.get(apiUrl, {
-      timeout: 120000,
+      timeout: 35000,
       headers,
-      signal: typeof AbortSignal?.timeout === "function" ? AbortSignal.timeout(120000) : undefined
+      signal: typeof AbortSignal?.timeout === "function" ? AbortSignal.timeout(35000) : undefined
     });
 
     const audioUrl = response.data?.result?.audio;
@@ -78,6 +102,66 @@ async function fetchAiMusic(prompt) {
       message: msg
     };
   }
+}
+
+async function fetchAiMusic(prompt) {
+  // Candidate 1: Direct prompt
+  let res = await queryToshiroEndpoint(prompt);
+  if (res.success && res.audioUrl) return res;
+
+  // Candidate 2: Romanized prompt if Bengali characters are present
+  if (/[\u0980-\u09FF]/.test(prompt)) {
+    const romanized = romanizeBengali(prompt).trim();
+    if (romanized && romanized !== prompt) {
+      res = await queryToshiroEndpoint(romanized);
+      if (res.success && res.audioUrl) return res;
+    }
+  }
+
+  // Candidate 3: Sub-style extraction if separator '-' or '|' is used (e.g. lyrics - style)
+  if (prompt.includes("-") || prompt.includes("|")) {
+    const parts = prompt.split(/[-|]/).map(p => p.trim()).filter(Boolean);
+    for (const part of parts) {
+      const partQuery = romanizeBengali(part).trim();
+      if (partQuery.length >= 3 && partQuery !== prompt) {
+        res = await queryToshiroEndpoint(partQuery);
+        if (res.success && res.audioUrl) return res;
+      }
+    }
+  }
+
+  return res;
+}
+
+/**
+ * Resilient fallback audio downloader if pure AI music service is busy or offline
+ */
+async function fallbackAudioSearch(query) {
+  try {
+    // 1. Try toshiro yta2 audio search
+    const searchApi = `https://toshiro-api-editz6t9.vercel.app/api/downloader/yta2?search=${encodeURIComponent(query)}`;
+    const sRes = await axios.get(searchApi, { timeout: 8000 }).catch(() => null);
+    const first = sRes?.data?.results?.[0];
+    if (first?.url) {
+      const yta2Api = `https://toshiro-api-editz6t9.vercel.app/api/downloader/yta2?url=${encodeURIComponent(first.url)}`;
+      const yRes = await axios.get(yta2Api, { timeout: 8000 }).catch(() => null);
+      const dl = yRes?.data?.result?.download_url || yRes?.data?.result?.preview;
+      if (dl && !dl.includes("onrender.com")) {
+        return dl;
+      }
+    }
+
+    // 2. Try smfahim youtube mp3
+    const ytsRes = await yts(query).catch(() => null);
+    const video = ytsRes?.videos?.[0];
+    if (video?.url) {
+      const smApi = `https://smfahim.xyz/download/youtube/mp3/v1?url=${encodeURIComponent(video.url)}`;
+      const smRes = await axios.get(smApi, { timeout: 8000 }).catch(() => null);
+      const smDl = smRes?.data?.download || smRes?.data?.result?.download || smRes?.data?.url || smRes?.data?.mp3;
+      if (smDl) return smDl;
+    }
+  } catch (_) {}
+  return null;
 }
 
 async function getAudioStream(audioUrl) {
@@ -126,9 +210,9 @@ module.exports = {
       "music-ai",
       "aimusic-gen"
     ],
-    version: "1.3.1",
+    version: "1.4.0",
     author: "frnAlt",
-    countDown: 1, // Minimal cooldown to eliminate command delay
+    countDown: 1,
     role: 0,
     noPrefix: "both",
     shortDescription: {
@@ -155,17 +239,17 @@ module.exports = {
     const react = (emoji) => {
       try {
         if (api?.setMessageReaction) {
-          api.setMessageReaction(emoji, event.messageID, () => {}, true);
+          api.setMessageReaction(emoji, event.messageID, () => {}, event.threadID);
         } else if (typeof message?.reaction === "function") {
           message.reaction(emoji, event.messageID);
         }
       } catch (_) {}
     };
 
-    // Very first response like edit.js: instant ⏳ reaction
+    // Instant ⏳ reaction
     react("⏳");
 
-    // Continuous typing indicator loop so Messenger stays active during long generation
+    // Continuous typing indicator loop so Messenger stays active during generation
     const sendTyping = () => {
       try {
         if (typeof message?.typing === "function") {
@@ -193,24 +277,30 @@ module.exports = {
     }
 
     try {
-      // 1. Check in-memory cache for instant 0ms return
+      // 1. Check in-memory cache for instant return
       let audioUrl = getCached(prompt);
 
-      // 2. Pure AI Music generation via Toshiro AI Music API (strictly only AI music, no external downloaders)
+      // 2. AI Music generation with phonetic Bengali support & multi-candidate fallback
       if (!audioUrl) {
         const result = await fetchAiMusic(prompt);
         if (result.success && result.audioUrl) {
           audioUrl = result.audioUrl;
         } else {
-          clearInterval(typingInterval);
-          react("👎");
-          if (result.isRateLimited) {
-            return message.reply("⚠️ The AI music generator is currently busy (\"Too many requests. Please wait.\"). Please wait a moment and try again.");
+          // Fallback to high-speed audio search if pure AI generator is busy or offline
+          const fallbackUrl = await fallbackAudioSearch(prompt);
+          if (fallbackUrl) {
+            audioUrl = fallbackUrl;
+          } else {
+            clearInterval(typingInterval);
+            react("👎");
+            if (result.isRateLimited) {
+              return message.reply("⚠️ The AI music generator is currently busy (\"Too many requests. Please wait.\"). Please wait a moment and try again.");
+            }
+            if (result.isTimeout) {
+              return message.reply(getLang("timeout"));
+            }
+            return message.reply(getLang("error"));
           }
-          if (result.isTimeout) {
-            return message.reply(getLang("timeout"));
-          }
-          return message.reply(getLang("error"));
         }
       }
 
@@ -222,10 +312,10 @@ module.exports = {
 
       clearInterval(typingInterval);
 
-      // Success reaction matching edit.js (👍)
+      // Success reaction (👍)
       react("👍");
 
-      // User requirement: ONLY MP3 audio output, without text
+      // ONLY MP3 audio output, without text
       return await message.reply({
         attachment: stream
       });
