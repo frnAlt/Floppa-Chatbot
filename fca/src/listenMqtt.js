@@ -351,7 +351,7 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
       delta_batch_size: 1000,
       encoding: 'JSON',
       entity_fbid: ctx.userID,
-      initial_titan_sequence_id: ctx.lastSeqId,
+      initial_titan_sequence_id: (ctx.lastSeqId && ctx.lastSeqId !== "-1") ? String(ctx.lastSeqId) : "0",
       device_params: null
     };
 
@@ -422,7 +422,7 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
       return;
     }
     if (!jsonMessage || typeof jsonMessage !== "object") return;
-    if (topic === "/t_ms" || topic === "/messaging_events" || topic === "/mercury") {
+    if (topic === "/t_ms" || topic === "/messaging_events" || topic === "/mercury" || topic === "/inbox" || topic === "/orca_message_notifications") {
       if (ctx.tmsWait && typeof ctx.tmsWait == "function") ctx.tmsWait();
 
       if (jsonMessage.firstDeltaSeqId && jsonMessage.syncToken) {
@@ -619,7 +619,7 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, {
                 global.Fca.Data.MsgCount.set(fmtMsg.threadID, ((global.Fca.Data.MsgCount.get(fmtMsg.threadID)) + 1 || 1));
             }    
 
-          if (ctx.globalOptions.autoMarkDelivery) {
+          if (ctx.globalOptions.autoMarkDelivery || ctx.globalOptions.autoMarkRead) {
             markDelivery(ctx, api, fmtMsg.threadID, fmtMsg.messageID);
           }
 
@@ -748,7 +748,7 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, {
           };
 
           const dispatchReply = (cbData) => {
-            if (ctx.globalOptions.autoMarkDelivery) {
+            if (ctx.globalOptions.autoMarkDelivery || ctx.globalOptions.autoMarkRead) {
               markDelivery(ctx, api, cbData.threadID, cbData.messageID);
             }
             if (!ctx.globalOptions.selfListen && cbData.senderID === ctx.userID) return;
@@ -816,7 +816,7 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, {
           } else if (delta.deltaMessageReply.replyToMessageId) {
             const fetchPromise = defaultFuncs
               .post('https://www.facebook.com/api/graphqlbatch/', ctx.jar, {
-                av: ctx.globalOptions.pageID,
+                av: ctx.globalOptions.pageID || ctx.userID,
                 queries: JSON.stringify({
                   o0: {
                     doc_id: '2848441488556444',
@@ -1066,16 +1066,15 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, {
 }
 
 function markDelivery(ctx, api, threadID, messageID) {
-  if (threadID && messageID) {
+  if (!threadID) return;
+  if (ctx.globalOptions.autoMarkDelivery && messageID) {
     api.markAsDelivered(threadID, messageID, (err) => {
       if (err) log.error('markAsDelivered', err);
-      else {
-        if (ctx.globalOptions.autoMarkRead) {
-          api.markAsRead(threadID, (err) => {
-            if (err) log.error('markAsDelivered', err);
-          });
-        }
-      }
+    });
+  }
+  if (ctx.globalOptions.autoMarkRead) {
+    api.markAsRead(threadID, (err) => {
+      if (err) log.error('markAsRead', err);
     });
   }
 }
@@ -1214,7 +1213,7 @@ module.exports = function(defaultFuncs, api, ctx) {
 
     //Same request as getThreadList
     form = {
-      av: ctx.globalOptions.pageID,
+      av: ctx.globalOptions.pageID || ctx.userID,
       queries: JSON.stringify({
         o0: {
           doc_id: '3336396659757871',

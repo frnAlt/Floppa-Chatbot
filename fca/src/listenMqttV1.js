@@ -413,7 +413,7 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
                     //temp
                 }
                 if (fmtMsg)
-                    if (ctx.globalOptions.autoMarkDelivery) markDelivery(ctx, api, fmtMsg.threadID, fmtMsg.messageID);
+                    if (ctx.globalOptions.autoMarkDelivery || ctx.globalOptions.autoMarkRead) markDelivery(ctx, api, fmtMsg.threadID, fmtMsg.messageID);
 
                 return !ctx.globalOptions.selfListen && fmtMsg.senderID === ctx.userID ? undefined : (function () { globalCallback(null, fmtMsg); })();
             } else {
@@ -541,7 +541,7 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
                     } else if (delta.deltaMessageReply.replyToMessageId) {
                         return defaultFuncs
                             .post("https://www.facebook.com/api/graphqlbatch/", ctx.jar, {
-                                "av": ctx.globalOptions.pageID,
+                                "av": ctx.globalOptions.pageID || ctx.userID,
                                 "queries": JSON.stringify({
                                     "o0": {
                                         //Using the same doc_id as forcedFetch
@@ -588,12 +588,12 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
                             })
                             .catch(err => log.error("forcedFetch", err))
                             .finally(function () {
-                                if (ctx.globalOptions.autoMarkDelivery) markDelivery(ctx, api, callbackToReturn.threadID, callbackToReturn.messageID);
+                                if (ctx.globalOptions.autoMarkDelivery || ctx.globalOptions.autoMarkRead) markDelivery(ctx, api, callbackToReturn.threadID, callbackToReturn.messageID);
                                 !ctx.globalOptions.selfListen && callbackToReturn.senderID === ctx.userID ? undefined : (function () { globalCallback(null, callbackToReturn); })();
                             });
                     } else callbackToReturn.delta = delta;
             
-                    if (ctx.globalOptions.autoMarkDelivery) markDelivery(ctx, api, callbackToReturn.threadID, callbackToReturn.messageID);
+                    if (ctx.globalOptions.autoMarkDelivery || ctx.globalOptions.autoMarkRead) markDelivery(ctx, api, callbackToReturn.threadID, callbackToReturn.messageID);
 
                     return !ctx.globalOptions.selfListen && callbackToReturn.senderID === ctx.userID ? undefined : (function () { globalCallback(null, callbackToReturn); })();
                 }
@@ -794,16 +794,15 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
 
 
 function markDelivery(ctx, api, threadID, messageID) {
-    if (threadID && messageID) {
+    if (!threadID) return;
+    if (ctx.globalOptions.autoMarkDelivery && messageID) {
         api.markAsDelivered(threadID, messageID, (err) => {
             if (err) log.error("markAsDelivered", err);
-            else {
-                if (ctx.globalOptions.autoMarkRead) {
-                    api.markAsRead(threadID, (err) => {
-                        if (err) log.error("markAsDelivered", err);
-                    });
-                }
-            }
+        });
+    }
+    if (ctx.globalOptions.autoMarkRead) {
+        api.markAsRead(threadID, (err) => {
+            if (err) log.error("markAsRead", err);
         });
     }
 }
@@ -893,7 +892,7 @@ module.exports = function (defaultFuncs, api, ctx) {
 
         //Same request as getThreadList
         form = {
-            "av": ctx.globalOptions.pageID,
+            "av": ctx.globalOptions.pageID || ctx.userID,
             "queries": JSON.stringify({
                 "o0": {
                     "doc_id": "3336396659757871",

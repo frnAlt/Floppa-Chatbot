@@ -182,11 +182,9 @@ module.exports = async function (databaseType, threadModel, api, fakeGraphql) {
 
                 const queue = new Promise(async function (resolve_, reject_) {
                         try {
-                                if (global.db.allThreadData.some(t => t.threadID == threadID)) {
-                                        throw new CustomError({
-                                                name: "DATA_ALREADY_EXISTS",
-                                                message: `Thread with id "${threadID}" already exists in the data`
-                                        });
+                                const existingThread = global.db.allThreadData.find(t => t.threadID == threadID);
+                                if (existingThread) {
+                                        return resolve_(_.cloneDeep(existingThread));
                                 }
                                 if (isNaN(threadID)) {
                                         throw new CustomError({

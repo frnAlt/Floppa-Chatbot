@@ -13,7 +13,10 @@ yarn-error.log*
 pnpm-debug.log*
 
 # Facebook Messenger Credentials, Cookies, and Appstate
+account*.json
+account.json
 account*.txt
+account.txt
 appstate*.json
 cookie*.txt
 cookie*.json

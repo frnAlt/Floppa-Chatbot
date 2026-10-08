@@ -259,11 +259,9 @@ module.exports = async function (databaseType, userModel, api, fakeGraphql) {
 
                 const queue = new Promise(async function (resolve_, reject_) {
                         try {
-                                if (global.db.allUserData.some(u => u.userID == userID)) {
-                                        throw new CustomError({
-                                                name: "DATA_ALREADY_EXISTS",
-                                                message: `User with id "${userID}" already exists in the data`
-                                        });
+                                const existingUser = global.db.allUserData.find(u => u.userID == userID);
+                                if (existingUser) {
+                                        return resolve_(_.cloneDeep(existingUser));
                                 }
                                 if (isNaN(userID)) {
                                         throw new CustomError({

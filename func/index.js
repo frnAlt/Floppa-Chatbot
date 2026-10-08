@@ -12,7 +12,6 @@ const mdToText = require("./mdToText.js");
 const messageQueue = require("./messageQueue.js");
 const spamTracker = require("./spamTracker.js");
 const analyticsBatcher = require("./analyticsBatcher.js");
-const aiHelper = require("./aiHelper.js");
 const systemStats = require("./systemStats.js");
 const cacheManager = require("./cacheManager.js");
 
@@ -44,7 +43,6 @@ module.exports = {
   messageQueue,
   spamTracker,
   analyticsBatcher,
-  aiHelper,
   systemStats,
   cacheManager,
   automationManager,
