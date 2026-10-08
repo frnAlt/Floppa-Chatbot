@@ -38,6 +38,10 @@ class SystemMemoryDB {
         mqttReconnects: 0,
         lastMqttPing: null,
         totalEventsReceived: 0,
+        totalMessagesReceived: 0,
+        totalGroupMessages: 0,
+        totalDirectMessages: 0,
+        totalUserMessages: 0,
         totalCommandsExecuted: 0,
         totalErrorsCaught: 0
       },
@@ -119,13 +123,25 @@ class SystemMemoryDB {
     if (!event) return;
     this.data.currentSession.totalEventsReceived++;
 
+    const isGroup = event.isGroup !== undefined ? Boolean(event.isGroup) : (event.threadID !== event.senderID);
+    const isMsg = event.type === "message" || event.type === "message_reply" || event.type === "message_unsend";
+    if (isMsg) {
+      this.data.currentSession.totalMessagesReceived = (this.data.currentSession.totalMessagesReceived || 0) + 1;
+      if (isGroup) {
+        this.data.currentSession.totalGroupMessages = (this.data.currentSession.totalGroupMessages || 0) + 1;
+      } else {
+        this.data.currentSession.totalDirectMessages = (this.data.currentSession.totalDirectMessages || 0) + 1;
+      }
+      this.data.currentSession.totalUserMessages = (this.data.currentSession.totalUserMessages || 0) + 1;
+    }
+
     const entry = {
       id: event.messageID || ("evt_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6)),
       timestamp: new Date().toISOString(),
       type: event.type || "unknown",
       threadID: String(event.threadID || "unknown"),
       senderID: String(event.senderID || event.userID || event.author || "unknown"),
-      isGroup: event.isGroup !== undefined ? Boolean(event.isGroup) : (event.threadID !== event.senderID),
+      isGroup,
       bodySnippet: (event.body || "").slice(0, 150),
       hasAttachments: Boolean(event.attachments && event.attachments.length > 0),
       attachmentTypes: event.attachments ? event.attachments.map(a => a.type || "unknown").slice(0, 3) : [],
@@ -224,8 +240,18 @@ class SystemMemoryDB {
         mqttConnected: this.data.currentSession.mqttConnected,
         mqttDisconnects: this.data.currentSession.mqttDisconnects,
         totalEventsCaptured: this.data.currentSession.totalEventsReceived,
+        totalMessagesReceived: this.data.currentSession.totalMessagesReceived || 0,
+        totalGroupMessages: this.data.currentSession.totalGroupMessages || 0,
+        totalDirectMessages: this.data.currentSession.totalDirectMessages || 0,
         totalCommandsExecuted: this.data.currentSession.totalCommandsExecuted,
         totalErrorsRecorded: this.data.currentSession.totalErrorsCaught
+      },
+      healthMetrics: {
+        totalMessagesReceived: this.data.currentSession.totalMessagesReceived || 0,
+        totalGroupMessages: this.data.currentSession.totalGroupMessages || 0,
+        totalDirectMessages: this.data.currentSession.totalDirectMessages || 0,
+        totalUserMessages: this.data.currentSession.totalUserMessages || 0,
+        totalEventsCaptured: this.data.currentSession.totalEventsReceived || 0
       },
       stability: this.data.stabilityMetrics,
       recentErrors: recentErrors.map(e => ({
@@ -290,3 +316,5 @@ if (!global.systemMemoryDB) {
 }
 
 module.exports = global.systemMemoryDB;
+module.exports.systemMemoryDB = global.systemMemoryDB;
+module.exports.SystemMemoryDB = SystemMemoryDB;

@@ -928,6 +928,23 @@ async function startBot(loginWithEmail) {
                 global.GoatBot.aliases = new Map();
                 global.GoatBot.onChat = [];
                 global.GoatBot.onEvent = [];
+                if (!global.GoatBot.onFirstChat || typeof global.GoatBot.onFirstChat.has !== "function") {
+                        if (typeof global.createOnFirstChatCollection === "function") {
+                                global.GoatBot.onFirstChat = global.createOnFirstChatCollection();
+                        } else {
+                                const arr = [];
+                                const threadSet = new Set();
+                                arr._commandNames = [];
+                                arr._threadSet = threadSet;
+                                arr.has = function (tid) { return threadSet.has(String(tid)); };
+                                arr.add = function (tid) { threadSet.add(String(tid)); return this; };
+                                arr.delete = function (tid) { return threadSet.delete(String(tid)); };
+                                arr.clear = function () { threadSet.clear(); arr.length = 0; arr._commandNames = []; };
+                                arr[Symbol.iterator] = function () { return threadSet.values(); };
+                                Object.defineProperty(arr, 'size', { get() { return threadSet.size; }, configurable: true });
+                                global.GoatBot.onFirstChat = arr;
+                        }
+                }
                 // Destroy old TTLMaps cleanly before replacing
                 if (global.GoatBot.onReply?.destroy) global.GoatBot.onReply.destroy();
                 if (global.GoatBot.onReaction?.destroy) global.GoatBot.onReaction.destroy();
@@ -1627,7 +1644,8 @@ async function startBot(loginWithEmail) {
                                 const whiteListIds = (global.GoatBot.config.whiteListMode?.whiteListIds || []).map(id => String(id));
                                 const whiteListThreadIds = (global.GoatBot.config.whiteListModeThread?.whiteListThreadIds || []).map(id => String(id));
                                 
-                                const isAdminOrDev = adminBot.includes(senderID) || devUsers.includes(senderID);
+                                const currentBotID = String(api?.getCurrentUserID?.() || global.GoatBot?.botID || "");
+                                const isAdminOrDev = adminBot.includes(senderID) || devUsers.includes(senderID) || (currentBotID && senderID === currentBotID);
                                 const isWhitelistedUser = whiteListIds.includes(senderID);
                                 const isWhitelistedThread = whiteListThreadIds.includes(threadID);
                                 

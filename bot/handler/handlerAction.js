@@ -47,8 +47,15 @@ module.exports = (api, threadModel, userModel, dashBoardModel, globalModel, user
                                 global.systemMemoryDB.recordEvent(event);
                         }
 
-                        // Check if the bot is in the inbox and anti inbox is enabled
+                        const sID = String(event.senderID || event.userID || event.author || "");
+                        const currentBotID = String(api?.getCurrentUserID?.() || global.GoatBot?.botID || global.FloppaBot?.botID || global.botID || "");
+                        const adminBot = (global.GoatBot?.config?.adminBot || []).map(String);
+                        const devUsers = (global.GoatBot?.config?.devUsers || []).map(String);
+                        const isAdminOrDev = adminBot.includes(sID) || devUsers.includes(sID) || (currentBotID && sID === currentBotID);
+
+                        // Check if the bot is in the inbox and anti inbox is enabled (exempt admin and dev)
                         if (
+                                !isAdminOrDev &&
                                 global.GoatBot.config.antiInbox == true &&
                                 (event.senderID == event.threadID || event.userID == event.senderID || event.isGroup == false) &&
                                 (event.senderID || event.userID || event.isGroup == false)
@@ -57,10 +64,6 @@ module.exports = (api, threadModel, userModel, dashBoardModel, globalModel, user
 
                         // Unified, colorized event logger (standard / advanced / compact mode with group & sender names)
                         const loggedInfo = eventLogger.logEvent(event, { usersData, threadsData });
-                        const sID = String(event.senderID || event.userID || event.author || "");
-                        const adminBot = (global.GoatBot?.config?.adminBot || []).map(String);
-                        const devUsers = (global.GoatBot?.config?.devUsers || []).map(String);
-                        const isAdminOrDev = adminBot.includes(sID) || devUsers.includes(sID);
 
                         const message = createFuncMessage(api, event);
 
@@ -91,28 +94,33 @@ module.exports = (api, threadModel, userModel, dashBoardModel, globalModel, user
                         switch (event.type) {
                                 case "message":
                                 case "message_reply":
-                                case "message_unsend":
-                                        if (event.body || event.attachments?.length > 0) {
-                                                if (!global.chatLogs) global.chatLogs = [];
-                                                global.chatLogs.unshift({
-                                                        id: event.messageID || Date.now(),
-                                                        senderID: loggedInfo?.senderID || event.senderID,
-                                                        senderName: loggedInfo?.senderName || `User ${event.senderID}`,
-                                                        threadID: loggedInfo?.threadID || event.threadID,
-                                                        threadName: loggedInfo?.threadName || (event.isGroup ? "Group Chat" : "Direct Message"),
-                                                        isGroup: typeof loggedInfo?.isGroup === "boolean" ? loggedInfo.isGroup : Boolean(event.isGroup),
-                                                        role: loggedInfo?.role?.name || "Member",
-                                                        body: event.body || (event.attachments?.length ? `[Attachment: ${event.attachments[0].type}]` : "[Message]"),
-                                                        type: event.type,
-                                                        timestamp: loggedInfo?.timeStr || new Date().toLocaleTimeString('en-US', { hour12: false })
-                                                });
-                                                if (global.chatLogs.length > 200) global.chatLogs.pop();
+                                case "message_unsend": {
+                                        if (!global.chatLogs) global.chatLogs = [];
+                                        const logBody = event.type === "message_unsend"
+                                                ? "[Unsent Message]"
+                                                : (event.body || (event.attachments?.length ? `[Attachment: ${event.attachments[0].type}]` : "[Message]"));
+                                        global.chatLogs.unshift({
+                                                id: event.messageID || Date.now(),
+                                                senderID: loggedInfo?.senderID || event.senderID,
+                                                senderName: loggedInfo?.senderName || `User ${event.senderID}`,
+                                                threadID: loggedInfo?.threadID || event.threadID,
+                                                threadName: loggedInfo?.threadName || (event.isGroup ? "Group Chat" : "Direct Message"),
+                                                isGroup: typeof loggedInfo?.isGroup === "boolean" ? loggedInfo.isGroup : Boolean(event.isGroup),
+                                                role: loggedInfo?.role?.name || "Member",
+                                                body: logBody,
+                                                type: event.type,
+                                                timestamp: loggedInfo?.timeStr || new Date().toLocaleTimeString('en-US', { hour12: false })
+                                        });
+                                        if (global.chatLogs.length > 200) global.chatLogs.pop();
+
+                                        if (event.type !== "message_unsend") {
+                                                safeCall(onFirstChat, 'onFirstChat');
+                                                safeCall(onChat, 'onChat');
+                                                safeCall(onStart, 'onStart');
+                                                safeCall(onReply, 'onReply');
                                         }
-                                        safeCall(onFirstChat, 'onFirstChat');
-                                        safeCall(onChat, 'onChat');
-                                        safeCall(onStart, 'onStart');
-                                        safeCall(onReply, 'onReply');
                                         break;
+                                }
                                 case "event": {
                                         const isEventsOff = global.GoatBot?.eventsOff ?? (global.GoatBot?.config?.eventsOff ?? false);
                                         const isBotOff = global.GoatBot?.botOff === true;

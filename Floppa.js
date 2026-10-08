@@ -107,6 +107,21 @@ const configCommands = require(dirConfigCommands);
 // Universal module resolver for aliases and TypeScript transpilation
 require("./func/moduleResolver.js");
 
+function createOnFirstChatCollection() {
+	const arr = [];
+	const threadSet = new Set();
+	arr._commandNames = [];
+	arr._threadSet = threadSet;
+	arr.has = function (tid) { return threadSet.has(String(tid)); };
+	arr.add = function (tid) { threadSet.add(String(tid)); return this; };
+	arr.delete = function (tid) { return threadSet.delete(String(tid)); };
+	arr.clear = function () { threadSet.clear(); arr.length = 0; arr._commandNames = []; };
+	arr[Symbol.iterator] = function () { return threadSet.values(); };
+	Object.defineProperty(arr, 'size', { get() { return threadSet.size; }, configurable: true });
+	return arr;
+}
+global.createOnFirstChatCollection = createOnFirstChatCollection;
+
 global.FloppaBot = {
 	startTime: Date.now() - process.uptime() * 1000,
 	commands: new Map(),
@@ -114,7 +129,7 @@ global.FloppaBot = {
 	commandFilesPath: [],
 	eventCommandsFilesPath: [],
 	aliases: new Map(),
-	onFirstChat: new Set(),
+	onFirstChat: createOnFirstChatCollection(),
 	onChat: [],
 	onEvent: [],
 	onReply: new TTLMap({ ttl: 30 * 60 * 1000, maxSize: 500, cleanupInterval: 60000 }),

@@ -31,7 +31,10 @@ module.exports = async function (usersData, threadsData, event) {
 
                                 const isGroupHint = typeof event.isGroup === "boolean" ? event.isGroup : (threadID && senderID ? String(threadID) !== String(senderID) : undefined);
                                 const threadData = await threadsData.create(threadID, null, isGroupHint);
-                                if (global.db && global.db.receivedTheFirstMessage) global.db.receivedTheFirstMessage[threadID] = true;
+                                if (global.db) {
+                                        if (!global.db.receivedTheFirstMessage) global.db.receivedTheFirstMessage = {};
+                                        global.db.receivedTheFirstMessage[threadID] = true;
+                                }
                                 log.info("DATABASE", `New Thread: ${threadID} | ${threadData.threadName} | ${config.database.type}`);
                         }
                         else {

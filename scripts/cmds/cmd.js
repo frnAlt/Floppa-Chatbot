@@ -380,11 +380,15 @@ function loadScripts(folder, fileName, log, configCommands, api, threadModel, us
 			allOnChat.splice(indexOnChat, 1);
 
 		// Check onFirstChat function
-		const indexOnFirstChat = allOnChat.findIndex(item => item == oldCommandName);
+		const indexOnFirstChat = Array.isArray(allOnFirstChat) ? allOnFirstChat.findIndex(item => (typeof item === 'string' ? item : item?.commandName) == oldCommandName) : -1;
 		let oldOnFirstChat;
-		if (indexOnFirstChat != -1) {
+		if (indexOnFirstChat != -1 && Array.isArray(allOnFirstChat)) {
 			oldOnFirstChat = allOnFirstChat[indexOnFirstChat];
 			allOnFirstChat.splice(indexOnFirstChat, 1);
+		}
+		if (allOnFirstChat?._commandNames) {
+			const idxName = allOnFirstChat._commandNames.indexOf(oldCommandName);
+			if (idxName != -1) allOnFirstChat._commandNames.splice(idxName, 1);
 		}
 
 		// Check onEvent function
@@ -462,8 +466,14 @@ function loadScripts(folder, fileName, log, configCommands, api, threadModel, us
 		if (command.onChat)
 			allOnChat.push(scriptName);
 
-		if (command.onFirstChat)
-			allOnFirstChat.push({ commandName: scriptName, threadIDsChattedFirstTime: oldOnFirstChat?.threadIDsChattedFirstTime || [] });
+		if (command.onFirstChat) {
+			if (Array.isArray(allOnFirstChat)) {
+				allOnFirstChat.push({ commandName: scriptName, threadIDsChattedFirstTime: oldOnFirstChat?.threadIDsChattedFirstTime || [] });
+			}
+			if (allOnFirstChat?._commandNames && !allOnFirstChat._commandNames.includes(scriptName)) {
+				allOnFirstChat._commandNames.push(scriptName);
+			}
+		}
 
 		if (command.onEvent)
 			allOnEvent.push(scriptName);

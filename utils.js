@@ -408,169 +408,204 @@ function message(api, event) {
                 : (event.threadID && event.senderID ? String(event.threadID) !== String(event.senderID) : false);
 
         return {
-                send: async (form, callback, options = {}) => {
-                        try {
-                                global.statusAccountBot = 'good';
+		send: async (form, callback, options = {}) => {
+			let typingStarted = false;
+			try {
+				global.statusAccountBot = 'good';
 
-                                // Check if typing indicator is enabled in config or active DM (non-blocking)
-                                const typingConfig = global.GoatBot?.config?.typingIndicator;
-                                const typingEnabled = !resolvedIsGroup || typingConfig === true || (typeof typingConfig === 'object' && typingConfig?.enable === true);
-                                if (typingEnabled && (typeof form === 'string' || form?.body) && typeof api?.sendTypingIndicator === 'function') {
-                                        try {
-                                                const typingRes = api.sendTypingIndicator(true, event.threadID);
-                                                if (typingRes && typeof typingRes.catch === 'function') {
-                                                        typingRes.catch(() => {});
-                                                }
-                                        } catch (_) {}
-                                }
+				// Check if typing indicator is enabled in config or active DM (non-blocking)
+				const typingConfig = global.GoatBot?.config?.typingIndicator;
+				const typingEnabled = !resolvedIsGroup || typingConfig === true || (typeof typingConfig === 'object' && typingConfig?.enable === true);
+				if (typingEnabled && (typeof form === 'string' || form?.body) && typeof api?.sendTypingIndicator === 'function') {
+					try {
+						const typingRes = api.sendTypingIndicator(true, event.threadID);
+						if (typingRes && typeof typingRes.catch === 'function') {
+							typingRes.catch(() => {});
+						}
+						typingStarted = true;
+					} catch (_) {}
+				}
 
-                                const cb = typeof callback === 'function' ? callback : undefined;
-                                const res = await api.sendMessage(form, event.threadID, cb, undefined, resolvedIsGroup);
-                                if (res?.messageID) {
-                                        recordBotMessage(res.messageID, event.threadID);
-                                        const text = typeof form === 'string' ? form : (form?.body || '');
-                                        if (options.autoUnsend || text.startsWith("❌") || text.toLowerCase().startsWith("error:")) {
-                                                const delayMs = options.autoUnsendDelay || 8000;
-                                                setTimeout(() => {
-                                                        api.unsendMessage(res.messageID, event.threadID).catch(() => {});
-                                                }, delayMs);
-                                        }
-                                }
-                                return res;
-                        }
-                        catch (err) {
-                                const errStr = String(err?.message || err || "");
-                                if (!resolvedIsGroup && (errStr.includes("1545116") || errStr.includes("E2EE") || errStr.includes("cutover") || errStr.includes("1545041"))) {
-                                        const senderUID = String(event.senderID || event.userID || event.author || event.threadID || "");
-                                        const userObj = (global.db?.allUserData || []).find(u => String(u.userID) === senderUID);
-                                        const uName = userObj?.name || `User ${senderUID}`;
+				const cb = typeof callback === 'function' ? callback : undefined;
+				const res = await api.sendMessage(form, event.threadID, cb, undefined, resolvedIsGroup);
+				if (res?.messageID) {
+					recordBotMessage(res.messageID, event.threadID);
+					const text = typeof form === 'string' ? form : (form?.body || '');
+					if (options.autoUnsend || text.startsWith("❌") || text.toLowerCase().startsWith("error:")) {
+						const delayMs = options.autoUnsendDelay || 8000;
+						setTimeout(() => {
+							api.unsendMessage(res.messageID, event.threadID).catch(() => {});
+						}, delayMs);
+					}
+				}
+				return res;
+			}
+			catch (err) {
+				const errStr = String(err?.message || err || "");
+				if (!resolvedIsGroup && (errStr.includes("1545116") || errStr.includes("E2EE") || errStr.includes("cutover") || errStr.includes("1545041"))) {
+					const senderUID = String(event.senderID || event.userID || event.author || event.threadID || "");
+					const userObj = (global.db?.allUserData || []).find(u => String(u.userID) === senderUID);
+					const uName = userObj?.name || `User ${senderUID}`;
 
-                                        // 1. Try routing to dedicated unencrypted private room IF already created
-                                        try {
-                                                let pMgr = global.privateThreadManager;
-                                                if (!pMgr) {
-                                                        try { pMgr = require(require('path').join(process.cwd(), "func/privateThreadManager")); } catch (_) {}
-                                                }
-                                                if (pMgr) {
-                                                        const privateTID = pMgr.getPrivateThread(senderUID);
-                                                        if (privateTID && String(privateTID) !== String(event.threadID)) {
-                                                                log.warn("DM_ROUTER", `Routed DM message for ${uName} (${senderUID}) to private room ${privateTID} due to Facebook E2EE`);
-                                                                return await api.sendMessage(form, privateTID, undefined, undefined, true);
-                                                        }
-                                                }
-                                        } catch (pErr) {
-                                                log.warn("DM_ROUTER", `Private room routing failed: ${pErr.message}`);
-                                        }
+					// 1. Try routing to dedicated unencrypted private room IF already created
+					try {
+						let pMgr = global.privateThreadManager;
+						if (!pMgr) {
+							try { pMgr = require(require('path').join(process.cwd(), "func/privateThreadManager")); } catch (_) {}
+						}
+						if (pMgr) {
+							const privateTID = pMgr.getPrivateThread(senderUID);
+							if (privateTID && String(privateTID) !== String(event.threadID)) {
+								log.warn("DM_ROUTER", `Routed DM message for ${uName} (${senderUID}) to private room ${privateTID} due to Facebook E2EE`);
+								return await api.sendMessage(form, privateTID, undefined, undefined, true);
+							}
+						}
+					} catch (pErr) {
+						log.warn("DM_ROUTER", `Private room routing failed: ${pErr.message}`);
+					}
 
-                                        // 2. Fallback to shared active group chat
-                                        let sharedGroup = null;
-                                        if (global.db && Array.isArray(global.db.allThreadData)) {
-                                                sharedGroup = global.db.allThreadData.find(t => 
-                                                        t.isGroup && t.members && t.members.some(m => String(m.userID || m.id || m) === senderUID)
-                                                );
-                                        }
-                                        if (sharedGroup) {
-                                                try {
-                                                        const textContent = typeof form === "string" ? form : (form?.body || "");
-                                                        const bridgeMsg = typeof form === "object" ? { ...form } : {};
-                                                        bridgeMsg.body = `💬 [DM Bridge for ${uName}]:\n\n${textContent}\n\nℹ️ (Facebook E2EE restricts 1-on-1 private bot messages; bridged to your active group chat)`;
-                                                        log.warn("DM_BRIDGE", `Bridged DM message for ${uName} (${senderUID}) to group ${sharedGroup.threadID} due to Facebook E2EE`);
-                                                        return await api.sendMessage(bridgeMsg, sharedGroup.threadID, undefined, undefined, true);
-                                                } catch (bErr) {
-                                                        log.warn("DM_BRIDGE", `Failed to bridge DM to group: ${bErr.message}`);
-                                                }
-                                        }
-                                }
-                                if (JSON.stringify(err).includes('spam')) {
-                                        setErrorUptime();
-                                        throw err;
-                                }
-                                log.err("MESSAGE_SEND", `Failed to send message to thread ${event.threadID}:`, err.message || err);
-                                return null;
-                        }
-                },
-                reply: async (form, callback, options = {}) => {
-                        try {
-                                global.statusAccountBot = 'good';
+					// 2. Fallback to shared active group chat
+					let sharedGroup = null;
+					if (global.db && Array.isArray(global.db.allThreadData)) {
+						sharedGroup = global.db.allThreadData.find(t => 
+							t.isGroup && t.members && t.members.some(m => String(m.userID || m.id || m) === senderUID)
+						);
+					}
+					if (sharedGroup) {
+						try {
+							const textContent = typeof form === "string" ? form : (form?.body || "");
+							const bridgeMsg = typeof form === "object" ? { ...form } : {};
+							bridgeMsg.body = `💬 [DM Bridge for ${uName}]:\n\n${textContent}\n\nℹ️ (Facebook E2EE restricts 1-on-1 private bot messages; bridged to your active group chat)`;
+							log.warn("DM_BRIDGE", `Bridged DM message for ${uName} (${senderUID}) to group ${sharedGroup.threadID} due to Facebook E2EE`);
+							return await api.sendMessage(bridgeMsg, sharedGroup.threadID, undefined, undefined, true);
+						} catch (bErr) {
+							log.warn("DM_BRIDGE", `Failed to bridge DM to group: ${bErr.message}`);
+						}
+					}
+				}
+				if (JSON.stringify(err).includes('spam')) {
+					setErrorUptime();
+					throw err;
+				}
+				log.err("MESSAGE_SEND", `Failed to send message to thread ${event.threadID}:`, err.message || err);
+				return null;
+			}
+			finally {
+				if (typingStarted && typeof api?.sendTypingIndicator === 'function') {
+					try {
+						const stopRes = api.sendTypingIndicator(false, event.threadID);
+						if (stopRes && typeof stopRes.catch === 'function') {
+							stopRes.catch(() => {});
+						}
+					} catch (_) {}
+				}
+			}
+		},
+		reply: async (form, callback, options = {}) => {
+			let typingStarted = false;
+			try {
+				global.statusAccountBot = 'good';
 
-                                // Check if typing indicator is enabled in config or active DM (non-blocking)
-                                const typingConfig = global.GoatBot?.config?.typingIndicator;
-                                const typingEnabled = !resolvedIsGroup || typingConfig === true || (typeof typingConfig === 'object' && typingConfig?.enable === true);
-                                if (typingEnabled && (typeof form === 'string' || form?.body) && typeof api?.sendTypingIndicator === 'function') {
-                                        try {
-                                                const typingRes = api.sendTypingIndicator(true, event.threadID);
-                                                if (typingRes && typeof typingRes.catch === 'function') {
-                                                        typingRes.catch(() => {});
-                                                }
-                                        } catch (_) {}
-                                }
+				// Check if typing indicator is enabled in config or active DM (non-blocking)
+				const typingConfig = global.GoatBot?.config?.typingIndicator;
+				const typingEnabled = !resolvedIsGroup || typingConfig === true || (typeof typingConfig === 'object' && typingConfig?.enable === true);
+				if (typingEnabled && (typeof form === 'string' || form?.body) && typeof api?.sendTypingIndicator === 'function') {
+					try {
+						const typingRes = api.sendTypingIndicator(true, event.threadID);
+						if (typingRes && typeof typingRes.catch === 'function') {
+							typingRes.catch(() => {});
+						}
+						typingStarted = true;
+					} catch (_) {}
+				}
 
-                                const cb = typeof callback === 'function' ? callback : undefined;
-                                const replyId = event.messageID || undefined;
-                                const res = await api.sendMessage(form, event.threadID, cb, replyId, resolvedIsGroup);
-                                if (res?.messageID) {
-                                        recordBotMessage(res.messageID, event.threadID);
-                                        const text = typeof form === 'string' ? form : (form?.body || '');
-                                        if (options.autoUnsend || text.startsWith("❌") || text.toLowerCase().startsWith("error:")) {
-                                                const delayMs = options.autoUnsendDelay || 8000;
-                                                setTimeout(() => {
-                                                        api.unsendMessage(res.messageID, event.threadID).catch(() => {});
-                                                }, delayMs);
-                                        }
-                                }
-                                return res;
-                        }
-                        catch (err) {
-                                const errStr = String(err?.message || err || "");
-                                if (!resolvedIsGroup && (errStr.includes("1545116") || errStr.includes("E2EE") || errStr.includes("cutover") || errStr.includes("1545041"))) {
-                                        const senderUID = String(event.senderID || event.userID || event.author || event.threadID || "");
-                                        const userObj = (global.db?.allUserData || []).find(u => String(u.userID) === senderUID);
-                                        const uName = userObj?.name || `User ${senderUID}`;
+				const cb = typeof callback === 'function' ? callback : undefined;
+				const replyId = event.messageID || undefined;
+				let res;
+				try {
+					res = await api.sendMessage(form, event.threadID, cb, replyId, resolvedIsGroup);
+				} catch (quoteErr) {
+					if (replyId) {
+						// Quoting a self-sent message ID or deleted message ID can fail on Facebook's MQTT/HTTP endpoints.
+						// Retry without replyId to guarantee message delivery.
+						res = await api.sendMessage(form, event.threadID, cb, undefined, resolvedIsGroup);
+					} else {
+						throw quoteErr;
+					}
+				}
+				if (res?.messageID) {
+					recordBotMessage(res.messageID, event.threadID);
+					const text = typeof form === 'string' ? form : (form?.body || '');
+					if (options.autoUnsend || text.startsWith("❌") || text.toLowerCase().startsWith("error:")) {
+						const delayMs = options.autoUnsendDelay || 8000;
+						setTimeout(() => {
+							api.unsendMessage(res.messageID, event.threadID).catch(() => {});
+						}, delayMs);
+					}
+				}
+				return res;
+			}
+			catch (err) {
+				const errStr = String(err?.message || err || "");
+				if (!resolvedIsGroup && (errStr.includes("1545116") || errStr.includes("E2EE") || errStr.includes("cutover") || errStr.includes("1545041"))) {
+					const senderUID = String(event.senderID || event.userID || event.author || event.threadID || "");
+					const userObj = (global.db?.allUserData || []).find(u => String(u.userID) === senderUID);
+					const uName = userObj?.name || `User ${senderUID}`;
 
-                                        // 1. Try routing to dedicated unencrypted private room IF already created
-                                        try {
-                                                let pMgr = global.privateThreadManager;
-                                                if (!pMgr) {
-                                                        try { pMgr = require(require('path').join(process.cwd(), "func/privateThreadManager")); } catch (_) {}
-                                                }
-                                                if (pMgr) {
-                                                        const privateTID = pMgr.getPrivateThread(senderUID);
-                                                        if (privateTID && String(privateTID) !== String(event.threadID)) {
-                                                                log.warn("DM_ROUTER", `Routed DM reply for ${uName} (${senderUID}) to private room ${privateTID} due to Facebook E2EE`);
-                                                                return await api.sendMessage(form, privateTID, undefined, undefined, true);
-                                                        }
-                                                }
-                                        } catch (pErr) {
-                                                log.warn("DM_ROUTER", `Private room routing failed: ${pErr.message}`);
-                                        }
+					// 1. Try routing to dedicated unencrypted private room IF already created
+					try {
+						let pMgr = global.privateThreadManager;
+						if (!pMgr) {
+							try { pMgr = require(require('path').join(process.cwd(), "func/privateThreadManager")); } catch (_) {}
+						}
+						if (pMgr) {
+							const privateTID = pMgr.getPrivateThread(senderUID);
+							if (privateTID && String(privateTID) !== String(event.threadID)) {
+								log.warn("DM_ROUTER", `Routed DM reply for ${uName} (${senderUID}) to private room ${privateTID} due to Facebook E2EE`);
+								return await api.sendMessage(form, privateTID, undefined, undefined, true);
+							}
+						}
+					} catch (pErr) {
+						log.warn("DM_ROUTER", `Private room routing failed: ${pErr.message}`);
+					}
 
-                                        // 2. Fallback to shared active group chat
-                                        let sharedGroup = null;
-                                        if (global.db && Array.isArray(global.db.allThreadData)) {
-                                                sharedGroup = global.db.allThreadData.find(t => 
-                                                        t.isGroup && t.members && t.members.some(m => String(m.userID || m.id || m) === senderUID)
-                                                );
-                                        }
-                                        if (sharedGroup) {
-                                                try {
-                                                        const textContent = typeof form === "string" ? form : (form?.body || "");
-                                                        const bridgeMsg = typeof form === "object" ? { ...form } : {};
-                                                        bridgeMsg.body = `💬 [DM Bridge for ${uName}]:\n\n${textContent}\n\nℹ️ (Facebook E2EE restricts 1-on-1 private bot messages; bridged to your active group chat)`;
-                                                        log.warn("DM_BRIDGE", `Bridged DM reply for ${uName} (${senderUID}) to group ${sharedGroup.threadID} due to Facebook E2EE`);
-                                                        return await api.sendMessage(bridgeMsg, sharedGroup.threadID, undefined, undefined, true);
-                                                } catch (bErr) {
-                                                        log.warn("DM_BRIDGE", `Failed to bridge DM reply to group: ${bErr.message}`);
-                                                }
-                                        }
-                                }
-                                if (JSON.stringify(err).includes('spam')) {
-                                        setErrorUptime();
-                                        throw err;
-                                }
-                                log.err("MESSAGE_REPLY", `Failed to reply in thread ${event.threadID}:`, err.message || err);
-                                return null;
-                        }
-                },
+					// 2. Fallback to shared active group chat
+					let sharedGroup = null;
+					if (global.db && Array.isArray(global.db.allThreadData)) {
+						sharedGroup = global.db.allThreadData.find(t => 
+							t.isGroup && t.members && t.members.some(m => String(m.userID || m.id || m) === senderUID)
+						);
+					}
+					if (sharedGroup) {
+						try {
+							const textContent = typeof form === "string" ? form : (form?.body || "");
+							const bridgeMsg = typeof form === "object" ? { ...form } : {};
+							bridgeMsg.body = `💬 [DM Bridge for ${uName}]:\n\n${textContent}\n\nℹ️ (Facebook E2EE restricts 1-on-1 private bot messages; bridged to your active group chat)`;
+							log.warn("DM_BRIDGE", `Bridged DM reply for ${uName} (${senderUID}) to group ${sharedGroup.threadID} due to Facebook E2EE`);
+							return await api.sendMessage(bridgeMsg, sharedGroup.threadID, undefined, undefined, true);
+						} catch (bErr) {
+							log.warn("DM_BRIDGE", `Failed to bridge DM reply to group: ${bErr.message}`);
+						}
+					}
+				}
+				if (JSON.stringify(err).includes('spam')) {
+					setErrorUptime();
+					throw err;
+				}
+				log.err("MESSAGE_REPLY", `Failed to reply in thread ${event.threadID}:`, err.message || err);
+				return null;
+			}
+			finally {
+				if (typingStarted && typeof api?.sendTypingIndicator === 'function') {
+					try {
+						const stopRes = api.sendTypingIndicator(false, event.threadID);
+						if (stopRes && typeof stopRes.catch === 'function') {
+							stopRes.catch(() => {});
+						}
+					} catch (_) {}
+				}
+			}
+		},
                 sendDM: async (form, targetUIDOrCallback, maybeCallback, options = {}) => {
                         let uid = event.senderID || event.userID || event.author;
                         let cb = undefined;

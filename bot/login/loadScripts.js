@@ -253,9 +253,13 @@ module.exports = async function (api, threadModel, userModel, dashBoardModel, gl
 
 				if (onChat || noPrefix) GoatBot.onChat.push(commandName);
 				if (onFirstChat) {
+					if (!GoatBot.onFirstChat) GoatBot.onFirstChat = global.createOnFirstChatCollection ? global.createOnFirstChatCollection() : [];
 					if (!GoatBot.onFirstChat._commandNames) GoatBot.onFirstChat._commandNames = [];
 					if (!GoatBot.onFirstChat._commandNames.includes(commandName)) GoatBot.onFirstChat._commandNames.push(commandName);
-					if (Array.isArray(GoatBot.onFirstChat)) GoatBot.onFirstChat.push({ commandName, threadIDsChattedFirstTime: [] });
+					if (Array.isArray(GoatBot.onFirstChat)) {
+						const exists = GoatBot.onFirstChat.find(item => item?.commandName === commandName);
+						if (!exists) GoatBot.onFirstChat.push({ commandName, threadIDsChattedFirstTime: [] });
+					}
 				}
 				if (onEvent) GoatBot.onEvent.push(commandName);
 				if (onAnyEvent) GoatBot.onAnyEvent.push(commandName);

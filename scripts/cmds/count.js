@@ -146,20 +146,26 @@ module.exports = {
 
 	onChat: async ({ usersData, threadsData, event }) => {
 		const { senderID, threadID } = event;
-		const members = await threadsData.get(threadID, "members");
-		const findMember = members.find(user => user.userID == senderID);
-		if (!findMember) {
-			members.push({
-				userID: senderID,
-				name: await usersData.getName(senderID),
-				nickname: null,
-				inGroup: true,
-				count: 1
-			});
-		}
-		else
-			findMember.count += 1;
-		await threadsData.set(threadID, members, "members");
+		if (!senderID || !threadID) return;
+		try {
+			let members = await threadsData.get(threadID, "members").catch(() => null);
+			if (Array.isArray(members)) {
+				const findMember = members.find(user => String(user.userID) === String(senderID));
+				if (!findMember) {
+					const uName = await usersData.getName(senderID).catch(() => `User ${senderID}`);
+					members.push({
+						userID: senderID,
+						name: uName,
+						nickname: null,
+						inGroup: true,
+						count: 1
+					});
+				} else {
+					findMember.count = (findMember.count || 0) + 1;
+				}
+				await threadsData.set(threadID, members, "members");
+			}
+		} catch (_) {}
 	}
 
 };
