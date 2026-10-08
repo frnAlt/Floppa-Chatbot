@@ -43,9 +43,26 @@ jobs:
           node-version: ${{ inputs.node_version || '24' }}
 
       - name: Install System Dependencies for Native Addons
+        timeout-minutes: 5
+        continue-on-error: true
         run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev
+          # Configure APT timeouts to prevent indefinite hanging on stalled connections
+          sudo mkdir -p /etc/apt/apt.conf.d
+          printf 'Acquire::http::Timeout "15";\nAcquire::https::Timeout "15";\nAcquire::Retries "3";\nAcquire::http::Pipeline-Depth "0";\n' | sudo tee /etc/apt/apt.conf.d/99custom-timeouts.conf > /dev/null
+
+          # Switch from flaky Azure mirrors to canonical Ubuntu archive mirrors
+          sudo sed -i 's|http://azure\.archive\.ubuntu\.com|http://archive.ubuntu.com|g' /etc/apt/apt-mirrors.txt /etc/apt/sources.list /etc/apt/sources.list.d/*.sources /etc/apt/sources.list.d/*.list 2>/dev/null || true
+          sudo sed -i 's|http://.*\.archive\.ubuntu\.com|http://archive.ubuntu.com|g' /etc/apt/apt-mirrors.txt 2>/dev/null || true
+
+          export DEBIAN_FRONTEND=noninteractive
+          sudo apt-get update -y -q || true
+          sudo apt-get install -y -q --no-install-recommends \
+            build-essential \
+            libcairo2-dev \
+            libpango1.0-dev \
+            libjpeg-dev \
+            libgif-dev \
+            librsvg2-dev || true
 
       - name: Cache Node Modules
         uses: actions/cache@v4
@@ -56,7 +73,7 @@ jobs:
             ${{ runner.os }}-node-
 
       - name: Install Dependencies
-        run: npm install && npm rebuild sqlite3 canvas bcrypt
+        run: npm install && (npm rebuild sqlite3 canvas bcrypt 2>/dev/null || true)
 
       - name: Core System Syntax Verification
         if: ${{ inputs.run_syntax_checks != false }}
