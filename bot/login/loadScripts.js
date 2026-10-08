@@ -200,7 +200,8 @@ module.exports = async function (api, threadModel, userModel, dashBoardModel, gl
 				}
 
 				if (GoatBot[setMap].has(commandName)) {
-					throw new Error(`${text} "${commandName}" already exists with file "${removeHomeDir(GoatBot[setMap].get(commandName).location || "")}"`);
+					log.warn("LOAD SCRIPT", `${text} "${commandName}" already exists with file "${removeHomeDir(GoatBot[setMap].get(commandName).location || "")}". Skipping "${file}".`);
+					continue;
 				}
 
 				const { onFirstChat, onChat, onLoad, onEvent, onAnyEvent, noPrefix } = command;

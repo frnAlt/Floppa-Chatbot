@@ -320,7 +320,8 @@ module.exports = async function (databaseType, userModel, api, fakeGraphql) {
                                 else
                                         reject_(err);
                         }
-                        creatingUserData.splice(creatingUserData.findIndex(u => u.userID == userID), 1);
+                        const idx = creatingUserData.findIndex(u => String(u.userID) === String(userID));
+                        if (idx !== -1) creatingUserData.splice(idx, 1);
                 });
                 creatingUserData.push({
                         userID,

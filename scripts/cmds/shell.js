@@ -1,13 +1,14 @@
 const { exec } = require("child_process");
-const util = require("util");
-const execPromise = util.promisify(exec);
+const { removeHomeDir } = global.utils || {};
+
+const MAX_OUTPUT = 3500;
 
 module.exports = {
         config: {
                 name: "shell",
-                aliases: ["sh", "bash", "terminal"],
-                version: "1.1",
-                author: "frnAlt",
+                aliases: ["sh", "exec", "run", "bash", "terminal"],
+                version: "1.2",
+                author: "frnAlt & Neoaz",
                 countDown: 5,
                 role: 2,
                 description: {
@@ -43,39 +44,56 @@ module.exports = {
         },
 
         onStart: async function ({ message, args, event, getLang, api }) {
-                const command = args.join(" ");
+                const command = args.join(" ").trim();
                 if (!command)
                         return message.reply(getLang("missingCommand"));
 
-                await message.reply(getLang("executing"));
+                const msg = await message.reply(getLang("executing"));
+
+                const sanitize = (str) => {
+                        if (!str) return "";
+                        return typeof removeHomeDir === "function" ? removeHomeDir(String(str)) : String(str);
+                };
+
+                const sendOrEdit = async (text) => {
+                        if (msg && msg.messageID && typeof api?.editMessage === "function") {
+                                try {
+                                        return await api.editMessage(text, msg.messageID);
+                                } catch (_) {}
+                        }
+                        return message.reply(text);
+                };
 
                 try {
-                        const { stdout, stderr } = await execPromise(command, {
-                                timeout: 30000,
-                                maxBuffer: 1024 * 1024 * 10
+                        const result = await new Promise((resolve, reject) => {
+                                exec(command, { cwd: process.cwd(), timeout: 30000, maxBuffer: 1024 * 1024 * 10 }, (err, stdout, stderr) => {
+                                        if (err && !stdout && !stderr) return reject(err);
+                                        resolve({ err, stdout: stdout ? String(stdout) : "", stderr: stderr ? String(stderr) : "" });
+                                });
                         });
 
-                        let output = "";
-                        if (stdout) output += stdout;
-                        if (stderr) output += stderr;
+                        let output = (result.stdout + (result.stderr ? "\n" + result.stderr : "")).trim();
+                        output = sanitize(output);
+                        if (!output && result.err)
+                                output = sanitize(result.err.message || result.err);
+                        if (!output)
+                                output = "Command executed successfully (no output)";
 
-                        if (!output) output = "Command executed successfully (no output)";
-
-                        if (output.length > 2000) {
-                                output = output.substring(0, 1997) + "...";
+                        if (output.length > MAX_OUTPUT) {
+                                output = output.substring(0, MAX_OUTPUT) + "\n... (output truncated)";
                         }
 
-                        return message.reply(getLang("output", output));
+                        return await sendOrEdit(getLang("output", output));
                 } catch (error) {
-                        let errorMsg = error.message;
+                        let errorMsg = sanitize(error.message || String(error));
                         if (errorMsg.includes("ETIMEDOUT") || errorMsg.includes("timeout"))
-                                return message.reply(getLang("timeout"));
+                                return await sendOrEdit(getLang("timeout"));
 
-                        if (errorMsg.length > 2000) {
-                                errorMsg = errorMsg.substring(0, 1997) + "...";
+                        if (errorMsg.length > MAX_OUTPUT) {
+                                errorMsg = errorMsg.substring(0, MAX_OUTPUT) + "\n... (output truncated)";
                         }
 
-                        return message.reply(getLang("error", errorMsg));
+                        return await sendOrEdit(getLang("error", errorMsg));
                 }
         }
 };

@@ -1266,16 +1266,245 @@ async function extractImageUrlAsync(event, args = [], api = null, options = {}) 
                 }
         }
 
-        return null;
+	return null;
+}
+
+const drive = {
+	parentID: "",
+	_localDir: path.join(__dirname, "cache", "drive"),
+	_initLocal() {
+		try { fs.ensureDirSync(this._localDir); } catch (_) {}
+	},
+	async uploadFile(fileName, mimeType, file) {
+		if (!file && typeof fileName === "string") {
+			file = mimeType;
+			mimeType = undefined;
+		}
+		try {
+			const { google } = require("googleapis");
+			const config = global.GoatBot?.config || {};
+			const gmailAccount = config.credentials?.gmailAccount || {};
+			const { clientId, clientSecret, refreshToken } = gmailAccount;
+			if (clientId && clientSecret && refreshToken) {
+				const oauth2Client = new google.auth.OAuth2(clientId, clientSecret, "https://developers.google.com/oauthplayground");
+				oauth2Client.setCredentials({ refresh_token: refreshToken });
+				const driveApi = google.drive({ version: 'v3', auth: oauth2Client });
+				const response = (await driveApi.files.create({
+					resource: {
+						name: fileName,
+						parents: this.parentID ? [this.parentID] : undefined
+					},
+					media: {
+						mimeType,
+						body: file
+					},
+					fields: "*"
+				})).data;
+				await this.makePublic(response.id).catch(() => {});
+				return response;
+			}
+		} catch (_) {}
+
+		this._initLocal();
+		const safeName = (fileName || `file_${Date.now()}`).replace(/[^a-zA-Z0-9._-]/g, "_");
+		const fileId = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}_${safeName}`;
+		const filePath = path.join(this._localDir, fileId);
+
+		if (Buffer.isBuffer(file)) {
+			await fs.writeFile(filePath, file);
+		} else if (file && typeof file.pipe === "function") {
+			await new Promise((resolve, reject) => {
+				const ws = fs.createWriteStream(filePath);
+				file.pipe(ws);
+				ws.on("finish", resolve);
+				ws.on("error", reject);
+			});
+		} else if (typeof file === "string") {
+			await fs.writeFile(filePath, file, "utf-8");
+		}
+		return {
+			id: fileId,
+			name: fileName || safeName,
+			mimeType: mimeType || "application/octet-stream",
+			path: filePath,
+			webViewLink: filePath
+		};
+	},
+
+	async deleteFile(id) {
+		if (!id || typeof id !== "string") return false;
+		try {
+			const { google } = require("googleapis");
+			const config = global.GoatBot?.config || {};
+			const gmailAccount = config.credentials?.gmailAccount || {};
+			const { clientId, clientSecret, refreshToken } = gmailAccount;
+			if (clientId && clientSecret && refreshToken) {
+				const oauth2Client = new google.auth.OAuth2(clientId, clientSecret, "https://developers.google.com/oauthplayground");
+				oauth2Client.setCredentials({ refresh_token: refreshToken });
+				const driveApi = google.drive({ version: 'v3', auth: oauth2Client });
+				await driveApi.files.delete({ fileId: id });
+				return true;
+			}
+		} catch (_) {}
+
+		this._initLocal();
+		const filePath = path.join(this._localDir, id);
+		if (fs.existsSync(filePath)) {
+			await fs.unlink(filePath).catch(() => {});
+			return true;
+		}
+		return true;
+	},
+
+	getUrlDownload(id = "") {
+		if (!id || typeof id !== "string") return "";
+		const config = global.GoatBot?.config || {};
+		const googleApiKey = config.credentials?.gmailAccount?.apiKey;
+		return `https://docs.google.com/uc?id=${id}&export=download&confirm=t${googleApiKey ? `&key=${googleApiKey}` : ''}`;
+	},
+
+	async getFile(id, responseType = "arraybuffer") {
+		if (!id || typeof id !== "string") throw new Error('The first argument (id) must be a string');
+		try {
+			const { google } = require("googleapis");
+			const config = global.GoatBot?.config || {};
+			const gmailAccount = config.credentials?.gmailAccount || {};
+			const { clientId, clientSecret, refreshToken } = gmailAccount;
+			if (clientId && clientSecret && refreshToken) {
+				const oauth2Client = new google.auth.OAuth2(clientId, clientSecret, "https://developers.google.com/oauthplayground");
+				oauth2Client.setCredentials({ refresh_token: refreshToken });
+				const driveApi = google.drive({ version: 'v3', auth: oauth2Client });
+				const response = await driveApi.files.get({ fileId: id, alt: 'media' }, { responseType });
+				if (responseType === "arraybuffer") return Buffer.from(response.data);
+				if (responseType === "stream") {
+					const headersResponse = response.headers || {};
+					response.data.path = headersResponse["content-disposition"]?.split('filename="')[1]?.split('"')[0] || `${randomString(10)}.${getExtFromMimeType(headersResponse["content-type"])}`;
+					return response.data;
+				}
+				return response.data;
+			}
+		} catch (_) {}
+
+		this._initLocal();
+		const filePath = path.join(this._localDir, id);
+		if (fs.existsSync(filePath)) {
+			if (responseType === "stream") {
+				const stream = fs.createReadStream(filePath);
+				stream.path = filePath;
+				return stream;
+			}
+			return await fs.readFile(filePath);
+		}
+		if (fs.existsSync(id)) {
+			if (responseType === "stream") {
+				const stream = fs.createReadStream(id);
+				stream.path = id;
+				return stream;
+			}
+			return await fs.readFile(id);
+		}
+		throw new Error(`File with id ${id} not found in Google Drive or local drive storage`);
+	},
+
+	async getFileName(id) {
+		if (!id || typeof id !== "string") return "";
+		try {
+			const { google } = require("googleapis");
+			const config = global.GoatBot?.config || {};
+			const gmailAccount = config.credentials?.gmailAccount || {};
+			const { clientId, clientSecret, refreshToken } = gmailAccount;
+			if (clientId && clientSecret && refreshToken) {
+				const oauth2Client = new google.auth.OAuth2(clientId, clientSecret, "https://developers.google.com/oauthplayground");
+				oauth2Client.setCredentials({ refresh_token: refreshToken });
+				const driveApi = google.drive({ version: 'v3', auth: oauth2Client });
+				const { data } = await driveApi.files.get({ fileId: id, fields: "name" });
+				return data.name;
+			}
+		} catch (_) {}
+		return path.basename(id);
+	},
+
+	async makePublic(id) {
+		if (!id || typeof id !== "string") return id;
+		try {
+			const { google } = require("googleapis");
+			const config = global.GoatBot?.config || {};
+			const gmailAccount = config.credentials?.gmailAccount || {};
+			const { clientId, clientSecret, refreshToken } = gmailAccount;
+			if (clientId && clientSecret && refreshToken) {
+				const oauth2Client = new google.auth.OAuth2(clientId, clientSecret, "https://developers.google.com/oauthplayground");
+				oauth2Client.setCredentials({ refresh_token: refreshToken });
+				const driveApi = google.drive({ version: 'v3', auth: oauth2Client });
+				await driveApi.permissions.create({
+					fileId: id,
+					requestBody: { role: 'reader', type: 'anyone' }
+				});
+			}
+		} catch (_) {}
+		return id;
+	},
+
+	async checkAndCreateParentFolder(folderName) {
+		if (!folderName || typeof folderName !== "string") return "";
+		try {
+			const { google } = require("googleapis");
+			const config = global.GoatBot?.config || {};
+			const gmailAccount = config.credentials?.gmailAccount || {};
+			const { clientId, clientSecret, refreshToken } = gmailAccount;
+			if (clientId && clientSecret && refreshToken) {
+				const oauth2Client = new google.auth.OAuth2(clientId, clientSecret, "https://developers.google.com/oauthplayground");
+				oauth2Client.setCredentials({ refresh_token: refreshToken });
+				const driveApi = google.drive({ version: 'v3', auth: oauth2Client });
+				const { data: findParentFolder } = await driveApi.files.list({
+					q: `name="${folderName}" and mimeType="application/vnd.google-apps.folder" and trashed=false`,
+					fields: '*'
+				});
+				const parentFolder = findParentFolder.files.find(i => i.ownedByMe);
+				if (!parentFolder) {
+					const { data } = await driveApi.files.create({
+						requestBody: { name: folderName, mimeType: 'application/vnd.google-apps.folder' }
+					});
+					await driveApi.permissions.create({
+						fileId: data.id,
+						requestBody: { role: 'reader', type: 'anyone' }
+					});
+					return data.id;
+				}
+				return parentFolder.id;
+			}
+		} catch (_) {}
+		const localFolder = path.join(this._localDir, folderName);
+		fs.ensureDirSync(localFolder);
+		return localFolder;
+	}
+};
+
+async function sendMail(options = {}) {
+	try {
+		const nodemailer = require("nodemailer");
+		const config = global.GoatBot?.config || {};
+		const mailConfig = config.credentials?.gmailAccount || {};
+		if (mailConfig.user && mailConfig.pass) {
+			const transporter = nodemailer.createTransport({
+				service: "gmail",
+				auth: { user: mailConfig.user, pass: mailConfig.pass }
+			});
+			return await transporter.sendMail(options);
+		}
+	} catch (_) {}
+	log?.warn?.("EMAIL", "Gmail/nodemailer is not configured to send mail.");
+	return false;
 }
 
 const utils = {
-        CustomError,
-        TaskQueue,
-        extractImageUrl,
-        extractImageUrlAsync,
-        extractImageUrlFromAttachment,
-        extractImageUrlFromEvent: extractImageUrl,
+	CustomError,
+	TaskQueue,
+	drive,
+	sendMail,
+	extractImageUrl,
+	extractImageUrlAsync,
+	extractImageUrlFromAttachment,
+	extractImageUrlFromEvent: extractImageUrl,
 
         colors,
         convertTime,

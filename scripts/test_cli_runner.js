@@ -1694,11 +1694,12 @@ async function runDiagnostics() {
     } catch (_) {}
     logTest("FCA_ENGINES", "extendFCA guarantees searchMusic and api.music.search on any FCA instance", extensionSearchMusicAttached);
 
-    // 4. selflisten.js command config loaded with proper schema
+    // 4. selflisten.js / sl.js command config loaded with proper schema
     let selfListenValid = false;
     try {
-      const selfListenCmd = require("./cmds/selflisten.js");
-      selfListenValid = selfListenCmd?.config?.name === "selflisten" &&
+      let selfListenCmd;
+      try { selfListenCmd = require("./cmds/selflisten.js"); } catch (_) { selfListenCmd = require("./cmds/sl.js"); }
+      selfListenValid = (selfListenCmd?.config?.name === "selflisten" || selfListenCmd?.config?.name === "sl") &&
         Array.isArray(selfListenCmd?.config?.aliases) &&
         typeof selfListenCmd?.onStart === "function";
     } catch (_) {}

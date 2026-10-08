@@ -10,13 +10,13 @@ process.stdout.clearLine = process.stdout.clearLine || function () {};
 module.exports = {
   config: {
     name: "up",
-    aliases: ["runtime", "floppauptime"],
-    version: "1.10",
-    author: "frnAlt",
+    aliases: ["uptime", "runtime", "status", "floppauptime"],
+    version: "1.11",
+    author: "frnAlt & Neoaz",
     countDown: 5,
     role: 0,
-    shortDescription: { en: "Check system uptime and status with image" },
-    longDescription: { en: "Displays the system uptime, RAM usage, CPU load, and other server details on an image." },
+    shortDescription: { en: "Check system uptime and status" },
+    longDescription: { en: "Displays system uptime, RAM usage, CPU load, and server details via canvas card or text box." },
     category: "SYSTEM",
     guide: { en: "{pn}" }
   },
@@ -65,6 +65,28 @@ module.exports = {
         { label: "Node.js", value: nodeVersion },
         { label: "Hostname", value: hostname }
       ];
+
+      const textFallback = `╭─────────────⭓`
+        + `\n│ ⏱️ UPTIME`
+        + `\n├─────⭔`
+        + `\n│ ${uptimeString}`
+        + `\n│ Days: ${days} | Hours: ${hours}`
+        + `\n│ Minutes: ${minutes} | Seconds: ${seconds}`
+        + `\n├─────⭔`
+        + `\n│ 💻 SYSTEM`
+        + `\n│ CPU: ${(cpus[0]?.model || "Unknown").trim()} (${cpus.length} cores)`
+        + `\n│ RAM: ${usedGB} GB / ${totalGB} GB`
+        + `\n│ CPU Load: ${avgCpuLoad}%`
+        + `\n│ Platform: ${platform}`
+        + `\n│ Node: ${nodeVersion}`
+        + `\n├─────⭔`
+        + `\n│ 💬 Ping: ${ping} ms`
+        + `\n╰─────────────⭓`;
+
+      if (!createCanvas) {
+        api.setMessageReaction("⏱️", event.messageID, () => {}, true);
+        return api.sendMessage(textFallback, threadID, messageID);
+      }
 
       const width = 1400;
       const height = 800;
@@ -184,9 +206,15 @@ module.exports = {
 
     } catch (error) {
       console.error("[UPTIME ERROR]:", error);
-      api.setMessageReaction("👎", event.messageID, () => {}, true);
       if (fs.existsSync(imagePath)) fs.unlink(imagePath, () => {});
-      api.sendMessage(`❌ Failed to render uptime card: ${error.message || error}`, threadID, messageID);
+      const uptime = process.uptime();
+      const days = Math.floor(uptime / 86400);
+      const hours = Math.floor((uptime % 86400) / 3600);
+      const minutes = Math.floor((uptime % 3600) / 60);
+      const seconds = Math.floor(uptime % 60);
+      const uptimeString = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+      const fallbackMsg = `╭─────────────⭓\n│ ⏱️ UPTIME: ${uptimeString}\n│ 💻 Platform: ${os.platform()} (${os.arch()})\n│ ⚡ Node: ${process.version}\n╰─────────────⭓`;
+      api.sendMessage(fallbackMsg, threadID, messageID);
     }
   }
 };

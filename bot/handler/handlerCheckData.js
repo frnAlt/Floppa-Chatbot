@@ -38,7 +38,10 @@ module.exports = async function (usersData, threadsData, event) {
                                 log.info("DATABASE", `New Thread: ${threadID} | ${threadData.threadName} | ${config.database.type}`);
                         }
                         else {
-                                await findInCreatingThreadData.promise;
+                                await Promise.race([
+                                        findInCreatingThreadData.promise,
+                                        new Promise(resolve => setTimeout(resolve, 5000))
+                                ]);
                         }
                 }
                 catch (err) {
@@ -56,18 +59,21 @@ module.exports = async function (usersData, threadsData, event) {
 
         // ————————————— CHECK USER DATA ————————————— //
         if (senderID) {
-                try {
-                        const findInCreatingUserData = creatingUserData.find(u => u.userID == senderID);
-                        if (!findInCreatingUserData) {
-                                if (db.allUserData.some(u => u.userID == senderID))
-                                        return;
+            try {
+                    const findInCreatingUserData = creatingUserData.find(u => u.userID == senderID);
+                    if (!findInCreatingUserData) {
+                            if (db.allUserData.some(u => u.userID == senderID))
+                                    return;
 
-                                const userData = await usersData.create(senderID);
-                                log.info("DATABASE", `New User: ${senderID} | ${userData.name} | ${config.database.type}`);
-                        }
-                        else {
-                                await findInCreatingUserData.promise;
-                        }
+                            const userData = await usersData.create(senderID);
+                            log.info("DATABASE", `New User: ${senderID} | ${userData.name} | ${config.database.type}`);
+                    }
+                    else {
+                            await Promise.race([
+                                    findInCreatingUserData.promise,
+                                    new Promise(resolve => setTimeout(resolve, 5000))
+                            ]);
+                    }
                 }
                 catch (err) {
                         if (err.name != "DATA_ALREADY_EXISTS")

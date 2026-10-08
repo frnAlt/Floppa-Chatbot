@@ -20,7 +20,14 @@ const spamTracker = new SpamTracker({
 const cooldownManager = require("../../func/cooldownManager.js");
 
 function getType(obj) {
-        return Object.prototype.toString.call(obj).slice(8, -1);
+	return Object.prototype.toString.call(obj).slice(8, -1);
+}
+
+function withTimeout(promise, ms = 25000, label = "event") {
+	return Promise.race([
+		promise,
+		new Promise((_, reject) => setTimeout(() => reject(new Error(`Timeout of ${ms}ms exceeded executing ${label}`)), ms))
+	]);
 }
 
 let _cachedSpamBannedThreads = null;
@@ -1194,27 +1201,35 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                         };
                                 }
 
-                                command.onAnyEvent({
-                                        ...parameters,
-                                        args,
-                                        commandName,
-                                        getLang: getText2
-                                })
-                                        .then(async (handler) => {
-                                                if (typeof handler == "function") {
-                                                        try {
-                                                                await handler();
-                                                                log.info("onAnyEvent", `${commandName} | ${senderID} | ${userData?.name || "User"} | ${threadID}`);
-                                                        }
-                                                        catch (err) {
-                                                                message.reply(utils.getText({ lang: langCode, head: "handlerEvents" }, "errorOccurred7", time, commandName, removeHomeDir(err.stack ? err.stack.split("\n").slice(0, 5).join("\n") : JSON.stringify(err, null, 2))));
-                                                                log.err("onAnyEvent", `An error occurred when calling the command onAnyEvent ${commandName}`, err);
-                                                        }
-                                                }
-                                        })
-                                        .catch(err => {
-                                                log.err("onAnyEvent", `An error occurred when calling the command onAnyEvent ${commandName}`, err);
-                                        });
+				withTimeout(
+					Promise.resolve(command.onAnyEvent({
+						...parameters,
+						args,
+						commandName,
+						getLang: getText2
+					})),
+					25000,
+					`command.onAnyEvent (${commandName})`
+				)
+					.then(async (handler) => {
+						if (typeof handler == "function") {
+							try {
+								await withTimeout(
+									Promise.resolve(handler()),
+									25000,
+									`command.onAnyEvent handler (${commandName})`
+								);
+								log.info("onAnyEvent", `${commandName} | ${senderID} | ${userData?.name || "User"} | ${threadID}`);
+							}
+							catch (err) {
+								message.reply(utils.getText({ lang: langCode, head: "handlerEvents" }, "errorOccurred7", time, commandName, removeHomeDir(err.stack ? err.stack.split("\n").slice(0, 5).join("\n") : JSON.stringify(err, null, 2))));
+								log.err("onAnyEvent", `An error occurred when calling the command onAnyEvent ${commandName}`, err);
+							}
+						}
+					})
+					.catch(err => {
+						log.err("onAnyEvent", `An error occurred when calling the command onAnyEvent ${commandName}`, err);
+					});
                         }
                 }
 
@@ -1585,13 +1600,21 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                 const getText2 = createGetText2(langCode, `${process.cwd()}/languages/events/${langCode}.js`, prefix, getEvent);
                                 const time = getTime("DD/MM/YYYY HH:mm:ss");
                                 try {
-                                        const handler = await getEvent.onStart({
-                                                ...parameters,
-                                                commandName,
-                                                getLang: getText2
-                                        });
+                                        const handler = await withTimeout(
+                                                Promise.resolve(getEvent.onStart({
+                                                        ...parameters,
+                                                        commandName,
+                                                        getLang: getText2
+                                                })),
+                                                25000,
+                                                `getEvent.onStart (${commandName})`
+                                        );
                                         if (typeof handler == "function") {
-                                                await handler();
+                                                await withTimeout(
+                                                        Promise.resolve(handler()),
+                                                        25000,
+                                                        `getEvent handler (${commandName})`
+                                                );
                                                 eventLogger.logEventCommand({
                                                         commandName,
                                                         userName: userData?.name,
@@ -1645,16 +1668,24 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                         };
                                 }
 
-                                command.onEvent({
-                                        ...parameters,
-                                        args,
-                                        commandName,
-                                        getLang: getText2
-                                })
+                                withTimeout(
+                                        Promise.resolve(command.onEvent({
+                                                ...parameters,
+                                                args,
+                                                commandName,
+                                                getLang: getText2
+                                        })),
+                                        25000,
+                                        `command.onEvent (${commandName})`
+                                )
                                         .then(async (handler) => {
                                                 if (typeof handler == "function") {
                                                         try {
-                                                                await handler();
+                                                                await withTimeout(
+                                                                        Promise.resolve(handler()),
+                                                                        25000,
+                                                                        `command.onEvent handler (${commandName})`
+                                                                );
                                                                 eventLogger.logEventCommand({
                                                                         commandName,
                                                                         userName: userData?.name,

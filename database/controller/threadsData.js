@@ -311,7 +311,8 @@ module.exports = async function (databaseType, threadModel, api, fakeGraphql) {
                                 else
                                         reject_(err);
                         }
-                        creatingThreadData.splice(creatingThreadData.findIndex(t => t.threadID == threadID), 1);
+                        const idx = creatingThreadData.findIndex(t => String(t.threadID) === String(threadID));
+                        if (idx !== -1) creatingThreadData.splice(idx, 1);
                 });
                 creatingThreadData.push({
                         threadID,
@@ -335,7 +336,7 @@ module.exports = async function (databaseType, threadModel, api, fakeGraphql) {
                         taskQueue.push(async function () {
                                 try {
                                         if (isNaN(threadID)) {
-                                                reject(new CustomError({
+                                                return reject(new CustomError({
                                                         name: "INVALID_THREAD_ID",
                                                         message: `The first argument (threadID) must be a number, not a ${typeof threadID}`
                                                 }));
