@@ -1,7 +1,7 @@
 module.exports = {
   config: {
     name: "metatheme",
-    aliases: ["settheme", "themecolor"],
+    aliases: ["themecolor"],
     version: "2.4.79",
     author: "frnAlt",
     countDown: 5,

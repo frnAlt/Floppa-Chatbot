@@ -3,7 +3,7 @@ const axios = require("axios");
 module.exports = {
   config: {
     name: "image",
-    aliases: ["dalle", "imagine", "genimage", "gen"],
+    aliases: ["dalle", "imagine", "genimage"],
     version: "2.0",
     author: "frnAlt",
     countDown: 10,

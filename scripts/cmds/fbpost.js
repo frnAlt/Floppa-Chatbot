@@ -3,7 +3,7 @@ const axios = require("axios");
 module.exports = {
   config: {
     name: "fbpost",
-    aliases: ["fbprank", "fakepost", "fakefb", "fbstatus", "fakechatfb", "fbhack", "fblog"],
+    aliases: ["fbprank", "fakepost", "fakefb", "fbstatus", "fakechatfb", "fblog"],
     version: "2.0.0",
     author: "frnAlt",
     countDown: 5,

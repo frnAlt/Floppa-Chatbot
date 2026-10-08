@@ -93,12 +93,18 @@ jobs:
               return 0
             fi
 
-            # Mask sensitive credential lines to prevent leakage in workflow logs
-            while IFS= read -r line; do
-              if [ ${#line} -gt 6 ]; then
-                echo "::add-mask::$line"
+            # Mask sensitive credential values to prevent leakage in workflow logs
+            for val in $(echo "$content" | grep -oE '"value"\s*:\s*"[^"]+"' | sed -E 's/"value"\s*:\s*"([^"]+)"/\1/' 2>/dev/null); do
+              if [ ${#val} -gt 5 ]; then
+                echo "::add-mask::$val"
               fi
-            done <<< "$content"
+            done
+            for pair in $(echo "$content" | grep -oE '(c_user|xs|fr|datr|sb)=[^;[:space:]]+' 2>/dev/null); do
+              token="${pair#*=}"
+              if [ ${#token} -gt 5 ]; then
+                echo "::add-mask::$token"
+              fi
+            done
 
             # Check if base64 encoded and decode if applicable
             if echo "$content" | base64 -d >/dev/null 2>&1 && [[ "$content" =~ ^[A-Za-z0-9+/=]+$ ]] && [[ ! "$content" =~ "c_user" ]] && echo "$content" | base64 -d 2>/dev/null | grep -q '\[\|{'; then

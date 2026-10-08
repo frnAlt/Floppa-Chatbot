@@ -11,7 +11,7 @@ const os = require("os");
 module.exports = {
 	config: {
 		name: "uptime",
-		aliases: ["upt", "floppauptime", "serveruptime"],
+		aliases: ["upt", "serveruptime"],
 		version: "2.0.0",
 		author: "frnAlt & Neoaz 🐊",
 		countDown: 5,

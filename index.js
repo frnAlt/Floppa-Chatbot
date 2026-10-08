@@ -34,6 +34,9 @@ function printDeployBanner() {
 }
 
 let isFirstStart = true;
+let consecutiveCrashes = 0;
+let lastCrashTime = 0;
+
 function startProject() {
 	if (isFirstStart) {
 		printDeployBanner();
@@ -57,8 +60,29 @@ function startProject() {
 			log.err("Floppa-Chatbot", `Process exited with code ${code} in CI test mode. Not restarting.`);
 			process.exit(code || 1);
 		}
-		const delay = code === 2 ? 0 : 3000;
-		log.info("Floppa-Chatbot", `Restarting in ${delay / 1000}s...`);
+
+		if (code === 2) {
+			consecutiveCrashes = 0;
+			log.info("Floppa-Chatbot", "Scheduled restart initiated...");
+			startProject();
+			return;
+		}
+
+		const now = Date.now();
+		if (now - lastCrashTime < 60000) {
+			consecutiveCrashes++;
+		} else {
+			consecutiveCrashes = 1;
+		}
+		lastCrashTime = now;
+
+		if (consecutiveCrashes >= 5) {
+			log.err("Floppa-Chatbot", `Process failed ${consecutiveCrashes} times consecutively within 60s. Halting supervisor.`);
+			process.exit(code || 1);
+		}
+
+		const delay = 3000;
+		log.info("Floppa-Chatbot", `Restarting in ${delay / 1000}s (failure count: ${consecutiveCrashes}/5)...`);
 		setTimeout(() => startProject(), delay);
 	});
 }

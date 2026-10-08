@@ -712,7 +712,9 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         // ————————————— SET COMMAND NAME ————————————— //
                         if (command) {
                                 if (!command.config && command.meta) command.config = command.meta;
-                                if (!command.onStart && command.entry) command.onStart = command.entry;
+                                if (!command.onStart) {
+                                        command.onStart = command.entry || command.run || command.onCall || command.execute || command.ST || command.start;
+                                }
                                 commandName = command.config?.name || command.meta?.name || commandName;
                         }
                         // ——————— FUNCTION REMOVE COMMAND NAME ———————— //
@@ -955,9 +957,15 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                         }, CMD_TIMEOUT_MS);
                                 });
 
+                                const onStartFn = typeof command.onStart === "function" ? command.onStart : (command.entry || command.run || command.onCall || command.execute || command.ST || command.start);
+                                if (typeof onStartFn !== "function") {
+                                        log.err("CMD_EXEC", `Command "${commandName}" does not have an executable onStart handler.`);
+                                        return await message.reply(`❌ Command "${commandName}" does not have an executable onStart handler.`);
+                                }
+
                                 try {
                                         await Promise.race([
-                                                command.onStart({
+                                                onStartFn.call(command, {
                                                         ...parameters,
                                                         message,
                                                         args,
@@ -1338,9 +1346,13 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                                 reject(new Error(`Command "${commandName}" onReply timed out after ${REPLY_TIMEOUT_MS / 1000} seconds.`));
                                         }, REPLY_TIMEOUT_MS);
                                 });
+                                const replyFn = typeof command.onReply === "function" ? command.onReply : (command.reply || command.handleReply);
+                                if (typeof replyFn !== "function")
+                                        return;
+
                                 try {
                                         await Promise.race([
-                                                command.onReply({
+                                                replyFn.call(command, {
                                                         ...parameters,
                                                         Reply,
                                                         args,
@@ -1387,28 +1399,43 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         const Reaction = onReaction.get(messageID);
                         const reaction = event.reaction;
 
-                        // Hand emoji reaction unsend: Only works for admins
-                        const handEmojis = ["✋", "🖐️", "🖐", "🤚", "👋", "👌", "👍", "👎", "✍️", "🤝", "🖕", "👊", "🤛", "🤜", "🤞", "🫰", "🤟", "🤘", "🤙", "👈", "👉", "👆", "👇", "☝️", "👏", "🙌", "👐", "🤲", "🙏"];
-                        if (reaction && handEmojis.some(h => reaction.includes(h) || reaction === h)) {
-                                const isBotMsg = Boolean(
-                                        (messageID && global.botSentMessages?.get(String(threadID))?.includes(messageID)) ||
-                                        Array.from(global.botSentMessages?.values() || []).some(list => list.includes(messageID))
-                                );
-                                const isAdmin = role >= 1 || (config.adminBot && config.adminBot.includes(String(senderID)));
-                                if (isAdmin && (isBotMsg || !Reaction)) {
-                                        try {
-                                                await api.unsendMessage(messageID, threadID);
-                                                const threadList = global.botSentMessages?.get(String(threadID));
-                                                if (threadList) {
-                                                        const idx = threadList.indexOf(messageID);
-                                                        if (idx !== -1) threadList.splice(idx, 1);
-                                                }
-                                                log.info("onReaction", `Admin ${senderID} unsent bot message ${messageID} with hand emoji reaction: ${reaction}`);
-                                                return;
-                                        } catch (err) {
-                                                // Message might not be unsendable or already gone
+                        // Custom Admin Reaction Features (unsendOnReaction & reactMirror)
+                        const customFeatures = config.customFeatures || {};
+                        const unsendCfg = customFeatures.unsendOnReaction || {};
+                        const mirrorCfg = customFeatures.reactMirror || {};
+                        const botID = String(api?.getCurrentUserID?.() || GoatBot?.botID || global.botID || "");
+                        const reactor = String(event.senderID || event.userID || "");
+                        const targetID = event.messageID;
+                        const isBotMsg = Boolean(
+                                (targetID && global.botSentMessages?.get(String(threadID))?.includes(targetID)) ||
+                                (targetID && GoatBot?.botSentMessages?.has?.(targetID)) ||
+                                Array.from(global.botSentMessages?.values() || []).some(list => Array.isArray(list) && list.includes(targetID))
+                        );
+                        const isAdmin = role >= 1 || (config.adminBot && config.adminBot.map(String).includes(reactor));
+
+                        if (isBotMsg) {
+                                if (isAdmin && reaction) {
+                                        const unsendReactions = (unsendCfg.reactions || ["😠", "😡", "👎"]).map(r => String(r).replace(/\uFE0F/g, ""));
+                                        const normReaction = String(reaction).replace(/\uFE0F/g, "");
+                                        const handEmojis = ["✋", "🖐️", "🖐", "🤚", "👋", "👌", "👍", "👎", "✍️", "🤝", "🖕", "👊", "🤛", "🤜", "🤞", "🫰", "🤟", "🤘", "🤙", "👈", "👉", "👆", "👇", "☝️", "👏", "🙌", "👐", "🤲", "🙏"].map(r => r.replace(/\uFE0F/g, ""));
+
+                                        if ((unsendCfg.enable !== false && unsendReactions.includes(normReaction)) || handEmojis.includes(normReaction)) {
+                                                try {
+                                                        await api.unsendMessage(targetID, threadID);
+                                                        const threadList = global.botSentMessages?.get(String(threadID));
+                                                        if (threadList) {
+                                                                const idx = threadList.indexOf(targetID);
+                                                                if (idx !== -1) threadList.splice(idx, 1);
+                                                        }
+                                                        log.info("onReaction", `Admin ${reactor} unsent bot message ${targetID} with reaction: ${reaction}`);
+                                                        return;
+                                                } catch (err) {}
                                         }
                                 }
+                        } else if (mirrorCfg.enable === true && isAdmin && reaction && reactor !== botID) {
+                                try {
+                                        await api.setMessageReaction(reaction, targetID, threadID, () => {}, true);
+                                } catch (_) {}
                         }
 
                         if (global.GoatBot.botOff && role !== 2 && role !== 4)
@@ -1462,9 +1489,13 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                 const timeoutPromise = new Promise((_, rej) => {
                                         onReactionTimeoutId = setTimeout(() => rej(new Error(`onReaction timeout for ${commandName}`)), ON_REACTION_TIMEOUT);
                                 });
+                                const reactFn = typeof command.onReaction === "function" ? command.onReaction : (command.react || command.handleReaction);
+                                if (typeof reactFn !== "function")
+                                        return;
+
                                 try {
                                         await Promise.race([
-                                                command.onReaction({
+                                                reactFn.call(command, {
                                                         ...parameters,
                                                         Reaction,
                                                         args,
@@ -1554,7 +1585,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                  +------------------------------------------------+
                 */
                 async function onEvent() {
-                        const isEventsOff = global.GoatBot?.eventsOff ?? (global.GoatBot?.config?.eventsOff ?? true);
+                        const isEventsOff = global.GoatBot?.eventsOff ?? (global.GoatBot?.config?.eventsOff ?? false);
                         const isBotOff = global.GoatBot?.botOff === true;
                         if (isEventsOff || isBotOff) {
                                 return;

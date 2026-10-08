@@ -114,7 +114,7 @@ module.exports = (api, threadModel, userModel, dashBoardModel, globalModel, user
                                         safeCall(onReply, 'onReply');
                                         break;
                                 case "event": {
-                                        const isEventsOff = global.GoatBot?.eventsOff ?? (global.GoatBot?.config?.eventsOff ?? true);
+                                        const isEventsOff = global.GoatBot?.eventsOff ?? (global.GoatBot?.config?.eventsOff ?? false);
                                         const isBotOff = global.GoatBot?.botOff === true;
                                         if (isEventsOff || isBotOff) {
                                                 break;

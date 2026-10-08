@@ -21,8 +21,8 @@
     "ignoreCommand": []
   },
   "botOff": false,
-  "events": false,
-  "eventsOff": true,
+  "events": true,
+  "eventsOff": false,
   "reactOff": false,
   "commandReaction": {
     "enable": true,
@@ -147,6 +147,29 @@
   "typingIndicator": {
     "enable": false,
     "duration": 0
+  },
+  "customFeatures": {
+    "unsendOnReaction": {
+      "enable": true,
+      "reactions": [
+        "😠",
+        "😡",
+        "👎"
+      ],
+      "notes": "when a bot admin (role 2) reacts with one of the reactions below on a message sent by the bot, the bot will unsend that message."
+    },
+    "reactMirror": {
+      "enable": true,
+      "notes": "when a bot admin (role 2) reacts with any emoji on someone else's message, the bot mirrors the same emoji onto that message."
+    },
+    "noPrefix": {
+      "enable": false,
+      "notes": "allow using commands without a prefix for admins. Normal messages are never treated as commands unless first word matches a command name."
+    },
+    "commandSuggestion": {
+      "enable": true,
+      "notes": "when a prefixed command is not found, reply with the closest command name."
+    }
   },
   "optionsFca": {
     "fcaEngine": "floppa-native",

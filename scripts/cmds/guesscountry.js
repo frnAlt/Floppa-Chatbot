@@ -81,7 +81,7 @@ function isAnswerCorrect(userGuess, country) {
 module.exports = {
   config: {
     name: "guesscountry",
-    aliases: ["flagquiz", "guessflag", "guesstheflag", "flag", "countryflag"],
+    aliases: ["flagquiz", "guessflag", "guesstheflag", "countryflag"],
     version: "1.0.0",
     author: "frnAlt",
     countDown: 5,

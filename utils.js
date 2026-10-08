@@ -1309,6 +1309,38 @@ const utils = {
             try { return require("./fca/src/utils/formatters/value/formatCookie").parseUniversalCookies; }
             catch (_) { return (c) => Array.isArray(c) ? c : []; }
         })(),
+        sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+        delay: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+        findClosestCommand: (input, cmds, als) => {
+            try {
+                const suggest = require("./func/commandSuggest.js");
+                return suggest.findSimilarCommand(input, cmds || global.GoatBot?.commands);
+            } catch (_) { return null; }
+        },
+        findSimilarCommand: (unknown, map) => {
+            try { return require("./func/commandSuggest.js").findSimilarCommand(unknown, map); }
+            catch (_) { return null; }
+        },
+        levenshteinDistance: (a, b) => {
+            a = String(a || "").toLowerCase();
+            b = String(b || "").toLowerCase();
+            if (a === b) return 0;
+            if (!a.length) return b.length;
+            if (!b.length) return a.length;
+            const matrix = [];
+            for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+            for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+            for (let i = 1; i <= b.length; i++) {
+                for (let j = 1; j <= a.length; j++) {
+                    if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                        matrix[i][j] = matrix[i - 1][j - 1];
+                    } else {
+                        matrix[i][j] = Math.min(matrix[i - 1][j - 1] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j] + 1);
+                    }
+                }
+            }
+            return matrix[b.length][a.length];
+        },
         ...require("./func")
 };
 

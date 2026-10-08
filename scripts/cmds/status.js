@@ -4,7 +4,7 @@ const os = require("os");
 module.exports = {
   config: {
     name: "status",
-    aliases: ["health", "ping"],
+    aliases: ["health", "botstatus"],
     version: "2.4.60",
     author: "frnAlt",
     role: 0,

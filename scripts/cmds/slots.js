@@ -172,7 +172,7 @@ function calculateWinnings(result, bet) {
 module.exports = {
   config: {
     name: "slots",
-    aliases: ["slots"],
+    aliases: ["slotmachine"],
     version: "2.4.78", 
     author: "frnAlt",
     role: 0,
