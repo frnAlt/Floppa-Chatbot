@@ -149,7 +149,7 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
             global.mqttClient.end(true);
         } catch (_) {}
 
-        if (ctx.globalOptions.autoReconnect) getSeqID();
+        if (ctx.globalOptions.autoReconnect && ctx.loggedIn !== false) getSeqID();
         else {
             return globalCallback({ type: "stop_listen", error: "Connection closed." }, null);
         }

@@ -4,6 +4,10 @@ const { log, getText } = utils;
 const { creatingThreadData, creatingUserData } = global.client.database;
 
 module.exports = async function (usersData, threadsData, event) {
+        if (!event || ["typ", "presence", "read_receipt"].includes(event.type)) {
+                return;
+        }
+
         const { threadID } = event;
         const senderID = event.senderID || event.author || event.userID;
 
@@ -11,18 +15,13 @@ module.exports = async function (usersData, threadsData, event) {
         if (threadID) {
                 try {
                         if (!global.temp) global.temp = {};
-                        if (!global.temp.createThreadDataError) global.temp.createThreadDataError = new Map();
+                        if (!global.temp.createThreadDataError) global.temp.createThreadDataError = [];
 
-                        const errMap = global.temp.createThreadDataError;
-                        if (typeof errMap.get === "function") {
-                                const errTime = errMap.get(threadID);
-                                if (errTime) {
-                                        if (Date.now() - errTime < 5 * 60 * 1000) return;
-                                        errMap.delete(threadID); // expired, retry allowed
-                                }
-                        } else if (typeof errMap.has === "function" && errMap.has(threadID)) {
-                                return;
-                        }
+                        const errList = global.temp.createThreadDataError;
+                        const isErr = Array.isArray(errList)
+                                ? errList.includes(threadID)
+                                : (typeof errList.has === "function" && errList.has(threadID));
+                        if (isErr) return;
 
                         const findInCreatingThreadData = creatingThreadData.find(t => t.threadID == threadID);
                         if (!findInCreatingThreadData) {
@@ -38,16 +37,14 @@ module.exports = async function (usersData, threadsData, event) {
                                 log.info("DATABASE", `New Thread: ${threadID} | ${threadData.threadName} | ${config.database.type}`);
                         }
                         else {
-                                await Promise.race([
-                                        findInCreatingThreadData.promise,
-                                        new Promise(resolve => setTimeout(resolve, 5000))
-                                ]);
+                                await findInCreatingThreadData.promise;
                         }
                 }
                 catch (err) {
                         if (err.name != "DATA_ALREADY_EXISTS") {
-                                if (typeof global.temp.createThreadDataError.set === "function") {
-                                        global.temp.createThreadDataError.set(threadID, Date.now());
+                                if (Array.isArray(global.temp.createThreadDataError)) {
+                                        if (!global.temp.createThreadDataError.includes(threadID))
+                                                global.temp.createThreadDataError.push(threadID);
                                 } else if (typeof global.temp.createThreadDataError.add === "function") {
                                         global.temp.createThreadDataError.add(threadID);
                                 }
@@ -59,21 +56,18 @@ module.exports = async function (usersData, threadsData, event) {
 
         // ————————————— CHECK USER DATA ————————————— //
         if (senderID) {
-            try {
-                    const findInCreatingUserData = creatingUserData.find(u => u.userID == senderID);
-                    if (!findInCreatingUserData) {
-                            if (db.allUserData.some(u => u.userID == senderID))
-                                    return;
+                try {
+                        const findInCreatingUserData = creatingUserData.find(u => u.userID == senderID);
+                        if (!findInCreatingUserData) {
+                                if (db.allUserData.some(u => u.userID == senderID))
+                                        return;
 
-                            const userData = await usersData.create(senderID);
-                            log.info("DATABASE", `New User: ${senderID} | ${userData.name} | ${config.database.type}`);
-                    }
-                    else {
-                            await Promise.race([
-                                    findInCreatingUserData.promise,
-                                    new Promise(resolve => setTimeout(resolve, 5000))
-                            ]);
-                    }
+                                const userData = await usersData.create(senderID);
+                                log.info("DATABASE", `New User: ${senderID} | ${userData.name} | ${config.database.type}`);
+                        }
+                        else {
+                                await findInCreatingUserData.promise;
+                        }
                 }
                 catch (err) {
                         if (err.name != "DATA_ALREADY_EXISTS")

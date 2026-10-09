@@ -270,13 +270,28 @@ module.exports = async function (databaseType, userModel, api, fakeGraphql) {
                                         });
                                 }
 				if (!userInfo) {
-					try {
-						const fetchPromise = api.getUserInfo(userID);
-						const timeoutPromise = new Promise((_, rej) => setTimeout(() => rej(new Error("Timeout")), 2500));
-						const fetched = await Promise.race([fetchPromise, timeoutPromise]);
-						userInfo = fetched?.[userID] || { name: `Facebook User ${userID}`, gender: "UNKNOWN" };
-					} catch (err) {
-						userInfo = { name: `Facebook User ${userID}`, gender: "UNKNOWN" };
+					if (global.db?.allThreadData) {
+						for (const thread of global.db.allThreadData) {
+							const mem = thread.members?.find(m => String(m.userID) === String(userID));
+							if (mem && mem.name && !mem.name.startsWith("Facebook User ") && !mem.name.startsWith("User ")) {
+								userInfo = { name: mem.name, gender: mem.gender || "UNKNOWN", vanity: null };
+								break;
+							}
+						}
+					}
+					if (!userInfo) {
+						try {
+							if (api && typeof api.getUserInfo === "function") {
+								const fetchPromise = api.getUserInfo(userID);
+								const timeoutPromise = new Promise((_, rej) => setTimeout(() => rej(new Error("Timeout")), 2000));
+								const fetched = await Promise.race([fetchPromise, timeoutPromise]);
+								userInfo = fetched?.[userID] || { name: `Facebook User ${userID}`, gender: "UNKNOWN" };
+							} else {
+								userInfo = { name: `Facebook User ${userID}`, gender: "UNKNOWN" };
+							}
+						} catch (err) {
+							userInfo = { name: `Facebook User ${userID}`, gender: "UNKNOWN" };
+						}
 					}
 				}
 				let userData = {

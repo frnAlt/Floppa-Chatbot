@@ -178,7 +178,7 @@
     "selfListenEvent": true,
     "listenEvents": true,
     "listenTyping": false,
-    "updatePresence": false,
+    "updatePresence": true,
     "autoMarkDelivery": true,
     "autoMarkRead": true,
     "autoReconnect": true,

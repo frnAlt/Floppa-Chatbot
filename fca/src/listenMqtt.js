@@ -220,7 +220,7 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
     if (ctx.mqttClient === client) ctx.mqttClient = undefined;
     if (global.mqttClient === client) global.mqttClient = undefined;
 
-    if (ctx.globalOptions.autoReconnect !== false) {
+    if (ctx.globalOptions.autoReconnect !== false && ctx.loggedIn !== false) {
       setTimeout(() => {
         getSeqID();
       }, 2000);

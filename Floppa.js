@@ -209,7 +209,14 @@ const shutdownManager = require("./func/gracefulShutdown.js");
 global.temp = {
 	createThreadData: [],
 	createUserData: [],
-	createThreadDataError: new Map(),
+	createThreadDataError: (() => {
+		const arr = [];
+		const s = new Set();
+		arr.has = function(id) { return s.has(String(id)) || arr.includes(id); };
+		arr.add = function(id) { s.add(String(id)); if (!arr.includes(id)) arr.push(id); return this; };
+		arr.delete = function(id) { s.delete(String(id)); const idx = arr.indexOf(id); if (idx !== -1) arr.splice(idx, 1); return this; };
+		return arr;
+	})(),
 	contentScripts: {
 		cmds: {},
 		events: {}

@@ -397,26 +397,22 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         }
                 }
 
-                let threadData = global.db.allThreadData.find(t => t.threadID == threadID);
-                let userData = global.db.allUserData.find(u => u.userID == senderID);
+                let threadData = global.db.allThreadData.find(t => String(t.threadID) === String(threadID));
+                let userData = global.db.allUserData.find(u => String(u.userID) === String(senderID));
 
                 if (!userData && !isNaN(senderID)) {
                         try {
-                                const createPromise = usersData.create(senderID);
-                                const timeoutPromise = new Promise((_, rej) => setTimeout(() => rej(new Error("Timeout")), 3000));
-                                userData = await Promise.race([createPromise, timeoutPromise]);
+                                userData = await usersData.create(senderID);
                         } catch (err) {
-                                userData = { userID: String(senderID), name: `User ${senderID}`, money: 0, exp: 0, data: {} };
+                                userData = global.db.allUserData.find(u => String(u.userID) === String(senderID)) || { userID: String(senderID), name: `User ${senderID}`, money: 0, exp: 0, data: {} };
                         }
                 }
 
                 if (!threadData && !isNaN(threadID)) {
                         try {
-                                const createPromise = threadsData.create(threadID, null, Boolean(isGroup));
-                                const timeoutPromise = new Promise((_, rej) => setTimeout(() => rej(new Error("Timeout")), 3000));
-                                threadData = await Promise.race([createPromise, timeoutPromise]);
+                                threadData = await threadsData.create(threadID, null, Boolean(isGroup));
                         } catch (err) {
-                                threadData = {
+                                threadData = global.db.allThreadData.find(t => String(t.threadID) === String(threadID)) || {
                                         threadID: String(threadID),
                                         threadName: isGroup ? "Group Chat" : "Direct Message",
                                         members: [{ userID: String(senderID), inGroup: true, permissionConfigDashboard: false }],

@@ -67,18 +67,17 @@ module.exports = (api, threadModel, userModel, dashBoardModel, globalModel, user
 
                         const message = createFuncMessage(api, event);
 
-                        // Run DB sanity check in background to prevent blocking command dispatch
-                        handlerCheckDB(usersData, threadsData, event).catch(err => {
-                                log.err("HANDLER", "Background DB check error:", err.message || err);
-                        });
+                        try {
+                                await handlerCheckDB(usersData, threadsData, event);
+                        } catch (err) {
+                                log.err("HANDLER", "Database check error:", err.message || err);
+                        }
 
                         let handlerChat;
                         try {
-                                const handlerEventsPromise = handlerEvents(event, message);
-                                const timeoutPromise = new Promise((_, rej) => setTimeout(() => rej(new Error("handlerEvents timeout (>20s)")), 20000));
-                                handlerChat = await Promise.race([handlerEventsPromise, timeoutPromise]);
+                                handlerChat = await handlerEvents(event, message);
                         } catch (err) {
-                                log.err("HANDLER", `Error or timeout in handlerEvents:`, err.message || err);
+                                log.err("HANDLER", `Error in handlerEvents:`, err.message || err);
                                 return;
                         }
                         if (!handlerChat)
