@@ -39,7 +39,9 @@ const EventEmitter = require('events');
 const Duplexify = require('duplexify');
 const SafeMqttStore = require('./utils/SafeMqttStore');
 const {
-  Transform
+  Transform,
+  PassThrough,
+  Writable
 } = require('stream');
 var identity = function() {};
 var form = {};
@@ -73,17 +75,245 @@ function logError(...args) {
   }
 }
 
-function buildMqttStream(host, options) {
-  const socket = new WebSocket(host, options.wsOptions);
-  const stream = WebSocket.createWebSocketStream(socket, options.wsOptions);
-  stream.url = host;
-  stream.socket = socket;
-  socket.once('error', (error) => {
-    if (!stream.destroyed) stream.destroy(error);
+const PING_INTERVAL_MS = 30000;
+const LIVENESS_CHECK_MS = 10000;
+const LIVENESS_MAX_IDLE_MS = 65000;
+
+function buildProxy() {
+  let target = null;
+  let ended = false;
+  const proxy = new Writable({
+    autoDestroy: true,
+    write(chunk, _enc, callback) {
+      if (ended || this.destroyed) return callback();
+      const socket = target;
+      if (socket && socket.readyState === 1) {
+        try {
+          socket.send(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk), callback);
+        } catch (error) {
+          callback(error);
+        }
+      } else {
+        callback();
+      }
+    },
+    writev(chunks, callback) {
+      if (ended || this.destroyed) return callback();
+      const socket = target;
+      if (!socket || socket.readyState !== 1) return callback();
+      try {
+        for (const item of chunks) {
+          socket.send(Buffer.isBuffer(item.chunk) ? item.chunk : Buffer.from(item.chunk));
+        }
+        callback();
+      } catch (error) {
+        callback(error);
+      }
+    },
+    final(callback) {
+      ended = true;
+      const socket = target;
+      target = null;
+      if (socket && (socket.readyState === 0 || socket.readyState === 1)) {
+        try {
+          if (typeof socket.terminate === "function") socket.terminate();
+          else socket.close();
+        } catch (_) {}
+      }
+      callback();
+    }
   });
-  socket.once('close', () => {
+  proxy.setTarget = (socket) => {
+    if (ended) return;
+    target = socket;
+  };
+  proxy.hardEnd = () => {
+    ended = true;
+    target = null;
+  };
+  return proxy;
+}
+
+function buildStream(options, webSocket, proxy) {
+  const readable = new PassThrough({ highWaterMark: 1024 * 1024 });
+  const stream = new Duplexify(undefined, undefined, {
+    end: false,
+    autoDestroy: true,
+    ...(options || {})
+  });
+  const noopWritable = new Writable({
+    write(_chunk, _enc, callback) {
+      callback();
+    }
+  });
+  let socket = webSocket;
+  let pingTimer = null;
+  let livenessTimer = null;
+  let lastActivity = Date.now();
+  let readablePaused = false;
+  let attached = false;
+  let style = "node";
+  let closed = false;
+
+  const toBuffer = (data) => {
+    if (Buffer.isBuffer(data)) return data;
+    if (data instanceof ArrayBuffer) return Buffer.from(data);
+    if (ArrayBuffer.isView(data)) {
+      return Buffer.from(data.buffer, data.byteOffset, data.byteLength);
+    }
+    return Buffer.from(String(data));
+  };
+
+  const swapToNoopWritable = () => {
+    try {
+      stream.setWritable(noopWritable);
+    } catch (_) {}
+  };
+
+  const onOpen = () => {
+    if (closed || !socket) return;
+    proxy.setTarget(socket);
+    stream.setWritable(proxy);
+    stream.setReadable(readable);
+    stream.emit("connect");
+    lastActivity = Date.now();
+    if (pingTimer) clearInterval(pingTimer);
+    if (livenessTimer) clearInterval(livenessTimer);
+    pingTimer = setInterval(() => {
+      if (!socket || socket.readyState !== 1) return;
+      if (typeof socket.ping === "function") {
+        try {
+          socket.ping();
+        } catch (_) {}
+      } else {
+        try {
+          socket.send("ping");
+        } catch (_) {}
+      }
+    }, PING_INTERVAL_MS);
+    livenessTimer = setInterval(() => {
+      if (!socket || socket.readyState !== 1) return;
+      if (Date.now() - lastActivity > LIVENESS_MAX_IDLE_MS) {
+        try {
+          if (typeof socket.terminate === "function") socket.terminate();
+          else socket.close();
+        } catch (_) {}
+      }
+    }, LIVENESS_CHECK_MS);
+  };
+
+  const pauseSocket = () => {
+    if (readablePaused) return;
+    readablePaused = true;
+    try {
+      if (socket && typeof socket.pause === "function") {
+        socket.pause();
+      }
+    } catch (_) {}
+  };
+
+  const resumeSocket = () => {
+    if (!readablePaused) return;
+    readablePaused = false;
+    try {
+      if (socket && typeof socket.resume === "function") {
+        socket.resume();
+      }
+    } catch (_) {}
+  };
+
+  readable.on("drain", resumeSocket);
+
+  const onMessage = (data) => {
+    lastActivity = Date.now();
+    const payload = typeof data === "object" && data !== null && "data" in data ? data.data : data;
+    const ok = readable.write(toBuffer(payload));
+    if (!ok) pauseSocket();
+  };
+
+  const onPong = () => {
+    lastActivity = Date.now();
+  };
+
+  const detach = (ws) => {
+    if (!attached || !ws) return;
+    attached = false;
+    if (typeof ws.off === "function") {
+      ws.off("open", onOpen);
+      ws.off("message", onMessage);
+      ws.off("error", onError);
+      ws.off("close", onClose);
+      ws.off("pong", onPong);
+      return;
+    }
+    ws.onopen = null;
+    ws.onmessage = null;
+    ws.onerror = null;
+    ws.onclose = null;
+  };
+
+  const cleanup = () => {
+    if (closed) return;
+    closed = true;
+    if (pingTimer) clearInterval(pingTimer);
+    if (livenessTimer) clearInterval(livenessTimer);
+    pingTimer = null;
+    livenessTimer = null;
+    try {
+      readable.off("drain", resumeSocket);
+    } catch (_) {}
+    proxy.hardEnd();
+    swapToNoopWritable();
+    if (socket) {
+      detach(socket);
+      try {
+        if (socket.readyState === 1) {
+          if (typeof socket.terminate === "function") socket.terminate();
+          else socket.close();
+        }
+      } catch (_) {}
+      socket = null;
+    }
+    readable.end();
+  };
+
+  const onError = (error) => {
+    cleanup();
+    stream.destroy(error instanceof Error ? error : new Error(String(error)));
+  };
+
+  const onClose = () => {
+    cleanup();
+    stream.end();
     if (!stream.destroyed) stream.destroy();
-  });
+  };
+
+  const attach = (ws) => {
+    if (attached || !ws) return;
+    attached = true;
+    if (typeof ws.on === "function" && typeof ws.off === "function") {
+      style = "node";
+      ws.on("open", onOpen);
+      ws.on("message", onMessage);
+      ws.on("error", onError);
+      ws.on("close", onClose);
+      ws.on("pong", onPong);
+      return;
+    }
+    ws.onopen = onOpen;
+    ws.onmessage = onMessage;
+    ws.onerror = onError;
+    ws.onclose = onClose;
+  };
+
+  attach(socket);
+  if (socket && socket.readyState === 1) onOpen();
+  stream.on("prefinish", swapToNoopWritable);
+  stream.on("finish", cleanup);
+  stream.on("close", cleanup);
+  proxy.on("close", swapToNoopWritable);
+  stream.url = options?.url || (socket && socket.url) || "";
+  stream.socket = socket;
   return stream;
 }
 
@@ -169,7 +399,15 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
         Origin: 'https://www.facebook.com',
         'User-Agent': cachedUA,
         Referer: 'https://www.facebook.com/',
-        Host: new URL(host).hostname,
+        Host: new URL(host).hostname || 'edge-chat.facebook.com',
+        Connection: 'Upgrade',
+        Pragma: 'no-cache',
+        'Cache-Control': 'no-cache',
+        Upgrade: 'websocket',
+        'Sec-WebSocket-Version': '13',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Sec-WebSocket-Extensions': 'permessage-deflate; client_max_window_bits'
       },
       origin: 'https://www.facebook.com',
       protocolVersion: 13,
@@ -177,9 +415,9 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
     },
     keepalive: Number(ctx.globalOptions.mqttKeepalive) > 0
       ? Math.floor(ctx.globalOptions.mqttKeepalive)
-      : 10,
-    reschedulePings: false,
-    connectTimeout: 15000,
+      : 30,
+    reschedulePings: true,
+    connectTimeout: 12000,
     reconnectPeriod: 0,
   };
 
@@ -188,7 +426,7 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
     options.wsOptions.agent = agent;
   }
 
-  ctx.mqttClient = new mqtt.Client(() => buildMqttStream(host, options), options);
+  ctx.mqttClient = new mqtt.Client(() => buildStream(options, new WebSocket(host, options.wsOptions), buildProxy()), options);
   global.mqttClient = ctx.mqttClient;
   const client = ctx.mqttClient;
 
@@ -336,14 +574,6 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
       process.env.OnStatus = true;
     }
 
-    client.subscribe(topics, { qos: 1 }, (err) => {
-      if (err) {
-        logWarn(`Topic subscription warning: ${err.message || err}`);
-      } else {
-        logInfo(`Subscribed to ${topics.length} MQTT topics successfully.`);
-      }
-    });
-
     let topic;
     const queue = {
       sync_api_version: 11,
@@ -363,20 +593,28 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
       topic = "/messenger_sync_create_queue";
     }
 
-    try {
-      if (client.connected && !client.disconnected && !client.disconnecting) {
-        client.publish(topic, JSON.stringify(queue), {
-          qos: 1,
-          retain: false
-        }, (err) => {
-          if (err) logWarn('Sync queue publish callback warning: ' + (err.message || err));
-        });
-        client.publish("/foreground_state", JSON.stringify({ foreground: chatOn }), { qos: 1 });
-        client.publish("/set_client_settings", JSON.stringify({ make_user_available_when_in_foreground: true }), { qos: 1 });
+    client.subscribe(topics, { qos: 1 }, (err) => {
+      if (err) {
+        logWarn(`Topic subscription warning: ${err.message || err}`);
+      } else {
+        logInfo(`Subscribed to ${topics.length} MQTT topics successfully.`);
       }
-    } catch (err) {
-      logWarn('Sync queue publish failed: ' + (err?.message || err));
-    }
+
+      try {
+        if (client.connected && !client.disconnected && !client.disconnecting) {
+          client.publish(topic, JSON.stringify(queue), {
+            qos: 1,
+            retain: false
+          }, (pubErr) => {
+            if (pubErr) logWarn('Sync queue publish callback warning: ' + (pubErr.message || pubErr));
+          });
+          client.publish("/foreground_state", JSON.stringify({ foreground: chatOn }), { qos: 1 });
+          client.publish("/set_client_settings", JSON.stringify({ make_user_available_when_in_foreground: true }), { qos: 1 });
+        }
+      } catch (err) {
+        logWarn('Sync queue publish failed: ' + (err?.message || err));
+      }
+    });
 
     let rTimeout = setTimeout(function() {
       if (client.disconnected || client.disconnecting || !client.connected) return;
@@ -609,13 +847,15 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, {
             const threadID = fmtMsg.threadID;
             const messageID = fmtMsg.messageID;
             
-            global.Fca.Data.event.set("Data", {
-                isGroup,
-                threadID,
-                messageID
-            });
+            if (global.Fca?.Data?.event && typeof global.Fca.Data.event.set === 'function') {
+                global.Fca.Data.event.set("Data", {
+                    isGroup,
+                    threadID,
+                    messageID
+                });
+            }
 
-            if (global.Fca.Require.Priyansh.AntiGetInfo.AntiGetThreadInfo) {
+            if (global.Fca?.Require?.Priyansh?.AntiGetInfo?.AntiGetThreadInfo && global.Fca?.Data?.MsgCount) {
                 global.Fca.Data.MsgCount.set(fmtMsg.threadID, ((global.Fca.Data.MsgCount.get(fmtMsg.threadID)) + 1 || 1));
             }    
 

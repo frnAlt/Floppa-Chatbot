@@ -24,7 +24,7 @@ function resolveFcaEngine(requestedEngine) {
 	const preferred = (requestedEngine || process.env.FCA_ENGINE || "").toLowerCase().trim();
 
 	// 1. If xtreme-fca is explicitly requested
-	if (preferred === "xtreme-fca" || preferred === "xtreme") {
+	if (preferred === "xtreme-fca" || preferred === "xtreme" || preferred === "neokex" || preferred === "neokex-fca") {
 		try {
 			const xtremePkg = defaultRequire("xtreme-fca");
 			const fn = typeof xtremePkg === "function" ? xtremePkg : (xtremePkg.login || xtremePkg.default || xtremePkg);
@@ -1522,17 +1522,15 @@ async function startBot(loginWithEmail) {
                                 }
 
                                 if (configLog.disableAll === false && configLog[event.type] !== false) {
-                                        if (configLog.mode === "raw" || configLog.debugRaw === true) {
-                                                // hide participantIDs (it is array too long)
-                                                const participantIDs_ = [...event.participantIDs || []];
-                                                if (event.participantIDs)
-                                                        event.participantIDs = 'Array(' + event.participantIDs.length + ')';
+                                        // hide participantIDs (it is array too long)
+                                        const participantIDs_ = [...event.participantIDs || []];
+                                        if (event.participantIDs)
+                                                event.participantIDs = 'Array(' + event.participantIDs.length + ')';
 
-                                                console.log(colors.green((event.type || "").toUpperCase() + ":"), jsonStringifyColor(event, null, 2));
+                                        console.log(colors.green((event.type || "").toUpperCase() + ":"), jsonStringifyColor(event, null, 2));
 
-                                                if (event.participantIDs)
-                                                        event.participantIDs = participantIDs_;
-                                        }
+                                        if (event.participantIDs)
+                                                event.participantIDs = participantIDs_;
                                 }
 
                                 if ((event.senderID && dataGban[event.senderID] || event.userID && dataGban[event.userID])) {

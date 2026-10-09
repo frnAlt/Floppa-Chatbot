@@ -611,7 +611,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                 ((global.GoatBot.config.devUsers || []).map(String).includes(String(senderID)));
                         const threadPrefix = prefix || getPrefix(threadID);
                         const globalPrefix = global.GoatBot?.config?.prefix;
-                        const validPrefixes = Array.from(new Set([threadPrefix, globalPrefix, "!"].filter(Boolean)))
+                        const validPrefixes = Array.from(new Set([threadPrefix, globalPrefix, "!", "-"].filter(Boolean)))
                                 .sort((a, b) => b.length - a.length);
                         const matchedPrefix = validPrefixes.find(p => trimmedBody.startsWith(p));
                         hasPrefix = Boolean(matchedPrefix);
