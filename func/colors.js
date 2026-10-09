@@ -73,7 +73,9 @@ const colorFunctions = {
 
 
 const colors = {};
-colors.bold = {};
+colors.bold = function (text) {
+	return colorFunctions.bold(text);
+};
 
 for (const key in colorFunctions) {
 	if (key === 'bold')
