@@ -74,8 +74,8 @@ module.exports = function (defaultFuncs, api, ctx) {
         reaction = "\uD83D\uDC4E";
         break;
       default:
-        if (forceCustomReaction) break;
-        return callback({ error: "Reaction is not a valid emoji." });
+        // Accept any unicode emoji reaction by default
+        break;
     }
 
     var variables = {

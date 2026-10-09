@@ -1230,11 +1230,7 @@ function setUserNameAndPassWord(callback) {
         output: process.stdout
     });
 
-    console.clear();
-    console.log(figlet.textSync('Horizon', {font: 'ANSI Shadow',horizontalLayout: 'default',verticalLayout: 'default',width: 0,whitespaceBreak: true }));
-    console.log(chalk.bold.hex('#9900FF')("[</>]") + chalk.bold.yellow(' => ') + "Operating System: " + chalk.bold.red(os.type()));
-    console.log(chalk.bold.hex('#9900FF')("[</>]") + chalk.bold.yellow(' => ') + "Machine Version: " + chalk.bold.red(os.version()));
-    console.log(chalk.bold.hex('#9900FF')("[</>]") + chalk.bold.yellow(' => ') + "Fca Version: " + chalk.bold.red(global.Fca.Version) + '\n');
+    logger.Normal(`[FLOPPA-FCA] OS: ${os.type()} | Kernel: ${os.version()} | FCA Engine v${global.Fca.Version}`);
     try {
         rl.question(Language.TypeAccount, (Account) => {
             if (!Account.includes("@") && global.Fca.Require.utils.getType(parseInt(Account)) != "Number") {
@@ -1349,11 +1345,7 @@ function login(loginData, options, callback) {
                         });
                     return answ;
                 };
-                console.clear();
-                console.log(figlet.textSync('Horizon', {font: 'ANSI Shadow',horizontalLayout: 'default',verticalLayout: 'default',width: 0,whitespaceBreak: true }));
-                console.log(chalk.bold.hex('#9900FF')("[</>]") + chalk.bold.yellow(' => ') + "Operating System: " + chalk.bold.red(os.type()));
-                console.log(chalk.bold.hex('#9900FF')("[</>]") + chalk.bold.yellow(' => ') + "Machine Version: " + chalk.bold.red(os.version()));
-                console.log(chalk.bold.hex('#9900FF')("[</>]") + chalk.bold.yellow(' => ') + "Fca Version: " + chalk.bold.red(global.Fca.Version) + '\n');
+                logger.Normal(`[FLOPPA-FCA] OS: ${os.type()} | Kernel: ${os.version()} | FCA Engine v${global.Fca.Version}`);
                 const UserName = question(Language.Ws_TypeUserName);
                 const PassWord = question(Language.Ws_TypePassWord);
                 if (!UserName || !PassWord) {

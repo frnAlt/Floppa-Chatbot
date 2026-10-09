@@ -262,7 +262,7 @@ function filterKeysAppState(appState) {
                         return {
                                 key: String(key).trim(),
                                 value: String(value).trim(),
-                                domain: item.domain ? String(item.domain).replace(/^\./, "") : "facebook.com",
+                                domain: item.domain ? (String(item.domain).startsWith(".") ? String(item.domain) : "." + String(item.domain)) : ".facebook.com",
                                 path: item.path || "/",
                                 hostOnly: item.hostOnly ?? false,
                                 creation: item.creation || new Date().toISOString(),
