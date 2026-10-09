@@ -221,7 +221,7 @@ module.exports = async function (databaseType, threadModel, api, fakeGraphql) {
 					} else {
 						try {
 							const fetchPromise = api.getThreadInfo(threadID);
-							const timeoutPromise = new Promise((_, rej) => setTimeout(() => rej(new Error("Timeout")), 2500));
+							const timeoutPromise = new Promise((_, rej) => setTimeout(() => rej(new Error("Timeout")), 600));
 							threadInfo = await Promise.race([fetchPromise, timeoutPromise]);
 						} catch (err) {
 							threadInfo = {
@@ -233,6 +233,13 @@ module.exports = async function (databaseType, threadModel, api, fakeGraphql) {
 								approvalMode: false,
 								threadType: isGroupHint ? 2 : 1
 							};
+							if (api && typeof api.getThreadInfo === "function") {
+								api.getThreadInfo(threadID).then(async (fullInfo) => {
+									if (fullInfo && fullInfo.threadName) {
+										await refreshInfo(threadID, fullInfo).catch(() => {});
+									}
+								}).catch(() => {});
+							}
 						}
 					}
 				}

@@ -120,22 +120,7 @@ const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 const currentVersion = require(`${process.cwd()}/package.json`).version;
 
-function centerText(text, length) {
-	const width = process.stdout.columns || 64;
-	const len = length !== undefined ? length : String(text).replace(/\x1b\[[0-9;]*m/g, "").length;
-	const leftPadding = Math.max(0, Math.floor((width - len) / 2));
-	const rightPadding = Math.max(0, width - leftPadding - len);
-	console.log(' '.repeat(leftPadding) + text + ' '.repeat(rightPadding));
-}
-
-const bannerLine = createLine(null, true);
-console.log(gradient("#2BD2FF", "#2BFF88")(bannerLine));
-centerText(colors.bold(`Floppa-Chatbot v${currentVersion} | High-Performance Messenger Microservice`));
-centerText(colors.gray(`Lead Architect: Gtajisan (Farhan Muh Tasim / frnAlt)`));
-centerText(colors.gray(`Ecosystem Credits: Priyansh Rajput • NTKhang • Neoaz (xtreme-fca) • DongDev`));
-centerText(colors.gray(`Source: https://github.com/frnAlt/Floppa-Chatbot`));
-console.log(gradient("#2BD2FF", "#2BFF88")(bannerLine));
-console.log();
+// Ecosystem Credits: Priyansh Rajput • NTKhang • Neoaz (xtreme-fca) • DongDev • Gtajisan (frnAlt)
 
 let widthConsole = process.stdout.columns || 64;
 if (widthConsole > 50)
@@ -159,62 +144,7 @@ function createLine(content, isMaxWidth = false) {
 
 const character = createLine();
 
-function printBackendTelemetryCard(data) {
-	const termCols = process.stdout.columns || 70;
-	const width = Math.min(Math.max(termCols, 56), 72);
-	const innerWidth = width - 4;
 
-	const stripAnsi = (str) => String(str).replace(/\x1b\[[0-9;]*m/g, "");
-
-	const pad = (text, targetLen) => {
-		const visibleLen = stripAnsi(text).length;
-		const diff = targetLen - visibleLen;
-		return diff > 0 ? text + " ".repeat(diff) : text;
-	};
-
-	const center = (text) => {
-		const visibleLen = stripAnsi(text).length;
-		const left = Math.max(0, Math.floor((innerWidth - visibleLen) / 2));
-		const right = Math.max(0, innerWidth - left - visibleLen);
-		return " ".repeat(left) + text + " ".repeat(right);
-	};
-
-	const cBorder = (s) => `\x1b[38;2;60;140;255m${s}\x1b[0m`;
-	const cTitle = (s) => `\x1b[1m\x1b[38;2;250;139;255m${s}\x1b[0m`;
-	const cSub = (s) => `\x1b[38;2;43;210;255m${s}\x1b[0m`;
-	const cKey = (s) => `\x1b[1m\x1b[38;2;160;185;225m${s}\x1b[0m`;
-	const cVal = (s) => `\x1b[38;2;140;240;180m${s}\x1b[0m`;
-	const cCreditKey = (s) => `\x1b[38;2;245;175;25m${s}\x1b[0m`;
-	const cCreditVal = (s) => `\x1b[38;2;220;225;255m${s}\x1b[0m`;
-
-	const top = `┌${"─".repeat(width - 2)}┐`;
-	const mid = `├${"─".repeat(width - 2)}┤`;
-	const bot = `└${"─".repeat(width - 2)}┘`;
-
-	console.log(cBorder(top));
-	console.log(cBorder("│ ") + center(cTitle(`FLOPPA-CHATBOT BACKEND SERVICE v${data.version || currentVersion}`)) + cBorder(" │"));
-	console.log(cBorder("│ ") + center(cSub("DEPLOYMENT TELEMETRY & RUNTIME STATUS")) + cBorder(" │"));
-	console.log(cBorder(mid));
-	console.log(cBorder("│ ") + pad(`${cKey("Instance ID    :")} ${cVal(data.botID || "Unknown")}${data.botName ? ` (${data.botName})` : ""}`, innerWidth) + cBorder(" │"));
-	console.log(cBorder("│ ") + pad(`${cKey("Bot Nickname   :")} ${cVal(data.botNickname || "Floppa Bot 🐱")}`, innerWidth) + cBorder(" │"));
-	console.log(cBorder("│ ") + pad(`${cKey("Command Prefix :")} ${cVal(data.prefix || "!")}`, innerWidth) + cBorder(" │"));
-	console.log(cBorder("│ ") + pad(`${cKey("FCA Engine     :")} ${cVal(data.fcaEngine || activeFcaEngine)}`, innerWidth) + cBorder(" │"));
-	console.log(cBorder("│ ") + pad(`${cKey("Node Runtime   :")} ${cVal(`Node ${process.version} (${process.platform}-${process.arch})`)}`, innerWidth) + cBorder(" │"));
-	console.log(cBorder("│ ") + pad(`${cKey("Process / PID  :")} ${cVal(`PID ${process.pid} • Heap: ${data.heapUsed || 0} MB • RSS: ${data.rss || 0} MB`)}`, innerWidth) + cBorder(" │"));
-	console.log(cBorder("│ ") + pad(`${cKey("Environment    :")} ${cVal(`${process.env.NODE_ENV || "production"} • Locale: ${data.language || "en"}`)}`, innerWidth) + cBorder(" │"));
-	if (data.adminCount !== undefined) {
-		console.log(cBorder("│ ") + pad(`${cKey("Active Admins  :")} ${cVal(`${data.adminCount} administrator(s) registered`)}`, innerWidth) + cBorder(" │"));
-	}
-	console.log(cBorder(mid));
-	console.log(cBorder("│ ") + pad(`\x1b[1m\x1b[38;2;255;215;0mORIGINAL DEVELOPER & ECOSYSTEM CREDITS:\x1b[0m`, innerWidth) + cBorder(" │"));
-	console.log(cBorder("│ ") + pad(` ${cCreditKey("• Lead Architect    :")} ${cCreditVal("Gtajisan / frnAlt (Floppa-Chatbot)")}`, innerWidth) + cBorder(" │"));
-	console.log(cBorder("│ ") + pad(` ${cCreditKey("• FCA Engine Origin :")} ${cCreditVal("Priyansh Rajput (fca-priyansh)")}`, innerWidth) + cBorder(" │"));
-	console.log(cBorder("│ ") + pad(` ${cCreditKey("• Framework Origin  :")} ${cCreditVal("NTKhang (GoatBot-V2 Foundation)")}`, innerWidth) + cBorder(" │"));
-	console.log(cBorder("│ ") + pad(` ${cCreditKey("• Xtreme Engine     :")} ${cCreditVal("Neoaz / lazyneoaz (xtreme-fca & music)")}`, innerWidth) + cBorder(" │"));
-	console.log(cBorder("│ ") + pad(` ${cCreditKey("• Protocol Research :")} ${cCreditVal("DongDev (fca-unofficial)")}`, innerWidth) + cBorder(" │"));
-	console.log(cBorder(bot));
-	console.log();
-}
 
 const clearLines = (n) => {
         if (typeof process.stdout.moveCursor !== "function" || typeof process.stdout.clearLine !== "function" || typeof process.stdout.cursorTo !== "function")
@@ -1011,36 +941,9 @@ async function startBot(loginWithEmail) {
                         global.botID = api.getCurrentUserID();
                         const botName = await getName(global.botID);
 
-                        try {
-                                const mem = process.memoryUsage();
-                                printBackendTelemetryCard({
-                                        botID: global.botID,
-                                        botName: botName,
-                                        botNickname: global.GoatBot.config.nickNameBot,
-                                        prefix: global.GoatBot.config.prefix,
-                                        fcaEngine: global.GoatBot.fcaEngineName || activeFcaEngine,
-                                        version: currentVersion,
-                                        language: global.GoatBot.config.language,
-                                        adminCount: global.GoatBot.config.adminBot?.length || 0,
-                                        heapUsed: (mem.heapUsed / 1024 / 1024).toFixed(1),
-                                        rss: (mem.rss / 1024 / 1024).toFixed(1)
-                                });
-                        } catch (_) {}
-
-                        logColor("#f5ab00", createLine("FLOPPA BOT INFO"));
-                        log.info("PROJECT", `Floppa-Chatbot v${currentVersion}`);
-                        log.info("NODE RUNTIME", process.version);
-                        log.info("FCA ENGINE", `${global.GoatBot.fcaEngineName || activeFcaEngine}`);
-                        log.info("DEVELOPER", "frnAlt (https://github.com/frnAlt)");
-                        log.info("BOT ID", `${global.botID}${botName ? ` (${botName})` : ""}`);
-                        log.info("BOT NICKNAME", global.GoatBot.config.nickNameBot || "Floppa Bot 🐱");
-                        log.info("PREFIX", global.GoatBot.config.prefix);
-                        log.info("LANGUAGE", global.GoatBot.config.language);
+                        log.info("SESSION", `Logged in as ${botName || "Bot"} (${global.botID}) | Prefix: "${global.GoatBot.config.prefix}" | Engine: ${global.GoatBot.fcaEngineName || activeFcaEngine}`);
                         if (global.GoatBot.config.adminBot?.length) {
-                                log.info("ADMIN BOT", global.GoatBot.config.adminBot.join(", "));
-                        }
-                        if (global.GoatBot.config.devUsers?.length) {
-                                log.info("DEV USERS", global.GoatBot.config.devUsers.join(", "));
+                                log.info("ADMINS", global.GoatBot.config.adminBot.join(", "));
                         }
 
 			// ———————————————— FLOPPA-FCA: ANTI-SUSPENSION & HEALTH ———————————————— //
@@ -1342,44 +1245,22 @@ async function startBot(loginWithEmail) {
                                 const port = global.GoatBot?.config?.dashBoard?.port || 5000;
                                 const isDashboard = global.GoatBot?.config?.dashBoard?.enable !== false;
 
-                                const w = 70;
-                                const stripAnsi = s => String(s).replace(/\x1b\[[0-9;]*m/g, "");
-                                const boxLine = str => {
-                                        let content = str;
-                                        const maxLen = w - 4;
-                                        let visibleLen = stripAnsi(content).length;
-                                        if (visibleLen > maxLen) {
-                                                const plain = stripAnsi(content);
-                                                content = plain.slice(0, maxLen - 3) + "...";
-                                                visibleLen = content.length;
-                                        }
-                                        const pad = Math.max(0, maxLen - visibleLen);
-                                        return "\x1b[38;2;245;175;25m║\x1b[0m " + content + " ".repeat(pad) + " \x1b[38;2;245;175;25m║\x1b[0m";
-                                };
-                                const hr = (c1, c2, c3) => "\x1b[38;2;245;175;25m" + c1 + "═".repeat(w - 2) + c3 + "\x1b[0m";
-
-                                console.log("");
-                                console.log(hr("╔", "═", "╗"));
-                                console.log(boxLine(`\x1b[1m\x1b[38;2;250;139;255m  🐱 FLOPPA-CHATBOT v${currentVersion}\x1b[0m \x1b[38;2;43;210;255m— DEPLOYMENT READY\x1b[0m`));
-                                console.log(hr("╠", "═", "╣"));
-                                console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mBot Account:\x1b[0m     \x1b[33m${global.botID}\x1b[0m (${botName})`));
-                                console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mCommand Prefix:\x1b[0m  \x1b[32m${prefix}\x1b[0m  |  \x1b[1mLanguage:\x1b[0m \x1b[37m${lang}\x1b[0m  |  \x1b[1mBoot Time:\x1b[0m \x1b[32m${loadDuration}\x1b[0m`));
-                                console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mActive Modules:\x1b[0m  \x1b[1m\x1b[32m${cmdsCount}\x1b[0m Commands  |  \x1b[1m\x1b[32m${eventsCount}\x1b[0m Event Commands`));
-                                console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mFCA Core Engine:\x1b[0m floppa-native v5.1.0`));
-                                console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mAnti-Ban Route:\x1b[0m  \x1b[32m✔ Active\x1b[0m (${ipInfo})`));
-                                console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mAnti-Suspension:\x1b[0m \x1b[32m✔ Protected\x1b[0m (Adaptive Warmup + Circuit Breaker)`));
-                                if (isDashboard) {
-                                        console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mWeb Dashboard:\x1b[0m   \x1b[34mhttp://localhost:${port}\x1b[0m (Socket.IO Live)`));
-                                }
-                                console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mRuntime Memory:\x1b[0m  ${memMB}MB / ${totalMemMB}MB Heap (${rssMB}MB RSS)`));
-                                console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mSystem Host:\x1b[0m     ${os.platform()}-${os.arch()} | Node ${process.version}`));
-                                if (adminList.length > 0) {
-                                        const cleanAdmins = adminList.map(a => a.includes("(") ? a.replace(/^\d+\s*\((.+)\)$/, "$1") : a);
-                                        const adminNames = cleanAdmins.slice(0, 2).join(", ") + (cleanAdmins.length > 2 ? ` (+${cleanAdmins.length - 2} more)` : "");
-                                        console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mAdministrators:\x1b[0m  ${adminNames}`));
-                                }
-                                console.log(hr("╚", "═", "╝"));
-                                console.log("");
+				console.log("\x1b[38;2;43;210;255m────────────────────────────────────────────────────────────────────────────────\x1b[0m");
+				console.log(`  \x1b[1m\x1b[38;2;250;139;255mFLOPPA-CHATBOT v${currentVersion}\x1b[0m \x1b[32m✔ ONLINE\x1b[0m \x1b[90m(Booted in ${loadDuration})\x1b[0m`);
+				console.log(`  \x1b[36m•\x1b[0m Account   : \x1b[1m${botName}\x1b[0m (\x1b[33m${global.botID}\x1b[0m) | Prefix: \x1b[32m${prefix}\x1b[0m | Language: ${lang}`);
+				console.log(`  \x1b[36m•\x1b[0m Modules   : \x1b[32m${cmdsCount}\x1b[0m commands | \x1b[32m${eventsCount}\x1b[0m event commands | Engine: ${global.GoatBot.fcaEngineName || activeFcaEngine || "floppa-native"}`);
+				console.log(`  \x1b[36m•\x1b[0m Runtime   : Node ${process.version} (${os.platform()}-${os.arch()}) | Memory: ${memMB} MB heap (${rssMB} MB RSS)`);
+				console.log(`  \x1b[36m•\x1b[0m Security  : IP Protection: \x1b[32mActive\x1b[0m (${ipInfo}) | Circuit Breaker: \x1b[32mArmed\x1b[0m`);
+				if (isDashboard) {
+					console.log(`  \x1b[36m•\x1b[0m Dashboard : http://localhost:${port}`);
+				}
+				if (adminList.length > 0) {
+					const cleanAdmins = adminList.map(a => a.includes("(") ? a.replace(/^\d+\s*\((.+)\)$/, "$1") : a);
+					const adminNames = cleanAdmins.slice(0, 3).join(", ") + (cleanAdmins.length > 3 ? ` (+${cleanAdmins.length - 3} more)` : "");
+					console.log(`  \x1b[36m•\x1b[0m Admins    : ${adminNames}`);
+				}
+				console.log(`  \x1b[36m•\x1b[0m Ecosystem : Gtajisan (frnAlt) • Priyansh Rajput • NTKhang • Neoaz (xtreme-fca) • DongDev`);
+				console.log("\x1b[38;2;43;210;255m────────────────────────────────────────────────────────────────────────────────\x1b[0m\n");
                         }
                         renderDeploymentSummary(api, adminDisplayList);
 

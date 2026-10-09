@@ -283,7 +283,7 @@ module.exports = async function (databaseType, userModel, api, fakeGraphql) {
 						try {
 							if (api && typeof api.getUserInfo === "function") {
 								const fetchPromise = api.getUserInfo(userID);
-								const timeoutPromise = new Promise((_, rej) => setTimeout(() => rej(new Error("Timeout")), 2000));
+								const timeoutPromise = new Promise((_, rej) => setTimeout(() => rej(new Error("Timeout")), 600));
 								const fetched = await Promise.race([fetchPromise, timeoutPromise]);
 								userInfo = fetched?.[userID] || { name: `Facebook User ${userID}`, gender: "UNKNOWN" };
 							} else {
@@ -291,6 +291,18 @@ module.exports = async function (databaseType, userModel, api, fakeGraphql) {
 							}
 						} catch (err) {
 							userInfo = { name: `Facebook User ${userID}`, gender: "UNKNOWN" };
+							if (api && typeof api.getUserInfo === "function") {
+								api.getUserInfo(userID).then(async (fetched) => {
+									const fetchedName = fetched?.[userID]?.name;
+									if (fetchedName && !fetchedName.startsWith("Facebook User ")) {
+										const uIdx = global.db.allUserData.findIndex(u => String(u.userID) === String(userID));
+										if (uIdx !== -1) {
+											global.db.allUserData[uIdx].name = fetchedName;
+											await save(userID, { name: fetchedName }, "update", "name").catch(() => {});
+										}
+									}
+								}).catch(() => {});
+							}
 						}
 					}
 				}
