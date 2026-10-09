@@ -252,7 +252,7 @@ module.exports = async function (api, threadModel, userModel, dashBoardModel, gl
 					}
 				}
 
-				if (onChat || noPrefix) GoatBot.onChat.push(commandName);
+				if (onChat && typeof onChat === "function") GoatBot.onChat.push(commandName);
 				if (onFirstChat) {
 					if (!GoatBot.onFirstChat) GoatBot.onFirstChat = global.createOnFirstChatCollection ? global.createOnFirstChatCollection() : [];
 					if (!GoatBot.onFirstChat._commandNames) GoatBot.onFirstChat._commandNames = [];
@@ -267,6 +267,9 @@ module.exports = async function (api, threadModel, userModel, dashBoardModel, gl
 
 				// Register in Map
 				GoatBot[setMap].set(commandName, command);
+				if (configCommand.name && configCommand.name !== commandName) {
+					GoatBot[setMap].set(configCommand.name, command);
+				}
 				if (global.FloppaBot && global.FloppaBot.multiCommands) {
 					global.FloppaBot.multiCommands.addOne(commandName, command);
 					for (const a of validAliases) {

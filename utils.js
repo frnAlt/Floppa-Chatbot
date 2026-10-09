@@ -413,9 +413,9 @@ function message(api, event) {
 			try {
 				global.statusAccountBot = 'good';
 
-				// Check if typing indicator is enabled in config or active DM (non-blocking)
+				// Check if typing indicator is enabled in config (non-blocking)
 				const typingConfig = global.GoatBot?.config?.typingIndicator;
-				const typingEnabled = !resolvedIsGroup || typingConfig === true || (typeof typingConfig === 'object' && typingConfig?.enable === true);
+				const typingEnabled = Boolean(typingConfig === true || (typeof typingConfig === 'object' && typingConfig?.enable === true));
 				if (typingEnabled && (typeof form === 'string' || form?.body) && typeof api?.sendTypingIndicator === 'function') {
 					try {
 						const typingRes = api.sendTypingIndicator(true, event.threadID);
@@ -506,9 +506,9 @@ function message(api, event) {
 			try {
 				global.statusAccountBot = 'good';
 
-				// Check if typing indicator is enabled in config or active DM (non-blocking)
+				// Check if typing indicator is enabled in config (non-blocking)
 				const typingConfig = global.GoatBot?.config?.typingIndicator;
-				const typingEnabled = !resolvedIsGroup || typingConfig === true || (typeof typingConfig === 'object' && typingConfig?.enable === true);
+				const typingEnabled = Boolean(typingConfig === true || (typeof typingConfig === 'object' && typingConfig?.enable === true));
 				if (typingEnabled && (typeof form === 'string' || form?.body) && typeof api?.sendTypingIndicator === 'function') {
 					try {
 						const typingRes = api.sendTypingIndicator(true, event.threadID);

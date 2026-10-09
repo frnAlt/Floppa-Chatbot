@@ -128,68 +128,14 @@ function centerText(text, length) {
 	console.log(' '.repeat(leftPadding) + text + ' '.repeat(rightPadding));
 }
 
-// logo
-const titles = [
-	[
-		"███████╗██╗      ██████╗ ██████╗ ██████╗  █████╗ ",
-		"██╔════╝██║     ██╔═══██╗██╔══██╗██╔══██╗██╔══██╗",
-		"█████╗  ██║     ██║   ██║██████╔╝██████╔╝███████║",
-		"██╔══╝  ██║     ██║   ██║██╔═══╝ ██╔═══╝ ██╔══██║",
-		"██║     ███████╗╚██████╔╝██║     ██║     ██║  ██║",
-		"╚═╝     ╚══════╝ ╚═════╝ ╚═╝     ╚═╝     ╚═╝  ╚═╝"
-	],
-	[
-		"█▀▀ █░░ █▀█ █▀█ █▀█ █▀█ █▀█",
-		"█▀░ █▄▄ █▄█ █▀▀ █▀▀ █▀█ █▀█"
-	],
-	[
-		"F L O P P A - C H A T B O T @" + currentVersion
-	],
-	[
-		"FLOPPA CHATBOT"
-	]
-];
-const maxWidth = process.stdout.columns || 64;
-const title = maxWidth >= 50 ?
-	titles[0] :
-	maxWidth > 36 ?
-		titles[1] :
-		maxWidth > 26 ?
-			titles[2] :
-			titles[3];
-
-console.log(gradient("#f5af19", "#f12711")(createLine(null, true)));
+const bannerLine = createLine(null, true);
+console.log(gradient("#2BD2FF", "#2BFF88")(bannerLine));
+centerText(colors.bold(`Floppa-Chatbot v${currentVersion} | High-Performance Messenger Microservice`));
+centerText(colors.gray(`Lead Architect: Gtajisan (Farhan Muh Tasim / frnAlt)`));
+centerText(colors.gray(`Ecosystem Credits: Priyansh Rajput • NTKhang • Neoaz (xtreme-fca) • DongDev`));
+centerText(colors.gray(`Source: https://github.com/frnAlt/Floppa-Chatbot`));
+console.log(gradient("#2BD2FF", "#2BFF88")(bannerLine));
 console.log();
-for (const text of title) {
-	const textColor = gradient("#FA8BFF", "#2BD2FF", "#2BFF88")(text);
-	centerText(textColor, text.length);
-}
-let subTitle = `Floppa-Chatbot@${currentVersion} - Intelligent Facebook Messenger Bot Engine`;
-const subTitleArray = [];
-if (subTitle.length > maxWidth) {
-	while (subTitle.length > maxWidth) {
-		let lastSpace = subTitle.slice(0, maxWidth).lastIndexOf(' ');
-		lastSpace = lastSpace == -1 ? maxWidth : lastSpace;
-		subTitleArray.push(subTitle.slice(0, lastSpace).trim());
-		subTitle = subTitle.slice(lastSpace).trim();
-	}
-	subTitle ? subTitleArray.push(subTitle) : '';
-}
-else {
-	subTitleArray.push(subTitle);
-}
-const author = ("Lead Architect: Gtajisan (Farhan Muh Tasim / frnAlt)");
-const fcaCredits = ("Ecosystem Credits: Priyansh Rajput • NTKhang • Neoaz (xtreme-fca) • DongDev");
-const srcUrl = ("Source code: https://github.com/frnAlt/Floppa-Chatbot");
-const releaseInfo = ("FLOPPA CHATBOT ENGINE - OFFICIAL REPO");
-for (const t of subTitleArray) {
-	const textColor2 = gradient("#9F98E8", "#AFF6CF")(t);
-	centerText(textColor2, t.length);
-}
-centerText(gradient("#9F98E8", "#AFF6CF")(author), author.length);
-centerText(gradient("#FA8BFF", "#2BD2FF")(fcaCredits), fcaCredits.length);
-centerText(gradient("#9F98E8", "#AFF6CF")(srcUrl), srcUrl.length);
-centerText(gradient("#f5af19", "#f12711")(releaseInfo), releaseInfo.length);
 
 let widthConsole = process.stdout.columns || 64;
 if (widthConsole > 50)

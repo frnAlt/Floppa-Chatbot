@@ -223,46 +223,53 @@ module.exports = function (defaultFuncs, api, ctx) {
       if (global.Fca) global.Fca.isUser = [];
     }
 
+    let isSingleUserDetermined = false;
+
     // 1. Explicit isGroup flag provided by caller (highest precedence)
     if (typeof isGroup === "boolean") {
       isSingleUser = !isGroup;
-      if (isSingleUser) {
-        if (!global.Fca.isUser.includes(tID)) global.Fca.isUser.push(tID);
-        const idx = global.Fca.isThread.indexOf(tID);
-        if (idx !== -1) global.Fca.isThread.splice(idx, 1);
-      } else {
-        if (!global.Fca.isThread.includes(tID)) global.Fca.isThread.push(tID);
-        const idx = global.Fca.isUser.indexOf(tID);
-        if (idx !== -1) global.Fca.isUser.splice(idx, 1);
-      }
+      isSingleUserDetermined = true;
     }
     // 2. Explicitly known from cache
     else if (global.Fca.isThread.includes(tID)) {
       isSingleUser = false;
+      isSingleUserDetermined = true;
     }
     else if (global.Fca.isUser.includes(tID)) {
       isSingleUser = true;
+      isSingleUserDetermined = true;
     }
-    // 3. From global event context if threadID matches current event
-    const eventData = (global.Fca?.Data?.event instanceof Map)
-      ? global.Fca.Data.event.get("Data")
-      : (typeof global.Fca?.Data?.event?.get === "function" ? global.Fca.Data.event.get("Data") : global.Fca?.Data?.event);
-    if (eventData && typeof eventData.isGroup === "boolean" && String(eventData.threadID) === tID) {
-      isSingleUser = !eventData.isGroup;
-      if (isSingleUser) {
-        if (!global.Fca.isUser.includes(tID)) global.Fca.isUser.push(tID);
+    // 3. Floppa database lookup
+    else if (global.db && Array.isArray(global.db.allThreadData) && global.db.allThreadData.some(t => String(t.threadID) === tID)) {
+      const threadObj = global.db.allThreadData.find(t => String(t.threadID) === tID);
+      isSingleUser = !(threadObj && (threadObj.isGroup === true || threadObj.isGroup === undefined));
+      isSingleUserDetermined = true;
+    }
+    else if (global.db && Array.isArray(global.db.allUserData) && global.db.allUserData.some(u => String(u.userID) === tID)) {
+      isSingleUser = true;
+      isSingleUserDetermined = true;
+    }
+
+    // 4. From global event context if threadID matches current event
+    if (!isSingleUserDetermined) {
+      const eventData = (global.Fca?.Data?.event instanceof Map)
+        ? global.Fca.Data.event.get("Data")
+        : (typeof global.Fca?.Data?.event?.get === "function" ? global.Fca.Data.event.get("Data") : global.Fca?.Data?.event);
+      if (eventData && typeof eventData.isGroup === "boolean" && String(eventData.threadID) === tID) {
+        isSingleUser = !eventData.isGroup;
       } else {
-        if (!global.Fca.isThread.includes(tID)) global.Fca.isThread.push(tID);
+        isSingleUser = tID.length <= 15 && !tID.startsWith("154");
       }
     }
-    // 4. Default heuristic: modern group threads are 16+ digits, user IDs are <= 15 digits
-    else {
-      isSingleUser = tID.length <= 15 && !tID.startsWith("154");
-      if (isSingleUser) {
-        if (!global.Fca.isUser.includes(tID)) global.Fca.isUser.push(tID);
-      } else {
-        if (!global.Fca.isThread.includes(tID)) global.Fca.isThread.push(tID);
-      }
+
+    if (isSingleUser) {
+      if (!global.Fca.isUser.includes(tID)) global.Fca.isUser.push(tID);
+      const idx = global.Fca.isThread.indexOf(tID);
+      if (idx !== -1) global.Fca.isThread.splice(idx, 1);
+    } else {
+      if (!global.Fca.isThread.includes(tID)) global.Fca.isThread.push(tID);
+      const idx = global.Fca.isUser.indexOf(tID);
+      if (idx !== -1) global.Fca.isUser.splice(idx, 1);
     }
 
     sendContent(form, threadID, isSingleUser, messageAndOTID, callback);

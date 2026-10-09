@@ -324,7 +324,7 @@ module.exports = async function (databaseType, threadModel, api, fakeGraphql) {
         async function create(threadID, threadInfo, isGroupHint) {
                 return new Promise(function (resolve, reject) {
                         taskQueue.push(async function () {
-                                create_(threadID, threadInfo, isGroupHint)
+                                return create_(threadID, threadInfo, isGroupHint)
                                         .then(resolve)
                                         .catch(reject);
                         });

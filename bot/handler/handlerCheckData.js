@@ -21,23 +21,23 @@ module.exports = async function (usersData, threadsData, event) {
                         const isErr = Array.isArray(errList)
                                 ? errList.includes(threadID)
                                 : (typeof errList.has === "function" && errList.has(threadID));
-                        if (isErr) return;
 
-                        const findInCreatingThreadData = creatingThreadData.find(t => t.threadID == threadID);
-                        if (!findInCreatingThreadData) {
-                                if (global.db.allThreadData.some(t => t.threadID == threadID))
-                                        return;
-
-                                const isGroupHint = typeof event.isGroup === "boolean" ? event.isGroup : (threadID && senderID ? String(threadID) !== String(senderID) : undefined);
-                                const threadData = await threadsData.create(threadID, null, isGroupHint);
-                                if (global.db) {
-                                        if (!global.db.receivedTheFirstMessage) global.db.receivedTheFirstMessage = {};
-                                        global.db.receivedTheFirstMessage[threadID] = true;
+                        if (!isErr) {
+                                const findInCreatingThreadData = creatingThreadData.find(t => t.threadID == threadID);
+                                if (!findInCreatingThreadData) {
+                                        if (!global.db.allThreadData.some(t => t.threadID == threadID)) {
+                                                const isGroupHint = typeof event.isGroup === "boolean" ? event.isGroup : (threadID && senderID ? String(threadID) !== String(senderID) : undefined);
+                                                const threadData = await threadsData.create(threadID, null, isGroupHint);
+                                                if (global.db) {
+                                                        if (!global.db.receivedTheFirstMessage) global.db.receivedTheFirstMessage = {};
+                                                        global.db.receivedTheFirstMessage[threadID] = true;
+                                                }
+                                                log.info("DATABASE", `New Thread: ${threadID} | ${threadData.threadName} | ${config.database.type}`);
+                                        }
                                 }
-                                log.info("DATABASE", `New Thread: ${threadID} | ${threadData.threadName} | ${config.database.type}`);
-                        }
-                        else {
-                                await findInCreatingThreadData.promise;
+                                else {
+                                        await findInCreatingThreadData.promise;
+                                }
                         }
                 }
                 catch (err) {

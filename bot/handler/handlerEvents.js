@@ -1088,7 +1088,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         const args = body ? body.split(/ +/) : [];
                         for (const key of allOnChat) {
                                 const command = GoatBot.commands.get(key);
-                                if (!command)
+                                if (!command || typeof command.onChat !== "function")
                                         continue;
                                 const commandName = command.config.name;
 
@@ -1181,7 +1181,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                 if (typeof key !== "string")
                                         continue;
                                 const command = GoatBot.commands.get(key);
-                                if (!command)
+                                if (!command || typeof command.onAnyEvent !== "function")
                                         continue;
                                 const commandName = command.config.name;
                                 const time = getTime("DD/MM/YYYY HH:mm:ss");
@@ -1265,7 +1265,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         for (const entry of commandEntries) {
                                 const commandName = entry.commandName;
                                 const command = GoatBot.commands.get(commandName);
-                                if (!command || !command.onFirstChat)
+                                if (!command || typeof command.onFirstChat !== "function")
                                         continue;
 
                                 const getText2 = createGetText2(langCode, `${process.cwd()}/languages/cmds/${langCode}.js`, prefix, command);

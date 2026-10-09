@@ -204,31 +204,37 @@ async function requestWithRetry(requestFunction, retries = 5, endpoint = '', thr
     const release = await globalRateLimiter.checkRateLimit(true, endpoint);
     try {
         if (globalRateLimiter.isEndpointOnCooldown("__GLOBAL__")) {
-            const cooldown = globalRateLimiter.getEndpointCooldownRemaining("__GLOBAL__");
-            console.warn(`Global cooldown active. Waiting ${cooldown}ms...`);
-            await delay(cooldown);
+            const cooldown = Math.min(globalRateLimiter.getEndpointCooldownRemaining("__GLOBAL__"), 1000);
+            if (cooldown > 0) {
+                console.warn(`Global cooldown active. Waiting ${cooldown}ms...`);
+                await delay(cooldown);
+            }
         }
 
         if (endpoint && globalRateLimiter.isEndpointOnCooldown(endpoint)) {
-            const cooldown = globalRateLimiter.getEndpointCooldownRemaining(endpoint);
-            console.warn(`Endpoint ${endpoint} on cooldown. Waiting ${cooldown}ms...`);
-            await delay(cooldown);
+            const cooldown = Math.min(globalRateLimiter.getEndpointCooldownRemaining(endpoint), 1000);
+            if (cooldown > 0) {
+                console.warn(`Endpoint ${endpoint} on cooldown. Waiting ${cooldown}ms...`);
+                await delay(cooldown);
+            }
         }
 
         if (threadID && globalRateLimiter.isThreadOnCooldown(threadID)) {
-            const cooldown = globalRateLimiter.getCooldownRemaining(threadID);
-            console.warn(`Thread ${threadID} on cooldown. Waiting ${cooldown}ms...`);
-            await delay(cooldown);
+            const cooldown = Math.min(globalRateLimiter.getCooldownRemaining(threadID), 1000);
+            if (cooldown > 0) {
+                console.warn(`Thread ${threadID} on cooldown. Waiting ${cooldown}ms...`);
+                await delay(cooldown);
+            }
         }
 
         const checkAndApplyRateLimitCooldowns = (responseBody) => {
             const ERROR_COOLDOWNS = {
-                1545012: 60000,
-                1675004: 30000,
-                368: 120000,
-                404: 5000,
-                500: 10000,
-                503: 30000
+                1545012: 3000,
+                1675004: 3000,
+                368: 5000,
+                404: 1000,
+                500: 2000,
+                503: 3000
             };
 
             const applyCooldown = (errorCode) => {
