@@ -35,14 +35,11 @@ module.exports = {
                         try {
                                 const [tid, time] = fs.readFileSync(pathFile, "utf-8").split(" ");
                                 const restartTime = (Date.now() - parseInt(time)) / 1000;
-                                // Delay sending message to ensure API is ready
+                                // Delay sending message to ensure API and MQTT connections are ready
                                 setTimeout(() => {
-                                        try {
-                                                api.sendMessage(`✓ | Bot restarted\n⏰ | Time: ${restartTime.toFixed(2)}s`, parseInt(tid));
-                                        } catch (err) {
-                                                console.error("Error sending restart notification:", err);
-                                        }
-                                }, 2000);
+                                        api.sendMessage(`✓ | Bot restarted\n⏰ | Time: ${restartTime.toFixed(2)}s`, String(tid))
+                                                .catch(err => console.error("[restart] Failed to send restart notification:", err.message));
+                                }, 5000);
                                 fs.unlinkSync(pathFile);
                         } catch (err) {
                                 console.error("Error in restart onLoad:", err);

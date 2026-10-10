@@ -29,7 +29,49 @@ try {
 const axios = require("axios");
 const mimeDB = require("mime-db");
 const http = require("http");
+const os = require("os");
 const server = http.createServer(app);
+
+let lastCpuUsage = process.cpuUsage();
+let lastCpuTime = Date.now();
+let currentCpuUsagePercent = "0.0";
+
+const cpuInterval = setInterval(() => {
+    const currentCpuUsage = process.cpuUsage();
+    const currentTime = Date.now();
+    const userDiff = currentCpuUsage.user - lastCpuUsage.user;
+    const systemDiff = currentCpuUsage.system - lastCpuUsage.system;
+    const timeDiff = (currentTime - lastCpuTime) * 1000; 
+    if (timeDiff > 0) {
+        currentCpuUsagePercent = ((userDiff + systemDiff) / timeDiff * 100).toFixed(1);
+    }
+    lastCpuUsage = currentCpuUsage;
+    lastCpuTime = currentTime;
+}, 2000);
+if (cpuInterval && typeof cpuInterval.unref === "function") cpuInterval.unref();
+
+const MAX_LOGS = 200;
+global.dashboardLogs = global.dashboardLogs || [];
+if (!global.stdoutHooked) {
+    const origStdout = process.stdout.write.bind(process.stdout);
+    const origStderr = process.stderr.write.bind(process.stderr);
+    
+    function capture(chunk) {
+        if (typeof chunk === 'string') {
+            const cleanText = chunk.replace(/\x1b\[[0-9;]*m/g, '').trim();
+            if (cleanText) {
+                global.dashboardLogs.push({ time: new Date().toLocaleTimeString(), text: cleanText });
+                if (global.dashboardLogs.length > MAX_LOGS) {
+                    global.dashboardLogs.shift();
+                }
+            }
+        }
+    }
+    
+    process.stdout.write = (chunk, encoding, cb) => { capture(chunk); return origStdout(chunk, encoding, cb); };
+    process.stderr.write = (chunk, encoding, cb) => { capture(chunk); return origStderr(chunk, encoding, cb); };
+    global.stdoutHooked = true;
+}
 
 const imageExt = ["png", "gif", "webp", "jpeg", "jpg"];
 const videoExt = ["webm", "mkv", "flv", "vob", "ogv", "ogg", "rrc", "gifv",
@@ -362,6 +404,323 @@ module.exports = async (api) => {
                 res.render("changeFbstate", {
                         currentFbstate
                 });
+        });
+
+        app.use('/images', express.static(path.join(__dirname, 'images')));
+
+        // ————————————————— CALYX / GOATBOT ADMIN PANEL ————————————————— //
+        app.get(["/admin", "/admin_panel", "/panel"], (req, res) => {
+            try {
+                const templatePath = path.join(__dirname, "views", "admin_panel.html");
+                if (fs.existsSync(templatePath)) {
+                    const html = fs.readFileSync(templatePath, "utf-8");
+                    return res.send(html);
+                }
+                res.redirect("/dashboard");
+            } catch (error) {
+                res.status(500).send("Error loading admin panel: " + error.message);
+            }
+        });
+
+        app.get("/api/stats", async (req, res) => {
+            try {
+                const allUsers = (await usersData.getAll()) || [];
+                const allThreads = (await threadsData.getAll()) || [];
+                const totalUsers = allUsers.length;
+                const totalThreads = allThreads.length;
+                const totalCommands = global.GoatBot?.commands ? global.GoatBot.commands.size : 0;
+                const uptimeSeconds = process.uptime();
+                
+                const mem = process.memoryUsage();
+                const memoryUsed = (mem.rss / 1024 / 1024).toFixed(2);
+                const memoryMax = (mem.heapTotal / 1024 / 1024).toFixed(2);
+                
+                let totalMembers = 0;
+                allThreads.forEach(t => {
+                    if (t.members) totalMembers += t.members.length;
+                });
+
+                let botVersion = "1.5.35";
+                try {
+                    botVersion = require(path.join(process.cwd(), "package.json")).version;
+                } catch(e) {}
+
+                const cpuUsage = currentCpuUsagePercent;
+                const osInfo = os.type() + " " + os.release();
+                
+                let totalPackages = 0;
+                try {
+                    const pkg = require(path.join(process.cwd(), "package.json"));
+                    if(pkg.dependencies) totalPackages += Object.keys(pkg.dependencies).length;
+                    if(pkg.devDependencies) totalPackages += Object.keys(pkg.devDependencies).length;
+                } catch(e) {}
+
+                let storageInfo = "Unknown";
+                try {
+                    if (fs.statfsSync) {
+                        const stat = fs.statfsSync(process.cwd());
+                        const totalGb = (stat.blocks * stat.bsize) / (1024 ** 3);
+                        const freeGb = (stat.bfree * stat.bsize) / (1024 ** 3);
+                        const usedGb = totalGb - freeGb;
+                        storageInfo = `${usedGb.toFixed(1)}GB / ${totalGb.toFixed(1)}GB`;
+                    }
+                } catch(e) {}
+
+                res.json({
+                    success: true,
+                    uptimeSeconds,
+                    memoryUsed,
+                    memoryMax,
+                    totalThreads,
+                    totalUsers,
+                    totalCommands,
+                    totalMembers,
+                    botVersion,
+                    cpuUsage,
+                    nodeVersion: process.version,
+                    osInfo,
+                    totalPackages,
+                    storageInfo
+                });
+            } catch (err) {
+                res.status(500).json({ success: false, error: err.message });
+            }
+        });
+
+        app.get("/api/config", (req, res) => {
+            try {
+                const configPath = path.join(process.cwd(), "config.json");
+                const data = fs.readFileSync(configPath, "utf-8");
+                res.json({ success: true, data });
+            } catch (e) {
+                res.json({ success: false, message: e.message });
+            }
+        });
+
+        app.post("/api/config", (req, res) => {
+            try {
+                const { configData } = req.body;
+                JSON.parse(configData); 
+                const configPath = path.join(process.cwd(), "config.json");
+                fs.writeFileSync(configPath, configData, "utf-8");
+                res.json({ success: true, message: "Config updated! Restart bot to apply." });
+            } catch (e) {
+                res.json({ success: false, message: "Invalid JSON or error saving: " + e.message });
+            }
+        });
+
+        app.get("/api/threads", async (req, res) => {
+            try {
+                const threads = (await threadsData.getAll()) || [];
+                const data = threads.map(t => ({ id: t.threadID, name: t.threadName || "Unknown", members: t.members ? t.members.length : 0 }));
+                res.json({ success: true, data });
+            } catch (e) {
+                res.json({ success: false, data: [] });
+            }
+        });
+
+        app.get("/api/users", async (req, res) => {
+            try {
+                const users = (await usersData.getAll()) || [];
+                const data = users.map(u => ({ id: u.userID, name: u.name || "Unknown" }));
+                res.json({ success: true, data });
+            } catch (e) {
+                res.json({ success: false, data: [] });
+            }
+        });
+
+        app.get("/api/commands", (req, res) => {
+            let cmds = [];
+            if (global.GoatBot && global.GoatBot.commands) {
+                for (const [name, cmdObj] of global.GoatBot.commands.entries()) {
+                    cmds.push({
+                        name: name,
+                        category: (cmdObj.config && cmdObj.config.category) ? cmdObj.config.category : "uncategorized"
+                    });
+                }
+            }
+            
+            let events = [];
+            if (global.GoatBot && global.GoatBot.events && global.GoatBot.events.size > 0) {
+                for (const [name, eventObj] of global.GoatBot.events.entries()) {
+                    events.push({ name: name, category: "events" });
+                }
+            } else {
+                try {
+                    const eventsPath = path.join(process.cwd(), "scripts", "events");
+                    if (fs.existsSync(eventsPath)) {
+                        const files = fs.readdirSync(eventsPath).filter(f => f.endsWith(".js"));
+                        for (const f of files) {
+                            events.push({ name: f.replace(".js", ""), category: "events" });
+                        }
+                    }
+                } catch (e) {}
+            }
+
+            res.json({ success: true, data: cmds, events: events });
+        });
+
+        app.get("/api/command/:name", (req, res) => {
+            try {
+                const cmdPath = path.join(process.cwd(), "scripts", "cmds", req.params.name + ".js");
+                if (fs.existsSync(cmdPath)) {
+                    const data = fs.readFileSync(cmdPath, "utf-8");
+                    res.json({ success: true, data });
+                } else {
+                    res.json({ success: false, message: "File not found" });
+                }
+            } catch (e) {
+                res.json({ success: false, message: e.message });
+            }
+        });
+
+        app.post("/api/command/:name", (req, res) => {
+            try {
+                const cmdPath = path.join(process.cwd(), "scripts", "cmds", req.params.name + ".js");
+                const { code } = req.body;
+                if (!code) return res.json({ success: false, message: "No code provided" });
+                fs.writeFileSync(cmdPath, code, "utf-8");
+                res.json({ success: true, message: "Command saved successfully! Reload command to apply." });
+            } catch (e) {
+                res.json({ success: false, message: e.message });
+            }
+        });
+
+        app.post("/api/fs/list", (req, res) => {
+            try {
+                const targetPath = path.join(process.cwd(), req.body.path || "");
+                if (!targetPath.startsWith(process.cwd())) return res.json({ success: false, message: "Access denied" });
+                
+                const stat = fs.statSync(targetPath);
+                if (stat.isDirectory()) {
+                    const items = fs.readdirSync(targetPath).map(file => {
+                        const itemPath = path.join(targetPath, file);
+                        const isDir = fs.statSync(itemPath).isDirectory();
+                        return { name: file, isDir, path: path.relative(process.cwd(), itemPath) };
+                    });
+                    items.sort((a, b) => {
+                        if (a.isDir && !b.isDir) return -1;
+                        if (!a.isDir && b.isDir) return 1;
+                        return a.name.localeCompare(b.name);
+                    });
+                    res.json({ success: true, type: "dir", data: items, currentPath: path.relative(process.cwd(), targetPath) });
+                } else {
+                    const data = fs.readFileSync(targetPath, "utf-8");
+                    res.json({ success: true, type: "file", data, currentPath: path.relative(process.cwd(), targetPath) });
+                }
+            } catch (e) {
+                res.json({ success: false, message: e.message });
+            }
+        });
+
+        app.post("/api/fs/save", (req, res) => {
+            try {
+                const targetPath = path.join(process.cwd(), req.body.path);
+                if (!targetPath.startsWith(process.cwd())) return res.json({ success: false, message: "Access denied" });
+                fs.writeFileSync(targetPath, req.body.content, "utf-8");
+                res.json({ success: true, message: "Saved successfully!" });
+            } catch (e) {
+                res.json({ success: false, message: e.message });
+            }
+        });
+
+        app.post("/api/fs/rename", (req, res) => {
+            try {
+                const oldPath = path.join(process.cwd(), req.body.oldPath);
+                const newPath = path.join(process.cwd(), req.body.newPath);
+                if (!oldPath.startsWith(process.cwd())) return res.json({ success: false, message: "Access denied" });
+                fs.renameSync(oldPath, newPath);
+                res.json({ success: true, message: "Renamed successfully!" });
+            } catch (e) {
+                res.json({ success: false, message: e.message });
+            }
+        });
+
+        app.post("/api/fs/delete", (req, res) => {
+            try {
+                const targetPath = path.join(process.cwd(), req.body.path);
+                if (!targetPath.startsWith(process.cwd())) return res.json({ success: false, message: "Access denied" });
+                const stat = fs.statSync(targetPath);
+                if (stat.isDirectory()) fs.rmSync(targetPath, { recursive: true, force: true });
+                else fs.unlinkSync(targetPath);
+                res.json({ success: true, message: "Deleted successfully!" });
+            } catch (e) {
+                res.json({ success: false, message: e.message });
+            }
+        });
+
+        app.post("/api/fs/create", (req, res) => {
+            try {
+                const targetPath = path.join(process.cwd(), req.body.path);
+                if (!targetPath.startsWith(process.cwd())) return res.json({ success: false, message: "Access denied" });
+                if (req.body.isDir) {
+                    fs.mkdirSync(targetPath, { recursive: true });
+                } else {
+                    fs.writeFileSync(targetPath, "", "utf-8");
+                }
+                res.json({ success: true, message: "Created successfully!" });
+            } catch (e) {
+                res.json({ success: false, message: e.message });
+            }
+        });
+
+        app.get("/api/logs", (req, res) => {
+            res.json({ success: true, data: global.dashboardLogs || [] });
+        });
+
+        app.post("/api/update-cookie", (req, res) => {
+            try {
+                const { cookie } = req.body;
+                if (!cookie) return res.json({ success: false, message: "Cookie is empty!" });
+                
+                const accountPath = path.join(process.cwd(), "account.txt");
+                const accountJson = path.join(process.cwd(), "account.json");
+                fs.writeFileSync(accountPath, cookie);
+                fs.writeFileSync(accountJson, cookie);
+                
+                res.json({ success: true, message: "Cookie updated successfully! Restart the bot to apply." });
+            } catch (err) {
+                res.json({ success: false, message: err.message });
+            }
+        });
+
+        app.post("/api/restart", (req, res) => {
+            res.json({ success: true, message: "Restarting..." });
+            setTimeout(() => {
+                process.exit(2);
+            }, 1000);
+        });
+
+        app.post("/api/stop", (req, res) => {
+            res.json({ success: true, message: "Stopping bot..." });
+            setTimeout(() => {
+                process.exit(0);
+            }, 1000);
+        });
+
+        app.post("/api/clear-cache", (req, res) => {
+            try {
+                if (global.client && global.client.cache) {
+                    global.client.cache = {};
+                }
+
+                const cacheDir = path.join(process.cwd(), "scripts", "cmds", "cache");
+                if (fs.existsSync(cacheDir)) {
+                    const files = fs.readdirSync(cacheDir);
+                    for (const file of files) {
+                        const filePath = path.join(cacheDir, file);
+                        if (fs.statSync(filePath).isFile()) {
+                            fs.unlinkSync(filePath);
+                        } else if (fs.statSync(filePath).isDirectory()) {
+                            fs.rmSync(filePath, { recursive: true, force: true });
+                        }
+                    }
+                }
+
+                res.json({ success: true, message: "Cache cleared successfully!" });
+            } catch (error) {
+                res.json({ success: false, message: "Error clearing cache: " + error.message });
+            }
         });
 
         app.use("/register", registerRoute);

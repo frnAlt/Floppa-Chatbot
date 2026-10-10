@@ -98,10 +98,17 @@ try {
 }
 const https = defaultRequire("https");
 
-async function getName(userID) {
+async function getName(userID, apiInstance) {
 	try {
+		const targetApi = apiInstance || global.GoatBot?.fcaApi || global.fcaApi;
+		if (targetApi && typeof targetApi.getUserInfo === "function") {
+			const userInfo = await targetApi.getUserInfo(userID);
+			if (userInfo && userInfo[userID]?.name) {
+				return userInfo[userID].name;
+			}
+		}
 		const user = await axios.post(`https://www.facebook.com/api/graphql/?q=${`node(${userID}){name}`}`);
-		return user.data[userID].name;
+		return user?.data?.[userID]?.name || null;
 	}
 	catch (error) {
 		return null;
@@ -939,7 +946,7 @@ async function startBot(loginWithEmail) {
 
                         let hasBanned = false;
                         global.botID = api.getCurrentUserID();
-                        const botName = await getName(global.botID);
+                        const botName = await getName(global.botID, api);
 
                         log.info("SESSION", `Logged in as ${botName || "Bot"} (${global.botID}) | Prefix: "${global.GoatBot.config.prefix}" | Engine: ${global.GoatBot.fcaEngineName || activeFcaEngine}`);
                         if (global.GoatBot.config.adminBot?.length) {

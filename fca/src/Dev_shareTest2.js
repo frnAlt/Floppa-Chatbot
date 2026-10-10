@@ -31,7 +31,7 @@ module.exports = function (defaultFuncs, api, ctx) {
                                             "send_type": 7,
                                             "mark_thread_read": 1,
                                             "url": "",
-                                            "attribution_app_id": ,
+                                            "attribution_app_id": null,
                                             "skip_url_preview_gen": 0,
                                             "text_has_links": 0,
                                             "multitab_env": 0,

@@ -533,8 +533,11 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
               client.end(true);
             }
             getSeqID();
-          } catch (_) {
-            process.exit(2);
+          } catch (e) {
+            logWarn("MQTT client restart error: " + (e?.message || e) + ", retrying in 5s...");
+            setTimeout(() => {
+              try { getSeqID(); } catch (_) {}
+            }, 5000);
           }
         }, Number(global.Fca.Require.Priyansh.AutoRestartMinutes) * 60000);
       }
@@ -566,8 +569,9 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
             try { global.gc(); } catch (_) {}
           }
           const mem = process.memoryUsage();
-          if (mem.heapTotal > 0 && (mem.heapUsed / mem.heapTotal) > 0.92) {
-            process.exit(2);
+          if (mem.heapTotal > 0 && (mem.heapUsed / mem.heapTotal) > 0.95) {
+            logWarn("High memory load detected, running GC and clearing internal caches");
+            try { global.Fca.Data.MsgCount?.clear(); } catch (_) {}
           }
         });
       }
