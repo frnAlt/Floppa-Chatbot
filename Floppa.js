@@ -72,8 +72,17 @@ function validJSON(pathDir) {
 	try {
 		if (!fs.existsSync(pathDir))
 			throw new Error(`File "${pathDir}" not found`);
-		execSync(`npx jsonlint "${pathDir}"`, { stdio: 'pipe' });
-		return true;
+		try {
+			const jsonlint = require("jsonlint-mod");
+			jsonlint.parse(fs.readFileSync(pathDir, "utf-8"));
+			return true;
+		} catch (lintErr) {
+			if (lintErr.name === "SyntaxError" || (lintErr.message && lintErr.message.includes("Parse error"))) {
+				throw lintErr;
+			}
+			execSync(`npx jsonlint "${pathDir}"`, { stdio: 'pipe' });
+			return true;
+		}
 	}
 	catch (err) {
 		let msgError = err.message;

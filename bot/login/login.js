@@ -1425,6 +1425,11 @@ async function startBot(loginWithEmail) {
                                                         isSendNotiErrorMessage = true;
                                                 }
 
+                                                if (process.env.CI || process.env.GITHUB_ACTIONS || process.env.CI_TEST_MODE) {
+                                                        log.err("SESSION", "Account session expired/invalidated in CI runner. Exiting to avoid hanging.");
+                                                        process.exit(1);
+                                                }
+
                                                 if (global.GoatBot.config.autoRestartWhenListenMqttError)
                                                         process.exit(2);
                                                 else {

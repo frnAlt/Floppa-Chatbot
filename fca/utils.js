@@ -3214,7 +3214,19 @@ function cleanHTML (text) {
     return text;
 }
 
+class CustomError extends Error {
+    constructor(obj) {
+        if (typeof obj === 'string')
+            obj = { message: obj };
+        super(obj?.message || obj?.error || 'CustomError');
+        if (typeof obj === 'object') {
+            Object.assign(this, obj);
+        }
+    }
+}
+
 module.exports = {
+    CustomError,
     cleanHTML,
     isReadableStream:isReadableStream,
     get:get,

@@ -1,0 +1,6 @@
+{
+  "name": "fb-chat-api",
+  "version": "1.0.0",
+  "description": "Compatibility proxy for fb-chat-api in Floppa-Chatbot",
+  "main": "index.js"
+}

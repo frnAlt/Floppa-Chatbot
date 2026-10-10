@@ -15,5 +15,27 @@
     "randomizeUserAgent": true,
     "maxRetries": 4,
     "backoffMs": 1500
+  },
+  "autoUpdate": false,
+  "checkUpdate": {
+    "enabled": false,
+    "install": false,
+    "notifyIfCurrent": false,
+    "packageName": "@floppa/fca-native",
+    "registryUrl": "https://registry.npmjs.org",
+    "timeoutMs": 10000
+  },
+  "mqtt": {
+    "enabled": true,
+    "reconnectInterval": 3600
+  },
+  "autoLogin": true,
+  "antiGetInfo": {
+    "AntiGetThreadInfo": false,
+    "AntiGetUserInfo": false
+  },
+  "threadCache": {
+    "maxAgeMs": 900000,
+    "invalidateIntervalMs": 900000
   }
 }
