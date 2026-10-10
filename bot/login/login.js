@@ -564,8 +564,16 @@ async function getAppStateToLogin(loginWithEmail) {
                         accountText = readFileSync(dirAccount, "utf8");
                 }
         }
-        if (!accountText.trim())
-                return log.error("LOGIN FACEBOOK", getText('login', 'notFoundDirAccount', colors.green(dirAccount)));
+        if (!accountText.trim()) {
+                log.err("LOGIN FACEBOOK", getText('login', 'notFoundDirAccount', colors.green(dirAccount)));
+                if (!process.stdin.isTTY || process.env.CI || process.env.GITHUB_ACTIONS) {
+                        log.err("LOGIN FACEBOOK", "Cannot prompt for credentials in non-interactive / CI runner. Please set workflow input cookie or FB_STATE secret.");
+                        process.exit(1);
+                }
+                const error = new Error(`${path.basename(dirAccount)} is empty`);
+                error.name = "ACCOUNT_EMPTY";
+                throw error;
+        }
 
         try {
                 const splitAccountText = accountText.replace(/\|/g, '\n').split('\n').map(i => i.trim()).filter(i => i);
@@ -883,13 +891,17 @@ async function startBot(loginWithEmail) {
                                 global.statusAccountBot = 'can\'t login';
 
                                 // ——————————— SINGLE ACCOUNT MODE ——————————— //
-                                // If only one account, keep retrying with exponential backoff
+                                // If only one account, keep retrying with exponential backoff (fail fast in CI or on fatal cookie errors)
                                 if (multiAccountManager.isSingleAccount()) {
-                                        if (process.env.CI_TEST_MODE) {
-                                                if (multiAccountManager.singleAccountRetryCount >= 3) {
-                                                        log.err("SINGLE ACCOUNT", "Exceeded max login retry attempts (3) in CI test mode. Exiting.");
-                                                        process.exit(1);
-                                                }
+                                        const isCI = Boolean(process.env.CI || process.env.GITHUB_ACTIONS || process.env.CI_TEST_MODE);
+                                        const isFatalCookie = error?.name === "COOKIE_INVALID" ||
+                                                error?.name === "CHECKPOINT_ERROR" ||
+                                                String(error?.message || error).includes("Your Cookie Is Wrong") ||
+                                                String(error?.message || error).includes("checkpoint");
+
+                                        if (isCI || isFatalCookie || multiAccountManager.singleAccountRetryCount >= 3) {
+                                                log.err("SINGLE ACCOUNT", `Login failed permanently (${error?.message || error}). Halting bot to prevent indefinite hanging in non-interactive runner.`);
+                                                process.exit(1);
                                         }
                                         multiAccountManager.singleAccountRetryCount++;
                                         const retryDelay = multiAccountManager.getRetryDelay(multiAccountManager.singleAccountRetryCount);
@@ -1354,13 +1366,12 @@ async function startBot(loginWithEmail) {
                                                 global.statusAccountBot = 'can\'t login';
 
                                                 // ——————————— SINGLE ACCOUNT MODE ——————————— //
-                                                // If only one account, keep retrying instead of restarting
+                                                // If only one account, keep retrying instead of restarting (fail fast in CI)
                                                 if (multiAccountManager.isSingleAccount()) {
-                                                        if (process.env.CI_TEST_MODE) {
-                                                                if (multiAccountManager.singleAccountRetryCount >= 3) {
-                                                                        log.err("SINGLE ACCOUNT", "Exceeded max login retry attempts (3) in CI test mode. Exiting.");
-                                                                        process.exit(1);
-                                                                }
+                                                        const isCI = Boolean(process.env.CI || process.env.GITHUB_ACTIONS || process.env.CI_TEST_MODE);
+                                                        if (isCI || multiAccountManager.singleAccountRetryCount >= 3) {
+                                                                log.err("SINGLE ACCOUNT", "Account session expired/invalidated in CI runner. Exiting to avoid hanging.");
+                                                                process.exit(1);
                                                         }
                                                         if (!isSendNotiErrorMessage) {
                                                                 await handlerWhenListenHasError({ api, threadModel, userModel, dashBoardModel, globalModel, threadsData, usersData, dashBoardData, globalData, error });
