@@ -59,7 +59,7 @@ var utils = global.Fca.Require.utils,
 
 log.maxRecordSize = 100;
 var checkVerified = null;
-const Boolean_Option = ['online','selfListen','listenEvents','updatePresence','forceLogin','autoMarkDelivery','autoMarkRead','listenTyping','autoReconnect','emitReady'];
+const Boolean_Option = ['online','selfListen','selfListenEvent','listenEvents','updatePresence','forceLogin','autoMarkDelivery','autoMarkRead','listenTyping','autoReconnect','emitReady'];
 
 function setOptions(globalOptions, options) {
     Object.keys(options).map(function(key) {

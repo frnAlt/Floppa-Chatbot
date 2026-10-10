@@ -13,6 +13,15 @@ on:
         required: false
         type: string
         default: ''
+      runner_duration:
+        description: 'Maximum run time in minutes on GitHub Runner (Max 350)'
+        required: false
+        default: '350'
+      auto_restart:
+        description: 'Enable continuous 24/7 auto-restart on GitHub Actions (re-triggers workflow before timeout)'
+        required: false
+        type: boolean
+        default: true
       node_version:
         description: 'Node.js version'
         required: false
@@ -161,12 +170,76 @@ jobs:
             echo "Secondary credentials are ready (account2.json: $(wc -c < account2.json 2>/dev/null || echo 0) bytes, account2.txt: $(wc -c < account2.txt 2>/dev/null || echo 0) bytes)"
           fi
 
-      - name: Start the Bot
+      - name: Launch & Monitor Floppa Bot on Runner
         env:
           PORT: 5000
           NODE_ENV: production
           FORCE_COLOR: '1'
+          RUNNER_MODE: 'true'
           COOKIES: ${{ inputs.cookie || secrets.FB_STATE || secrets.ACCOUNT_TXT }}
           FB_STATE: ${{ inputs.cookie || secrets.FB_STATE }}
           ACCOUNT_TXT: ${{ secrets.ACCOUNT_TXT }}
-        run: npm start
+          RUN_DURATION_MINUTES: ${{ inputs.runner_duration || '350' }}
+        run: |
+          echo "=========================================="
+          echo "🚀 Launching Floppa Bot on GitHub Runner"
+          echo "⏱️  Configured Runtime: ${RUN_DURATION_MINUTES} minutes"
+          echo "=========================================="
+
+          # Start bot in background and capture PID
+          npm start &
+          BOT_PID=$!
+          echo "Bot process started with PID: $BOT_PID"
+
+          # Wait for dashboard / HTTP health server to be reachable
+          echo "Waiting for health check endpoint..."
+          HEALTH_URL="http://127.0.0.1:5000/health"
+          UP=false
+          for i in {1..30}; do
+            if curl -s -f "$HEALTH_URL" > /dev/null 2>&1 || curl -s -f "http://127.0.0.1:5000/" > /dev/null 2>&1; then
+              echo "✅ Health check passed! Floppa web dashboard is live and listening on port 5000."
+              UP=true
+              break
+            fi
+            if ! kill -0 $BOT_PID 2>/dev/null; then
+              echo "❌ Bot process exited unexpectedly."
+              wait $BOT_PID
+              exit 1
+            fi
+            sleep 2
+          done
+
+          if [ "$UP" != "true" ]; then
+            echo "⚠️ Health check timed out, but bot process is still alive. Continuing monitor loop..."
+          fi
+
+          # Keep-alive loop running up to RUN_DURATION_MINUTES
+          TARGET_SECONDS=$(( RUN_DURATION_MINUTES * 60 ))
+          START_TIME=$(date +%s)
+          echo "Bot supervisor loop active until target time reached."
+
+          while kill -0 $BOT_PID 2>/dev/null; do
+            CURRENT_TIME=$(date +%s)
+            ELAPSED=$(( CURRENT_TIME - START_TIME ))
+            if [ $ELAPSED -ge $TARGET_SECONDS ]; then
+              echo "⏱️ Maximum run duration reached (${RUN_DURATION_MINUTES}m). Gracefully stopping..."
+              kill -TERM $BOT_PID 2>/dev/null || true
+              wait $BOT_PID 2>/dev/null || true
+              break
+            fi
+            sleep 15
+          done
+
+          echo "Process finished cleanly."
+
+      - name: Trigger Auto-Restart (24/7 Continuity)
+        if: always() && github.event_name == 'workflow_dispatch' && inputs.auto_restart == true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "🔄 Auto-restart enabled. Triggering next workflow run..."
+          gh workflow run run.yml \
+            --ref "${{ github.ref_name }}" \
+            -f runner_duration="${{ inputs.runner_duration || '350' }}" \
+            -f node_version="${{ inputs.node_version || '24' }}" \
+            -f auto_restart=true || echo "⚠️ Could not trigger next workflow cycle (check token permissions)."
