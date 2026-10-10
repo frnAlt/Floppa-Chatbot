@@ -580,13 +580,11 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
 
     let topic;
     const queue = {
-      sync_api_version: 11,
+      sync_api_version: 10,
       max_deltas_able_to_process: 1000,
       delta_batch_size: 1000,
       encoding: 'JSON',
-      entity_fbid: ctx.userID,
-      initial_titan_sequence_id: (ctx.lastSeqId && ctx.lastSeqId !== "-1") ? String(ctx.lastSeqId) : "0",
-      device_params: null
+      entity_fbid: ctx.userID
     };
 
     if (ctx.syncToken) {
@@ -595,6 +593,8 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
       queue.sync_token = ctx.syncToken;
     } else {
       topic = "/messenger_sync_create_queue";
+      queue.initial_titan_sequence_id = (ctx.lastSeqId && ctx.lastSeqId !== "-1") ? String(ctx.lastSeqId) : "0";
+      queue.device_params = null;
     }
 
     client.subscribe(topics, { qos: 1 }, (err) => {
@@ -1363,14 +1363,16 @@ module.exports = function(defaultFuncs, api, ctx) {
             error: "getSeqId: there was no successful_results",
             res: resData
           };
-          if (resData[0].o0.data.viewer.message_threads.sync_sequence_id) {
+          if (resData[0]?.o0?.data?.viewer?.message_threads?.sync_sequence_id) {
             ctx.lastSeqId = resData[0].o0.data.viewer.message_threads.sync_sequence_id;
             ctx.getSeqIdRetryCount = 0;
             listenMqtt(defaultFuncs, api, ctx, globalCallback);
-          } else throw {
-            error: "getSeqId: no sync_sequence_id found.",
-            res: resData
-          };
+          } else {
+            log.warn("getSeqId", "sync_sequence_id not present in response, defaulting sequence to 0 for initial queue sync.");
+            ctx.lastSeqId = "0";
+            ctx.getSeqIdRetryCount = 0;
+            listenMqtt(defaultFuncs, api, ctx, globalCallback);
+          }
         }
       })
       .catch((err) => {

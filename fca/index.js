@@ -275,7 +275,7 @@ const DEFAULT_OPTIONS = {
     autoReLogin: false,
     online: true,
     emitReady: false,
-    preferMqttSend: true,
+    preferMqttSend: false,
     antiBan: {
         enabled: true,
         spoofIP: true,

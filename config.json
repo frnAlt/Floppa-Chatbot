@@ -188,7 +188,7 @@
     "persona": "desktop",
     "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
     "stealthMode": true,
-    "preferMqttSend": true,
+    "preferMqttSend": false,
     "maxConcurrentRequests": 10,
     "maxRequestsPerMinute": 150,
     "requestCooldownMs": 0,

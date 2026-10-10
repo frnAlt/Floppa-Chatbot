@@ -443,12 +443,15 @@ module.exports = (defaultFuncs, api, ctx) => {
       try {
         const mqttReady = ctx.mqttClient && ctx.mqttClient.connected;
         isSingleUser = !isMultiRecipient && !(await isGroupThread(threadID, isGroup));
-        const preferMqtt = Boolean(mqttReady && !isMultiRecipient && api.sendMessageMqtt && ctx.globalOptions?.preferMqttSend !== false);
+        const preferMqtt = Boolean(mqttReady && !isMultiRecipient && api.sendMessageMqtt && ctx.globalOptions?.preferMqttSend === true);
 
         let result;
         if (preferMqtt) {
           try {
             result = await api.sendMessageMqtt(msg, threadID, replyToMessage);
+            if (!result || !result.messageID) {
+              result = await sendViaHttp(msg, threadID, replyToMessage, isGroup);
+            }
           } catch (mqttErr) {
             // For 1-on-1 direct messages or non-threaded threads, retry MQTT without reply metadata
             if (replyToMessage) {
@@ -456,7 +459,7 @@ module.exports = (defaultFuncs, api, ctx) => {
                 result = await api.sendMessageMqtt(msg, threadID, undefined);
               } catch (_) {}
             }
-            if (!result) {
+            if (!result || !result.messageID) {
               utils.warn("sendMessage", "MQTT send failed, attempting HTTP fallback:", mqttErr?.message || mqttErr);
               try {
                 result = await sendViaHttp(msg, threadID, replyToMessage, isGroup);

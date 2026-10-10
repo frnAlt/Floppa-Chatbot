@@ -193,7 +193,7 @@ module.exports = function (defaultFuncs, api, ctx) {
     cb();
   }
 
-  function send(form, threadID, callback, replyToMessage) {
+  function send(form, threadID, callback, replyToMessage, otid) {
     if (replyToMessage) {
       form.payload.tasks[0].payload.reply_metadata = {
         reply_source_id: replyToMessage,
@@ -202,6 +202,10 @@ module.exports = function (defaultFuncs, api, ctx) {
       };
     }
     const mqttClient = ctx.mqttClient;
+    if (!mqttClient || !mqttClient.connected) {
+      const connErr = new Error("MQTT client is not connected");
+      return callback(connErr);
+    }
     form.payload.tasks.forEach((task) => {
       task.payload = JSON.stringify(task.payload);
     });
@@ -209,28 +213,59 @@ module.exports = function (defaultFuncs, api, ctx) {
     return mqttClient.publish(
       "/ls_req",
       JSON.stringify(form),
-      function (err, data) {
+      function (err) {
         if (err) {
           utils.error("Error publishing message: ", err);
           callback(err);
         } else {
-          callback(null, data);
+          const messageInfo = {
+            threadID: threadID ? threadID.toString() : "",
+            messageID: otid ? otid.toString() : utils.generateOfflineThreadingID(),
+            timestamp: Date.now()
+          };
+          callback(null, messageInfo);
         }
       },
     );
   }
 
   return function sendMessageMqtt(msg, threadID, callback, replyToMessage) {
+    let resolveFunc = () => {};
+    let rejectFunc = () => {};
+    const returnPromise = new Promise((resolve, reject) => {
+      resolveFunc = resolve;
+      rejectFunc = reject;
+    });
+
     if (
       !callback &&
       (utils.getType(threadID) === "Function" ||
         utils.getType(threadID) === "AsyncFunction")
     ) {
-      return threadID({ error: "Pass a threadID as a second argument." });
+      const err = new Error("Pass a threadID as a second argument.");
+      threadID(err);
+      return Promise.reject(err);
     }
     if (!replyToMessage && utils.getType(callback) === "String") {
       replyToMessage = callback;
-      callback = function () {};
+      callback = undefined;
+    }
+
+    const originalCb = typeof callback === "function" ? callback : null;
+    callback = function (err, data) {
+      if (err) {
+        if (originalCb) originalCb(err);
+        rejectFunc(err);
+        return;
+      }
+      if (originalCb) originalCb(null, data);
+      resolveFunc(data);
+    };
+
+    if (!ctx.mqttClient || !ctx.mqttClient.connected) {
+      const connErr = new Error("MQTT client is not connected");
+      callback(connErr);
+      return returnPromise;
     }
 
     if (!callback) {
@@ -306,11 +341,13 @@ module.exports = function (defaultFuncs, api, ctx) {
         handleMention(msg, form, callback, function () {
           handleSticker(msg, form, callback, function () {
             handleAttachment(msg, form, callback, function () {
-              send(form, threadID, callback, replyToMessage);
+              send(form, threadID, callback, replyToMessage, otid);
             });
           });
         });
       });
     });
+
+    return returnPromise;
   };
 };

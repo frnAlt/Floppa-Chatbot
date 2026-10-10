@@ -107,8 +107,7 @@ async function getName(userID, apiInstance) {
 				return userInfo[userID].name;
 			}
 		}
-		const user = await axios.post(`https://www.facebook.com/api/graphql/?q=${`node(${userID}){name}`}`);
-		return user?.data?.[userID]?.name || null;
+		return null;
 	}
 	catch (error) {
 		return null;
