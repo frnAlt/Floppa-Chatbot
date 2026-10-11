@@ -504,7 +504,8 @@ async function listenMqtt(defaultFuncs, api, ctx, globalCallback, scheduleReconn
                 ctx._tmsTimeout = null;
             }
             ctx._tmsReceived = true;
-            if (ctx.globalOptions.emitReady) {
+            utils.log("MQTT", "Initial sync established with Facebook (/t_ms received). Live listening is active.");
+            if (ctx.globalOptions.emitReady !== false) {
                 globalCallback(null, { type: "ready", timestamp: Date.now() });
             }
             try {
@@ -517,8 +518,18 @@ async function listenMqtt(defaultFuncs, api, ctx, globalCallback, scheduleReconn
     mqttClient.on('message', guard("message", async (topic, message, _packet) => {
         try {
             ctx._lastMqttMessageAt = Date.now();
-            let jsonMessage = Buffer.isBuffer(message) ? Buffer.from(message).toString() : message;
-            try { jsonMessage = JSON.parse(jsonMessage); } catch (_) { jsonMessage = {}; }
+            let rawStr = Buffer.isBuffer(message) ? Buffer.from(message).toString() : message;
+            let jsonMessage;
+            try { 
+                jsonMessage = JSON.parse(rawStr); 
+            } catch (_) { 
+                if (typeof rawStr === "string" && (rawStr.includes("IRIS_CURSOR_LIMIT") || rawStr.includes("CURSOR"))) {
+                    utils.warn("MQTT", `IRIS cursor limit encountered on topic ${topic}, refreshing sequence ID...`);
+                    if (ctx.tmsWait && typeof ctx.tmsWait === "function") ctx.tmsWait();
+                    getSeqIDWrapper();
+                }
+                jsonMessage = {}; 
+            }
 
             const callbackToUse = (err, data) => {
                 if (typeof ctx._listenCallback === 'function') {
@@ -539,7 +550,7 @@ async function listenMqtt(defaultFuncs, api, ctx, globalCallback, scheduleReconn
                     actorFbId: jsonMessage.from.toString(), 
                     timestamp: Date.now().toString() 
                 });
-            } else if (topic === "/t_ms" || topic === "/messaging_events" || topic === "/mercury") {
+            } else if (topic === "/t_ms" || topic === "/messaging_events" || topic === "/mercury" || topic === "/inbox" || topic === "/orca_message_notifications") {
                 if (ctx.tmsWait && typeof ctx.tmsWait === "function") ctx.tmsWait();
 
                 if (jsonMessage.firstDeltaSeqId && jsonMessage.syncToken) {

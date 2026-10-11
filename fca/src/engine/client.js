@@ -31,7 +31,7 @@ const DEFAULT_OPTIONS = {
     mqttStaleMs: 300000,
     mqttKeepalive: 10,
     online: true,
-    emitReady: false,
+    emitReady: true,
     preferMqttSend: true,
     userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.182 Safari/537.36",
 };

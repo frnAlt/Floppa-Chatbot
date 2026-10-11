@@ -1676,6 +1676,18 @@ async function startBot(loginWithEmail) {
                         } else {
                                 log.info("BOT_MODE", "Bot is active and accepting commands for all users (botOff: false).");
                         }
+
+                        // Periodic runner heartbeat to provide continuous live confirmation in GitHub Actions and CI logs
+                        if (!global.__runnerHeartbeatInterval) {
+                                global.__runnerHeartbeatInterval = setInterval(() => {
+                                        try {
+                                                const uptimeStr = global.utils ? global.utils.convertTime(Date.now() - global.GoatBot.startTime) : `${Math.floor(process.uptime())}s`;
+                                                const memMB = (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(1);
+                                                const isMqttConnected = !!(api && api.ctx && api.ctx.mqttClient && api.ctx.mqttClient.connected);
+                                                log.info("HEARTBEAT", `Bot ONLINE & listening | Uptime: ${uptimeStr} | Memory: ${memMB} MB | MQTT: ${isMqttConnected ? "Connected" : "Reconnecting"}`);
+                                        } catch (_) {}
+                                }, 120000);
+                        }
                 });
         })(appState);
 
