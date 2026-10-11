@@ -12,7 +12,7 @@ module.exports = async function (usersData, threadsData, event) {
         const senderID = event.senderID || event.author || event.userID;
 
         // ———————————— CHECK THREAD DATA ———————————— //
-        if (threadID) {
+        if (threadID && !event.isE2EE) {
                 try {
                         if (!global.temp) global.temp = {};
                         if (!global.temp.createThreadDataError) global.temp.createThreadDataError = [];

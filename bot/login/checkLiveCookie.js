@@ -103,6 +103,9 @@ module.exports = async function (cookie, userAgent) {
 			dataStr.includes('"actorID"') ||
 			dataStr.includes('"ACCOUNT_ID"') ||
 			dataStr.includes('action="/logout.php"') ||
+			dataStr.includes('/privacy/xcs/action/logging/') ||
+			dataStr.includes('/notifications.php?') ||
+			dataStr.includes('href="/login/save-password-interstitial') ||
 			dataStr.includes('name="fb_dtsg"') ||
 			dataStr.includes('["DTSGInitData"') ||
 			dataStr.includes('"DTSGInitialData"');

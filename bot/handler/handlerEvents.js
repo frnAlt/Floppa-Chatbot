@@ -400,21 +400,11 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                 let threadData = global.db.threadMap?.get(String(threadID)) || global.db.allThreadData.find(t => String(t.threadID) === String(threadID));
                 let userData = global.db.userMap?.get(String(senderID)) || global.db.allUserData.find(u => String(u.userID) === String(senderID));
 
-                if (!userData && !isNaN(senderID)) {
-                        try {
-                                userData = await usersData.create(senderID);
-                        } catch (err) {
-                                userData = global.db.userMap?.get(String(senderID)) || global.db.allUserData.find(u => String(u.userID) === String(senderID)) || { userID: String(senderID), name: `User ${senderID}`, money: 0, exp: 0, data: {} };
-                        }
-                }
-
-                if (!threadData && !isNaN(threadID)) {
-                        try {
-                                threadData = await threadsData.create(threadID, null, Boolean(isGroup));
-                        } catch (err) {
-                                threadData = global.db.threadMap?.get(String(threadID)) || global.db.allThreadData.find(t => String(t.threadID) === String(threadID)) || {
+                if (event.isE2EE) {
+                        if (!threadData) {
+                                threadData = {
                                         threadID: String(threadID),
-                                        threadName: isGroup ? "Group Chat" : "Direct Message",
+                                        threadName: isGroup ? "E2EE Group Chat" : "E2EE Chat",
                                         members: [{ userID: String(senderID), inGroup: true, permissionConfigDashboard: false }],
                                         adminIDs: [],
                                         settings: {},
@@ -422,24 +412,59 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                         isGroup: Boolean(isGroup)
                                 };
                         }
-                        if (global.db) {
-                                if (!global.db.receivedTheFirstMessage) global.db.receivedTheFirstMessage = {};
-                                global.db.receivedTheFirstMessage[threadID] = true;
+                        if (!userData) {
+                                userData = {
+                                        userID: String(senderID),
+                                        name: `User ${senderID}`,
+                                        exp: 0,
+                                        money: 0,
+                                        banned: { status: false },
+                                        settings: {},
+                                        data: {}
+                                };
                         }
-                }
-                else {
-                        const isMessageEvent = event.type === "message" || event.type === "message_reply";
-                        if (
-                                autoRefreshThreadInfoFirstTime === true
-                                && isMessageEvent
-                                && !global.db?.receivedTheFirstMessage?.[threadID]
-                                && Boolean(isGroup)
-                        ) {
+                } else {
+                        if (!userData && !isNaN(senderID)) {
+                                try {
+                                        userData = await usersData.create(senderID);
+                                } catch (err) {
+                                        userData = global.db.userMap?.get(String(senderID)) || global.db.allUserData.find(u => String(u.userID) === String(senderID)) || { userID: String(senderID), name: `User ${senderID}`, money: 0, exp: 0, data: {} };
+                                }
+                        }
+
+                        if (!threadData && !isNaN(threadID)) {
+                                try {
+                                        threadData = await threadsData.create(threadID, null, Boolean(isGroup));
+                                } catch (err) {
+                                        threadData = global.db.threadMap?.get(String(threadID)) || global.db.allThreadData.find(t => String(t.threadID) === String(threadID)) || {
+                                                threadID: String(threadID),
+                                                threadName: isGroup ? "Group Chat" : "Direct Message",
+                                                members: [{ userID: String(senderID), inGroup: true, permissionConfigDashboard: false }],
+                                                adminIDs: [],
+                                                settings: {},
+                                                data: { prefix: config.prefix || "!" },
+                                                isGroup: Boolean(isGroup)
+                                        };
+                                }
                                 if (global.db) {
                                         if (!global.db.receivedTheFirstMessage) global.db.receivedTheFirstMessage = {};
                                         global.db.receivedTheFirstMessage[threadID] = true;
                                 }
-                                threadsData.refreshInfo(threadID).catch(() => {});
+                        }
+                        else {
+                                const isMessageEvent = event.type === "message" || event.type === "message_reply";
+                                if (
+                                        autoRefreshThreadInfoFirstTime === true
+                                        && isMessageEvent
+                                        && !global.db?.receivedTheFirstMessage?.[threadID]
+                                        && Boolean(isGroup)
+                                ) {
+                                        if (global.db) {
+                                                if (!global.db.receivedTheFirstMessage) global.db.receivedTheFirstMessage = {};
+                                                global.db.receivedTheFirstMessage[threadID] = true;
+                                        }
+                                        threadsData.refreshInfo(threadID).catch(() => {});
+                                }
                         }
                 }
 
@@ -492,7 +517,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                 event.targetID = repliedUID;
                         }
                 }
-                const prefix = getPrefix(threadID);
+                const prefix = event.isE2EE ? (config.prefix || "!") : getPrefix(threadID);
                 const role = getRole(threadData, senderID);
                 const input = new InputClass({ api, event, message, role, prefix, args: body ? body.trim().split(/\s+/).slice(1) : [] });
                 const output = new OutputClass({ api, event, message });
