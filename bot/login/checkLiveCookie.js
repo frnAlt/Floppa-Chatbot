@@ -35,6 +35,12 @@ module.exports = async function (cookie, userAgent) {
 			} catch (_) {}
 		}
 
+		if (cookieString.includes("xs=") && cookieString.includes("%3A")) {
+			cookieString = cookieString.replace(/xs=([^;]+)/g, (match, p1) => {
+				try { return "xs=" + decodeURIComponent(p1); } catch (_) { return match; }
+			});
+		}
+
 		const ua = userAgent || DEFAULT_DESKTOP_AGENT;
 		const isMobile = /Android|iPhone|iPad|Mobile/i.test(ua);
 		const targetUrl = isMobile ? "https://mbasic.facebook.com/" : "https://www.facebook.com/";

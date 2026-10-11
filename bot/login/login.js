@@ -671,9 +671,14 @@ async function getAppStateToLogin(loginWithEmail) {
                                         appState = accountText.split(';')
                                                 .map(i => {
                                                         const [key, ...vParts] = i.split('=');
+                                                        const k = (key || "").trim();
+                                                        let val = vParts.join("=").trim().replace(/^"(.*)"$/, "$1");
+                                                        if (k.toLowerCase() === "xs" && val.includes("%3A")) {
+                                                                try { val = decodeURIComponent(val); } catch (_) {}
+                                                        }
                                                         return {
-                                                                key: (key || "").trim(),
-                                                                value: vParts.join("=").trim().replace(/^"(.*)"$/, "$1"),
+                                                                key: k,
+                                                                value: val,
                                                                 domain: "facebook.com",
                                                                 path: "/",
                                                                 hostOnly: false,

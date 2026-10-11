@@ -1,6 +1,24 @@
 "use strict";
 
 /**
+ * Normalizes a cookie value, ensuring URL-encoded colons (%3A) in xs session tokens
+ * are properly decoded to literal colons expected by Facebook auth endpoints.
+ * @param {string} key - Cookie name/key.
+ * @param {any} value - Cookie raw value.
+ * @returns {string} Normalized cookie value.
+ */
+function normalizeCookieValue(key, value) {
+    if (typeof value !== "string") value = String(value !== null && value !== undefined ? value : "");
+    let cleanVal = value.trim().replace(/^"(.*)"$/, "$1");
+    if (String(key).toLowerCase() === "xs" && cleanVal.includes("%3A")) {
+        try {
+            cleanVal = decodeURIComponent(cleanVal);
+        } catch (_) {}
+    }
+    return cleanVal;
+}
+
+/**
  * Formats a cookie array into a string for use in a cookie jar.
  * @param {Array<string>} arr - An array containing cookie parts.
  * @param {string} url - The base URL for the cookie domain.
@@ -36,7 +54,8 @@ function normalizeCookieHeaderString(cookieString) {
         if (eqIndex <= 0) continue;
 
         const key = part.slice(0, eqIndex).trim();
-        const value = part.slice(eqIndex + 1).trim().replace(/^"(.*)"$/, "$1");
+        const rawValue = part.slice(eqIndex + 1).trim();
+        const value = normalizeCookieValue(key, rawValue);
 
         if (!key) continue;
         output.push(`${key}=${value}`);
@@ -102,7 +121,8 @@ function setJarFromCookies(jar, cookies, defaultUrl = "https://www.facebook.com/
             cookie.sameSite ? `SameSite=${cookie.sameSite}` : ""
         ].filter(Boolean);
 
-        const cookieStr = `${name}=${cookie.value}; ${attributes.join("; ")}`;
+        const cleanValue = normalizeCookieValue(name, cookie.value);
+        const cookieStr = `${name}=${cleanValue}; ${attributes.join("; ")}`;
         try {
             if (typeof jar.setCookieSync === 'function') {
                 jar.setCookieSync(cookieStr, url);
@@ -157,9 +177,10 @@ function parseUniversalCookies(input) {
             if (!item || typeof item !== "object") {
                 if (typeof item === "string" && item.includes("=")) {
                     const [k, ...vParts] = item.split("=");
+                    const key = k.trim();
                     return {
-                        key: k.trim(),
-                        value: vParts.join("=").trim().replace(/^"(.*)"$/, "$1"),
+                        key,
+                        value: normalizeCookieValue(key, vParts.join("=")),
                         domain: "facebook.com",
                         path: "/",
                         hostOnly: false,
@@ -170,11 +191,10 @@ function parseUniversalCookies(input) {
                 return null;
             }
             const key = item.key || item.name;
-            const value = item.value !== undefined && item.value !== null ? String(item.value) : "";
             if (!key) return null;
             return {
                 key: String(key).trim(),
-                value: value.trim().replace(/^"(.*)"$/, "$1"),
+                value: normalizeCookieValue(key, item.value),
                 domain: item.domain ? String(item.domain).replace(/^\./, "") : "facebook.com",
                 path: item.path || "/",
                 hostOnly: item.hostOnly ?? false,
@@ -194,7 +214,7 @@ function parseUniversalCookies(input) {
         // Key-value dictionary e.g. { c_user: "...", xs: "..." }
         return Object.entries(raw).map(([key, value]) => ({
             key: String(key).trim(),
-            value: String(value !== null && value !== undefined ? value : "").trim().replace(/^"(.*)"$/, "$1"),
+            value: normalizeCookieValue(key, value),
             domain: "facebook.com",
             path: "/",
             hostOnly: false,
@@ -265,10 +285,11 @@ function parseUniversalCookies(input) {
                 const path = parts[2].trim() || '/';
                 const exp = Number(parts[4]);
                 const key = parts[5].trim();
-                let value = parts[6].trim().replace(/^"(.*)"$/, '$1');
-                if (value.includes('#')) {
-                    value = value.split('#')[0].trim();
+                let rawVal = parts[6].trim().replace(/^"(.*)"$/, '$1');
+                if (rawVal.includes('#')) {
+                    rawVal = rawVal.split('#')[0].trim();
                 }
+                const value = normalizeCookieValue(key, rawVal);
                 if (key && value && key !== 'x-referer') {
                     cookies.push({
                         key,
@@ -299,7 +320,7 @@ function parseUniversalCookies(input) {
         const eqIdx = pair.indexOf('=');
         if (eqIdx <= 0) continue;
         const key = pair.slice(0, eqIdx).trim();
-        const value = pair.slice(eqIdx + 1).trim().replace(/^"(.*)"$/, "$1");
+        const value = normalizeCookieValue(key, pair.slice(eqIdx + 1).trim());
         if (!key || !value || key.toLowerCase() === "cookie" || key === "x-referer") continue;
         result.push({
             key,
