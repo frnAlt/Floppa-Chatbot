@@ -384,6 +384,42 @@ async function loginHelper(credentials, globalOptions, callback, setOptionsFunc,
             api.sendMessageDM = (msg, threadID, callback, replyToMessage) => {
                 return api.sendMessage(msg, threadID, callback, replyToMessage, false);
             };
+            if (!api.sendMention) {
+                api.sendMention = (text, mentions, threadID, callback) => {
+                    if (typeof threadID === 'function') {
+                        callback = threadID;
+                        threadID = null;
+                    }
+                    return api.sendMessage({ body: text, mentions }, threadID, callback);
+                };
+            }
+        }
+
+        if (api.sendMessageMqtt && !api.sendMqttMessage) {
+            api.sendMqttMessage = api.sendMessageMqtt;
+        }
+        if (api.unsendMessage && !api.unsendMqttMessage) {
+            api.unsendMqttMessage = api.unsendMessage;
+        }
+        if (api.setThreadTheme && !api.changeThreadTheme) {
+            api.changeThreadTheme = api.setThreadTheme;
+        }
+        if (api.createAITheme && !api.generateAiTheme) {
+            api.generateAiTheme = api.createAITheme;
+        }
+        if (api.getUserID && !api.getUID) {
+            api.getUID = api.getUserID;
+            api.findUID = api.getUserID;
+        }
+        if (api.friend && typeof api.friend.requests === 'function' && !api.getPendingFriendRequests) {
+            api.getPendingFriendRequests = (callback) => {
+                const p = api.friend.requests();
+                if (typeof callback === 'function') {
+                    p.then(res => callback(null, res)).catch(err => callback(err));
+                    return;
+                }
+                return p;
+            };
         }
 
         try {

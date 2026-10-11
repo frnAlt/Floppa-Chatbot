@@ -540,6 +540,32 @@ test("xtreme-fca dependency is loadable and interoperable", () => {
   assert.ok(typeof xtreme === "function" || typeof xtreme.login === "function");
 });
 
+test("uniqueUserAgent generates valid, unique user agents", () => {
+  assert.ok(typeof fca.uniqueUserAgent === "function");
+  const ua = fca.uniqueUserAgent({ mobile: false });
+  assert.ok(typeof ua === "string" && ua.length > 20);
+  assert.ok(ua.startsWith("Mozilla/5.0"));
+
+  const multiple = fca.getMultipleUserAgents(5);
+  assert.strictEqual(multiple.length, 5);
+  const uniqueSet = new Set(multiple);
+  assert.strictEqual(uniqueSet.size, 5);
+});
+
+test("CookieUtils parses Netscape, JSON, and Header formats accurately", () => {
+  assert.ok(fca.CookieUtils);
+  const netscapeSample = "# Netscape HTTP Cookie File\n.facebook.com\tTRUE\t/\tTRUE\t1823227701\tc_user\t61593675886067\n";
+  const jar = fca.CookieUtils.parse(netscapeSample);
+  const appState = fca.CookieUtils.toAppState(jar);
+  assert.ok(Array.isArray(appState));
+  assert.ok(appState.some(c => c.key === "c_user" && c.value === "61593675886067"));
+
+  const jsonSample = [{ name: "xs", value: "test_xs_token", domain: ".facebook.com" }];
+  const jar2 = fca.CookieUtils.parse(jsonSample);
+  const appState2 = fca.CookieUtils.toAppState(jar2);
+  assert.ok(appState2.some(c => c.key === "xs" && c.value === "test_xs_token"));
+});
+
 test("optional live login works when credentials are provided", async () => {
   const integration = loadIntegrationCredentials();
   if (!integration) {

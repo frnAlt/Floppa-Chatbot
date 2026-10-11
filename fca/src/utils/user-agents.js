@@ -389,6 +389,8 @@ function cachePersonaData(options, personaData) {
     return options;
 }
 
+const uniqueUserAgent = require("./uniqueUserAgent");
+
 module.exports = {
     defaultUserAgent,
     windowsUserAgent: defaultUserAgent,
@@ -400,4 +402,7 @@ module.exports = {
     randomOrcaUA,
     generateUserAgentByPersona,
     cachePersonaData,
+    uniqueUserAgent,
+    getRandomUserAgent: uniqueUserAgent.getRandomUserAgent || uniqueUserAgent,
+    getMultipleUserAgents: uniqueUserAgent.getMultipleUserAgents,
 };

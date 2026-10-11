@@ -282,6 +282,20 @@ try {
 } catch (_) {}
 
 try {
+    const CookieUtils = require("./src/utils/cookieUtils");
+    module.exports.CookieUtils = CookieUtils;
+    module.exports.cookieUtils = CookieUtils;
+} catch (_) {}
+
+try {
+    const uniqueUserAgent = require("./src/utils/uniqueUserAgent");
+    module.exports.uniqueUserAgent = uniqueUserAgent;
+    module.exports.getRandomUserAgent = uniqueUserAgent.getRandomUserAgent || uniqueUserAgent;
+    module.exports.getMultipleUserAgents = uniqueUserAgent.getMultipleUserAgents;
+    module.exports.randomUserAgent = uniqueUserAgent.getRandomUserAgent || uniqueUserAgent;
+} catch (_) {}
+
+try {
     const antiSuspension = require("./src/utils/antiSuspension");
     module.exports.globalAntiSuspension = antiSuspension.globalAntiSuspension;
 } catch (_) {}
