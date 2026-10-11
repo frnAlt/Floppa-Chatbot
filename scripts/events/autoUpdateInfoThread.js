@@ -11,26 +11,40 @@ module.exports = {
 		if (!types.includes(event.logMessageType))
 			return;
 		const { threadID, logMessageData, logMessageType } = event;
-		const threadInfo = await threadsData.get(event.threadID);
+		let threadInfo = await threadsData.get(event.threadID);
+		if (!threadInfo) {
+			threadInfo = await threadsData.create(event.threadID).catch(() => null);
+		}
+		if (!threadInfo)
+			return;
 		// eslint-disable-next-line prefer-const
-		let { members, adminIDs } = threadInfo;
+		let { members = [], adminIDs = [] } = threadInfo;
+		if (!Array.isArray(members)) members = [];
+		if (!Array.isArray(adminIDs)) adminIDs = [];
 		switch (logMessageType) {
 			case "log:subscribe":
 				return async function () {
 					const { addedParticipants } = event.logMessageData;
-					const threadInfo_Fca = await api.getThreadInfo(threadID);
-					threadsData.refreshInfo(threadID, threadInfo_Fca);
+					let threadInfo_Fca;
+					try {
+						threadInfo_Fca = await api.getThreadInfo(threadID);
+					} catch (_) {
+						threadInfo_Fca = null;
+					}
+					if (!threadInfo_Fca) return;
+					threadsData.refreshInfo(threadID, threadInfo_Fca).catch(() => {});
 
 					for (const user of addedParticipants) {
 						let oldData = members.find(member => member.userID === user.userFbId);
 						const isOldMember = oldData ? true : false;
 						oldData = oldData || {};
-						const { userInfo, nicknames } = threadInfo_Fca;
+						const userInfo = Array.isArray(threadInfo_Fca.userInfo) ? threadInfo_Fca.userInfo : [];
+						const nicknames = threadInfo_Fca.nicknames || {};
 
 						const newData = {
 							userID: user.userFbId,
 							name: user.fullName,
-							gender: userInfo.find(u => u.id == user.userFbId)?.gender,
+							gender: userInfo.find(u => u.id == user.userFbId)?.gender || "UNKNOWN",
 							nickname: nicknames[user.userFbId] || null,
 							inGroup: true,
 							count: oldData.count || 0

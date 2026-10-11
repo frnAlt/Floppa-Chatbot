@@ -35,8 +35,9 @@ module.exports = {
 
 		return async function () {
 			const { threadID, author } = event;
-			const threadData = await threadsData.get(threadID).catch(() => ({}));
-			if (threadData?.settings?.sendLeaveMessage === false)
+			let threadData = await threadsData.get(threadID).catch(() => null);
+			threadData = threadData || {};
+			if (threadData.settings?.sendLeaveMessage === false)
 				return;
 
 			const { leftParticipantFbId } = event.logMessageData;

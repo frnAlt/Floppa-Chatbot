@@ -221,7 +221,7 @@ module.exports = async function (databaseType, threadModel, api, fakeGraphql) {
 					} else {
 						try {
 							const fetchPromise = api.getThreadInfo(threadID);
-							const timeoutPromise = new Promise((_, rej) => setTimeout(() => rej(new Error("Timeout")), 600));
+							const timeoutPromise = new Promise((_, rej) => setTimeout(() => rej(new Error("Timeout")), 5000));
 							threadInfo = await Promise.race([fetchPromise, timeoutPromise]);
 						} catch (err) {
 							threadInfo = {

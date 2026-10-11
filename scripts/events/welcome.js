@@ -46,11 +46,15 @@ module.exports = {
 			let threadData;
 			try {
 				threadData = await threadsData.get(threadID);
+				if (!threadData) {
+					threadData = await threadsData.create(threadID).catch(() => null);
+				}
 			} catch (_) {
-				return;
+				threadData = null;
 			}
+			threadData = threadData || {};
 
-			const settings = threadData?.settings || {};
+			const settings = threadData.settings || {};
 
 			// ── Case 1: Bot itself joined ──
 			if (addedParticipants.some(item => String(item.userFbId) === botID)) {

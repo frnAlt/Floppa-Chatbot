@@ -21,9 +21,9 @@ module.exports = {
                 if (event.logMessageType == "log:subscribe")
                         return async function () {
                                 const { threadID } = event;
-                                const { data } = await threadsData.get(event.threadID);
-                                const { warn: warnList } = data;
-                                if (!warnList)
+                                const threadRecord = await threadsData.get(event.threadID).catch(() => null);
+                                const warnList = threadRecord?.data?.warn;
+                                if (!warnList || !Array.isArray(warnList))
                                         return;
                                 const { addedParticipants } = event.logMessageData;
                                 for (const user of addedParticipants) {
