@@ -410,6 +410,13 @@ async function loginHelper(credentials, globalOptions, callback, setOptionsFunc,
         api.ctx = ctx;
         api.defaultFuncs = defaultFuncs;
         api.globalOptions = globalOptions;
+        api.api = api;
+        api.userID = String(ctx.userID);
+        api.fbid = String(ctx.userID);
+        try {
+            const { attachClientFacade } = require('../../app/createFcaClient');
+            attachClientFacade(api);
+        } catch (_) {}
 
         // Expose EventEmitter interface on the API so consumers can subscribe to
         // key lifecycle events: 'sessionExpired', 'checkpoint', 'relogin', 'ready'

@@ -42,7 +42,7 @@ function resolveFcaEngine(requestedEngine) {
 		const localFca = defaultRequire(path.join(process.cwd(), "fca"));
 		const fn = typeof localFca === "function" ? localFca : (localFca.login || localFca.default || localFca);
 		if (typeof fn === "function") {
-			activeFcaEngine = "floppa-native (local v5.2.0)";
+			activeFcaEngine = "@floppa/fca-native v5.2.0 (Native Local Engine)";
 			return fn;
 		}
 	} catch (_) {}

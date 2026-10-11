@@ -44,6 +44,7 @@ database/data/*.db
 database/data/*.bak
 database/data/test_atomic*
 Horizon_Database/
+metachat_database/
 
 # Logs, Dumps & Diagnostics
 *.log

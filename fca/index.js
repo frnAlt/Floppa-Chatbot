@@ -258,113 +258,11 @@ if (!global.Fca) {
     } catch (_) {}
 }
 
-const loginMain = require("./Main");
-
-const DEFAULT_OPTIONS = {
-    selfListen: false,
-    selfListenEvent: false,
-    listenEvents: true,
-    listenTyping: false,
-    simulateTyping: false,
-    updatePresence: false,
-    forceLogin: false,
-    autoMarkDelivery: false,
-    autoMarkRead: false,
-    autoReconnect: true,
-    autoListen: false,
-    autoReLogin: false,
-    online: true,
-    emitReady: false,
-    preferMqttSend: false,
-    antiBan: {
-        enabled: true,
-        spoofIP: true,
-        rotateIPOnBlock: true,
-        ignoreIPBan: true,
-        randomizeUserAgent: true,
-        maxRetries: 4,
-        backoffMs: 1500
-    },
-    userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.182 Safari/537.36"
-};
-
-/**
- * Initiates the login process for a Facebook account.
- * Supports both Callback and Promise styles.
- *
- * @param {object} credentials - User credentials ({ appState } or { email, password }).
- * @param {object|function} [options={}] - Options object or callback.
- * @param {function} [callback] - Callback (err, api).
- * @returns {Promise<object>|void}
- */
-function login(credentials, options, callback) {
-    if (typeof options === "function") {
-        callback = options;
-        options = {};
-    }
-
-    const mergedOptions = Object.assign({}, DEFAULT_OPTIONS, options || {});
-
-    let returnPromise = null;
-    let resolveFunc = null;
-    let rejectFunc = null;
-
-    if (typeof callback !== "function") {
-        returnPromise = new Promise(function(resolve, reject) {
-            resolveFunc = resolve;
-            rejectFunc = reject;
-        });
-        callback = function(err, api) {
-            if (err) return rejectFunc(err);
-            resolveFunc(api);
-        };
-    }
-
-    try {
-        loginMain(credentials, mergedOptions, function(err, api) {
-            if (err) return callback(err);
-            return callback(null, api);
-        });
-    } catch (err) {
-        callback(err);
-    }
-
-    return returnPromise;
-}
-
-/**
- * Promise-based login returning an FcaContext wrapper.
- */
-async function loginAsync(credentials, options = {}) {
-    return new Promise(function(resolve, reject) {
-        login(credentials, options, function(err, api) {
-            if (err) return reject(err);
-            const userID = api.getCurrentUserID ? String(api.getCurrentUserID()) : (api.ctx && api.ctx.userID) || "";
-            resolve({
-                api,
-                userID,
-                cookieString: api.getAppState ? JSON.stringify(api.getAppState()) : "",
-                ctx: api.ctx || {}
-            });
-        });
-    });
-}
-
-/**
- * Legacy callback-based login wrapper.
- */
-function loginLegacy(credentials, options, callback) {
-    if (typeof options === "function") {
-        callback = options;
-        options = {};
-    }
-    const p = loginAsync(credentials, options || {});
-    if (typeof callback === "function") {
-        p.then(ctx => callback(null, ctx)).catch(err => callback(err));
-        return;
-    }
-    return p;
-}
+const { login, loginAsync, loginLegacy, DEFAULT_OPTIONS } = require('./src/engine/client');
+let loginMain = null;
+try {
+    loginMain = require("./Main");
+} catch (_) {}
 
 module.exports = login;
 module.exports.login = login;
@@ -372,6 +270,7 @@ module.exports.default = login;
 module.exports.loginAsync = loginAsync;
 module.exports.loginLegacy = loginLegacy;
 module.exports.DEFAULT_OPTIONS = DEFAULT_OPTIONS;
+module.exports.loginMain = loginMain;
 
 // Utilities & GoatBot v2 Integration Helpers
 try {

@@ -109,6 +109,7 @@ async function loginAsync(credentials, options = {}) {
     return {
         api: loginApi,
         userID,
+        fbid: userID,
         cookieString: loginApi.getAppState ? JSON.stringify(loginApi.getAppState()) : "",
         ctx: loginApi.ctx || {},
     };
