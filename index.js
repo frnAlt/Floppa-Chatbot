@@ -2,6 +2,7 @@
  * @author Gtajisan (Farhan Muh Tasim)
  * ! Floppa-Chatbot Core Starter
  * ! Official repository: https://github.com/frnAlt/Floppa-Chatbot
+ * Ecosystem Credits: Priyansh Rajput • NTKhang • Neoaz (xtreme-fca) • DongDev • frnAlt
  */
 
 const { spawn } = require("child_process");
@@ -17,23 +18,10 @@ if (process.stderr._handle && typeof process.stderr._handle.setBlocking === 'fun
 	process.stderr._handle.setBlocking(true);
 }
 
-function printDeployBanner() {
-	console.log("\x1b[38;2;43;210;255m────────────────────────────────────────────────────────────────────────────────\x1b[0m");
-	console.log(`  \x1b[1m\x1b[38;2;250;139;255mFLOPPA-CHATBOT v${pkg.version}\x1b[0m \x1b[90m• Messenger Microservice Supervisor\x1b[0m`);
-	console.log(`  \x1b[36m•\x1b[0m Node ${process.version} (${os.platform()}-${os.arch()}) • PID: ${process.pid} • Environment: ${process.env.NODE_ENV || "production"}`);
-	console.log(`  \x1b[36m•\x1b[0m Ecosystem: Gtajisan (frnAlt) • Priyansh Rajput • NTKhang • Neoaz (xtreme-fca) • DongDev`);
-	console.log("\x1b[38;2;43;210;255m────────────────────────────────────────────────────────────────────────────────\x1b[0m\n");
-}
-
-let isFirstStart = true;
 let consecutiveCrashes = 0;
 let lastCrashTime = 0;
 
 function startProject() {
-	if (isFirstStart) {
-		printDeployBanner();
-		isFirstStart = false;
-	}
 	// --expose-gc  : lets MemoryManager call global.gc() to force V8 GC when heap is high
 	// --max-old-space-size=400 : caps V8 old-gen heap at 400 MB
 	const child = spawn("node", ["--expose-gc", "--max-old-space-size=400", "Floppa.js"], {
