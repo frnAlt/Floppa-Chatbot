@@ -301,7 +301,7 @@ async function loginHelper(credentials, globalOptions, callback, setOptionsFunc,
             resp.statusCode === 401 ||
             (resp.headers && resp.headers["set-cookie"] && (
                 (Array.isArray(resp.headers["set-cookie"]) && resp.headers["set-cookie"].some(s => s.includes("c_user=deleted") || s.includes("xs=deleted"))) ||
-                (typeof resp.headers["set-cookie"] === "string" && resp.headers["set-cookie"].includes("deleted"))
+                (typeof resp.headers["set-cookie"] === "string" && (resp.headers["set-cookie"].includes("c_user=deleted") || resp.headers["set-cookie"].includes("xs=deleted")))
             ))
         );
         const reqHref = (resp && resp.request && resp.request.uri && resp.request.uri.href) ||
