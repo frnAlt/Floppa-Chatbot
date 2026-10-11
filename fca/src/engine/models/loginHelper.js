@@ -296,6 +296,32 @@ async function loginHelper(credentials, globalOptions, callback, setOptionsFunc,
 
         let resp = await utils.get(fbLinkFunc(), jar, null, globalOptions, { noRef: true }).then(utils.saveCookies(jar));
 
+        const isSessionRevoked = resp && (
+            resp.statusCode === 400 ||
+            resp.statusCode === 401 ||
+            (resp.headers && resp.headers["set-cookie"] && (
+                (Array.isArray(resp.headers["set-cookie"]) && resp.headers["set-cookie"].some(s => s.includes("c_user=deleted") || s.includes("xs=deleted"))) ||
+                (typeof resp.headers["set-cookie"] === "string" && resp.headers["set-cookie"].includes("deleted"))
+            ))
+        );
+        const reqHref = (resp && resp.request && resp.request.uri && resp.request.uri.href) ||
+            (resp && resp.headers && resp.headers.location) || "";
+        const isCheckpoint = reqHref.includes("checkpoint") || (typeof resp?.body === "string" && resp.body.includes("/checkpoint/"));
+
+        if (isSessionRevoked) {
+            const sessionErr = new Error(`[SESSION_EXPIRED] Facebook session expired or was revoked by Meta (HTTP ${resp?.statusCode || 400}: Facebook deleted c_user/xs cookies). Please export fresh cookies from an active browser session.`);
+            sessionErr.name = "SESSION_EXPIRED";
+            sessionErr.isSessionExpired = true;
+            sessionErr.statusCode = resp?.statusCode || 400;
+            throw sessionErr;
+        }
+
+        if (isCheckpoint) {
+            const cpErr = new Error("[CHECKPOINT_ERROR] Facebook account encountered a checkpoint security challenge. Please open Facebook in a web browser, complete verification, and export fresh cookies.");
+            cpErr.name = "CHECKPOINT_ERROR";
+            throw cpErr;
+        }
+
         const extractNetData = (html) => {
             const allScriptsData = [];
             const scriptRegex = /<script type="application\/json"[^>]*>(.*?)<\/script>/g;

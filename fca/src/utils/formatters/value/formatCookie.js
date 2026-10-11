@@ -102,8 +102,15 @@ function setJarFromCookies(jar, cookies, defaultUrl = "https://www.facebook.com/
             cookie.sameSite ? `SameSite=${cookie.sameSite}` : ""
         ].filter(Boolean);
 
+        const cookieStr = `${name}=${cookie.value}; ${attributes.join("; ")}`;
         try {
-            jar.setCookieSync(`${name}=${cookie.value}; ${attributes.join("; ")}`, url);
+            if (typeof jar.setCookieSync === 'function') {
+                jar.setCookieSync(cookieStr, url);
+            } else if (jar._jar && typeof jar._jar.setCookieSync === 'function') {
+                jar._jar.setCookieSync(cookieStr, url);
+            } else if (typeof jar.setCookie === 'function') {
+                jar.setCookie(cookieStr, url);
+            }
         } catch (_) {
             // Ignore malformed individual cookies and continue loading the
             // remaining session state.

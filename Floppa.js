@@ -80,7 +80,7 @@ function validJSON(pathDir) {
 			if (lintErr.name === "SyntaxError" || (lintErr.message && lintErr.message.includes("Parse error"))) {
 				throw lintErr;
 			}
-			execSync(`npx jsonlint "${pathDir}"`, { stdio: 'pipe' });
+			JSON.parse(fs.readFileSync(pathDir, "utf-8"));
 			return true;
 		}
 	}
@@ -178,6 +178,8 @@ global.Cassidy = global.FloppaBot;
 global.db = {
 	allThreadData: [],
 	allUserData: [],
+	threadMap: new Map(),
+	userMap: new Map(),
 	allDashBoardData: [],
 	allGlobalData: [],
 

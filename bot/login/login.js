@@ -187,36 +187,20 @@ const title = maxWidth > 58 ?
 			titles[2] :
 			titles[3];
 
-console.log(gradient("#f5af19", "#f12711")(createLine(null, true)));
+console.log(createLine(null, true));
 console.log();
 for (const text of title) {
-	const textColor = gradient("#FA8BFF", "#2BD2FF", "#2BFF88")(text);
-	centerText(textColor, text.length);
+	centerText(text);
 }
-let subTitle = `Floppa-Chatbot@${currentVersion} - Intelligent Facebook Messenger Bot Engine`;
-const subTitleArray = [];
-if (subTitle.length > maxWidth) {
-	while (subTitle.length > maxWidth) {
-		let lastSpace = subTitle.slice(0, maxWidth).lastIndexOf(' ');
-		lastSpace = lastSpace == -1 ? maxWidth : lastSpace;
-		subTitleArray.push(subTitle.slice(0, lastSpace).trim());
-		subTitle = subTitle.slice(lastSpace).trim();
-	}
-	subTitle ? subTitleArray.push(subTitle) : '';
-}
-else {
-	subTitleArray.push(subTitle);
-}
-const author = ("Developer: Gtajisan (Farhan Muh Tasim)");
-const srcUrl = ("Source code: https://github.com/frnAlt/Floppa-Chatbot");
-const releaseInfo = ("FLOPPA CHATBOT ENGINE - OFFICIAL REPO");
-for (const t of subTitleArray) {
-	const textColor2 = gradient("#9F98E8", "#AFF6CF")(t);
-	centerText(textColor2, t.length);
-}
-centerText(gradient("#9F98E8", "#AFF6CF")(author), author.length);
-centerText(gradient("#9F98E8", "#AFF6CF")(srcUrl), srcUrl.length);
-centerText(gradient("#f5af19", "#f12711")(releaseInfo), releaseInfo.length);
+console.log();
+centerText(`Floppa-Chatbot v${currentVersion} - Intelligent Facebook Messenger Bot Engine`);
+centerText("Developer: Gtajisan (Farhan Muh Tasim) | Maintainer: frnAlt");
+centerText(`Runtime: Node.js ${process.version} (${process.platform}-${process.arch}) | Prefix: ${global.GoatBot?.config?.prefix || "!"}`);
+centerText(`Engine: ${activeFcaEngine || "@floppa/fca-native v5.2.0"} | Database: SQLite / JSON`);
+centerText("Repository: https://github.com/frnAlt/Floppa-Chatbot");
+centerText("Credits: Priyansh Rajput • NTKhang • Neoaz (xtreme-fca) • DongDev • frnAlt");
+console.log();
+console.log(createLine(null, true));
 
 
 
@@ -960,14 +944,18 @@ async function startBot(loginWithEmail) {
                                 // ——————————— SINGLE ACCOUNT MODE ——————————— //
                                 // If only one account, keep retrying with exponential backoff (fail fast in CI or on fatal cookie errors)
                                 if (multiAccountManager.isSingleAccount()) {
-                                        const isCI = Boolean(process.env.CI || process.env.GITHUB_ACTIONS || process.env.CI_TEST_MODE);
+                                        const isCI = Boolean(process.env.CI || process.env.GITHUB_ACTIONS || process.env.CI_TEST_MODE || process.env.RUNNER_MODE);
                                         const isFatalCookie = error?.name === "COOKIE_INVALID" ||
                                                 error?.name === "CHECKPOINT_ERROR" ||
+                                                error?.name === "SESSION_EXPIRED" ||
+                                                error?.isSessionExpired ||
+                                                String(error?.message || error).includes("SESSION_EXPIRED") ||
+                                                String(error?.message || error).includes("Error retrieving userID") ||
                                                 String(error?.message || error).includes("Your Cookie Is Wrong") ||
                                                 String(error?.message || error).includes("checkpoint");
 
                                         if (isCI || isFatalCookie || multiAccountManager.singleAccountRetryCount >= 3) {
-                                                log.err("SINGLE ACCOUNT", `Login failed permanently (${error?.message || error}). Halting bot to prevent indefinite hanging in non-interactive runner.`);
+                                                log.err("LOGIN FACEBOOK", `\n══════════════════════════════════════════════════════════════════════════\n[SESSION ERROR] ${error?.message || error}\n\nRECOVERY STEPS:\n1. Open facebook.com in a web browser and confirm you are logged in.\n2. Ensure the account is active and not locked in a checkpoint.\n3. Export fresh cookies (using C3C FBState or Cookie-Editor extension).\n4. Update account.txt / account.json or your GitHub Actions 'cookie' secret.\n══════════════════════════════════════════════════════════════════════════`);
                                                 process.exit(1);
                                         }
                                         multiAccountManager.singleAccountRetryCount++;
@@ -1008,7 +996,7 @@ async function startBot(loginWithEmail) {
                                         return;
                                 }
                                 else {
-                                        process.exit();
+                                        process.exit(1);
                                 }
                         }
 
@@ -1313,9 +1301,9 @@ async function startBot(loginWithEmail) {
                         log.master("SUCCESS", getText('login', 'runBot'));
                         log.master("LOAD TIME", `${convertTime(Date.now() - global.GoatBot.startTime)}`);
 
-                        logColor("#f5ab00", createLine("FLOPPA CHATBOT"));
-                        console.log(`\x1b[1m\x1b[33mFLOPPA-CHATBOT:\x1b[0m\x1b[1m\x1b[37m \x1b[0m\x1b[1m\x1b[36mFloppa-Chatbot v${currentVersion} - Intelligent Facebook Messenger Bot Engine | Developer: Gtajisan (Farhan Muh Tasim) | Maintained by frnAlt\x1b[0m`);
-                        logColor("#f5ab00", character);
+                        console.log(createLine("FLOPPA CHATBOT"));
+                        console.log(`FLOPPA-CHATBOT: Floppa-Chatbot v${currentVersion} - Intelligent Facebook Messenger Bot Engine | Developer: Gtajisan (Farhan Muh Tasim) | Maintained by frnAlt`);
+                        console.log(character);
 
                         global.GoatBot.config.adminBot = adminBot;
                         writeFileSync(global.client.dirConfig, JSON.stringify(global.GoatBot.config, null, 2));

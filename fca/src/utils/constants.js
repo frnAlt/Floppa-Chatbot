@@ -465,7 +465,7 @@ function credits() {
   if (!shouldLog('info')) return;
   const { name, version: ver } = readLocalPackage();
   const title = `${name} v${ver} (Native Local Engine)`;
-  console.log(applyTheme(`
+  console.log(`
  ╔═══════════════════════════════════════════════════════════════════════╗
  ║                     FLOPPA FACEBOOK CHAT API                          ║
  ║  ${title.padEnd(69, ' ')}║
@@ -475,7 +475,7 @@ function credits() {
  ║  Protocol  : Realtime MQTT / WebSocket TLS Engine                     ║
  ║  Engine    : Floppa Multi-Engine Platform                             ║
  ║  GitHub    : https://github.com/frnAlt/Floppa-Chatbot                 ║
- ╚═══════════════════════════════════════════════════════════════════════╝`));
+ ╚═══════════════════════════════════════════════════════════════════════╝`);
 }
 
 function startupBanner() {

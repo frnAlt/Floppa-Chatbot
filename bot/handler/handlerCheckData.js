@@ -25,7 +25,7 @@ module.exports = async function (usersData, threadsData, event) {
                         if (!isErr) {
                                 const findInCreatingThreadData = creatingThreadData.find(t => t.threadID == threadID);
                                 if (!findInCreatingThreadData) {
-                                        if (!global.db.allThreadData.some(t => t.threadID == threadID)) {
+                                        if (!threadsData.existsSync(threadID)) {
                                                 const isGroupHint = typeof event.isGroup === "boolean" ? event.isGroup : (threadID && senderID ? String(threadID) !== String(senderID) : undefined);
                                                 const threadData = await threadsData.create(threadID, null, isGroupHint);
                                                 if (global.db) {
@@ -59,7 +59,7 @@ module.exports = async function (usersData, threadsData, event) {
                 try {
                         const findInCreatingUserData = creatingUserData.find(u => u.userID == senderID);
                         if (!findInCreatingUserData) {
-                                if (db.allUserData.some(u => u.userID == senderID))
+                                if (usersData.existsSync(senderID))
                                         return;
 
                                 const userData = await usersData.create(senderID);

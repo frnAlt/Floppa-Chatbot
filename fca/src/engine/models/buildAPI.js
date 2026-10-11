@@ -51,7 +51,20 @@ async function buildAPI(html, jar, netData, globalOptions, fbLinkFunc, errorRetr
     }
 
     if (!primaryProfile && !secondaryProfile) {
-        throw new Error(errorRetrievingMsg);
+        const isFacebookError = typeof html === "string" && (
+            html.includes("<title>Error</title>") ||
+            html.includes("checkpoint") ||
+            html.includes("login.php")
+        );
+        if (isFacebookError) {
+            const err = new Error("[SESSION_EXPIRED] Facebook session expired or was revoked by Meta (Facebook returned error/login page with no valid user session). Please export fresh cookies from an active browser session.");
+            err.name = "SESSION_EXPIRED";
+            err.isSessionExpired = true;
+            throw err;
+        }
+        const err = new Error(errorRetrievingMsg);
+        err.name = "RETRIEVE_USER_ID_ERROR";
+        throw err;
     }
     userID = secondaryProfile?.cookieString().split("=")[1] || primaryProfile.cookieString().split("=")[1];
 

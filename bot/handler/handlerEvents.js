@@ -141,7 +141,7 @@ function getRole(threadData, senderID) {
         if (adminBot.includes(sID))
                 return 2;
         if (premiumUsers.includes(sID)) {
-                const userData = global.db.allUserData.find(u => String(u.userID) === sID);
+                const userData = global.db.userMap?.get(sID) || global.db.allUserData.find(u => String(u.userID) === sID);
                 if (userData && userData.data && userData.data.premiumExpireTime) {
                         if (userData.data.premiumExpireTime < Date.now()) {
                                 global.temp.expiredPremiumUsers = global.temp.expiredPremiumUsers || [];
@@ -397,14 +397,14 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         }
                 }
 
-                let threadData = global.db.allThreadData.find(t => String(t.threadID) === String(threadID));
-                let userData = global.db.allUserData.find(u => String(u.userID) === String(senderID));
+                let threadData = global.db.threadMap?.get(String(threadID)) || global.db.allThreadData.find(t => String(t.threadID) === String(threadID));
+                let userData = global.db.userMap?.get(String(senderID)) || global.db.allUserData.find(u => String(u.userID) === String(senderID));
 
                 if (!userData && !isNaN(senderID)) {
                         try {
                                 userData = await usersData.create(senderID);
                         } catch (err) {
-                                userData = global.db.allUserData.find(u => String(u.userID) === String(senderID)) || { userID: String(senderID), name: `User ${senderID}`, money: 0, exp: 0, data: {} };
+                                userData = global.db.userMap?.get(String(senderID)) || global.db.allUserData.find(u => String(u.userID) === String(senderID)) || { userID: String(senderID), name: `User ${senderID}`, money: 0, exp: 0, data: {} };
                         }
                 }
 
@@ -412,7 +412,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         try {
                                 threadData = await threadsData.create(threadID, null, Boolean(isGroup));
                         } catch (err) {
-                                threadData = global.db.allThreadData.find(t => String(t.threadID) === String(threadID)) || {
+                                threadData = global.db.threadMap?.get(String(threadID)) || global.db.allThreadData.find(t => String(t.threadID) === String(threadID)) || {
                                         threadID: String(threadID),
                                         threadName: isGroup ? "Group Chat" : "Direct Message",
                                         members: [{ userID: String(senderID), inGroup: true, permissionConfigDashboard: false }],
@@ -590,7 +590,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         // —————————————— CHECK USE BOT —————————————— //
                         if (!body) {
                                 if (!isGroup && event.attachments && Array.isArray(event.attachments) && event.attachments.some(a => a.isUnrecognized || (a.ID && String(a.ID).startsWith("ee.mid")) || a.description === "Unsupported shared content.")) {
-                                        const uObj = (global.db?.allUserData || []).find(u => String(u.userID) === String(senderID));
+                                        const uObj = global.db?.userMap?.get(String(senderID)) || (global.db?.allUserData || []).find(u => String(u.userID) === String(senderID));
                                         const uName = uObj?.name || "";
                                         return await message.reply(
                                                 `🔒 [Facebook E2EE Notice]\n\n` +

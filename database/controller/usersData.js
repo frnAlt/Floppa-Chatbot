@@ -54,6 +54,8 @@ module.exports = async function (databaseType, userModel, api, fakeGraphql) {
                 }
         }
         global.db.allUserData = Users;
+        if (!global.db.userMap) global.db.userMap = new Map();
+        Users.forEach(u => { if (u && u.userID) global.db.userMap.set(String(u.userID), u); });
 
         async function save(userID, userData, mode, path) {
                 try {
@@ -82,6 +84,7 @@ module.exports = async function (databaseType, userModel, api, fakeGraphql) {
                                                                 _.omit(dataCreated._doc, ["_id", "__v"]) :
                                                                 dataCreated.get({ plain: true });
                                                         global.db.allUserData.push(dataCreated);
+                                                        global.db.userMap?.set(String(userData.userID), dataCreated);
                                                         return _.cloneDeep(dataCreated);
                                                 }
                                                 case "json": {
@@ -89,6 +92,7 @@ module.exports = async function (databaseType, userModel, api, fakeGraphql) {
                                                         userData.createdAt = timeCreate;
                                                         userData.updatedAt = timeCreate;
                                                         global.db.allUserData.push(userData);
+                                                        global.db.userMap?.set(String(userData.userID), userData);
                                                         writeJSONSafeSync(pathUsersData, global.db.allUserData, optionsWriteJSON);
                                                         return _.cloneDeep(userData);
                                                 }
@@ -124,12 +128,14 @@ module.exports = async function (databaseType, userModel, api, fakeGraphql) {
                                                         let dataUpdated = await userModel.findOneAndUpdate({ userID }, dataWillChange, { returnDocument: 'after' });
                                                         dataUpdated = _.omit(dataUpdated._doc, ["_id", "__v"]);
                                                         global.db.allUserData[index] = dataUpdated;
+                                                        global.db.userMap?.set(String(userID), dataUpdated);
                                                         return _.cloneDeep(dataUpdated);
                                                 }
                                                 case "sqlite": {
                                                         const user = await userModel.findOne({ where: { userID } });
                                                         const dataUpdated = (await user.update(dataWillChange)).get({ plain: true });
                                                         global.db.allUserData[index] = dataUpdated;
+                                                        global.db.userMap?.set(String(userID), dataUpdated);
                                                         return _.cloneDeep(dataUpdated);
                                                 }
                                                 case "json": {
@@ -138,6 +144,7 @@ module.exports = async function (databaseType, userModel, api, fakeGraphql) {
                                                                 ...oldUserData,
                                                                 ...dataWillChange
                                                         };
+                                                        global.db.userMap?.set(String(userID), global.db.allUserData[index]);
                                                         writeJSONSafeSync(pathUsersData, global.db.allUserData, optionsWriteJSON);
                                                         return _.cloneDeep(global.db.allUserData[index]);
                                                 }
@@ -147,6 +154,7 @@ module.exports = async function (databaseType, userModel, api, fakeGraphql) {
                                 case "remove": {
                                         if (index != -1) {
                                                 global.db.allUserData.splice(index, 1);
+                                                global.db.userMap?.delete(String(userID));
                                                 switch (databaseType) {
                                                         case "mongodb":
                                                                 await userModel.deleteOne({ userID });
@@ -173,7 +181,7 @@ module.exports = async function (databaseType, userModel, api, fakeGraphql) {
         }
 
         function getNameInDB(userID) {
-                const userData = global.db.allUserData.find(u => u.userID == userID);
+                const userData = global.db.userMap?.get(String(userID)) || global.db.allUserData.find(u => u.userID == userID);
                 if (userData && userData.name)
                         return userData.name;
                 for (const t of (global.db.allThreadData || [])) {
@@ -455,13 +463,16 @@ module.exports = async function (databaseType, userModel, api, fakeGraphql) {
                                 message: `The first argument (userID) must be a number, not ${typeof userID}`
                         });
                 }
-                let userData;
-
-                const index = global.db.allUserData.findIndex(u => u.userID == userID);
-                if (index === -1)
-                        userData = await create_(userID);
-                else
-                        userData = global.db.allUserData[index];
+                let userData = global.db.userMap?.get(String(userID));
+                if (!userData) {
+                        const index = global.db.allUserData.findIndex(u => u.userID == userID);
+                        if (index === -1)
+                                userData = await create_(userID);
+                        else {
+                                userData = global.db.allUserData[index];
+                                global.db.userMap?.set(String(userID), userData);
+                        }
+                }
 
                 // Track access for cache eviction
                 if (global.dbCacheManager) {
@@ -706,6 +717,7 @@ module.exports = async function (databaseType, userModel, api, fakeGraphql) {
 
         return {
                 existsSync: function existsSync(userID) {
+                        if (global.db.userMap?.has(String(userID))) return true;
                         return global.db.allUserData.some(u => u.userID == userID);
                 },
                 getName,

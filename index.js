@@ -36,6 +36,16 @@ function startProject() {
 			log.info("Floppa-Chatbot", "Stopped cleanly. Not restarting.");
 			return;
 		}
+		const isCiOrRunner = Boolean(
+			process.env.CI_TEST_MODE === 'true' ||
+			process.env.CI === 'true' ||
+			process.env.GITHUB_ACTIONS === 'true' ||
+			process.env.RUNNER_MODE === 'true'
+		);
+		if (isCiOrRunner && code === 1) {
+			log.err("Floppa-Chatbot", `Process exited with fatal code ${code} in CI/Runner environment. Halting supervisor.`);
+			process.exit(code || 1);
+		}
 		if (process.env.CI_TEST_MODE === 'true' && code !== 2) {
 			log.err("Floppa-Chatbot", `Process exited with code ${code} in CI test mode. Not restarting.`);
 			process.exit(code || 1);

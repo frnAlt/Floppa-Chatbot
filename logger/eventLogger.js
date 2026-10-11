@@ -155,7 +155,7 @@ function resolveThread(threadID, isGroupHint, explicitThreadName) {
 		}
 	}
 
-	let threadData = global.db?.allThreadData?.find(t => String(t.threadID) === strID);
+	let threadData = global.db?.threadMap?.get(strID) || global.db?.allThreadData?.find(t => String(t.threadID) === strID);
 	let threadName = threadData?.threadName;
 	let isGroup = typeof threadData?.isGroup === "boolean" ? threadData.isGroup : isGroupHint;
 
@@ -205,7 +205,7 @@ function resolveUser(senderID, threadData, explicitUserName) {
 	}
 
 	if (!senderName || senderName.startsWith("User ")) {
-		const uData = global.db?.allUserData?.find(u => String(u.userID) === strID);
+		const uData = global.db?.userMap?.get(strID) || global.db?.allUserData?.find(u => String(u.userID) === strID);
 		if (uData?.name) {
 			senderName = uData.name;
 		} else if (threadData?.members) {
@@ -408,7 +408,7 @@ const eventLogger = {
 			const isGroupHint = typeof event.isGroup === "boolean" ? event.isGroup : (threadID && senderID ? String(threadID) !== String(senderID) : true);
 
 			const thread = resolveThread(threadID, isGroupHint, event.threadName);
-			const user = resolveUser(senderID, global.db?.allThreadData?.find(t => String(t.threadID) === String(threadID)), event.senderName);
+			const user = resolveUser(senderID, global.db?.threadMap?.get(String(threadID)) || global.db?.allThreadData?.find(t => String(t.threadID) === String(threadID)), event.senderName);
 
 			const timeStr = getTimestamp("HH:mm:ss");
 			const fullTimeStr = getFullDateTime();
