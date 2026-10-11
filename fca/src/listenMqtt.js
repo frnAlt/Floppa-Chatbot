@@ -664,7 +664,7 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
       return;
     }
     if (!jsonMessage || typeof jsonMessage !== "object") return;
-    if (topic === "/t_ms" || topic === "/messaging_events" || topic === "/mercury" || topic === "/inbox" || topic === "/orca_message_notifications") {
+    if (topic === "/t_ms" || topic === "/messaging_events" || topic === "/mercury" || topic === "/inbox" || topic === "/orca_message_notifications" || topic === "/legacy_web" || topic === "/pp") {
       if (ctx.tmsWait && typeof ctx.tmsWait == "function") ctx.tmsWait();
 
       if (jsonMessage.firstDeltaSeqId && jsonMessage.syncToken) {
@@ -679,7 +679,8 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
           try {
             var delta = jsonMessage.deltas[i];
             parseDelta(defaultFuncs, api, ctx, globalCallback, {
-              "delta": delta
+              "delta": delta,
+              "queue": jsonMessage.queue
             });
           } catch (err) {
             logWarn(`Failed to parse delta [${i}]: ${err.message || err}`);
@@ -688,7 +689,8 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
       } else if (jsonMessage.delta && typeof jsonMessage.delta === "object") {
         try {
           parseDelta(defaultFuncs, api, ctx, globalCallback, {
-            "delta": jsonMessage.delta
+            "delta": jsonMessage.delta,
+            "queue": jsonMessage.queue
           });
         } catch (err) {
           logWarn(`Failed to parse single delta: ${err.message || err}`);
@@ -831,11 +833,11 @@ if (global.Fca.Require.Priyansh.AntiGetInfo.AntiGetThreadInfo) {
     }, 30 * 1000);
 }
 
-function parseDelta(defaultFuncs, api, ctx, globalCallback, {
-  delta
-}) {
-  if (delta.class === 'NewMessage') {
-    if (ctx.globalOptions.pageID && ctx.globalOptions.pageID !== delta.queue) return;
+function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
+  const delta = v?.delta?.deltaNewMessage?.message || v?.delta?.deltaNewMessage || v?.delta;
+  const isNewMessage = (v?.delta && (v.delta.class === 'NewMessage' || v.delta.deltaNewMessage || (v.delta.messageMetadata && !v.delta.class && v.delta.class !== 'ForcedFetch')));
+  if (isNewMessage) {
+    if (ctx.globalOptions.pageID && v.queue && ctx.globalOptions.pageID !== v.queue) return;
 
     const resolveAttachmentUrl = (i) => {
       if (!delta.attachments || i === delta.attachments.length || utils.getType(delta.attachments) !== 'Array') {
@@ -906,8 +908,10 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, {
     };
 
     resolveAttachmentUrl(0);
-  } else if (delta.class === 'ClientPayload') {
-    const clientPayload = utils.decodeClientPayload(delta.payload);
+    return;
+  } else if ((v?.delta?.class || delta.class) === 'ClientPayload') {
+    const payloadDelta = v?.delta || delta;
+    const clientPayload = utils.decodeClientPayload(payloadDelta.payload);
     if (clientPayload && clientPayload.deltas) {
       for (const delta of clientPayload.deltas) {
         if (delta.deltaMessageReaction && !!ctx.globalOptions.listenEvents) {
@@ -1127,6 +1131,55 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, {
             callbackToReturn.delta = delta;
             dispatchReply(callbackToReturn);
           }
+        } else if (delta.deltaNewMessage) {
+          const rawMsg = delta.deltaNewMessage.message || delta.deltaNewMessage;
+          let mdata = [];
+          try {
+            if (rawMsg.data?.prng) mdata = JSON.parse(rawMsg.data.prng);
+          } catch (_) {
+            mdata = [];
+          }
+          if (!Array.isArray(mdata)) mdata = [];
+          const mentions = {};
+          mdata.forEach(m => mentions[m.i] = (rawMsg.body || "").substring(m.o, m.o + m.l));
+          const msgMeta = rawMsg.messageMetadata || {};
+          const threadKey = msgMeta.threadKey || {};
+          const threadID = (threadKey.threadFbId || threadKey.otherUserFbId || "").toString();
+          const senderID = (msgMeta.actorFbId || "").toString();
+          const msgBody = rawMsg.body || "";
+          const isGroup = !!threadKey.threadFbId;
+
+          const callbackToReturn = {
+            type: "message",
+            threadID: threadID,
+            messageID: msgMeta.messageId || "",
+            senderID: senderID,
+            attachments: (rawMsg.attachments || []).map(att => {
+              if (att && att.mercuryJSON && typeof att.mercuryJSON === "string") {
+                try {
+                  const mercury = JSON.parse(att.mercuryJSON);
+                  Object.assign(att, mercury);
+                } catch (_) {}
+              }
+              try {
+                return utils._formatAttachment(att);
+              } catch (ex) {
+                return { ...att, url: att?.url || att?.preview_url || att?.large_preview_url || null, error: ex, type: "unknown" };
+              }
+            }),
+            args: msgBody.trim().split(/\s+/),
+            body: msgBody,
+            isGroup: isGroup,
+            mentions: mentions,
+            timestamp: parseInt(msgMeta.timestamp || Date.now()),
+            participantIDs: (rawMsg.participants || []).map(e => e.toString())
+          };
+
+          if (ctx.globalOptions.autoMarkDelivery || ctx.globalOptions.autoMarkRead) {
+            markDelivery(ctx, api, callbackToReturn.threadID, callbackToReturn.messageID);
+          }
+          if (!ctx.globalOptions.selfListen && callbackToReturn.senderID === ctx.userID) continue;
+          globalCallback(null, callbackToReturn);
         }
       }
 

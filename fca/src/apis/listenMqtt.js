@@ -110,9 +110,9 @@ async function listenMqtt(defaultFuncs, api, ctx, globalCallback, scheduleReconn
     // for the same socket in quick succession.
     ctx._mqttReconnectRequested = false;
 
-    const chatOn = ctx.globalOptions.online;
+    const chatOn = ctx.globalOptions.online !== false;
     const region = ctx.region;
-    const foreground = false;
+    const foreground = true;
     const sessionID = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER) + 1;
     // Keep one stable device id for the whole Facebook session. Some page
     // variants omit MqttWebDeviceID; never send the literal "undefined".
@@ -122,10 +122,10 @@ async function listenMqtt(defaultFuncs, api, ctx, globalCallback, scheduleReconn
         u: ctx.userID,
         s: sessionID,
         chat_on: chatOn,
-        fg: false,
+        fg: foreground,
         d: cid,
         ct: 'websocket',
-        aid: 219994525426954,
+        aid: '219994525426954',
         aids: null,
         mqtt_sid: '',
         cp: 3,
@@ -261,6 +261,9 @@ async function listenMqtt(defaultFuncs, api, ctx, globalCallback, scheduleReconn
     mqttClient.on("packetsend", markMqttActivity);
     mqttClient.on("packetreceive", (packet) => {
         markMqttActivity();
+        if (packet.cmd === "publish" && packet.topic && packet.topic !== "/orca_presence") {
+            utils.log("MQTT", `Incoming packet on topic: ${packet.topic}`);
+        }
         if (ctx.globalOptions?.debug || process.env.DEBUG) {
             if (packet.cmd === "publish") {
                 utils.log("MQTT_PACKET", `Topic: ${packet.topic} | Payload: ${packet.payload?.toString()?.slice(0, 300)}`);
@@ -426,6 +429,25 @@ async function listenMqtt(defaultFuncs, api, ctx, globalCallback, scheduleReconn
             }
         }, watchdogInterval);
 
+        const queue = { 
+            sync_api_version: 10, 
+            max_deltas_able_to_process: 1000, 
+            delta_batch_size: 1000, 
+            encoding: "JSON", 
+            entity_fbid: ctx.userID
+        };
+
+        let topic;
+        if (ctx.syncToken) {
+            topic = "/messenger_sync_get_diffs";
+            queue.last_seq_id = ctx.lastSeqId;
+            queue.sync_token = ctx.syncToken;
+        } else {
+            topic = "/messenger_sync_create_queue";
+            queue.initial_titan_sequence_id = (!ctx.lastSeqId || ctx.lastSeqId === "-1") ? "0" : String(ctx.lastSeqId);
+            queue.device_params = null;
+        }
+
         mqttClient.subscribe(topics, { qos: 1 }, (error, granted) => {
             if (ctx.mqttClient !== mqttClient || ctx._ending) return;
             if (error) {
@@ -437,37 +459,22 @@ async function listenMqtt(defaultFuncs, api, ctx, globalCallback, scheduleReconn
                 return;
             }
 
-            if (ctx.globalOptions?.debug || process.env.DEBUG) {
-                utils.log("MQTT", `Subscribed to ${topics.length} topics successfully. (Granted: ${granted ? granted.length : 0})`);
+            utils.log("MQTT", `Subscribed to ${topics.length} topics successfully.`);
+
+            try {
+                if (mqttClient.connected && !mqttClient.disconnected && !mqttClient.disconnecting) {
+                    mqttClient.publish(topic, JSON.stringify(queue), { qos: 1, retain: false }, (pubErr) => {
+                        if (pubErr && ctx.mqttClient === mqttClient) {
+                            utils.warn("MQTT", `Publish ${topic} error: ${pubErr.message || pubErr}`);
+                        }
+                    });
+                    mqttClient.publish("/foreground_state", JSON.stringify({ foreground: chatOn }), { qos: 1 });
+                    mqttClient.publish("/set_client_settings", JSON.stringify({ make_user_available_when_in_foreground: true }), { qos: 1 });
+                }
+            } catch (err) {
+                utils.warn("MQTT", `Publish sync queue failed: ${err.message || err}`);
             }
         });
-
-        const queue = { 
-            sync_api_version: 11, 
-            max_deltas_able_to_process: 1000, 
-            delta_batch_size: 1000, 
-            encoding: "JSON", 
-            entity_fbid: ctx.userID,
-            initial_titan_sequence_id: (!ctx.lastSeqId || ctx.lastSeqId === "-1") ? "0" : String(ctx.lastSeqId),
-            device_params: null
-        };
-
-        let topic;
-        if (ctx.syncToken) {
-            topic = "/messenger_sync_get_diffs";
-            queue.last_seq_id = ctx.lastSeqId;
-            queue.sync_token = ctx.syncToken;
-        } else {
-            topic = "/messenger_sync_create_queue";
-        }
-
-        mqttClient.publish(topic, JSON.stringify(queue), { qos: 1, retain: false }, (pubErr) => {
-            if (pubErr && ctx.mqttClient === mqttClient) {
-                utils.warn("MQTT", `Publish ${topic} error: ${pubErr.message || pubErr}`);
-            }
-        });
-        mqttClient.publish("/foreground_state", JSON.stringify({ foreground: chatOn }), { qos: 1 });
-        mqttClient.publish("/set_client_settings", JSON.stringify({ make_user_available_when_in_foreground: true }), { qos: 1 });
 
         let rTimeout = setTimeout(() => {
             if (mqttClient.disconnected || mqttClient.disconnecting || !mqttClient.connected) return;
@@ -550,7 +557,7 @@ async function listenMqtt(defaultFuncs, api, ctx, globalCallback, scheduleReconn
                     actorFbId: jsonMessage.from.toString(), 
                     timestamp: Date.now().toString() 
                 });
-            } else if (topic === "/t_ms" || topic === "/messaging_events" || topic === "/mercury" || topic === "/inbox" || topic === "/orca_message_notifications") {
+            } else if (topic === "/t_ms" || topic === "/messaging_events" || topic === "/mercury" || topic === "/inbox" || topic === "/orca_message_notifications" || topic === "/legacy_web" || topic === "/pp") {
                 if (ctx.tmsWait && typeof ctx.tmsWait === "function") ctx.tmsWait();
 
                 if (jsonMessage.firstDeltaSeqId && jsonMessage.syncToken) {
@@ -564,14 +571,14 @@ async function listenMqtt(defaultFuncs, api, ctx, globalCallback, scheduleReconn
                 if (Array.isArray(jsonMessage.deltas)) {
                     for (const delta of jsonMessage.deltas) {
                         try {
-                            parseDelta(defaultFuncs, api, ctx, callbackToUse, { delta });
+                            parseDelta(defaultFuncs, api, ctx, callbackToUse, { delta, queue: jsonMessage.queue });
                         } catch (err) {
                             utils.warn("MQTT", `Failed to parse delta: ${err.message || err}`);
                         }
                     }
                 } else if (jsonMessage.delta && typeof jsonMessage.delta === "object") {
                     try {
-                        parseDelta(defaultFuncs, api, ctx, callbackToUse, { delta: jsonMessage.delta });
+                        parseDelta(defaultFuncs, api, ctx, callbackToUse, { delta: jsonMessage.delta, queue: jsonMessage.queue });
                     } catch (err) {
                         utils.warn("MQTT", `Failed to parse single delta: ${err.message || err}`);
                     }
@@ -611,6 +618,10 @@ async function listenMqtt(defaultFuncs, api, ctx, globalCallback, scheduleReconn
                             statuses: data.p 
                         });
                     }
+                }
+            } else {
+                if (ctx.globalOptions?.debug || process.env.DEBUG) {
+                    utils.log("MQTT:UnhandledTopic", `Topic: ${topic} | Message: ${typeof rawStr === 'string' ? rawStr.slice(0, 200) : ''}`);
                 }
             }
         } catch (ex) {

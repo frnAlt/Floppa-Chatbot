@@ -4,14 +4,17 @@ const utils = require('../utils');
 
 
 function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
-  if (v.delta.class == "NewMessage") {
+  const rawDelta = v?.delta?.deltaNewMessage?.message || v?.delta?.deltaNewMessage || v?.delta;
+  const isNewMessage = (v?.delta && (v.delta.class == "NewMessage" || v.delta.deltaNewMessage || (v.delta.messageMetadata && !v.delta.class && v.delta.class !== "ForcedFetch")));
 
-    if (ctx.globalOptions.pageID && ctx.globalOptions.pageID != v.queue) return;
+  if (isNewMessage) {
+    if (ctx.globalOptions.pageID && v.queue && ctx.globalOptions.pageID != v.queue) return;
+    const normV = { delta: rawDelta, queue: v.queue };
     (function resolveAttachmentUrl(i) {
-      if (!v.delta.attachments || i == v.delta.attachments.length || utils.getType(v.delta.attachments) !== "Array") {
+      if (!rawDelta.attachments || i == rawDelta.attachments.length || utils.getType(rawDelta.attachments) !== "Array") {
         var fmtMsg;
         try {
-          fmtMsg = utils.formatDeltaMessage(v);
+          fmtMsg = utils.formatDeltaMessage(normV);
         } catch (err) {
           utils.warn("parseDelta:formatDeltaMessage", err?.message || err);
           return;
@@ -31,7 +34,7 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
             return globalCallback(null, fmtMsg);
         }
       } else {
-         var attachment = v.delta.attachments[i];
+         var attachment = rawDelta.attachments[i];
          if (attachment && attachment.mercury && attachment.mercury.attach_type == "photo") {
            let hasResolved = false;
            const photoTimeout = setTimeout(() => {
@@ -64,6 +67,7 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
          }
       }
     })(0);
+    return;
   }
 
   if (v.delta.class == "ClientPayload") {
@@ -103,6 +107,7 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
             mdata.forEach(m => mentions[m.i] = (delta.deltaMessageReply.message.body || "").substring(m.o, m.o + m.l));
           }
 
+          var replyBody = delta.deltaMessageReply.message?.body || "";
           var callbackToReturn = {
             type: "message_reply",
             threadID: (delta.deltaMessageReply.message.messageMetadata.threadKey.threadFbId || delta.deltaMessageReply.message.messageMetadata.threadKey.otherUserFbId).toString(),
@@ -121,7 +126,8 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
                 return { ...att, url: att?.url || att?.preview_url || att?.large_preview_url || null, error: ex, type: "unknown" };
               }
             }),
-            body: (delta.deltaMessageReply.message.body || ""),
+            args: replyBody.trim().split(/\s+/),
+            body: replyBody,
             isGroup: !!delta.deltaMessageReply.message.messageMetadata.threadKey.threadFbId,
             mentions: mentions,
             timestamp: delta.deltaMessageReply.message.messageMetadata.timestamp,
@@ -164,14 +170,67 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
           }
           if (ctx.globalOptions.autoMarkDelivery) api.markAsDelivered(callbackToReturn.threadID, callbackToReturn.messageID);
           if (!ctx.globalOptions.selfListen && String(callbackToReturn.senderID) === String(ctx.userID || ctx.i_userID)) return;
+          utils.log("ClientPayload:Reply", `Received message reply [${callbackToReturn.threadID}] ${callbackToReturn.senderID} -> "${callbackToReturn.body || '[Attachment]'}"`);
           return globalCallback(null, callbackToReturn);
+        } else if (delta.deltaNewMessage) {
+          const rawMsg = delta.deltaNewMessage.message || delta.deltaNewMessage;
+          let mdata = [];
+          try {
+            if (rawMsg.data?.prng) mdata = JSON.parse(rawMsg.data.prng);
+          } catch (_) {
+            mdata = [];
+          }
+          if (!Array.isArray(mdata)) mdata = [];
+          const mentions = {};
+          mdata.forEach(m => mentions[m.i] = (rawMsg.body || "").substring(m.o, m.o + m.l));
+          const msgMeta = rawMsg.messageMetadata || {};
+          const threadKey = msgMeta.threadKey || {};
+          const threadID = (threadKey.threadFbId || threadKey.otherUserFbId || "").toString();
+          const senderID = (msgMeta.actorFbId || "").toString();
+          const msgBody = rawMsg.body || "";
+          const isGroup = !!threadKey.threadFbId;
+
+          const callbackToReturn = {
+            type: "message",
+            threadID: threadID,
+            messageID: msgMeta.messageId || "",
+            senderID: senderID,
+            attachments: (rawMsg.attachments || []).map(att => {
+              if (att && att.mercuryJSON && typeof att.mercuryJSON === "string") {
+                try {
+                  const mercury = JSON.parse(att.mercuryJSON);
+                  Object.assign(att, mercury);
+                } catch (_) {}
+              }
+              try {
+                return utils._formatAttachment(att);
+              } catch (ex) {
+                return { ...att, url: att?.url || att?.preview_url || att?.large_preview_url || null, error: ex, type: "unknown" };
+              }
+            }),
+            args: msgBody.trim().split(/\s+/),
+            body: msgBody,
+            isGroup: isGroup,
+            mentions: mentions,
+            timestamp: parseInt(msgMeta.timestamp || Date.now()),
+            participantIDs: (rawMsg.participants || []).map(e => e.toString())
+          };
+
+          if (callbackToReturn.threadID && typeof callbackToReturn.isGroup === "boolean") {
+            if (!ctx.threadTypeCache) ctx.threadTypeCache = Object.create(null);
+            ctx.threadTypeCache[callbackToReturn.threadID.toString()] = callbackToReturn.isGroup;
+          }
+          if (ctx.globalOptions.autoMarkDelivery) api.markAsDelivered(callbackToReturn.threadID, callbackToReturn.messageID);
+          if (!ctx.globalOptions.selfListen && String(callbackToReturn.senderID) === String(ctx.userID || ctx.i_userID)) continue;
+          utils.log("ClientPayload:NewMessage", `Received message [${callbackToReturn.threadID}] ${callbackToReturn.senderID} -> "${callbackToReturn.body || '[Attachment]'}"`);
+          globalCallback(null, callbackToReturn);
         }
       }
       return;
     }
   }
 
-  if (v.delta.class !== "NewMessage" && v.delta.class !== "ForcedFetch" && !ctx.globalOptions.listenEvents) return;
+  if (v.delta.class !== "ForcedFetch" && !ctx.globalOptions.listenEvents) return;
   switch (v.delta.class) {
     case "ReadReceipt":
       var fmtMsg;
