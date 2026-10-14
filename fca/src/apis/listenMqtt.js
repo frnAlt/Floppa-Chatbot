@@ -568,19 +568,35 @@ async function listenMqtt(defaultFuncs, api, ctx, globalCallback, scheduleReconn
                     ctx.lastSeqId = parseInt(jsonMessage.lastIssuedSeqId, 10);
                 }
 
-                if (Array.isArray(jsonMessage.deltas)) {
-                    for (const delta of jsonMessage.deltas) {
+                let deltas = Array.isArray(jsonMessage.deltas) ? jsonMessage.deltas : null;
+                if (!deltas && jsonMessage.delta && typeof jsonMessage.delta === "object") {
+                    deltas = [jsonMessage.delta];
+                }
+                if (!deltas && jsonMessage.payload) {
+                    try {
+                        const decodedPayload = typeof jsonMessage.payload === "string" 
+                            ? (jsonMessage.payload.startsWith("{") ? JSON.parse(jsonMessage.payload) : utils.decodeClientPayload(jsonMessage.payload))
+                            : utils.decodeClientPayload(jsonMessage.payload);
+                        if (decodedPayload) {
+                            if (Array.isArray(decodedPayload.deltas)) {
+                                deltas = decodedPayload.deltas;
+                            } else if (decodedPayload.delta) {
+                                deltas = [decodedPayload.delta];
+                            } else {
+                                parseDelta(defaultFuncs, api, ctx, callbackToUse, { delta: { class: "ClientPayload", payload: jsonMessage.payload }, queue: jsonMessage.queue });
+                            }
+                        }
+                    } catch (err) {
+                        utils.warn("MQTT", `Failed to decode payload in ${topic}: ${err.message || err}`);
+                    }
+                }
+                if (Array.isArray(deltas)) {
+                    for (const delta of deltas) {
                         try {
                             parseDelta(defaultFuncs, api, ctx, callbackToUse, { delta, queue: jsonMessage.queue });
                         } catch (err) {
                             utils.warn("MQTT", `Failed to parse delta: ${err.message || err}`);
                         }
-                    }
-                } else if (jsonMessage.delta && typeof jsonMessage.delta === "object") {
-                    try {
-                        parseDelta(defaultFuncs, api, ctx, callbackToUse, { delta: jsonMessage.delta, queue: jsonMessage.queue });
-                    } catch (err) {
-                        utils.warn("MQTT", `Failed to parse single delta: ${err.message || err}`);
                     }
                 }
             } else if (topic === "/ls_resp") {

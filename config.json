@@ -49,9 +49,7 @@
   "notes_devUsers": "List of developer IDs with full access (role 4)",
   "whiteListMode": {
     "enable": false,
-    "whiteListIds": [
-      ""
-    ],
+    "whiteListIds": [],
     "notes": "if you enable this feature, only the ids in the whiteListIds list can use the bot"
   },
   "whiteListModeThread": {
@@ -175,7 +173,7 @@
     "fcaEngine": "floppa-native",
     "online": true,
     "emitReady": true,
-    "selfListen": true,
+    "selfListen": false,
     "selfListenEvent": true,
     "listenEvents": true,
     "listenTyping": false,
@@ -189,7 +187,7 @@
     "persona": "desktop",
     "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
     "stealthMode": true,
-    "preferMqttSend": true,
+    "preferMqttSend": false,
     "maxConcurrentRequests": 10,
     "maxRequestsPerMinute": 150,
     "requestCooldownMs": 0,

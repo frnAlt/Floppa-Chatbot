@@ -1888,6 +1888,84 @@ async function runDiagnostics() {
     logTest("SECTION_11", "Section 11 tests encountered failure", false, err.message);
   }
 
+  // ──────────────── Section 12: MQTT Delta Value Parsing, E2EE Flagging & DM Peer ThreadID ────────────────
+  console.log("\n--- 12. MQTT Delta Value Parsing, E2EE Flagging & DM Peer ThreadID ---");
+  try {
+    const { formatDeltaMessage } = require("../fca/src/utils/formatters");
+    const { parseDelta } = require("../fca/src/apis/mqttDeltaValue");
+
+    // 1. Direct message (DM) peer threadID calculation
+    const dmRawDelta = {
+      messageMetadata: {
+        actorFbId: "10001",
+        threadKey: { otherUserFbId: "10002" },
+        messageId: "mid.12345",
+        timestamp: Date.now()
+      },
+      body: "Hello Floppa"
+    };
+    const mockCtx = { userID: "10002", globalOptions: { selfListen: false } };
+    const formattedDM = formatDeltaMessage(dmRawDelta, mockCtx);
+    const dmPeerValid = formattedDM && formattedDM.threadID === "10001" && formattedDM.isGroup === false;
+    logTest("FCA_DELTA", "formatDeltaMessage accurately resolves DM threadID to sender peer instead of botID", dmPeerValid);
+
+    // 2. E2EE message detection
+    const e2eeDelta = {
+      messageMetadata: {
+        actorFbId: "10001",
+        threadKey: { otherUserFbId: "10002" },
+        messageId: "ee.mid.test1234",
+        timestamp: Date.now()
+      },
+      attachments: [{ isUnrecognized: true, description: "Unsupported shared content." }]
+    };
+    const formattedE2EE = formatDeltaMessage(e2eeDelta, mockCtx);
+    const e2eeFlagValid = formattedE2EE && formattedE2EE.isE2EE === true;
+    logTest("FCA_DELTA", "formatDeltaMessage detects ee.mid and unsupported shared attachments as isE2EE", e2eeFlagValid);
+
+    // 3. Unrecognized attachments do not crash _formatAttachment
+    const weirdDelta = {
+      messageMetadata: { actorFbId: "10001", threadKey: { threadFbId: "99999" } },
+      attachments: [{ attach_type: "unrecognized_future_meta_type", id: "555" }]
+    };
+    let weirdParsed = null;
+    try {
+      weirdParsed = formatDeltaMessage(weirdDelta, mockCtx);
+    } catch (_) {}
+    const safeAttachValid = weirdParsed && weirdParsed.attachments?.[0]?.type === "unknown";
+    logTest("FCA_DELTA", "_formatAttachment gracefully falls back to unknown type without throwing Error", safeAttachValid);
+
+    // 4. Batch delta loop doesn't prematurely exit on replies
+    const receivedBatch = [];
+    const mockCallback = (err, data) => receivedBatch.push(data);
+    const mockApi = { markAsDelivered: () => {} };
+    const batchPayload = {
+      deltas: [
+        {
+          deltaMessageReply: {
+            message: {
+              messageMetadata: { actorFbId: "10001", threadKey: { otherUserFbId: "10002" }, messageId: "mid.rep.1" },
+              body: "reply 1"
+            }
+          }
+        },
+        {
+          deltaNewMessage: {
+            message: {
+              messageMetadata: { actorFbId: "10001", threadKey: { otherUserFbId: "10002" }, messageId: "mid.new.2" },
+              body: "new msg 2"
+            }
+          }
+        }
+      ]
+    };
+    parseDelta({}, mockApi, mockCtx, mockCallback, { delta: { class: "ClientPayload", payload: batchPayload } });
+    const batchMultiValid = receivedBatch.length === 2 && receivedBatch[0].type === "message_reply" && receivedBatch[1].type === "message";
+    logTest("FCA_DELTA", "mqttDeltaValue.parseDelta processes all batch deltas without premature loop termination", batchMultiValid);
+  } catch (err) {
+    logTest("SECTION_12", "Section 12 tests encountered failure", false, err.message);
+  }
+
   // Restore original tracked files so diagnostic execution does not dirty repo state or reset botOff
   restoreSnapshots();
 

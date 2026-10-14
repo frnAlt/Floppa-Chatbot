@@ -614,17 +614,32 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                 async function onStart() {
                         // —————————————— CHECK USE BOT —————————————— //
                         if (!body) {
-                                if (!isGroup && event.attachments && Array.isArray(event.attachments) && event.attachments.some(a => a.isUnrecognized || (a.ID && String(a.ID).startsWith("ee.mid")) || a.description === "Unsupported shared content.")) {
+                                if (!isGroup && (event.isE2EE || (event.attachments && Array.isArray(event.attachments) && event.attachments.some(a => a.isUnrecognized || (a.ID && String(a.ID).startsWith("ee.mid")) || a.description === "Unsupported shared content.")))) {
                                         const uObj = global.db?.userMap?.get(String(senderID)) || (global.db?.allUserData || []).find(u => String(u.userID) === String(senderID));
                                         const uName = uObj?.name || "";
-                                        return await message.reply(
-                                                `🔒 [Facebook E2EE Notice]\n\n` +
+                                        const pMgr = global.privateThreadManager || (function() { try { return require("../../func/privateThreadManager.js"); } catch (_) { return null; } })();
+                                        let targetThreadID = null;
+                                        if (pMgr && typeof pMgr.getOrCreatePrivateThread === "function") {
+                                                try {
+                                                        targetThreadID = await pMgr.getOrCreatePrivateThread(api, senderID, uName);
+                                                } catch (err) {
+                                                        // fallback
+                                                }
+                                        }
+                                        const noticeText = `🔒 [Facebook E2EE Notice]\n\n` +
                                                 `👋 Hey ${uName || "there"}!\n\n` +
                                                 `Your Facebook Messenger app has End-to-End Encryption (E2EE) enabled on this direct chat, which hides message text from third-party bot integrations.\n\n` +
                                                 `🔒 I've opened a dedicated private room for us where everything is 100% unencrypted and works seamlessly!\n\n` +
                                                 `💡 You can also add Floppa Bot to any group chat or chat directly in any shared group.\n\n` +
-                                                `Type ${prefix}help to explore all features!`
-                                        );
+                                                `Type ${prefix}help to explore all features!`;
+
+                                        if (targetThreadID) {
+                                                return await new Promise((resolve) => {
+                                                        api.sendMessage(noticeText, targetThreadID, (err, info) => resolve(info));
+                                                });
+                                        } else {
+                                                return await message.reply(noticeText);
+                                        }
                                 }
                                 return;
                         }
@@ -643,6 +658,11 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         let hasNoPrefix = false;
 
                         if (!hasPrefix) {
+                                const isReplyingToBotPrompt = Boolean(event.messageReply?.messageID && (GoatBot.onReply?.has(event.messageReply.messageID) || global.GoatBot?.onReply?.has(event.messageReply.messageID)));
+                                if (isReplyingToBotPrompt) {
+                                        return;
+                                }
+
                                 const noPrefixConfig = global.GoatBot.config.noPrefix !== false;
 
                                 // Extract all tokens with strict boundary matching at the very start of the message
@@ -1346,9 +1366,19 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         if (global.GoatBot.botOff && role !== 2 && role !== 4)
                                 return;
 
-                        // Never intercept commands or messages starting with any prefix (-gay, !help, /cmd, .cmd)
-                        if (isUserCallCommand || hasPrefix || (body && /^[!#$%\&*+\-./:<=>?@\\^_`~]/.test(body.trim())))
+                        // Never intercept commands
+                        if (isUserCallCommand || hasPrefix)
                                 return;
+
+                        const trimmedReplyBody = (body || "").trim();
+                        const checkPrefixes = Array.from(new Set([prefix, global.GoatBot?.config?.prefix, "!", "/"].filter(Boolean)));
+                        const matchedCmdPrefix = checkPrefixes.find(p => trimmedReplyBody.startsWith(p));
+                        if (matchedCmdPrefix) {
+                                const possibleCmdWord = trimmedReplyBody.slice(matchedCmdPrefix.length).trim().split(/\s+/)[0]?.toLowerCase();
+                                if (possibleCmdWord && (GoatBot.commands.has(possibleCmdWord) || GoatBot.aliases.has(possibleCmdWord))) {
+                                        return;
+                                }
+                        }
 
                         const { onReply } = GoatBot;
                         let Reply = null;

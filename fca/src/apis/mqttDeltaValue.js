@@ -14,7 +14,7 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
       if (!rawDelta.attachments || i == rawDelta.attachments.length || utils.getType(rawDelta.attachments) !== "Array") {
         var fmtMsg;
         try {
-          fmtMsg = utils.formatDeltaMessage(normV);
+          fmtMsg = utils.formatDeltaMessage(normV, ctx);
         } catch (err) {
           utils.warn("parseDelta:formatDeltaMessage", err?.message || err);
           return;
@@ -78,38 +78,56 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
         var delta = clientPayload.deltas[i];
 
         if (delta.deltaMessageReaction && !!ctx.globalOptions.listenEvents) {
+            const rxThreadKey = delta.deltaMessageReaction.threadKey || {};
+            const rxSender = (delta.deltaMessageReaction.senderId && delta.deltaMessageReaction.senderId != 0 ? delta.deltaMessageReaction.senderId : delta.deltaMessageReaction.userId).toString();
+            const rxOtherID = rxThreadKey.otherUserFbId && String(rxThreadKey.otherUserFbId) !== String(ctx.userID || ctx.i_userID) ? rxThreadKey.otherUserFbId : rxSender;
+            const rxThreadID = (rxThreadKey.threadFbId || rxOtherID || rxSender || "").toString();
+
             const reactionEvent = {
               type: "message_reaction",
-              threadID: (delta.deltaMessageReaction.threadKey.threadFbId || delta.deltaMessageReaction.threadKey.otherUserFbId).toString(),
+              threadID: rxThreadID,
               messageID: delta.deltaMessageReaction.messageId,
               reaction: delta.deltaMessageReaction.reaction,
-              senderID: (delta.deltaMessageReaction.senderId && delta.deltaMessageReaction.senderId != 0 ? delta.deltaMessageReaction.senderId : delta.deltaMessageReaction.userId).toString(),
+              senderID: rxSender,
               userID: (delta.deltaMessageReaction.userId || delta.deltaMessageReaction.senderId).toString()
             };
 
             if (!ctx.globalOptions.selfListen && String(reactionEvent.senderID) === String(ctx.userID || ctx.i_userID)) {
-              return;
+              continue;
             }
 
             globalCallback(null, reactionEvent);
+            continue;
         } else if (delta.deltaRecallMessageData && !!ctx.globalOptions.listenEvents) {
+            const rcThreadKey = delta.deltaRecallMessageData.threadKey || {};
+            const rcSender = (delta.deltaRecallMessageData.senderID || "").toString();
+            const rcOtherID = rcThreadKey.otherUserFbId && String(rcThreadKey.otherUserFbId) !== String(ctx.userID || ctx.i_userID) ? rcThreadKey.otherUserFbId : rcSender;
+            const rcThreadID = (rcThreadKey.threadFbId || rcOtherID || rcSender || "").toString();
+
             globalCallback(null, {
               type: "message_unsend",
-              threadID: (delta.deltaRecallMessageData.threadKey.threadFbId || delta.deltaRecallMessageData.threadKey.otherUserFbId).toString(),
+              threadID: rcThreadID,
               messageID: delta.deltaRecallMessageData.messageID,
-              senderID: delta.deltaRecallMessageData.senderID.toString(),
+              senderID: rcSender,
               deletionTimestamp: delta.deltaRecallMessageData.deletionTimestamp,
               timestamp: delta.deltaRecallMessageData.timestamp
             });
+            continue;
         } else if (delta.deltaRemoveMessage && !!ctx.globalOptions.listenEvents) {
+            const rmThreadKey = delta.deltaRemoveMessage.threadKey || {};
+            const rmSender = (ctx.userID || ctx.i_userID || "").toString();
+            const rmOtherID = rmThreadKey.otherUserFbId && String(rmThreadKey.otherUserFbId) !== String(ctx.userID || ctx.i_userID) ? rmThreadKey.otherUserFbId : rmSender;
+            const rmThreadID = (rmThreadKey.threadFbId || rmOtherID || rmSender || "").toString();
+
             globalCallback(null, {
               type: "message_self_delete",
-              threadID: (delta.deltaRemoveMessage.threadKey.threadFbId || delta.deltaRemoveMessage.threadKey.otherUserFbId).toString(),
+              threadID: rmThreadID,
               messageID: Array.isArray(delta.deltaRemoveMessage.messageIds) ? (delta.deltaRemoveMessage.messageIds[0] || "") : delta.deltaRemoveMessage.messageIds,
-              senderID: (ctx.userID || ctx.i_userID || "").toString(),
+              senderID: rmSender,
               deletionTimestamp: delta.deltaRemoveMessage.deletionTimestamp,
               timestamp: delta.deltaRemoveMessage.timestamp
             });
+            continue;
         } else if (delta.deltaMessageReply) {
           var mdata = delta.deltaMessageReply.message?.data?.prng ? JSON.parse(delta.deltaMessageReply.message.data.prng) : [];
           var mentions = {};
@@ -117,12 +135,18 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
             mdata.forEach(m => mentions[m.i] = (delta.deltaMessageReply.message.body || "").substring(m.o, m.o + m.l));
           }
 
+          var rMsgMeta = delta.deltaMessageReply.message?.messageMetadata || {};
+          var rThreadKey = rMsgMeta.threadKey || {};
+          var rSenderID = (rMsgMeta.actorFbId || "").toString();
+          var rOtherID = rThreadKey.otherUserFbId && String(rThreadKey.otherUserFbId) !== String(ctx.userID || ctx.i_userID) ? rThreadKey.otherUserFbId : rSenderID;
+          var rThreadID = (rThreadKey.threadFbId || rOtherID || rSenderID || "").toString();
+
           var replyBody = delta.deltaMessageReply.message?.body || "";
           var callbackToReturn = {
             type: "message_reply",
-            threadID: (delta.deltaMessageReply.message.messageMetadata.threadKey.threadFbId || delta.deltaMessageReply.message.messageMetadata.threadKey.otherUserFbId).toString(),
-            messageID: delta.deltaMessageReply.message.messageMetadata.messageId,
-            senderID: delta.deltaMessageReply.message.messageMetadata.actorFbId.toString(),
+            threadID: rThreadID,
+            messageID: rMsgMeta.messageId || "",
+            senderID: rSenderID,
             attachments: (delta.deltaMessageReply.message.attachments || []).map(att => {
               if (att && att.mercuryJSON && typeof att.mercuryJSON === "string") {
                 try {
@@ -138,10 +162,14 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
             }),
             args: replyBody.trim().split(/\s+/),
             body: replyBody,
-            isGroup: !!delta.deltaMessageReply.message.messageMetadata.threadKey.threadFbId,
+            isGroup: !!rThreadKey.threadFbId,
             mentions: mentions,
-            timestamp: delta.deltaMessageReply.message.messageMetadata.timestamp,
-            participantIDs: (delta.deltaMessageReply.message.participants || []).map(e => e.toString())
+            timestamp: rMsgMeta.timestamp,
+            participantIDs: (delta.deltaMessageReply.message.participants || []).map(e => e.toString()),
+            isE2EE: Boolean(
+              (rMsgMeta.messageId && String(rMsgMeta.messageId).startsWith("ee.mid")) ||
+              (delta.deltaMessageReply.message.attachments && Array.isArray(delta.deltaMessageReply.message.attachments) && delta.deltaMessageReply.message.attachments.some(a => a.isUnrecognized || (a.id && String(a.id).startsWith("ee.mid")) || (a.ID && String(a.ID).startsWith("ee.mid")) || a.description === "Unsupported shared content."))
+            )
           };
           if (delta.deltaMessageReply.repliedToMessage) {
             var rmentions = {};
@@ -150,10 +178,16 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
                 rmdata.forEach(m => rmentions[m.i] = (delta.deltaMessageReply.repliedToMessage.body || "").substring(m.o, m.o + m.l));
             }
 
+            var repMsgMeta = delta.deltaMessageReply.repliedToMessage?.messageMetadata || {};
+            var repThreadKey = repMsgMeta.threadKey || {};
+            var repSenderID = (repMsgMeta.actorFbId || "").toString();
+            var repOtherID = repThreadKey.otherUserFbId && String(repThreadKey.otherUserFbId) !== String(ctx.userID || ctx.i_userID) ? repThreadKey.otherUserFbId : repSenderID;
+            var repThreadID = (repThreadKey.threadFbId || repOtherID || repSenderID || "").toString();
+
             callbackToReturn.messageReply = {
-              threadID: (delta.deltaMessageReply.repliedToMessage.messageMetadata.threadKey.threadFbId || delta.deltaMessageReply.repliedToMessage.messageMetadata.threadKey.otherUserFbId).toString(),
-              messageID: delta.deltaMessageReply.repliedToMessage.messageMetadata.messageId,
-              senderID: delta.deltaMessageReply.repliedToMessage.messageMetadata.actorFbId.toString(),
+              threadID: repThreadID,
+              messageID: repMsgMeta.messageId || "",
+              senderID: repSenderID,
               attachments: (delta.deltaMessageReply.repliedToMessage.attachments || []).map(att => {
                  if (att && att.mercuryJSON && typeof att.mercuryJSON === "string") {
                    try {
@@ -168,9 +202,9 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
                  }
               }),
               body: delta.deltaMessageReply.repliedToMessage.body || "",
-              isGroup: !!delta.deltaMessageReply.repliedToMessage.messageMetadata.threadKey.threadFbId,
+              isGroup: !!repThreadKey.threadFbId,
               mentions: rmentions,
-              timestamp: delta.deltaMessageReply.repliedToMessage.messageMetadata.timestamp,
+              timestamp: repMsgMeta.timestamp,
               participantIDs: (delta.deltaMessageReply.repliedToMessage.participants || []).map(e => e.toString())
             };
           }
@@ -179,9 +213,10 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
             ctx.threadTypeCache[callbackToReturn.threadID.toString()] = callbackToReturn.isGroup;
           }
           if (ctx.globalOptions.autoMarkDelivery) api.markAsDelivered(callbackToReturn.threadID, callbackToReturn.messageID);
-          if (!ctx.globalOptions.selfListen && String(callbackToReturn.senderID) === String(ctx.userID || ctx.i_userID)) return;
+          if (!ctx.globalOptions.selfListen && String(callbackToReturn.senderID) === String(ctx.userID || ctx.i_userID)) continue;
           utils.log("ClientPayload:Reply", `Received message reply [${callbackToReturn.threadID}] ${callbackToReturn.senderID} -> "${callbackToReturn.body || '[Attachment]'}"`);
-          return globalCallback(null, callbackToReturn);
+          globalCallback(null, callbackToReturn);
+          continue;
         } else if (delta.deltaNewMessage) {
           const rawMsg = delta.deltaNewMessage.message || delta.deltaNewMessage;
           let mdata = [];
@@ -224,7 +259,11 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
             isGroup: isGroup,
             mentions: mentions,
             timestamp: parseInt(msgMeta.timestamp || Date.now()),
-            participantIDs: (rawMsg.participants || []).map(e => e.toString())
+            participantIDs: (rawMsg.participants || []).map(e => e.toString()),
+            isE2EE: Boolean(
+              (msgMeta.messageId && String(msgMeta.messageId).startsWith("ee.mid")) ||
+              (rawMsg.attachments && Array.isArray(rawMsg.attachments) && rawMsg.attachments.some(a => a.isUnrecognized || (a.id && String(a.id).startsWith("ee.mid")) || (a.ID && String(a.ID).startsWith("ee.mid")) || a.description === "Unsupported shared content."))
+            )
           };
 
           if (callbackToReturn.threadID && typeof callbackToReturn.isGroup === "boolean") {
@@ -235,6 +274,7 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
           if (!ctx.globalOptions.selfListen && String(callbackToReturn.senderID) === String(ctx.userID || ctx.i_userID)) continue;
           utils.log("ClientPayload:NewMessage", `Received message [${callbackToReturn.threadID}] ${callbackToReturn.senderID} -> "${callbackToReturn.body || '[Attachment]'}"`);
           globalCallback(null, callbackToReturn);
+          continue;
         }
       }
       return;

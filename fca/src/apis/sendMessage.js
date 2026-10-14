@@ -360,8 +360,11 @@ module.exports = (defaultFuncs, api, ctx) => {
     } else {
       const _userCb = callback;
       callback = (err, data) => {
-        if (err) { _userCb(err); return rejectFunc(err); }
-        _userCb(null, data);
+        if (err) {
+          try { _userCb(err); } catch (_) {}
+          return resolveFunc(null);
+        }
+        try { _userCb(null, data); } catch (_) {}
         resolveFunc(data);
       };
     }

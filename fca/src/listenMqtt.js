@@ -674,10 +674,32 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
 
       if (jsonMessage.lastIssuedSeqId) ctx.lastSeqId = parseInt(jsonMessage.lastIssuedSeqId);
       //If it contains more than 1 delta
-      if (Array.isArray(jsonMessage.deltas)) {
-        for (var i in jsonMessage.deltas) {
+      let deltas = Array.isArray(jsonMessage.deltas) ? jsonMessage.deltas : null;
+      if (!deltas && jsonMessage.delta && typeof jsonMessage.delta === "object") {
+        deltas = [jsonMessage.delta];
+      }
+      if (!deltas && jsonMessage.payload) {
+        try {
+          const decodedPayload = typeof jsonMessage.payload === "string" 
+            ? (jsonMessage.payload.startsWith("{") ? JSON.parse(jsonMessage.payload) : utils.decodeClientPayload(jsonMessage.payload))
+            : utils.decodeClientPayload(jsonMessage.payload);
+          if (decodedPayload) {
+            if (Array.isArray(decodedPayload.deltas)) {
+              deltas = decodedPayload.deltas;
+            } else if (decodedPayload.delta) {
+              deltas = [decodedPayload.delta];
+            } else {
+              parseDelta(defaultFuncs, api, ctx, globalCallback, { delta: { class: "ClientPayload", payload: jsonMessage.payload }, queue: jsonMessage.queue });
+            }
+          }
+        } catch (err) {
+          logWarn(`Failed to decode payload in ${topic}: ${err.message || err}`);
+        }
+      }
+      if (Array.isArray(deltas)) {
+        for (var i in deltas) {
           try {
-            var delta = jsonMessage.deltas[i];
+            var delta = deltas[i];
             parseDelta(defaultFuncs, api, ctx, globalCallback, {
               "delta": delta,
               "queue": jsonMessage.queue
@@ -685,15 +707,6 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
           } catch (err) {
             logWarn(`Failed to parse delta [${i}]: ${err.message || err}`);
           }
-        }
-      } else if (jsonMessage.delta && typeof jsonMessage.delta === "object") {
-        try {
-          parseDelta(defaultFuncs, api, ctx, globalCallback, {
-            "delta": jsonMessage.delta,
-            "queue": jsonMessage.queue
-          });
-        } catch (err) {
-          logWarn(`Failed to parse single delta: ${err.message || err}`);
         }
       }
     } else if (topic === "/ls_resp") {
@@ -843,7 +856,7 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
       if (!delta.attachments || i === delta.attachments.length || utils.getType(delta.attachments) !== 'Array') {
         let fmtMsg;
         try {
-          fmtMsg = utils.formatDeltaMessage(delta);
+          fmtMsg = utils.formatDeltaMessage(delta, ctx);
         } catch (err) {
           return;
         }

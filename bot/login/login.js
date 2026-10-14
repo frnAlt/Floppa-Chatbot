@@ -1542,13 +1542,19 @@ async function startBot(loginWithEmail) {
                                                 return;
                                 }
 
-                                // Deduplicate messages
+                                // Check if listenMqtt loop and deduplicate
                                 if (event.messageID && (event.type == "message" || event.type == "message_reply")) {
-                                        if (!isAdminOrDev && global.GoatBot.storage5Message?.includes(event.messageID))
-                                                return;
                                         if (!global.GoatBot.storage5Message) global.GoatBot.storage5Message = [];
-                                        global.GoatBot.storage5Message.push(event.messageID);
-                                        if (global.GoatBot.storage5Message.length > 50)
+                                        if (global.GoatBot.storage5Message.includes(event.messageID)) {
+                                                Object.keys(callbackListenTime).slice(0, -1).forEach(key => {
+                                                        callbackListenTime[key] = () => { };
+                                                });
+                                                return;
+                                        }
+                                        else {
+                                                global.GoatBot.storage5Message.push(event.messageID);
+                                        }
+                                        if (global.GoatBot.storage5Message.length > 20)
                                                 global.GoatBot.storage5Message.shift();
                                 }
 

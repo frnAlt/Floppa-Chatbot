@@ -20,10 +20,11 @@ function getAdminTextMessageType(type) {
     }
 }
 
-function formatDeltaMessage(m) {
-    if (!m || !m.delta) return null;
-    const md = m.delta.messageMetadata || {};
-    const body = m.delta.body != null ? String(m.delta.body) : "";
+function formatDeltaMessage(m, ctx) {
+    if (!m) return null;
+    const delta = m.delta || m || {};
+    const md = delta.messageMetadata || {};
+    const body = delta.body != null ? String(delta.body) : "";
     let mdata = [];
 
     // Method 1: messageMetadata.data.data (asMap format - 2025/2026 FB format)
@@ -50,9 +51,9 @@ function formatDeltaMessage(m) {
     }
 
     // Method 2: data.prng (stringified JSON array)
-    if (mdata.length === 0 && m.delta.data?.prng) {
+    if (mdata.length === 0 && delta.data?.prng) {
         try {
-            const parsed = JSON.parse(m.delta.data.prng);
+            const parsed = JSON.parse(delta.data.prng);
             if (Array.isArray(parsed)) {
                 mdata = parsed.map(item => ({
                     i: (item.i || item.id || item.user_id)?.toString(),
@@ -64,9 +65,9 @@ function formatDeltaMessage(m) {
     }
 
     // Method 3: data.mentions
-    if (mdata.length === 0 && m.delta.data?.mentions) {
+    if (mdata.length === 0 && delta.data?.mentions) {
         try {
-            const parsed = JSON.parse(m.delta.data.mentions);
+            const parsed = JSON.parse(delta.data.mentions);
             if (Array.isArray(parsed)) {
                 mdata = parsed.map(mention => ({
                     i: (mention.i || mention.id || mention.user_id)?.toString(),
@@ -89,16 +90,16 @@ function formatDeltaMessage(m) {
     }
 
     // Method 5: delta.mentions directly
-    if (mdata.length === 0 && m.delta.mentions) {
+    if (mdata.length === 0 && delta.mentions) {
         try {
-            if (Array.isArray(m.delta.mentions)) {
-                mdata = m.delta.mentions.map(mention => ({
+            if (Array.isArray(delta.mentions)) {
+                mdata = delta.mentions.map(mention => ({
                     i: (mention.id || mention.i || mention.user_id || mention.userId)?.toString(),
                     o: mention.offset ?? mention.o ?? 0,
                     l: mention.length ?? mention.l ?? 0
                 }));
-            } else if (typeof m.delta.mentions === 'object') {
-                mdata = Object.entries(m.delta.mentions).map(([id, tag]) => {
+            } else if (typeof delta.mentions === 'object') {
+                mdata = Object.entries(delta.mentions).map(([id, tag]) => {
                     const offset = body.indexOf(tag);
                     return { i: id.toString(), o: offset >= 0 ? offset : 0, l: (tag || "").length };
                 });
@@ -107,9 +108,9 @@ function formatDeltaMessage(m) {
     }
 
     // Method 6: platform_xmd / profile_xmd / at
-    if (mdata.length === 0 && (m.delta.data?.platform_xmd || m.delta.data?.profile_xmd || m.delta.data?.at)) {
+    if (mdata.length === 0 && (delta.data?.platform_xmd || delta.data?.profile_xmd || delta.data?.at)) {
         try {
-            const raw = m.delta.data.platform_xmd || m.delta.data.profile_xmd || m.delta.data.at;
+            const raw = delta.data.platform_xmd || delta.data.profile_xmd || delta.data.at;
             const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
             const list = Array.isArray(parsed) ? parsed : (parsed?.mentions || []);
             mdata = list.map(item => ({
@@ -130,7 +131,7 @@ function formatDeltaMessage(m) {
     }
 
     // Parse messageReply with comprehensive fallback keys
-    const rawReply = m.delta.messageReply || m.delta.repliedToMessage;
+    const rawReply = delta.messageReply || delta.repliedToMessage;
     let messageReply = null;
     if (rawReply) {
         const replySender = rawReply.senderID 
@@ -152,22 +153,41 @@ function formatDeltaMessage(m) {
 
     const senderID = md.actorFbId != null ? formatID(md.actorFbId.toString()) : "0";
     const threadKey = md.threadKey || {};
-    const threadRaw = threadKey.threadFbId || threadKey.otherUserFbId;
+    const isGroup = !!threadKey.threadFbId;
+    const botID = String(ctx?.userID || ctx?.i_userID || global.botID || global.GoatBot?.botID || "");
+    let dmPeer = senderID;
+    if (threadKey.otherUserFbId) {
+        const otherStr = threadKey.otherUserFbId.toString();
+        if (botID && otherStr === botID) {
+            dmPeer = senderID;
+        } else if (botID && senderID === botID) {
+            dmPeer = otherStr;
+        } else {
+            dmPeer = otherStr;
+        }
+    }
+    const threadRaw = threadKey.threadFbId || dmPeer || senderID;
     const threadID = threadRaw != null ? formatID(threadRaw.toString()) : "0";
+
+    const isE2EE = Boolean(
+        (md.messageId && String(md.messageId).startsWith("ee.mid")) ||
+        (delta.attachments && Array.isArray(delta.attachments) && delta.attachments.some(a => a.isUnrecognized || (a.id && String(a.id).startsWith("ee.mid")) || (a.ID && String(a.ID).startsWith("ee.mid")) || a.description === "Unsupported shared content."))
+    );
 
     return {
         type: messageReply ? "message_reply" : "message",
         senderID,
-        body: m.delta.body || "",
+        body: delta.body || "",
         threadID,
         messageID: md.messageId,
         offlineThreadingId: md.offlineThreadingId,
-        attachments: (m.delta.attachments || []).map(v => _formatAttachment(v)),
+        attachments: (delta.attachments || []).map(v => _formatAttachment(v)),
         mentions: mentions,
         timestamp: md.timestamp,
-        isGroup: !!threadKey.threadFbId,
-        participantIDs: m.delta.participants,
-        messageReply: messageReply
+        isGroup: isGroup,
+        participantIDs: delta.participants,
+        messageReply: messageReply,
+        isE2EE: isE2EE
     };
 }
 

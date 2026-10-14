@@ -440,15 +440,14 @@ function _formatAttachment(attachment1, attachment2) {
                                                                             name: blob.filename
                                                                         };
         default:
-                                                                            throw new Error(
-                                                                                "unrecognized attach_file of type " +
-                                                                                type +
-                                                                                "`" +
-                                                                                JSON.stringify(attachment1, null, 4) +
-                                                                                " attachment2: " +
-                                                                                JSON.stringify(attachment2, null, 4) +
-                                                                                "`"
-                                                                            );
+            return {
+                type: "unknown",
+                isUnrecognized: true,
+                description: attachment1?.description || "Unsupported shared content.",
+                ID: attachment1?.id || attachment1?.ID || attachment1?.fbid || attachment2?.id || "",
+                url: attachment1?.url || null,
+                rawAttachment: attachment1
+            };
     }
 }                                        function formatAttachment(attachments, attachmentIds, attachmentMap, shareMap) {
                                                                     attachmentMap = shareMap || attachmentMap;
@@ -469,9 +468,11 @@ function _formatAttachment(attachment1, attachment2) {
  * Enhanced formatDeltaMessage with comprehensive mention parsing
  * Supports multiple Facebook mention formats (2024+)
  */
-function formatDeltaMessage(m) {
-    const md = m.delta.messageMetadata;
-    const body = m.delta.body || "";
+function formatDeltaMessage(m, ctx) {
+    if (!m) return null;
+    const delta = m.delta || m || {};
+    const md = delta.messageMetadata || {};
+    const body = delta.body || "";
     let mdata = [];
     
     // NEW METHOD: messageMetadata.data.data.Gb.asMap.data (2025+ Facebook format)
@@ -506,9 +507,9 @@ function formatDeltaMessage(m) {
     }
     
     // Method 1: data.prng (old format - stringified JSON array)
-    if (mdata.length === 0 && m.delta.data?.prng) {
+    if (mdata.length === 0 && delta.data?.prng) {
         try {
-            const parsed = JSON.parse(m.delta.data.prng);
+            const parsed = JSON.parse(delta.data.prng);
             if (Array.isArray(parsed)) {
                 mdata = parsed.map(item => ({
                     i: item.i || item.id || item.user_id,
@@ -520,9 +521,9 @@ function formatDeltaMessage(m) {
     }
     
     // Method 2: data.mentions (newer format - stringified JSON)
-    if (mdata.length === 0 && m.delta.data?.mentions) {
+    if (mdata.length === 0 && delta.data?.mentions) {
         try {
-            const parsed = JSON.parse(m.delta.data.mentions);
+            const parsed = JSON.parse(delta.data.mentions);
             if (Array.isArray(parsed)) {
                 mdata = parsed.map(mention => ({
                     i: mention.i || mention.id || mention.user_id,
@@ -545,16 +546,16 @@ function formatDeltaMessage(m) {
     }
     
     // Method 4: delta.mentions directly (array format)
-    if (mdata.length === 0 && m.delta.mentions) {
+    if (mdata.length === 0 && delta.mentions) {
         try {
-            if (Array.isArray(m.delta.mentions)) {
-                mdata = m.delta.mentions.map(mention => ({
+            if (Array.isArray(delta.mentions)) {
+                mdata = delta.mentions.map(mention => ({
                     i: mention.id || mention.i || mention.user_id || mention.userId,
                     o: mention.offset ?? mention.o ?? 0,
                     l: mention.length ?? mention.l ?? 0
                 }));
-            } else if (typeof m.delta.mentions === 'object') {
-                mdata = Object.entries(m.delta.mentions).map(([id, tag]) => {
+            } else if (typeof delta.mentions === 'object') {
+                mdata = Object.entries(delta.mentions).map(([id, tag]) => {
                     const offset = body.indexOf(tag);
                     return { i: id, o: offset >= 0 ? offset : 0, l: tag.length };
                 });
@@ -563,9 +564,9 @@ function formatDeltaMessage(m) {
     }
     
     // Method 5: data.platform_xmd (newer Facebook format with nested structure)
-    if (mdata.length === 0 && m.delta.data?.platform_xmd) {
+    if (mdata.length === 0 && delta.data?.platform_xmd) {
         try {
-            const xmd = JSON.parse(m.delta.data.platform_xmd);
+            const xmd = JSON.parse(delta.data.platform_xmd);
             if (xmd.mention_offsets) {
                 const ids = Object.keys(xmd.mention_offsets);
                 for (const uid of ids) {
@@ -592,9 +593,9 @@ function formatDeltaMessage(m) {
     }
     
     // Method 6: data.profile_xmd (alternative profile mentions format)
-    if (mdata.length === 0 && m.delta.data?.profile_xmd) {
+    if (mdata.length === 0 && delta.data?.profile_xmd) {
         try {
-            const xmd = JSON.parse(m.delta.data.profile_xmd);
+            const xmd = JSON.parse(delta.data.profile_xmd);
             if (Array.isArray(xmd)) {
                 mdata = xmd.map(item => ({
                     i: item.id || item.i || item.user_id,
@@ -606,11 +607,11 @@ function formatDeltaMessage(m) {
     }
     
     // Method 7: delta.data with separate mention_ids/offsets/lengths arrays
-    if (mdata.length === 0 && m.delta.data?.mention_ids) {
+    if (mdata.length === 0 && delta.data?.mention_ids) {
         try {
-            const ids = JSON.parse(m.delta.data.mention_ids);
-            const offsets = m.delta.data.mention_offsets ? JSON.parse(m.delta.data.mention_offsets) : [];
-            const lengths = m.delta.data.mention_lengths ? JSON.parse(m.delta.data.mention_lengths) : [];
+            const ids = JSON.parse(delta.data.mention_ids);
+            const offsets = delta.data.mention_offsets ? JSON.parse(delta.data.mention_offsets) : [];
+            const lengths = delta.data.mention_lengths ? JSON.parse(delta.data.mention_lengths) : [];
             for (let i = 0; i < ids.length; i++) {
                 mdata.push({
                     i: ids[i],
@@ -622,9 +623,9 @@ function formatDeltaMessage(m) {
     }
     
     // Method 8: data.tagging (another Facebook format)
-    if (mdata.length === 0 && m.delta.data?.tagging) {
+    if (mdata.length === 0 && delta.data?.tagging) {
         try {
-            const tagging = JSON.parse(m.delta.data.tagging);
+            const tagging = JSON.parse(delta.data.tagging);
             if (Array.isArray(tagging)) {
                 mdata = tagging.map(t => ({
                     i: t.id || t.user_id || t.i,
@@ -636,12 +637,12 @@ function formatDeltaMessage(m) {
     }
     
     // Method 9: Scan all data properties for any JSON that looks like mentions
-    if (mdata.length === 0 && m.delta.data && body.includes('@')) {
+    if (mdata.length === 0 && delta.data && body.includes('@')) {
         try {
-            for (const key of Object.keys(m.delta.data)) {
-                if (typeof m.delta.data[key] === 'string' && m.delta.data[key].startsWith('[')) {
+            for (const key of Object.keys(delta.data)) {
+                if (typeof delta.data[key] === 'string' && delta.data[key].startsWith('[')) {
                     try {
-                        const parsed = JSON.parse(m.delta.data[key]);
+                        const parsed = JSON.parse(delta.data[key]);
                         if (Array.isArray(parsed) && parsed.length > 0 && parsed[0]) {
                             const first = parsed[0];
                             if (first.i !== undefined || first.id !== undefined || first.user_id !== undefined) {
@@ -660,9 +661,9 @@ function formatDeltaMessage(m) {
     }
     
     // Method 10: New Facebook format - data.at (2024+ format)
-    if (mdata.length === 0 && m.delta.data?.at) {
+    if (mdata.length === 0 && delta.data?.at) {
         try {
-            const atData = JSON.parse(m.delta.data.at);
+            const atData = JSON.parse(delta.data.at);
             if (Array.isArray(atData)) {
                 mdata = atData.map(item => ({
                     i: item.i || item.id || item.uid || item.user_id,
@@ -685,9 +686,9 @@ function formatDeltaMessage(m) {
     }
     
     // Method 12: New xmd format with nested mention data
-    if (mdata.length === 0 && m.delta.data?.xmd) {
+    if (mdata.length === 0 && delta.data?.xmd) {
         try {
-            const xmd = JSON.parse(m.delta.data.xmd);
+            const xmd = JSON.parse(delta.data.xmd);
             if (xmd.mention) {
                 const mentionData = Array.isArray(xmd.mention) ? xmd.mention : [xmd.mention];
                 mdata = mentionData.map(mt => ({
@@ -698,7 +699,7 @@ function formatDeltaMessage(m) {
             } else if (xmd.mentions) {
                 const mentionData = Array.isArray(xmd.mentions) ? xmd.mentions : [xmd.mentions];
                 mdata = mentionData.map(mt => ({
-                    i: mt.i || mt.id || mt.user_id || mt.uid,
+                    i: mt.id || mt.i || mt.user_id || mt.uid,
                     o: mt.o ?? mt.offset ?? 0,
                     l: mt.l ?? mt.length ?? 0
                 }));
@@ -714,9 +715,9 @@ function formatDeltaMessage(m) {
     }
     
     // Method 13: Check for mention data in requestContext
-    if (mdata.length === 0 && m.delta.requestContext?.mentions) {
+    if (mdata.length === 0 && delta.requestContext?.mentions) {
         try {
-            const rcMentions = m.delta.requestContext.mentions;
+            const rcMentions = delta.requestContext.mentions;
             if (Array.isArray(rcMentions)) {
                 mdata = rcMentions.map(mt => ({
                     i: mt.id || mt.i || mt.user_id || mt.uid,
@@ -728,9 +729,9 @@ function formatDeltaMessage(m) {
     }
     
     // Method 14: Parse from message_ranges in newer format
-    if (mdata.length === 0 && m.delta.data?.message_ranges) {
+    if (mdata.length === 0 && delta.data?.message_ranges) {
         try {
-            const ranges = JSON.parse(m.delta.data.message_ranges);
+            const ranges = JSON.parse(delta.data.message_ranges);
             if (Array.isArray(ranges)) {
                 mdata = ranges.filter(r => r.type === 'mention' || r.entity_type === 'user' || r.entity).map(r => ({
                     i: r.entity?.id || r.id || r.user_id || r.entity_id,
@@ -742,9 +743,9 @@ function formatDeltaMessage(m) {
     }
     
     // Method 15: Blob XMD format (newer FB format)
-    if (mdata.length === 0 && m.delta.data?.blob_xmd) {
+    if (mdata.length === 0 && delta.data?.blob_xmd) {
         try {
-            const blobXmd = JSON.parse(m.delta.data.blob_xmd);
+            const blobXmd = JSON.parse(delta.data.blob_xmd);
             if (blobXmd.mentions && Array.isArray(blobXmd.mentions)) {
                 mdata = blobXmd.mentions.map(mt => ({
                     i: mt.id || mt.i || mt.user_id,
@@ -756,9 +757,9 @@ function formatDeltaMessage(m) {
     }
     
     // Method 16: Check snippet_annotations for mentions
-    if (mdata.length === 0 && m.delta.data?.snippet_annotations) {
+    if (mdata.length === 0 && delta.data?.snippet_annotations) {
         try {
-            const annotations = JSON.parse(m.delta.data.snippet_annotations);
+            const annotations = JSON.parse(delta.data.snippet_annotations);
             if (Array.isArray(annotations)) {
                 const mentionAnnotations = annotations.filter(a => 
                     a.type === 'mention' || a.annotation_type === 'mention' || a.entity_type === 'user'
@@ -780,7 +781,7 @@ function formatDeltaMessage(m) {
         }
     }
     
-    const rawReply = m.delta.messageReply || m.delta.repliedToMessage;
+    const rawReply = delta.messageReply || delta.repliedToMessage;
     let messageReply = null;
     if (rawReply) {
         const replySender = rawReply.senderID 
@@ -802,8 +803,26 @@ function formatDeltaMessage(m) {
 
     const threadKey = md?.threadKey || {};
     const actorFbId = md?.actorFbId != null ? md.actorFbId.toString() : "";
-    const rawThread = threadKey.threadFbId || threadKey.otherUserFbId || actorFbId;
+    const isGroup = !!threadKey.threadFbId;
+    const botID = String(ctx?.userID || ctx?.i_userID || global.botID || global.GoatBot?.botID || "");
+    let dmPeer = actorFbId;
+    if (threadKey.otherUserFbId) {
+        const otherStr = threadKey.otherUserFbId.toString();
+        if (botID && otherStr === botID) {
+            dmPeer = actorFbId;
+        } else if (botID && actorFbId === botID) {
+            dmPeer = otherStr;
+        } else {
+            dmPeer = otherStr;
+        }
+    }
+    const rawThread = threadKey.threadFbId || dmPeer || actorFbId;
     const threadID = formatID(rawThread ? rawThread.toString() : "0");
+
+    const isE2EE = Boolean(
+        (md?.messageId && String(md.messageId).startsWith("ee.mid")) ||
+        (delta.attachments && Array.isArray(delta.attachments) && delta.attachments.some(a => a.isUnrecognized || (a.id && String(a.id).startsWith("ee.mid")) || (a.ID && String(a.ID).startsWith("ee.mid")) || a.description === "Unsupported shared content."))
+    );
 
     return {
         type: messageReply ? "message_reply" : "message",
@@ -812,12 +831,13 @@ function formatDeltaMessage(m) {
         threadID: threadID,
         messageID: md?.messageId || "",
         offlineThreadingId: md?.offlineThreadingId,
-        attachments: (m.delta?.attachments || []).map(v => _formatAttachment(v)),
+        attachments: (delta.attachments || []).map(v => _formatAttachment(v)),
         mentions: mentions,
         timestamp: md?.timestamp,
-        isGroup: !!threadKey.threadFbId,
-        participantIDs: m.delta?.participants,
-        messageReply: messageReply
+        isGroup: isGroup,
+        participantIDs: delta.participants,
+        messageReply: messageReply,
+        isE2EE: isE2EE
     };
 }                                     function formatID(id) {
                                                         if (id != undefined && id != null) {
