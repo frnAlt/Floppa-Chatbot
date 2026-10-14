@@ -1144,10 +1144,11 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
           mdata.forEach(m => mentions[m.i] = (rawMsg.body || "").substring(m.o, m.o + m.l));
           const msgMeta = rawMsg.messageMetadata || {};
           const threadKey = msgMeta.threadKey || {};
-          const threadID = (threadKey.threadFbId || threadKey.otherUserFbId || "").toString();
           const senderID = (msgMeta.actorFbId || "").toString();
-          const msgBody = rawMsg.body || "";
           const isGroup = !!threadKey.threadFbId;
+          const otherID = threadKey.otherUserFbId && String(threadKey.otherUserFbId) !== String(ctx.userID || ctx.i_userID) ? threadKey.otherUserFbId : senderID;
+          const threadID = (threadKey.threadFbId || otherID || senderID || "").toString();
+          const msgBody = rawMsg.body || "";
 
           const callbackToReturn = {
             type: "message",

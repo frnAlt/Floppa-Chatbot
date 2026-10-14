@@ -70,8 +70,9 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
     return;
   }
 
-  if (v.delta.class == "ClientPayload") {
-    var clientPayload = utils.decodeClientPayload(v.delta.payload);
+  const isClientPayload = v?.delta && (v.delta.class === "ClientPayload" || v.delta.type === "ClientPayload" || (v.delta.payload && !v.delta.class));
+  if (isClientPayload) {
+    var clientPayload = utils.decodeClientPayload(v.delta.payload || v.delta);
     if (clientPayload && clientPayload.deltas) {
       for (var i in clientPayload.deltas) {
         var delta = clientPayload.deltas[i];
@@ -82,8 +83,8 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
               threadID: (delta.deltaMessageReaction.threadKey.threadFbId || delta.deltaMessageReaction.threadKey.otherUserFbId).toString(),
               messageID: delta.deltaMessageReaction.messageId,
               reaction: delta.deltaMessageReaction.reaction,
-              senderID: delta.deltaMessageReaction.userId.toString(),
-              userID: delta.deltaMessageReaction.userId.toString()
+              senderID: (delta.deltaMessageReaction.senderId && delta.deltaMessageReaction.senderId != 0 ? delta.deltaMessageReaction.senderId : delta.deltaMessageReaction.userId).toString(),
+              userID: (delta.deltaMessageReaction.userId || delta.deltaMessageReaction.senderId).toString()
             };
 
             if (!ctx.globalOptions.selfListen && String(reactionEvent.senderID) === String(ctx.userID || ctx.i_userID)) {
@@ -99,6 +100,15 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
               senderID: delta.deltaRecallMessageData.senderID.toString(),
               deletionTimestamp: delta.deltaRecallMessageData.deletionTimestamp,
               timestamp: delta.deltaRecallMessageData.timestamp
+            });
+        } else if (delta.deltaRemoveMessage && !!ctx.globalOptions.listenEvents) {
+            globalCallback(null, {
+              type: "message_self_delete",
+              threadID: (delta.deltaRemoveMessage.threadKey.threadFbId || delta.deltaRemoveMessage.threadKey.otherUserFbId).toString(),
+              messageID: Array.isArray(delta.deltaRemoveMessage.messageIds) ? (delta.deltaRemoveMessage.messageIds[0] || "") : delta.deltaRemoveMessage.messageIds,
+              senderID: (ctx.userID || ctx.i_userID || "").toString(),
+              deletionTimestamp: delta.deltaRemoveMessage.deletionTimestamp,
+              timestamp: delta.deltaRemoveMessage.timestamp
             });
         } else if (delta.deltaMessageReply) {
           var mdata = delta.deltaMessageReply.message?.data?.prng ? JSON.parse(delta.deltaMessageReply.message.data.prng) : [];
@@ -185,10 +195,11 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
           mdata.forEach(m => mentions[m.i] = (rawMsg.body || "").substring(m.o, m.o + m.l));
           const msgMeta = rawMsg.messageMetadata || {};
           const threadKey = msgMeta.threadKey || {};
-          const threadID = (threadKey.threadFbId || threadKey.otherUserFbId || "").toString();
           const senderID = (msgMeta.actorFbId || "").toString();
-          const msgBody = rawMsg.body || "";
           const isGroup = !!threadKey.threadFbId;
+          const otherID = threadKey.otherUserFbId && String(threadKey.otherUserFbId) !== String(ctx.userID || ctx.i_userID) ? threadKey.otherUserFbId : senderID;
+          const threadID = (threadKey.threadFbId || otherID || senderID || "").toString();
+          const msgBody = rawMsg.body || "";
 
           const callbackToReturn = {
             type: "message",

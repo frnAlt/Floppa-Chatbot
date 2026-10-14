@@ -12,7 +12,43 @@ function isReadableStream(obj) {
 }
 
 function decodeClientPayload(payload) {
-    return JSON.parse(String.fromCharCode.apply(null, payload));
+    if (!payload) return null;
+    try {
+        if (typeof payload === "object" && !Buffer.isBuffer(payload) && !Array.isArray(payload) && !(payload instanceof Uint8Array)) {
+            return payload;
+        }
+        let str;
+        if (typeof payload === "string") {
+            const trimmed = payload.trim();
+            if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+                str = payload;
+            } else {
+                try {
+                    str = Buffer.from(payload, "base64").toString("utf8");
+                } catch (_) {
+                    str = payload;
+                }
+            }
+        } else if (Buffer.isBuffer(payload)) {
+            str = payload.toString("utf8");
+        } else if (payload instanceof Uint8Array || Array.isArray(payload)) {
+            str = Buffer.from(payload).toString("utf8");
+        } else {
+            str = String(payload);
+        }
+        return JSON.parse(str);
+    } catch (_) {
+        try {
+            if (Array.isArray(payload) || payload instanceof Uint8Array) {
+                let out = "";
+                for (let i = 0; i < payload.length; i++) {
+                    out += String.fromCharCode(payload[i]);
+                }
+                return JSON.parse(out);
+            }
+        } catch (_) {}
+        return null;
+    }
 }
 
 function formatMessage(m) {

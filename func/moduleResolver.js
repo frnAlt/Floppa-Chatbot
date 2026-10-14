@@ -74,32 +74,60 @@ const ALIASES = {
   "bcrypt": path.join(__dirname, "bcryptShim.js"),
   "bcryptjs": path.join(__dirname, "bcryptShim.js"),
   "neokex-fca": path.join(__dirname, "../fca"),
-  "@lazyneoaz/neokex-fca": path.join(__dirname, "../fca")
+  "@lazyneoaz/neokex-fca": path.join(__dirname, "../fca"),
+  "xtreme-fca": path.join(__dirname, "../fca"),
+  "@lazyneoaz/xtreme-fca": path.join(__dirname, "../fca")
 };
+
+function resolveTargetPath(target) {
+  if (fs.existsSync(target)) {
+    try {
+      const stat = fs.statSync(target);
+      if (stat.isFile()) return target;
+      if (stat.isDirectory()) {
+        const pkgPath = path.join(target, "package.json");
+        if (fs.existsSync(pkgPath)) {
+          try {
+            const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
+            if (pkg.main) {
+              const mainPath = path.resolve(target, pkg.main);
+              if (fs.existsSync(mainPath)) {
+                const mainStat = fs.statSync(mainPath);
+                if (mainStat.isFile()) return mainPath;
+              }
+              for (const ext of [".js", ".ts", "/index.js"]) {
+                if (fs.existsSync(mainPath + ext)) return mainPath + ext;
+              }
+            }
+          } catch (_) {}
+        }
+        for (const ext of ["/index.js", "/index.ts", "/index.json"]) {
+          if (fs.existsSync(target + ext)) return target + ext;
+        }
+      }
+    } catch (_) {}
+  }
+  for (const ext of [".js", ".ts", ".tsx", ".json", "/index.js", "/index.ts"]) {
+    if (fs.existsSync(target + ext)) return target + ext;
+  }
+  return null;
+}
 
 // Hook into Module._resolveFilename for alias interception
 const originalResolveFilename = Module._resolveFilename;
 Module._resolveFilename = function (request, parent, isMain, options) {
   for (const [alias, target] of Object.entries(ALIASES)) {
     if (request === alias) {
-      if (fs.existsSync(target)) return target;
-      for (const ext of [".js", ".ts", ".tsx", ".json", "/index.js", "/index.ts"]) {
-        if (fs.existsSync(target + ext)) return target + ext;
-      }
+      const resolved = resolveTargetPath(target);
+      if (resolved) return resolved;
       return originalResolveFilename.call(this, target, parent, isMain, options);
     }
     if (request.startsWith(alias + "/")) {
       const subPath = request.slice(alias.length + 1);
-      let resolved = path.join(target, subPath);
-
-      if (fs.existsSync(resolved)) return resolved;
-      const extensions = [".js", ".ts", ".tsx", ".json", "/index.js", "/index.ts"];
-      for (const ext of extensions) {
-        if (fs.existsSync(resolved + ext)) {
-          return resolved + ext;
-        }
-      }
-      return originalResolveFilename.call(this, resolved, parent, isMain, options);
+      const targetSub = path.join(target, subPath);
+      const resolved = resolveTargetPath(targetSub);
+      if (resolved) return resolved;
+      return originalResolveFilename.call(this, targetSub, parent, isMain, options);
     }
   }
 
@@ -192,6 +220,14 @@ registerExtension(".jsx", ["jsx", "imports"]);
 const originalJsExtension = require.extensions[".js"];
 require.extensions[".js"] = function (module, filename) {
   if (filename.includes("node_modules")) {
+    return originalJsExtension(module, filename);
+  }
+  try {
+    const stat = fs.statSync(filename);
+    if (!stat.isFile()) {
+      return originalJsExtension(module, filename);
+    }
+  } catch (_) {
     return originalJsExtension(module, filename);
   }
   const rawContent = fs.readFileSync(filename, "utf8");

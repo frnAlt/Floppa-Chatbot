@@ -3042,48 +3042,43 @@ function formatPresence(presence, userID) {
  */
 
 function decodeClientPayload(payload) {
-    /*
-    Special function which Client using to "encode" clients JSON payload
-    */
-
-    /**
-     * @param {string | any[]} array
-     */
-
-    function Utf8ArrayToStr(array) {
-        var out, i, len, c;
-        var char2, char3;
-        out = "";
-        len = array.length;
-        i = 0;
-        while (i < len) {
-            c = array[i++];
-            switch (c >> 4) {
-                case 0:
-                case 1:
-                case 2:
-                case 3:
-                case 4:
-                case 5:
-                case 6:
-                case 7:
-                    out += String.fromCharCode(c);
-                    break;
-                case 12:
-                case 13:
-                    char2 = array[i++];
-                    out += String.fromCharCode(((c & 0x1F) << 6) | (char2 & 0x3F));
-                    break;
-                case 14:
-                    char2 = array[i++]; 
-                    char3 = array[i++];
-                    out += String.fromCharCode(((c & 0x0F) << 12) | ((char2 & 0x3F) << 6) | ((char3 & 0x3F) << 0));
-                    break;
-            }
+    if (!payload) return null;
+    try {
+        if (typeof payload === "object" && !Buffer.isBuffer(payload) && !Array.isArray(payload) && !(payload instanceof Uint8Array)) {
+            return payload;
         }
-        return out;
+        let str;
+        if (typeof payload === "string") {
+            const trimmed = payload.trim();
+            if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+                str = payload;
+            } else {
+                try {
+                    str = Buffer.from(payload, "base64").toString("utf8");
+                } catch (_) {
+                    str = payload;
+                }
+            }
+        } else if (Buffer.isBuffer(payload)) {
+            str = payload.toString("utf8");
+        } else if (payload instanceof Uint8Array || Array.isArray(payload)) {
+            str = Buffer.from(payload).toString("utf8");
+        } else {
+            str = String(payload);
+        }
+        return JSON.parse(str);
+    } catch (_) {
+        try {
+            if (Array.isArray(payload) || payload instanceof Uint8Array) {
+                let out = "";
+                for (let i = 0; i < payload.length; i++) {
+                    out += String.fromCharCode(payload[i]);
+                }
+                return JSON.parse(out);
+            }
+        } catch (_) {}
+        return null;
     }
-    return JSON.parse(Utf8ArrayToStr(payload));
 }
 
 /**

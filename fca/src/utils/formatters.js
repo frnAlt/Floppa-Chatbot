@@ -800,20 +800,23 @@ function formatDeltaMessage(m) {
         };
     }
 
+    const threadKey = md?.threadKey || {};
+    const actorFbId = md?.actorFbId != null ? md.actorFbId.toString() : "";
+    const rawThread = threadKey.threadFbId || threadKey.otherUserFbId || actorFbId;
+    const threadID = formatID(rawThread ? rawThread.toString() : "0");
+
     return {
         type: messageReply ? "message_reply" : "message",
-        senderID: formatID(md.actorFbId.toString()),
+        senderID: formatID(actorFbId || "0"),
         body: body,
-        threadID: formatID(
-            (md.threadKey.threadFbId || md.threadKey.otherUserFbId).toString()
-        ),
-        messageID: md.messageId,
-        offlineThreadingId: md.offlineThreadingId,
-        attachments: (m.delta.attachments || []).map(v => _formatAttachment(v)),
+        threadID: threadID,
+        messageID: md?.messageId || "",
+        offlineThreadingId: md?.offlineThreadingId,
+        attachments: (m.delta?.attachments || []).map(v => _formatAttachment(v)),
         mentions: mentions,
-        timestamp: md.timestamp,
-        isGroup: !!md.threadKey.threadFbId,
-        participantIDs: m.delta.participants,
+        timestamp: md?.timestamp,
+        isGroup: !!threadKey.threadFbId,
+        participantIDs: m.delta?.participants,
         messageReply: messageReply
     };
 }                                     function formatID(id) {
@@ -1350,10 +1353,43 @@ function formatPresence(presence, userID) {
 }
 
 function decodeClientPayload(payload) {
-    /*
-Special function which Client using to "encode" clients JSON payload
-*/
-    return JSON.parse(String.fromCharCode.apply(null, payload));
+    if (!payload) return null;
+    try {
+        if (typeof payload === "object" && !Buffer.isBuffer(payload) && !Array.isArray(payload) && !(payload instanceof Uint8Array)) {
+            return payload;
+        }
+        let str;
+        if (typeof payload === "string") {
+            const trimmed = payload.trim();
+            if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+                str = payload;
+            } else {
+                try {
+                    str = Buffer.from(payload, "base64").toString("utf8");
+                } catch (_) {
+                    str = payload;
+                }
+            }
+        } else if (Buffer.isBuffer(payload)) {
+            str = payload.toString("utf8");
+        } else if (payload instanceof Uint8Array || Array.isArray(payload)) {
+            str = Buffer.from(payload).toString("utf8");
+        } else {
+            str = String(payload);
+        }
+        return JSON.parse(str);
+    } catch (_) {
+        try {
+            if (Array.isArray(payload) || payload instanceof Uint8Array) {
+                let out = "";
+                for (let i = 0; i < payload.length; i++) {
+                    out += String.fromCharCode(payload[i]);
+                }
+                return JSON.parse(out);
+            }
+        } catch (_) {}
+        return null;
+    }
 }
 
 

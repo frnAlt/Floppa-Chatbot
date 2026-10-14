@@ -100,7 +100,7 @@
 		"valid-url": "^1.0.9",
 		"websocket-stream": "^5.3.0",
 		"ws": "^8.18.1",
-		"xtreme-fca": "^1.0.2",
+		"xtreme-fca": "file:./fca",
 		"yt-search": "^2.13.1"
 	},
 	"scripts": {
