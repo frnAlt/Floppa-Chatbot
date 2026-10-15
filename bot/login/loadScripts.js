@@ -267,8 +267,14 @@ module.exports = async function (api, threadModel, userModel, dashBoardModel, gl
 
 				// Register in Map
 				GoatBot[setMap].set(commandName, command);
+				if (typeof commandName === "string" && commandName.toLowerCase() !== commandName) {
+					GoatBot[setMap].set(commandName.toLowerCase(), command);
+				}
 				if (configCommand.name && configCommand.name !== commandName) {
 					GoatBot[setMap].set(configCommand.name, command);
+					if (typeof configCommand.name === "string" && configCommand.name.toLowerCase() !== configCommand.name) {
+						GoatBot[setMap].set(configCommand.name.toLowerCase(), command);
+					}
 				}
 				if (global.FloppaBot && global.FloppaBot.multiCommands) {
 					global.FloppaBot.multiCommands.addOne(commandName, command);

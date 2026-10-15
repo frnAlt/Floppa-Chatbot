@@ -358,8 +358,17 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 
                 if (botID && sID === botID) {
                         const isAutomatedBotMsg = Boolean(
-                                (event.messageID && global.botSentMessages?.get(String(threadID))?.includes(event.messageID)) ||
-                                (event.offlineThreadingId && Array.from(global.botSentMessages?.values() || []).some(list => list.includes(event.offlineThreadingId)))
+                                (event.messageID && (
+                                        global.botSentMessages?.get?.(String(threadID))?.includes(event.messageID) ||
+                                        global.GoatBot?.botSentMessages?.has?.(event.messageID) ||
+                                        global.FloppaBot?.botSentMessages?.has?.(event.messageID) ||
+                                        (Array.isArray(global.GoatBot?.storage5Message) && global.GoatBot.storage5Message.includes(event.messageID))
+                                )) ||
+                                (event.offlineThreadingId && (
+                                        Array.from(global.botSentMessages?.values?.() || []).some(list => Array.isArray(list) && list.includes(event.offlineThreadingId)) ||
+                                        global.GoatBot?.botSentMessages?.has?.(event.offlineThreadingId) ||
+                                        global.FloppaBot?.botSentMessages?.has?.(event.offlineThreadingId)
+                                ))
                         );
                         if (isAutomatedBotMsg) {
                                 return;
@@ -387,7 +396,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                         validPrefixes.some(p => trimmedBody.startsWith(p)) ||
                                         !isGroup ||
                                         isKnownCmd ||
-                                        (isSenderAdminOrDev && GoatBot.config?.noPrefix !== false && allTokens.length > 0);
+                                        (isSenderAdminOrDev && allTokens.length > 0);
 
                                 if (!isSelfCommand && !allowSelfListen) {
                                         return;
@@ -674,7 +683,9 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                         potentialCmd?.config?.noPrefix === true ||
                                         potentialCmd?.config?.noPrefix === "both" ||
                                         potentialCmd?.meta?.noPrefix === true ||
-                                        potentialCmd?.meta?.noPrefix === "both"
+                                        potentialCmd?.meta?.noPrefix === "both" ||
+                                        potentialCmd?.noPrefix === true ||
+                                        potentialCmd?.noPrefix === "both"
                                 );
 
                                 if (potentialCmd) {
@@ -708,7 +719,11 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                         // Allow non-prefix execution if:
                                         // 1) User is Bot Admin or Developer (all commands work without prefix when noPrefix is enabled)
                                         // 2) Command explicitly allows noPrefix ("both" or true) for all users
-                                        const isAllowedNoPrefix = (isBotAdmin && noPrefixConfig) || cmdAllowsNoPrefix;
+                                        // 3) Global noPrefixForAll is enabled or Thread allows noPrefix
+                                        const isAllowedNoPrefix = (isBotAdmin && noPrefixConfig) ||
+                                                cmdAllowsNoPrefix ||
+                                                (noPrefixConfig && global.GoatBot.config.noPrefixForAll === true) ||
+                                                (threadData?.data?.noPrefix === true);
 
                                         if (isAllowedNoPrefix) {
                                                 hasNoPrefix = true;
@@ -765,6 +780,14 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                 if (aliasesData[cmdName]?.includes(commandName)) {
                                         command = GoatBot.commands.get(cmdName);
                                         break;
+                                }
+                        }
+                        if (!command) {
+                                for (const [k, v] of GoatBot.commands.entries()) {
+                                        if (k && k.toLowerCase() === commandName) {
+                                                command = v;
+                                                break;
+                                        }
                                 }
                         }
                         // ————————————— SET COMMAND NAME ————————————— //

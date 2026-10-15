@@ -520,7 +520,8 @@ function message(api, event) {
 				}
 
 				const cb = typeof callback === 'function' ? callback : undefined;
-				const replyId = event.messageID || undefined;
+				const isSelfSent = Boolean(event.senderID && String(event.senderID) === String(api?.getCurrentUserID?.() || global.GoatBot?.botID || global.botID || ""));
+				const replyId = isSelfSent ? undefined : (event.messageID || undefined);
 				let res;
 				try {
 					res = await api.sendMessage(form, event.threadID, cb, replyId, resolvedIsGroup);

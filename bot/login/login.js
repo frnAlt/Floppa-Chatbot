@@ -1007,6 +1007,9 @@ async function startBot(loginWithEmail) {
 
                         global.GoatBot.fcaApi = api;
                         global.GoatBot.botID = api.getCurrentUserID();
+                        if (typeof api.setOptions === "function") {
+                                api.setOptions(global.GoatBot.config.optionsFca || {});
+                        }
                         if (global.utils && typeof global.utils.extendFCA === "function") {
                                 global.utils.extendFCA(api);
                         }
@@ -1332,7 +1335,7 @@ async function startBot(loginWithEmail) {
                                 const isDashboard = global.GoatBot?.config?.dashBoard?.enable !== false;
                                 const fcaEngine = global.GoatBot?.fcaEngineName || activeFcaEngine || "floppa-native v5.2.0";
 
-                                const w = 78;
+                                const w = 82;
                                 const stripAnsi = s => String(s).replace(/\x1b\[[0-9;]*m/g, "");
                                 const boxLine = str => {
                                         let content = str;
@@ -1354,6 +1357,8 @@ async function startBot(loginWithEmail) {
                                 console.log(hr("╠", "═", "╣"));
                                 console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mBot Account:\x1b[0m     \x1b[33m${global.botID}\x1b[0m (${botName})`));
                                 console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mCommand Prefix:\x1b[0m  \x1b[32m${prefix}\x1b[0m  |  \x1b[1mLanguage:\x1b[0m \x1b[37m${lang}\x1b[0m  |  \x1b[1mBoot Time:\x1b[0m \x1b[32m${loadDuration}\x1b[0m`));
+                                console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mCommand Mode:\x1b[0m    \x1b[32mPrefix & Non-Prefix Active\x1b[0m (Full Admin Control)`));
+                                console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mSelf-Commands:\x1b[0m   \x1b[32m✔ Enabled\x1b[0m (Bot Account Owner Direct Execution)`));
                                 console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mActive Modules:\x1b[0m  \x1b[1m\x1b[32m${cmdsCount}\x1b[0m Commands  |  \x1b[1m\x1b[32m${eventsCount}\x1b[0m Event Commands`));
                                 console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mFCA Core Engine:\x1b[0m ${fcaEngine}`));
                                 console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mAnti-Ban Route:\x1b[0m  \x1b[32m✔ Active\x1b[0m (${ipInfo})`));

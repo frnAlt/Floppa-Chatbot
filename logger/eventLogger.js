@@ -229,9 +229,12 @@ function resolveUser(senderID, threadData, explicitUserName) {
 	const premiumUsers = (config.premiumUsers || []).map(String);
 	const adminBox = threadData?.adminIDs ? threadData.adminIDs.map(String) : [];
 
+	const currentBotID = String(global.GoatBot?.botID || global.FloppaBot?.botID || global.botID || "");
 	let role = { id: 0, name: "Member", badge: "User" };
 
-	if (devUsers.includes(strID)) {
+	if (currentBotID && strID === currentBotID) {
+		role = { id: 4, name: "Bot Account", badge: "Self" };
+	} else if (devUsers.includes(strID)) {
 		role = { id: 4, name: "Developer", badge: "Dev" };
 	} else if (adminBot.includes(strID)) {
 		role = { id: 2, name: "Bot Admin", badge: "Admin" };
@@ -646,6 +649,15 @@ const eventLogger = {
 				const userTag = formatUserTag(user, roleBadge);
 
 				console.log(`${timeTag} ${badge} ${chatTag} ${userTag} ${c.arrow} \x1b[1;37m${commandName}\x1b[0m${argsStr ? ` ${c.id(argsStr)}` : ""}`);
+			} else if (cfg.mode === "advanced") {
+				const border = c.cardBorderYellow("─".repeat(50));
+				console.log(
+					`\x1b[1;93m⚡ [COMMAND START: ${commandName.toUpperCase()}] \x1b[0m${border}\n` +
+					`\x1b[1;93m│\x1b[0m 💬 Chat   : [${thread.isGroup ? "Group" : "DM"}] "${thread.threadName}" | ID: \x1b[36m${thread.threadID}\x1b[0m\n` +
+					`\x1b[1;93m│\x1b[0m 👤 Caller : "${user.senderName}" | ID: \x1b[33m${user.senderID}\x1b[0m${roleBadge ? ` | ${roleBadge.trim()}` : ""}\n` +
+					`\x1b[1;93m│\x1b[0m ⚙️  Params : ${commandName}${argsStr ? ` ${argsStr}` : ""}\n` +
+					`\x1b[1;93m└\x1b[0m${border}`
+				);
 			}
 		} catch (_) {}
 	},

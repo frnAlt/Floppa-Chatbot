@@ -678,21 +678,33 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
         deltas.push(jsonMessage.delta);
       }
       if (jsonMessage.payload) {
+        let decodedSuccessfully = false;
         try {
           const decodedPayload = typeof jsonMessage.payload === "string" 
             ? (jsonMessage.payload.startsWith("{") ? JSON.parse(jsonMessage.payload) : utils.decodeClientPayload(jsonMessage.payload))
             : utils.decodeClientPayload(jsonMessage.payload);
           if (decodedPayload) {
-            if (Array.isArray(decodedPayload.deltas)) {
+            if (Array.isArray(decodedPayload.deltas) && decodedPayload.deltas.length > 0) {
               deltas.push(...decodedPayload.deltas);
+              decodedSuccessfully = true;
             } else if (decodedPayload.delta) {
               deltas.push(decodedPayload.delta);
-            } else {
-              parseDelta(defaultFuncs, api, ctx, globalCallback, { delta: { class: "ClientPayload", payload: jsonMessage.payload }, queue: jsonMessage.queue });
+              decodedSuccessfully = true;
             }
           }
         } catch (err) {
-          logWarn(`Failed to decode payload in ${topic}: ${err.message || err}`);
+          if (ctx.globalOptions?.debug || process.env.DEBUG) {
+            logWarn(`Failed to decode payload in ${topic}: ${err.message || err}`);
+          }
+        }
+        if (!decodedSuccessfully && jsonMessage.payload) {
+          try {
+            parseDelta(defaultFuncs, api, ctx, globalCallback, { delta: { class: "ClientPayload", payload: jsonMessage.payload }, queue: jsonMessage.queue });
+          } catch (err) {
+            if (ctx.globalOptions?.debug || process.env.DEBUG) {
+              logWarn(`ClientPayload parse error: ${err.message || err}`);
+            }
+          }
         }
       }
       if (Array.isArray(deltas) && deltas.length > 0) {

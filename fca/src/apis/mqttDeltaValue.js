@@ -24,7 +24,9 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
                 if (!ctx.threadTypeCache) ctx.threadTypeCache = Object.create(null);
                 ctx.threadTypeCache[fmtMsg.threadID.toString()] = fmtMsg.isGroup;
             }
-            utils.log("NewMessage", `Received message [${fmtMsg.threadID}] ${fmtMsg.senderID} -> "${fmtMsg.body || '[Attachment]'}"`);
+            if (ctx.globalOptions?.debug || process.env.DEBUG) {
+                utils.log("NewMessage", `Received message [${fmtMsg.threadID}] ${fmtMsg.senderID} -> "${fmtMsg.body || '[Attachment]'}"`);
+            }
             if (ctx.globalOptions.autoMarkDelivery) {
                 api.markAsDelivered(fmtMsg.threadID, fmtMsg.messageID);
             }
@@ -214,7 +216,9 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
           }
           if (ctx.globalOptions.autoMarkDelivery) api.markAsDelivered(callbackToReturn.threadID, callbackToReturn.messageID);
           if (!ctx.globalOptions.selfListen && String(callbackToReturn.senderID) === String(ctx.userID || ctx.i_userID)) continue;
-          utils.log("ClientPayload:Reply", `Received message reply [${callbackToReturn.threadID}] ${callbackToReturn.senderID} -> "${callbackToReturn.body || '[Attachment]'}"`);
+          if (ctx.globalOptions?.debug || process.env.DEBUG) {
+            utils.log("ClientPayload:Reply", `Received message reply [${callbackToReturn.threadID}] ${callbackToReturn.senderID} -> "${callbackToReturn.body || '[Attachment]'}"`);
+          }
           globalCallback(null, callbackToReturn);
           continue;
         } else if (delta.deltaNewMessage) {
@@ -272,7 +276,9 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
           }
           if (ctx.globalOptions.autoMarkDelivery) api.markAsDelivered(callbackToReturn.threadID, callbackToReturn.messageID);
           if (!ctx.globalOptions.selfListen && String(callbackToReturn.senderID) === String(ctx.userID || ctx.i_userID)) continue;
-          utils.log("ClientPayload:NewMessage", `Received message [${callbackToReturn.threadID}] ${callbackToReturn.senderID} -> "${callbackToReturn.body || '[Attachment]'}"`);
+          if (ctx.globalOptions?.debug || process.env.DEBUG) {
+            utils.log("ClientPayload:NewMessage", `Received message [${callbackToReturn.threadID}] ${callbackToReturn.senderID} -> "${callbackToReturn.body || '[Attachment]'}"`);
+          }
           globalCallback(null, callbackToReturn);
           continue;
         }
