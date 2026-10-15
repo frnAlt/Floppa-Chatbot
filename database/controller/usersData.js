@@ -278,7 +278,14 @@ module.exports = async function (databaseType, userModel, api, fakeGraphql) {
                                         });
                                 }
 				if (!userInfo) {
-					if (global.db?.allThreadData) {
+					const currentBotID = String(global.GoatBot?.botID || global.botID || "");
+					if (currentBotID && String(userID) === currentBotID) {
+						userInfo = {
+							name: global.GoatBot?.config?.nickNameBot || "Floppa Bot 🐱",
+							gender: "MALE",
+							vanity: null
+						};
+					} else if (global.db?.allThreadData) {
 						for (const thread of global.db.allThreadData) {
 							const mem = thread.members?.find(m => String(m.userID) === String(userID));
 							if (mem && mem.name && !mem.name.startsWith("Facebook User ") && !mem.name.startsWith("User ")) {

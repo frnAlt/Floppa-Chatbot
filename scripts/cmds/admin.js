@@ -99,7 +99,11 @@ module.exports = {
                                         else
                                                 notAdminIds.push(sUid);
                                 }
+                                const currentBotID = String(global.GoatBot?.botID || global.botID || "");
                                 for (const uid of adminIds) {
+                                        if (currentBotID && String(uid) === currentBotID) {
+                                                continue; // Protect bot ID from removal
+                                        }
                                         const idx = config.adminBot.findIndex(id => String(id) === String(uid));
                                         if (idx !== -1) config.adminBot.splice(idx, 1);
                                 }

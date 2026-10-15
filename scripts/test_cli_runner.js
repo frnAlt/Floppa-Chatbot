@@ -1876,13 +1876,69 @@ async function runDiagnostics() {
     } catch (_) {}
     logTest("MESSAGE_REPLY", "utils.message.reply seamlessly falls back to unquoted delivery upon quote error", replyFallbackValid);
 
-    // 4. Admin self-command executes when senderID === botID even if allowSelfListen is disabled
+    // 4. Admin self-command executes when senderID === botID and is recognized as Admin
     let selfCmdAdminValid = false;
     try {
-      const handlerEvents = require("../bot/handler/handlerEvents");
-      selfCmdAdminValid = typeof handlerEvents === "function";
-    } catch (_) {}
-    logTest("ADMIN_DISPATCH", "handlerEvents dispatches self-commands for botID and admin accounts", selfCmdAdminValid);
+      const handlerEvents = require(path.join(cwd, "bot/handler/handlerEvents.js"))(
+        mockApi, {}, {}, {}, {}, mockUsersData, mockThreadsData, {}, {}
+      );
+      const testBotID = String(mockApi.getCurrentUserID());
+      global.GoatBot.botID = testBotID;
+      global.botID = testBotID;
+      if (!global.GoatBot.config.adminBot) global.GoatBot.config.adminBot = [];
+      if (!global.GoatBot.config.adminBot.includes(testBotID)) global.GoatBot.config.adminBot.push(testBotID);
+
+      // Simulate incoming command message sent by bot's own account
+      const selfCmdEvent = {
+        type: "message",
+        threadID: "test_self_thread_1",
+        senderID: testBotID,
+        userID: testBotID,
+        messageID: "self_cmd_input_mid_123",
+        body: "!ping",
+        isGroup: true
+      };
+
+      // Ensure storage5Message contains this messageID (simulating login.js MQTT receipt)
+      if (!global.GoatBot.storage5Message) global.GoatBot.storage5Message = [];
+      global.GoatBot.storage5Message.push(selfCmdEvent.messageID);
+
+      let selfReplySent = false;
+      const mockSelfMsg = {
+        reply: async (text) => {
+          selfReplySent = true;
+          return { messageID: "self_reply_output_mid_456" };
+        },
+        send: async (text) => {
+          selfReplySent = true;
+          return { messageID: "self_reply_output_mid_456" };
+        }
+      };
+
+      const handlerChat = await handlerEvents(selfCmdEvent, mockSelfMsg);
+      if (handlerChat && typeof handlerChat.onStart === "function") {
+        await handlerChat.onStart();
+      }
+
+      // Also verify that automated bot replies (recorded in botSentMessages) are safely ignored
+      if (!global.botSentMessages) global.botSentMessages = new Map();
+      global.botSentMessages.set("test_self_thread_1", ["self_reply_output_mid_456"]);
+
+      const autoBotMsgEvent = {
+        type: "message",
+        threadID: "test_self_thread_1",
+        senderID: testBotID,
+        userID: testBotID,
+        messageID: "self_reply_output_mid_456",
+        body: "Pong!",
+        isGroup: true
+      };
+      const autoHandler = await handlerEvents(autoBotMsgEvent, mockSelfMsg);
+      selfCmdAdminValid = selfReplySent && (autoHandler === undefined || autoHandler === null);
+    } catch (err) {
+      console.error("Self command test error:", err);
+    }
+    logTest("ADMIN_DISPATCH", "handlerEvents dispatches self-commands for botID as admin and ignores automated bot replies", selfCmdAdminValid);
 
   } catch (err) {
     logTest("SECTION_11", "Section 11 tests encountered failure", false, err.message);

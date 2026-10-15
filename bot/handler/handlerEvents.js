@@ -361,8 +361,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                 (event.messageID && (
                                         global.botSentMessages?.get?.(String(threadID))?.includes(event.messageID) ||
                                         global.GoatBot?.botSentMessages?.has?.(event.messageID) ||
-                                        global.FloppaBot?.botSentMessages?.has?.(event.messageID) ||
-                                        (Array.isArray(global.GoatBot?.storage5Message) && global.GoatBot.storage5Message.includes(event.messageID))
+                                        global.FloppaBot?.botSentMessages?.has?.(event.messageID)
                                 )) ||
                                 (event.offlineThreadingId && (
                                         Array.from(global.botSentMessages?.values?.() || []).some(list => Array.isArray(list) && list.includes(event.offlineThreadingId)) ||
@@ -380,7 +379,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         if (isMessageEvent) {
                                 const currentPrefix = getPrefix(threadID);
                                 const globalPrefix = GoatBot?.config?.prefix || "!";
-                                const validPrefixes = Array.from(new Set([currentPrefix, globalPrefix, "!"].filter(Boolean)));
+                                const validPrefixes = Array.from(new Set([currentPrefix, globalPrefix, "!", "-", "/"].filter(Boolean)));
                                 const trimmedBody = typeof body === "string" ? body.trim() : "";
                                 const allTokens = trimmedBody.split(/\s+/).filter(Boolean);
                                 const firstWord = allTokens[0]?.toLowerCase() || "";
@@ -1065,7 +1064,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                 cooldownManager.setCooldown(commandName, senderID);
                                 
                                 // Deduct money if requiredMoney was set
-                                if (requiredMoney && requiredMoney > 0) {
+                                if (requiredMoney && requiredMoney > 0 && role !== 2 && role !== 4 && !isBotAdmin) {
                                         try {
                                                 await usersData.subtractMoney(senderID, requiredMoney);
                                         } catch (err) {
@@ -1421,8 +1420,9 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         if (!Reply)
                                 return;
 
-                        // Ensure only the author of the original prompt (or if author unspecified) can trigger the reply
-                        if (Reply.author && String(Reply.author) !== String(senderID))
+                        // Ensure only the author of the original prompt (or if author unspecified, or bot/admin) can trigger the reply
+                        const isBotOrAdminReply = role === 2 || role === 4 || (botID && String(senderID) === botID) || ((config.adminBot || []).map(String).includes(String(senderID)));
+                        if (Reply.author && String(Reply.author) !== String(senderID) && !isBotOrAdminReply)
                                 return;
 
                         Reply.delete = () => onReply.delete(replyTargetMID);
@@ -1541,12 +1541,13 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         const isAdmin = role >= 1 || (config.adminBot && config.adminBot.map(String).includes(reactor));
 
                         if (isBotMsg) {
-                                if (isAdmin && reaction) {
+                                // Never process bot's own automated or self-reactions to prevent self-unsending loops
+                                if (isAdmin && reaction && reactor !== botID && !Reaction) {
                                         const unsendReactions = (unsendCfg.reactions || ["😠", "😡", "👎"]).map(r => String(r).replace(/\uFE0F/g, ""));
                                         const normReaction = String(reaction).replace(/\uFE0F/g, "");
-                                        const handEmojis = ["✋", "🖐️", "🖐", "🤚", "👋", "👌", "👍", "👎", "✍️", "🤝", "🖕", "👊", "🤛", "🤜", "🤞", "🫰", "🤟", "🤘", "🤙", "👈", "👉", "👆", "👇", "☝️", "👏", "🙌", "👐", "🤲", "🙏"].map(r => r.replace(/\uFE0F/g, ""));
+                                        const stopHandEmojis = ["✋", "🖐️", "🖐", "🤚"].map(r => r.replace(/\uFE0F/g, ""));
 
-                                        if ((unsendCfg.enable !== false && unsendReactions.includes(normReaction)) || handEmojis.includes(normReaction)) {
+                                        if ((unsendCfg.enable !== false && unsendReactions.includes(normReaction)) || stopHandEmojis.includes(normReaction)) {
                                                 try {
                                                         await api.unsendMessage(targetID, threadID);
                                                         const threadList = global.botSentMessages?.get(String(threadID));

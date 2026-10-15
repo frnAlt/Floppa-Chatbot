@@ -1006,10 +1006,38 @@ async function startBot(loginWithEmail) {
                         }
 
                         global.GoatBot.fcaApi = api;
-                        global.GoatBot.botID = api.getCurrentUserID();
+                        global.GoatBot.botID = String(api.getCurrentUserID() || "");
+                        global.botID = global.GoatBot.botID;
+
+                        // Ensure botSentMessages Set and Map are initialized early
+                        if (!global.GoatBot.botSentMessages) global.GoatBot.botSentMessages = new Set();
+                        if (!global.botSentMessages) global.botSentMessages = new Map();
+
+                        // Guarantee selfListen is enabled in FCA options so the bot can receive and execute its own commands
+                        const fcaOptions = Object.assign({}, global.GoatBot.config.optionsFca || {}, {
+                                selfListen: true,
+                                selfListenEvent: true
+                        });
                         if (typeof api.setOptions === "function") {
-                                api.setOptions(global.GoatBot.config.optionsFca || {});
+                                api.setOptions(fcaOptions);
                         }
+
+                        // Automatically ensure bot's own ID is registered as Bot Admin and Developer
+                        if (global.GoatBot.botID) {
+                                if (!Array.isArray(global.GoatBot.config.adminBot)) {
+                                        global.GoatBot.config.adminBot = [];
+                                }
+                                if (!global.GoatBot.config.adminBot.map(String).includes(global.GoatBot.botID)) {
+                                        global.GoatBot.config.adminBot.push(global.GoatBot.botID);
+                                }
+                                if (!Array.isArray(global.GoatBot.config.devUsers)) {
+                                        global.GoatBot.config.devUsers = [];
+                                }
+                                if (!global.GoatBot.config.devUsers.map(String).includes(global.GoatBot.botID)) {
+                                        global.GoatBot.config.devUsers.push(global.GoatBot.botID);
+                                }
+                        }
+
                         if (global.utils && typeof global.utils.extendFCA === "function") {
                                 global.utils.extendFCA(api);
                         }
@@ -1020,7 +1048,6 @@ async function startBot(loginWithEmail) {
                         multiAccountManager.singleAccountRetryCount = 0;
 
                         let hasBanned = false;
-                        global.botID = api.getCurrentUserID();
                         const botName = await getName(global.botID, api);
 
                         logColor("#f5ab00", createLine("FLOPPA BOT INFO", true));

@@ -506,8 +506,14 @@ module.exports = (defaultFuncs, api, ctx) => {
           for (const tid of tids) {
             const list = global.botSentMessages.get(String(tid)) || [];
             list.push(result.messageID);
-            if (list.length > 80) list.shift();
+            if (list.length > 100) list.shift();
             global.botSentMessages.set(String(tid), list);
+          }
+          if (global.GoatBot?.botSentMessages && typeof global.GoatBot.botSentMessages.add === "function") {
+            global.GoatBot.botSentMessages.add(result.messageID);
+          }
+          if (global.FloppaBot?.botSentMessages && typeof global.FloppaBot.botSentMessages.add === "function") {
+            global.FloppaBot.botSentMessages.add(result.messageID);
           }
         }
         callback(null, result);

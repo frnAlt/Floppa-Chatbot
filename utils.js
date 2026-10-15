@@ -367,11 +367,20 @@ function jsonStringifyColor(obj, filter, indent, level) {
 function message(api, event) {
         function recordBotMessage(mid, threadID) {
                 if (!mid || !threadID) return;
+                const sTid = String(threadID);
+                const sMid = String(mid);
                 if (!global.botSentMessages) global.botSentMessages = new Map();
-                const list = global.botSentMessages.get(threadID) || [];
-                list.push(mid);
-                if (list.length > 60) list.shift();
-                global.botSentMessages.set(threadID, list);
+                const list = global.botSentMessages.get(sTid) || [];
+                list.push(sMid);
+                if (list.length > 100) list.shift();
+                global.botSentMessages.set(sTid, list);
+
+                if (global.GoatBot?.botSentMessages && typeof global.GoatBot.botSentMessages.add === "function") {
+                        global.GoatBot.botSentMessages.add(sMid);
+                }
+                if (global.FloppaBot?.botSentMessages && typeof global.FloppaBot.botSentMessages.add === "function") {
+                        global.FloppaBot.botSentMessages.add(sMid);
+                }
         }
 
         async function sendMessageError(err) {
