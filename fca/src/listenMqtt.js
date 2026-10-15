@@ -922,29 +922,38 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
 
     resolveAttachmentUrl(0);
     return;
-  } else if ((v?.delta?.class || delta.class) === 'ClientPayload') {
+  } else if ((v?.delta?.class || delta?.class) === 'ClientPayload') {
     const payloadDelta = v?.delta || delta;
     const clientPayload = utils.decodeClientPayload(payloadDelta.payload);
     if (clientPayload && clientPayload.deltas) {
       for (const delta of clientPayload.deltas) {
         if (delta.deltaMessageReaction && !!ctx.globalOptions.listenEvents) {
+          const rxThreadKey = delta.deltaMessageReaction.threadKey || {};
           const rawSenderId = delta.deltaMessageReaction.senderId;
-          const senderIdStr = (rawSenderId && rawSenderId.toString() !== "0") ? rawSenderId.toString() : delta.deltaMessageReaction.userId.toString();
+          const senderIdStr = (rawSenderId && rawSenderId.toString() !== "0") ? rawSenderId.toString() : (delta.deltaMessageReaction.userId || "").toString();
+          const rxOtherID = rxThreadKey.otherUserFbId && String(rxThreadKey.otherUserFbId) !== String(ctx.userID || ctx.i_userID) ? rxThreadKey.otherUserFbId : senderIdStr;
+          const rxThreadID = (rxThreadKey.threadFbId || rxOtherID || senderIdStr || "").toString();
+
           const messageReaction = {
             type: 'message_reaction',
-            threadID: (delta.deltaMessageReaction.threadKey.threadFbId ? delta.deltaMessageReaction.threadKey.threadFbId : delta.deltaMessageReaction.threadKey.otherUserFbId).toString(),
+            threadID: rxThreadID,
             messageID: delta.deltaMessageReaction.messageId,
             reaction: delta.deltaMessageReaction.reaction,
             senderID: senderIdStr,
-            userID: delta.deltaMessageReaction.userId.toString(),
+            userID: (delta.deltaMessageReaction.userId || delta.deltaMessageReaction.senderId || "").toString(),
           };
           globalCallback(null, messageReaction);
         } else if (delta.deltaRecallMessageData && !!ctx.globalOptions.listenEvents) {
+          const rcThreadKey = delta.deltaRecallMessageData.threadKey || {};
+          const rcSender = (delta.deltaRecallMessageData.senderID || "").toString();
+          const rcOtherID = rcThreadKey.otherUserFbId && String(rcThreadKey.otherUserFbId) !== String(ctx.userID || ctx.i_userID) ? rcThreadKey.otherUserFbId : rcSender;
+          const rcThreadID = (rcThreadKey.threadFbId || rcOtherID || rcSender || "").toString();
+
           const messageUnsend = {
             type: 'message_unsend',
-            threadID: (delta.deltaRecallMessageData.threadKey.threadFbId ? delta.deltaRecallMessageData.threadKey.threadFbId : delta.deltaRecallMessageData.threadKey.otherUserFbId).toString(),
+            threadID: rcThreadID,
             messageID: delta.deltaRecallMessageData.messageID,
-            senderID: delta.deltaRecallMessageData.senderID.toString(),
+            senderID: rcSender,
             deletionTimestamp: delta.deltaRecallMessageData.deletionTimestamp,
             timestamp: delta.deltaRecallMessageData.timestamp,
           };
@@ -1200,6 +1209,7 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
       return;
     }
   }
+  if (!delta || typeof delta !== 'object') return;
   switch (delta.class) {
     case 'ReadReceipt': {
       let fmtMsg;

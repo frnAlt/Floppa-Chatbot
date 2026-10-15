@@ -281,7 +281,7 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
     }
   }
 
-  if (v.delta.class !== "ForcedFetch" && !ctx.globalOptions.listenEvents) return;
+  if (!v?.delta || (v.delta.class !== "ForcedFetch" && !ctx.globalOptions.listenEvents)) return;
   switch (v.delta.class) {
     case "ReadReceipt":
       var fmtMsg;
