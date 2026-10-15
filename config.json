@@ -157,7 +157,7 @@
       "notes": "when a bot admin (role 2) reacts with one of the reactions below on a message sent by the bot, the bot will unsend that message."
     },
     "reactMirror": {
-      "enable": true,
+      "enable": false,
       "notes": "when a bot admin (role 2) reacts with any emoji on someone else's message, the bot mirrors the same emoji onto that message."
     },
     "noPrefix": {
