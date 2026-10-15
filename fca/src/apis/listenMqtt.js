@@ -568,20 +568,20 @@ async function listenMqtt(defaultFuncs, api, ctx, globalCallback, scheduleReconn
                     ctx.lastSeqId = parseInt(jsonMessage.lastIssuedSeqId, 10);
                 }
 
-                let deltas = Array.isArray(jsonMessage.deltas) ? jsonMessage.deltas : null;
-                if (!deltas && jsonMessage.delta && typeof jsonMessage.delta === "object") {
-                    deltas = [jsonMessage.delta];
+                const deltas = Array.isArray(jsonMessage.deltas) && jsonMessage.deltas.length > 0 ? [...jsonMessage.deltas] : [];
+                if (jsonMessage.delta && typeof jsonMessage.delta === "object") {
+                    deltas.push(jsonMessage.delta);
                 }
-                if (!deltas && jsonMessage.payload) {
+                if (jsonMessage.payload) {
                     try {
                         const decodedPayload = typeof jsonMessage.payload === "string" 
                             ? (jsonMessage.payload.startsWith("{") ? JSON.parse(jsonMessage.payload) : utils.decodeClientPayload(jsonMessage.payload))
                             : utils.decodeClientPayload(jsonMessage.payload);
                         if (decodedPayload) {
                             if (Array.isArray(decodedPayload.deltas)) {
-                                deltas = decodedPayload.deltas;
+                                deltas.push(...decodedPayload.deltas);
                             } else if (decodedPayload.delta) {
-                                deltas = [decodedPayload.delta];
+                                deltas.push(decodedPayload.delta);
                             } else {
                                 parseDelta(defaultFuncs, api, ctx, callbackToUse, { delta: { class: "ClientPayload", payload: jsonMessage.payload }, queue: jsonMessage.queue });
                             }
@@ -590,7 +590,7 @@ async function listenMqtt(defaultFuncs, api, ctx, globalCallback, scheduleReconn
                         utils.warn("MQTT", `Failed to decode payload in ${topic}: ${err.message || err}`);
                     }
                 }
-                if (Array.isArray(deltas)) {
+                if (Array.isArray(deltas) && deltas.length > 0) {
                     for (const delta of deltas) {
                         try {
                             parseDelta(defaultFuncs, api, ctx, callbackToUse, { delta, queue: jsonMessage.queue });

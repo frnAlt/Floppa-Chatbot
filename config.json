@@ -161,7 +161,7 @@
       "notes": "when a bot admin (role 2) reacts with any emoji on someone else's message, the bot mirrors the same emoji onto that message."
     },
     "noPrefix": {
-      "enable": false,
+      "enable": true,
       "notes": "allow using commands without a prefix for admins. Normal messages are never treated as commands unless first word matches a command name."
     },
     "commandSuggestion": {
@@ -169,11 +169,12 @@
       "notes": "when a prefixed command is not found, reply with the closest command name."
     }
   },
+  "selfListen": true,
   "optionsFca": {
     "fcaEngine": "floppa-native",
     "online": true,
     "emitReady": true,
-    "selfListen": false,
+    "selfListen": true,
     "selfListenEvent": true,
     "listenEvents": true,
     "listenTyping": false,

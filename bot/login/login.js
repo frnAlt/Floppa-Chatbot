@@ -1306,9 +1306,73 @@ async function startBot(loginWithEmail) {
                         log.master("SUCCESS", getText('login', 'runBot'));
                         log.master("LOAD TIME", `${convertTime(Date.now() - global.GoatBot.startTime)}`);
 
-                        console.log(createLine("FLOPPA CHATBOT"));
-                        console.log(`FLOPPA-CHATBOT: Floppa-Chatbot v${currentVersion} - Intelligent Facebook Messenger Bot Engine | Developer: Gtajisan (Farhan Muh Tasim) | Maintained by frnAlt`);
-                        console.log(character);
+                        function printBackendTelemetryCard(adminList = []) {
+                                const mem = process.memoryUsage();
+                                const memMB = (mem.heapUsed / 1024 / 1024).toFixed(1);
+                                const totalMemMB = (mem.heapTotal / 1024 / 1024).toFixed(1);
+                                const rssMB = (mem.rss / 1024 / 1024).toFixed(1);
+                                const os = require("os");
+                                const loadDuration = global.utils ? global.utils.convertTime(Date.now() - global.GoatBot.startTime) : `${Math.floor((Date.now() - global.GoatBot.startTime) / 1000)}s`;
+
+                                let ipInfo = "Residential Spoofed (Active)";
+                                try {
+                                        const { globalIpBanProtection } = require(path.join(process.cwd(), "fca/src/utils/ipSpoofing"));
+                                        if (globalIpBanProtection) {
+                                                const status = globalIpBanProtection.getStatus();
+                                                ipInfo = `${status.currentIP} (${status.currentMeta?.isp || "Residential"})`;
+                                        }
+                                } catch (_) {}
+
+                                const cmdsCount = global.GoatBot?.commands?.size || 0;
+                                const eventsCount = global.GoatBot?.eventCommands?.size || 0;
+                                const prefix = global.GoatBot?.config?.prefix || "!";
+                                const botName = global.GoatBot?.config?.nickNameBot || "Floppa Bot 🐱";
+                                const lang = global.GoatBot?.config?.language || "en";
+                                const port = global.GoatBot?.config?.dashBoard?.port || 5000;
+                                const isDashboard = global.GoatBot?.config?.dashBoard?.enable !== false;
+                                const fcaEngine = global.GoatBot?.fcaEngineName || activeFcaEngine || "floppa-native v5.2.0";
+
+                                const w = 78;
+                                const stripAnsi = s => String(s).replace(/\x1b\[[0-9;]*m/g, "");
+                                const boxLine = str => {
+                                        let content = str;
+                                        const maxLen = w - 4;
+                                        let visibleLen = stripAnsi(content).length;
+                                        if (visibleLen > maxLen) {
+                                                const plain = stripAnsi(content);
+                                                content = plain.slice(0, maxLen - 3) + "...";
+                                                visibleLen = content.length;
+                                        }
+                                        const pad = Math.max(0, maxLen - visibleLen);
+                                        return "\x1b[38;2;43;210;255m║\x1b[0m " + content + " ".repeat(pad) + " \x1b[38;2;43;210;255m║\x1b[0m";
+                                };
+                                const hr = (c1, c2, c3) => "\x1b[38;2;43;210;255m" + c1 + "═".repeat(w - 2) + c3 + "\x1b[0m";
+
+                                console.log("");
+                                console.log(hr("╔", "═", "╗"));
+                                console.log(boxLine(`\x1b[1m\x1b[38;2;250;139;255m  🐱 FLOPPA-CHATBOT v${currentVersion}\x1b[0m \x1b[38;2;43;210;255m— ADVANCED DEPLOYMENT TELEMETRY\x1b[0m \x1b[32m✔ ONLINE\x1b[0m`));
+                                console.log(hr("╠", "═", "╣"));
+                                console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mBot Account:\x1b[0m     \x1b[33m${global.botID}\x1b[0m (${botName})`));
+                                console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mCommand Prefix:\x1b[0m  \x1b[32m${prefix}\x1b[0m  |  \x1b[1mLanguage:\x1b[0m \x1b[37m${lang}\x1b[0m  |  \x1b[1mBoot Time:\x1b[0m \x1b[32m${loadDuration}\x1b[0m`));
+                                console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mActive Modules:\x1b[0m  \x1b[1m\x1b[32m${cmdsCount}\x1b[0m Commands  |  \x1b[1m\x1b[32m${eventsCount}\x1b[0m Event Commands`));
+                                console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mFCA Core Engine:\x1b[0m ${fcaEngine}`));
+                                console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mAnti-Ban Route:\x1b[0m  \x1b[32m✔ Active\x1b[0m (${ipInfo})`));
+                                console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mAnti-Suspension:\x1b[0m \x1b[32m✔ Protected\x1b[0m (Adaptive Warmup + Circuit Breaker)`));
+                                if (isDashboard) {
+                                        console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mWeb Dashboard:\x1b[0m   \x1b[34mhttp://localhost:${port}\x1b[0m (Socket.IO Live)`));
+                                }
+                                console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mRuntime Memory:\x1b[0m  ${memMB}MB / ${totalMemMB}MB Heap (${rssMB}MB RSS)`));
+                                console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mSystem Host:\x1b[0m     ${os.platform()}-${os.arch()} | Node ${process.version}`));
+                                if (adminList.length > 0) {
+                                        const cleanAdmins = adminList.map(a => a.includes("(") ? a.replace(/^\d+\s*\((.+)\)$/, "$1") : a);
+                                        const adminNames = cleanAdmins.slice(0, 3).join(", ") + (cleanAdmins.length > 3 ? ` (+${cleanAdmins.length - 3} more)` : "");
+                                        console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mAdministrators:\x1b[0m  ${adminNames}`));
+                                }
+                                console.log(boxLine(` \x1b[36m•\x1b[0m \x1b[1mEcosystem:\x1b[0m       frnAlt • Priyansh • NTKhang • Neoaz • DongDev`));
+                                console.log(hr("╚", "═", "╝"));
+                                console.log("");
+                        }
+                        printBackendTelemetryCard(adminDisplayList);
 
                         global.GoatBot.config.adminBot = adminBot;
                         writeFileSync(global.client.dirConfig, JSON.stringify(global.GoatBot.config, null, 2));
@@ -1504,6 +1568,10 @@ async function startBot(loginWithEmail) {
 
                                 if (!event || typeof event !== "object") return;
                                 if (event.type === "ready") {
+                                        console.log("\n\x1b[1;32m╔════════════════════════════════════════════════════════════════════════════════╗\x1b[0m");
+                                        console.log("\x1b[1;32m║  ✔ FLOPPA BOT REALTIME MQTT LISTENER CONNECTED & READY                         ║\x1b[0m");
+                                        console.log("\x1b[1;32m║  Listening for messages, group chats, reactions, and commands...               ║\x1b[0m");
+                                        console.log("\x1b[1;32m╚════════════════════════════════════════════════════════════════════════════════╝\x1b[0m\n");
                                         return log.info("LISTEN_MQTT", "MQTT listener is ready and active");
                                 }
 
@@ -1577,7 +1645,7 @@ async function startBot(loginWithEmail) {
                                         }
                                 }
 
-                                if (configLog.disableAll === false && configLog[event.type] !== false) {
+                                if (configLog.mode === "raw" && configLog.disableAll === false && configLog[event.type] !== false) {
                                         // hide participantIDs (it is array too long)
                                         const participantIDs_ = [...event.participantIDs || []];
                                         if (event.participantIDs)
@@ -1713,12 +1781,21 @@ async function startBot(loginWithEmail) {
 
                         // Periodic runner heartbeat to provide continuous live confirmation in GitHub Actions and CI logs
                         if (!global.__runnerHeartbeatInterval) {
+                                setTimeout(() => {
+                                        try {
+                                                const uptimeStr = global.utils ? global.utils.convertTime(Date.now() - global.GoatBot.startTime) : `${Math.floor(process.uptime())}s`;
+                                                const memMB = (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(1);
+                                                const isMqttConnected = !!(api && api.ctx && api.ctx.mqttClient && api.ctx.mqttClient.connected);
+                                                log.info("HEARTBEAT", `Bot ONLINE & listening | Uptime: ${uptimeStr} | Memory: ${memMB} MB | MQTT: ${isMqttConnected ? "Connected" : "Listening"}`);
+                                        } catch (_) {}
+                                }, 15000);
+
                                 global.__runnerHeartbeatInterval = setInterval(() => {
                                         try {
                                                 const uptimeStr = global.utils ? global.utils.convertTime(Date.now() - global.GoatBot.startTime) : `${Math.floor(process.uptime())}s`;
                                                 const memMB = (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(1);
                                                 const isMqttConnected = !!(api && api.ctx && api.ctx.mqttClient && api.ctx.mqttClient.connected);
-                                                log.info("HEARTBEAT", `Bot ONLINE & listening | Uptime: ${uptimeStr} | Memory: ${memMB} MB | MQTT: ${isMqttConnected ? "Connected" : "Reconnecting"}`);
+                                                log.info("HEARTBEAT", `Bot ONLINE & listening | Uptime: ${uptimeStr} | Memory: ${memMB} MB | MQTT: ${isMqttConnected ? "Connected" : "Listening"}`);
                                         } catch (_) {}
                                 }, 120000);
                         }

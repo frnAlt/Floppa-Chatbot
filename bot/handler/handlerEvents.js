@@ -663,7 +663,8 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                         return;
                                 }
 
-                                const noPrefixConfig = global.GoatBot.config.noPrefix !== false;
+                                const noPrefixConfig = global.GoatBot.config.noPrefix !== false || global.GoatBot.config.customFeatures?.noPrefix?.enable === true;
+                                const onlyAdminNoPrefix = global.GoatBot.config.customFeatures?.noPrefix?.onlyAdmin === true;
 
                                 // Extract all tokens with strict boundary matching at the very start of the message
                                 const allTokens = trimmedBody.split(/\s+/).filter(Boolean);
@@ -1028,6 +1029,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                                         args,
                                                         commandName,
                                                         getLang: getText2,
+                                                        getText: getText2,
                                                         removeCommandNameFromBody
                                                 }),
                                                 cmdTimeoutPromise
@@ -1166,7 +1168,8 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                                 isUserCallCommand,
                                                 args,
                                                 commandName,
-                                                getLang: getText2
+                                                getLang: getText2,
+                                                getText: getText2
                                         }),
                                         timeoutPromise
                                 ])
@@ -1247,7 +1250,8 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 						...parameters,
 						args,
 						commandName,
-						getLang: getText2
+						getLang: getText2,
+						getText: getText2
 					})),
 					25000,
 					`command.onAnyEvent (${commandName})`
@@ -1331,7 +1335,8 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                                 isUserCallCommand,
                                                 args,
                                                 commandName,
-                                                getLang: getText2
+                                                getLang: getText2,
+                                                getText: getText2
                                         });
                                         if (typeof handler == "function") {
                                                 if (isBannedOrOnlyAdmin(userData, threadData, senderID, threadID, isGroup, commandName, message, langCode))
@@ -1455,7 +1460,8 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                                         Reply,
                                                         args,
                                                         commandName,
-                                                        getLang: getText2
+                                                        getLang: getText2,
+                                                        getText: getText2
                                                 }),
                                                 replyTimeoutPromise
                                         ]);
@@ -1598,7 +1604,8 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                                         Reaction,
                                                         args,
                                                         commandName,
-                                                        getLang: getText2
+                                                        getLang: getText2,
+                                                        getText: getText2
                                                 }),
                                                 timeoutPromise
                                         ]);
