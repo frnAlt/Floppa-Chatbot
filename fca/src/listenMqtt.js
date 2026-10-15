@@ -338,7 +338,7 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
   }
 
   const chatOn = ctx.globalOptions.online !== false;
-  const foreground = true;
+  const foreground = false;
 
   const sessionID = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER) + 1;
   const GUID = ctx.clientID || (ctx.clientID = utils.getGUID());
@@ -347,10 +347,10 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
     u: ctx.userID,
     s: sessionID,
     chat_on: chatOn,
-    fg: foreground,
+    fg: false,
     d: GUID,
     ct: 'websocket',
-    aid: '219994525426954',
+    aid: 219994525426954,
     aids: null,
     mqtt_sid: '',
     cp: 3,
@@ -578,13 +578,23 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
       process.env.OnStatus = true;
     }
 
+    client.subscribe(topics, { qos: 1 }, (err) => {
+      if (err) {
+        logWarn(`Topic subscription warning: ${err.message || err}`);
+      } else {
+        logInfo(`Subscribed to ${topics.length} MQTT topics successfully.`);
+      }
+    });
+
     let topic;
     const queue = {
-      sync_api_version: 10,
-      max_deltas_able_to_process: 1000,
-      delta_batch_size: 1000,
+      sync_api_version: 11,
+      max_deltas_able_to_process: 200,
+      delta_batch_size: 200,
       encoding: 'JSON',
-      entity_fbid: ctx.userID
+      entity_fbid: ctx.userID,
+      initial_titan_sequence_id: (ctx.lastSeqId && ctx.lastSeqId !== "-1") ? String(ctx.lastSeqId) : "0",
+      device_params: null
     };
 
     if (ctx.syncToken) {
@@ -593,32 +603,22 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
       queue.sync_token = ctx.syncToken;
     } else {
       topic = "/messenger_sync_create_queue";
-      queue.initial_titan_sequence_id = (ctx.lastSeqId && ctx.lastSeqId !== "-1") ? String(ctx.lastSeqId) : "0";
-      queue.device_params = null;
     }
 
-    client.subscribe(topics, { qos: 1 }, (err) => {
-      if (err) {
-        logWarn(`Topic subscription warning: ${err.message || err}`);
-      } else {
-        logInfo(`Subscribed to ${topics.length} MQTT topics successfully.`);
+    try {
+      if (client.connected && !client.disconnected && !client.disconnecting) {
+        client.publish(topic, JSON.stringify(queue), {
+          qos: 1,
+          retain: false
+        }, (pubErr) => {
+          if (pubErr) logWarn('Sync queue publish callback warning: ' + (pubErr.message || pubErr));
+        });
+        client.publish("/foreground_state", JSON.stringify({ foreground: chatOn }), { qos: 1 });
+        client.publish("/set_client_settings", JSON.stringify({ make_user_available_when_in_foreground: true }), { qos: 1 });
       }
-
-      try {
-        if (client.connected && !client.disconnected && !client.disconnecting) {
-          client.publish(topic, JSON.stringify(queue), {
-            qos: 1,
-            retain: false
-          }, (pubErr) => {
-            if (pubErr) logWarn('Sync queue publish callback warning: ' + (pubErr.message || pubErr));
-          });
-          client.publish("/foreground_state", JSON.stringify({ foreground: chatOn }), { qos: 1 });
-          client.publish("/set_client_settings", JSON.stringify({ make_user_available_when_in_foreground: true }), { qos: 1 });
-        }
-      } catch (err) {
-        logWarn('Sync queue publish failed: ' + (err?.message || err));
-      }
-    });
+    } catch (err) {
+      logWarn('Sync queue publish failed: ' + (err?.message || err));
+    }
 
     let rTimeout = setTimeout(function() {
       if (client.disconnected || client.disconnecting || !client.connected) return;

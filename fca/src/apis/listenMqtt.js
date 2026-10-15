@@ -112,7 +112,7 @@ async function listenMqtt(defaultFuncs, api, ctx, globalCallback, scheduleReconn
 
     const chatOn = ctx.globalOptions.online !== false;
     const region = ctx.region;
-    const foreground = true;
+    const foreground = false;
     const sessionID = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER) + 1;
     // Keep one stable device id for the whole Facebook session. Some page
     // variants omit MqttWebDeviceID; never send the literal "undefined".
@@ -122,10 +122,10 @@ async function listenMqtt(defaultFuncs, api, ctx, globalCallback, scheduleReconn
         u: ctx.userID,
         s: sessionID,
         chat_on: chatOn,
-        fg: foreground,
+        fg: false,
         d: cid,
         ct: 'websocket',
-        aid: '219994525426954',
+        aid: 219994525426954,
         aids: null,
         mqtt_sid: '',
         cp: 3,
@@ -429,25 +429,6 @@ async function listenMqtt(defaultFuncs, api, ctx, globalCallback, scheduleReconn
             }
         }, watchdogInterval);
 
-        const queue = { 
-            sync_api_version: 10, 
-            max_deltas_able_to_process: 1000, 
-            delta_batch_size: 1000, 
-            encoding: "JSON", 
-            entity_fbid: ctx.userID
-        };
-
-        let topic;
-        if (ctx.syncToken) {
-            topic = "/messenger_sync_get_diffs";
-            queue.last_seq_id = ctx.lastSeqId;
-            queue.sync_token = ctx.syncToken;
-        } else {
-            topic = "/messenger_sync_create_queue";
-            queue.initial_titan_sequence_id = (!ctx.lastSeqId || ctx.lastSeqId === "-1") ? "0" : String(ctx.lastSeqId);
-            queue.device_params = null;
-        }
-
         mqttClient.subscribe(topics, { qos: 1 }, (error, granted) => {
             if (ctx.mqttClient !== mqttClient || ctx._ending) return;
             if (error) {
@@ -460,21 +441,40 @@ async function listenMqtt(defaultFuncs, api, ctx, globalCallback, scheduleReconn
             }
 
             utils.log("MQTT", `Subscribed to ${topics.length} topics successfully.`);
-
-            try {
-                if (mqttClient.connected && !mqttClient.disconnected && !mqttClient.disconnecting) {
-                    mqttClient.publish(topic, JSON.stringify(queue), { qos: 1, retain: false }, (pubErr) => {
-                        if (pubErr && ctx.mqttClient === mqttClient) {
-                            utils.warn("MQTT", `Publish ${topic} error: ${pubErr.message || pubErr}`);
-                        }
-                    });
-                    mqttClient.publish("/foreground_state", JSON.stringify({ foreground: chatOn }), { qos: 1 });
-                    mqttClient.publish("/set_client_settings", JSON.stringify({ make_user_available_when_in_foreground: true }), { qos: 1 });
-                }
-            } catch (err) {
-                utils.warn("MQTT", `Publish sync queue failed: ${err.message || err}`);
-            }
         });
+
+        const queue = { 
+            sync_api_version: 11, 
+            max_deltas_able_to_process: 200, 
+            delta_batch_size: 200, 
+            encoding: "JSON", 
+            entity_fbid: ctx.userID,
+            initial_titan_sequence_id: (!ctx.lastSeqId || ctx.lastSeqId === "-1") ? "0" : String(ctx.lastSeqId),
+            device_params: null
+        };
+
+        let topic;
+        if (ctx.syncToken) {
+            topic = "/messenger_sync_get_diffs";
+            queue.last_seq_id = ctx.lastSeqId;
+            queue.sync_token = ctx.syncToken;
+        } else {
+            topic = "/messenger_sync_create_queue";
+        }
+
+        try {
+            if (mqttClient.connected && !mqttClient.disconnected && !mqttClient.disconnecting) {
+                mqttClient.publish(topic, JSON.stringify(queue), { qos: 1, retain: false }, (pubErr) => {
+                    if (pubErr && ctx.mqttClient === mqttClient) {
+                        utils.warn("MQTT", `Publish ${topic} error: ${pubErr.message || pubErr}`);
+                    }
+                });
+                mqttClient.publish("/foreground_state", JSON.stringify({ foreground: chatOn }), { qos: 1 });
+                mqttClient.publish("/set_client_settings", JSON.stringify({ make_user_available_when_in_foreground: true }), { qos: 1 });
+            }
+        } catch (err) {
+            utils.warn("MQTT", `Publish sync queue failed: ${err.message || err}`);
+        }
 
         let rTimeout = setTimeout(() => {
             if (mqttClient.disconnected || mqttClient.disconnecting || !mqttClient.connected) return;
