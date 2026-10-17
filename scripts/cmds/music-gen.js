@@ -1,6 +1,5 @@
 const axios = require("axios");
 const { Readable } = require("stream");
-const yts = require("yt-search");
 
 // In-memory zero-latency cache for generated tracks with automatic storage cleanup
 const audioCache = new Map();
@@ -64,9 +63,6 @@ function romanizeBengali(text) {
   return text.split("").map(c => map[c] !== undefined ? map[c] : c).join("");
 }
 
-const btch = require("btch-downloader");
-const crypto = require("crypto");
-
 async function queryToshiroEndpoint(promptCandidate) {
   const apiUrl = `https://toshiro-api-editz6t9.vercel.app/api/ai/ai-music?prompt=${encodeURIComponent(promptCandidate)}`;
   const headers = {
@@ -76,17 +72,18 @@ async function queryToshiroEndpoint(promptCandidate) {
 
   try {
     const response = await axios.get(apiUrl, {
-      timeout: 25000,
+      timeout: 60000,
       headers,
-      signal: typeof AbortSignal?.timeout === "function" ? AbortSignal.timeout(25000) : undefined
+      signal: typeof AbortSignal?.timeout === "function" ? AbortSignal.timeout(60000) : undefined
     });
 
-    const audioUrl = response.data?.result?.audio;
+    const data = response.data;
+    const audioUrl = data?.result?.audio || data?.result?.url || data?.audio || data?.data?.audio || data?.url;
     if (audioUrl) {
       return { success: true, audioUrl };
     }
 
-    const msg = response.data?.message || response.data?.error || "";
+    const msg = data?.message || data?.error || "";
     return {
       success: false,
       isRateLimited: msg.toLowerCase().includes("too many requests") || response.status === 429,
@@ -110,86 +107,7 @@ async function queryToshiroEndpoint(promptCandidate) {
 async function fetchAiMusic(prompt) {
   const hasBengali = /[\u0980-\u09FF]/.test(prompt);
   const candidate = hasBengali ? romanizeBengali(prompt).trim() : prompt.trim();
-  return await queryToshiroEndpoint(candidate);
-}
-
-function decodeSavetube(enc) {
-  try {
-    const secretKey = "C5D58EF67A7584E4A29F6C35BBC4EB12";
-    const data = Buffer.from(enc, "base64");
-    const iv = data.slice(0, 16);
-    const content = data.slice(16);
-    const key = Buffer.from(secretKey, "hex");
-    const decipher = crypto.createDecipheriv("aes-128-cbc", key, iv);
-    const decrypted = Buffer.concat([decipher.update(content), decipher.final()]);
-    return JSON.parse(decrypted.toString());
-  } catch (_) {
-    return null;
-  }
-}
-
-async function getSavetubeAudio(youtubeUrl) {
-  try {
-    const cdnRes = await axios.get("https://media.savetube.vip/api/random-cdn", { timeout: 4000 });
-    const cdn = cdnRes.data?.cdn;
-    if (!cdn) return null;
-
-    const infoRes = await axios.post(`https://${cdn}/v2/info`, { url: youtubeUrl }, {
-      headers: { "Referer": "https://save-tube.com/" },
-      timeout: 6000
-    });
-    const info = decodeSavetube(infoRes.data?.data);
-    if (!info?.key) return null;
-
-    const dlRes = await axios.post(`https://${cdn}/download`, {
-      downloadType: "audio",
-      quality: "128",
-      key: info.key
-    }, {
-      headers: { "Referer": "https://save-tube.com/" },
-      timeout: 7000
-    });
-    return dlRes.data?.data?.downloadUrl || null;
-  } catch (_) {
-    return null;
-  }
-}
-
-/**
- * Resilient, fast fallback audio downloader if pure AI music service is busy or offline
- */
-async function fallbackAudioSearch(query) {
-  try {
-    let searchRes = await Promise.race([
-      yts(query),
-      new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000))
-    ]).catch(() => null);
-
-    let video = searchRes?.videos?.[0];
-    if (!video?.url && (query.includes("-") || query.includes("|"))) {
-      const parts = query.split(/[-|]/).map(p => p.trim()).filter(Boolean);
-      for (const p of parts.reverse()) {
-        searchRes = await yts(p).catch(() => null);
-        video = searchRes?.videos?.[0];
-        if (video?.url) break;
-      }
-    }
-    if (!video?.url) return null;
-
-    const savetubeUrl = await getSavetubeAudio(video.url);
-    if (savetubeUrl) return savetubeUrl;
-
-    try {
-      const bRes = await btch.youtube(video.url);
-      if (bRes?.status !== false && bRes?.mp3 && !bRes.mp3.includes("onrender.com")) {
-        return bRes.mp3;
-      }
-    } catch (_) {}
-
-    return null;
-  } catch (_) {
-    return null;
-  }
+  return await queryToshiroEndpoint(candidate || prompt.trim());
 }
 
 async function getAudioStream(audioUrl) {
@@ -197,7 +115,7 @@ async function getAudioStream(audioUrl) {
   try {
     const res = await axios.get(audioUrl, {
       responseType: "arraybuffer",
-      timeout: 45000,
+      timeout: 60000,
       headers: {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
       }
@@ -208,7 +126,7 @@ async function getAudioStream(audioUrl) {
   } catch (_) {
     if (global.utils && typeof global.utils.getStreamFromURL === "function") {
       return await global.utils.getStreamFromURL(audioUrl, "music.mp3", {
-        timeout: 45000,
+        timeout: 60000,
         headers: {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
         }
@@ -238,7 +156,7 @@ module.exports = {
       "music-ai",
       "aimusic-gen"
     ],
-    version: "1.4.0",
+    version: "1.4.1",
     author: "frnAlt",
     countDown: 1,
     role: 0,
@@ -308,27 +226,21 @@ module.exports = {
       // 1. Check in-memory cache for instant return
       let audioUrl = getCached(prompt);
 
-      // 2. AI Music generation with phonetic Bengali support & multi-candidate fallback
+      // 2. Pure AI Music generation strictly via Toshiro AI Music API (https://toshiro-api-editz6t9.vercel.app/api/ai/ai-music)
       if (!audioUrl) {
         const result = await fetchAiMusic(prompt);
         if (result.success && result.audioUrl) {
           audioUrl = result.audioUrl;
         } else {
-          // Fallback to high-speed audio search if pure AI generator is busy or offline
-          const fallbackUrl = await fallbackAudioSearch(prompt);
-          if (fallbackUrl) {
-            audioUrl = fallbackUrl;
-          } else {
-            clearInterval(typingInterval);
-            react("👎");
-            if (result.isRateLimited) {
-              return message.reply("⚠️ The AI music generator is currently busy (\"Too many requests. Please wait.\"). Please wait a moment and try again.");
-            }
-            if (result.isTimeout) {
-              return message.reply(getLang("timeout"));
-            }
-            return message.reply(getLang("error"));
+          clearInterval(typingInterval);
+          react("👎");
+          if (result.isRateLimited) {
+            return message.reply("⚠️ The AI music generator is currently busy (\"Too many requests. Please wait.\"). Please wait a moment and try again.");
           }
+          if (result.isTimeout) {
+            return message.reply(getLang("timeout"));
+          }
+          return message.reply(result.message || getLang("error"));
         }
       }
 
