@@ -339,7 +339,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                 const { autoRefreshThreadInfoFirstTime } = config.database;
                 let { hideNotiMessage = {} } = config;
                 if (typeof GoatBot.botOff === "undefined")
-                        GoatBot.botOff = typeof config.botOff !== "undefined" ? Boolean(config.botOff) : false;
+                        GoatBot.botOff = typeof config.botOff !== "undefined" ? Boolean(config.botOff) : true;
 
                 const { body, messageID, threadID, isGroup } = event;
 
@@ -527,6 +527,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                 }
                 const prefix = event.isE2EE ? (config.prefix || "!") : getPrefix(threadID);
                 const role = getRole(threadData, senderID);
+                const isBotAdmin = role === 2 || role === 4 || isSenderAdminOrDev;
                 const input = new InputClass({ api, event, message, role, prefix, args: body ? body.trim().split(/\s+/).slice(1) : [] });
                 const output = new OutputClass({ api, event, message });
                 const isTwoPersonThread = Boolean(
@@ -559,7 +560,12 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                         if (typeof arguments[i] != "string")
                                                 throw new Error(`The parameter "${i + 1}" must be a string, but got "${getType(arguments[i])}"`);
 
-                                return body_.replace(new RegExp(`^${prefix_}(\\s+|)${commandName_}`, "i"), "").trim();
+                                const escapedPrefix = prefix_ ? prefix_.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : "";
+                                const escapedCmd = commandName_.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                                const regex = escapedPrefix
+                                        ? new RegExp(`^(\\s+|)?(?:${escapedPrefix})?(\\s+|)?${escapedCmd}`, "i")
+                                        : new RegExp(`^(\\s+|)?${escapedCmd}`, "i");
+                                return body_.replace(regex, "").trim();
                         }
                 };
                 const langCode = threadData?.data?.lang || config.language || "en";
@@ -653,10 +659,13 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         }
 
                         const trimmedBody = (body || "").trim();
-                        const isBotAdmin = role === 2 || role === 4 ||
-                                Boolean(botID && String(senderID) === botID) ||
-                                ((global.GoatBot.config.adminBot || []).map(String).includes(String(senderID))) ||
-                                ((global.GoatBot.config.devUsers || []).map(String).includes(String(senderID)));
+
+                        // When bot is in Admin-Only mode (botOff: true), non-admin messages, commands and triggers are silently ignored
+                        if (global.GoatBot.botOff && role !== 2 && role !== 4 && !isBotAdmin) {
+                                log.warn("BOT_MODE", `[Ignored] Message/command attempt from non-admin user ${senderID} in thread ${threadID} while bot is in Admin-Only mode (botOff: true).`);
+                                return;
+                        }
+
                         const threadPrefix = prefix || getPrefix(threadID);
                         const globalPrefix = global.GoatBot?.config?.prefix;
                         const validPrefixes = Array.from(new Set([threadPrefix, globalPrefix, "!", "-"].filter(Boolean)))
@@ -672,7 +681,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                 }
 
                                 const noPrefixConfig = global.GoatBot.config.noPrefix !== false || global.GoatBot.config.customFeatures?.noPrefix?.enable === true;
-                                const onlyAdminNoPrefix = global.GoatBot.config.customFeatures?.noPrefix?.onlyAdmin === true;
+                                const onlyAdminNoPrefix = global.GoatBot.config.customFeatures?.noPrefix?.onlyAdmin === true || global.GoatBot.config.noPrefixOnlyAdmin === true;
 
                                 // Extract all tokens with strict boundary matching at the very start of the message
                                 const allTokens = trimmedBody.split(/\s+/).filter(Boolean);
@@ -691,13 +700,29 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                         const cmdName = (potentialCmd.config?.name || potentialCmd.meta?.name || firstWord).toLowerCase();
                                         const restTokens = allTokens.slice(1);
 
-                                        // Only suppress well-known conversational English idioms starting with command words:
-                                        // 1. "ping" takes 0 arguments; casual chat like "ping John please" remains silent
+                                        // Conversational English suppression for command names & aliases:
+                                        // 1. "on" or "off" without prefix:
+                                        // "on" and "off" are extremely common prepositions in everyday English ("on my way", "off to work", etc.)
+                                        // Without a prefix, they MUST only be usable by Bot Admins, and if followed by extra tokens,
+                                        // only when the next token is a recognized bot subcommand.
+                                        if (["on", "off", "botoff", "boton"].includes(firstWord) || ["on", "off", "botoff", "boton"].includes(cmdName)) {
+                                                if (!isBotAdmin) {
+                                                        return;
+                                                }
+                                                if (restTokens.length > 0) {
+                                                        const validBotArgs = ["eve", "event", "events", "react", "reaction", "reactions", "bot", "admin", "ad", "mode", "emoji", "reset", "state", "status", "public", "default"];
+                                                        if (!validBotArgs.includes(restTokens[0].toLowerCase())) {
+                                                                return; // Casual English phrase like "on my way", "off we go"
+                                                        }
+                                                }
+                                        }
+
+                                        // 2. "ping" takes 0 arguments; casual chat like "ping John please" remains silent
                                         if (cmdName === "ping" && restTokens.length > 0) {
                                                 return;
                                         }
 
-                                        // 2. "help" navigation menu: if trailing phrase is casual chat (e.g. "help me with this project"),
+                                        // 3. "help" navigation menu: if trailing phrase is casual chat (e.g. "help me with this project"),
                                         // and the target is not a registered command, category, or page number, remain silent.
                                         if (["help", "menu", "commands", "cmds", "allcmds", "guide"].includes(cmdName) && restTokens.length > 0) {
                                                 const target = restTokens[0].toLowerCase();
@@ -715,14 +740,19 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                                 }
                                         }
 
+                                        // 4. "all" tagall command: suppress casual conversational phrases like "all of you", "all right", "all good"
+                                        if (cmdName === "all" && restTokens.length > 0 && ["right", "good", "of", "the", "day", "night", "clear", "set"].includes(restTokens[0].toLowerCase())) {
+                                                return;
+                                        }
+
                                         // Allow non-prefix execution if:
                                         // 1) User is Bot Admin or Developer (all commands work without prefix when noPrefix is enabled)
-                                        // 2) Command explicitly allows noPrefix ("both" or true) for all users
-                                        // 3) Global noPrefixForAll is enabled or Thread allows noPrefix
+                                        // 2) Command explicitly allows noPrefix ("both" or true) for all users (unless onlyAdminNoPrefix is set)
+                                        // 3) Global noPrefixForAll is enabled or Thread allows noPrefix (unless onlyAdminNoPrefix is set)
                                         const isAllowedNoPrefix = (isBotAdmin && noPrefixConfig) ||
-                                                cmdAllowsNoPrefix ||
-                                                (noPrefixConfig && global.GoatBot.config.noPrefixForAll === true) ||
-                                                (threadData?.data?.noPrefix === true);
+                                                (!onlyAdminNoPrefix && cmdAllowsNoPrefix) ||
+                                                (!onlyAdminNoPrefix && noPrefixConfig && global.GoatBot.config.noPrefixForAll === true) ||
+                                                (!onlyAdminNoPrefix && threadData?.data?.noPrefix === true);
 
                                         if (isAllowedNoPrefix) {
                                                 hasNoPrefix = true;
@@ -744,12 +774,6 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                         // Regular conversation message without prefix or taught response: DO NOT reply, remain silent
                                         return;
                                 }
-                        }
-
-                        // Check bot maintenance / off state: only admin (role 2 or 4) can use bot. Silently ignore non-admins without emoji reactions
-                        if (global.GoatBot.botOff && role !== 2 && role !== 4 && !isBotAdmin) {
-                                log.warn("BOT_MODE", `[Ignored] Command attempt from non-admin user ${senderID} in thread ${threadID} while bot is in Admin-Only mode (botOff: true).`);
-                                return;
                         }
 
                         // —————————— CHECK SPAM BANNED THREAD —————————— //
@@ -807,22 +831,23 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                         if (typeof commandName_ != "string")
                                                 throw new Error(`The third argument (commandName) must be a string, but got "${getType(commandName_)}"`);
 
-                                        const escapedPrefix = prefix_.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                                        const escapedPrefix = prefix_ ? prefix_.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : "";
                                         const escapedCmd = commandName_.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                                         const regex = escapedPrefix
-                                                ? new RegExp(`^(\\s+|)?${escapedPrefix}(\\s+|)${escapedCmd}`, "i")
+                                                ? new RegExp(`^(\\s+|)?(?:${escapedPrefix})?(\\s+|)?${escapedCmd}`, "i")
                                                 : new RegExp(`^(\\s+|)?${escapedCmd}`, "i");
                                         return body_.replace(regex, "").trim();
                                 }
                                 else {
                                         const pfx = hasPrefix ? (matchedPrefix || prefix) : "";
+                                        const escapedPfx = pfx ? pfx.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : "";
                                         const escapedRaw = (rawCommandName || "").replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                                         const escapedCmd = (commandName || "").replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                                         const cmdPattern = (escapedRaw && escapedRaw !== escapedCmd)
                                                 ? `(?:${escapedRaw}|${escapedCmd})`
                                                 : escapedCmd;
-                                        const regex = pfx
-                                                ? new RegExp(`^(\\s+|)?${pfx.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\s+|)${cmdPattern}`, "i")
+                                        const regex = escapedPfx
+                                                ? new RegExp(`^(\\s+|)?(?:${escapedPfx})?(\\s+|)?${cmdPattern}`, "i")
                                                 : new RegExp(`^(\\s+|)?${cmdPattern}`, "i");
                                         return body.replace(regex, "").trim();
                                 }
@@ -1050,6 +1075,9 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                                         message,
                                                         args,
                                                         commandName,
+                                                        rawCommandName,
+                                                        invokedName: rawCommandName,
+                                                        alias: rawCommandName !== commandName ? rawCommandName : undefined,
                                                         getLang: getText2,
                                                         getText: getText2,
                                                         removeCommandNameFromBody
@@ -1151,7 +1179,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                  +------------------------------------------------+
                 */
                 async function onChat() {
-                        if (global.GoatBot.botOff && role !== 2 && role !== 4)
+                        if (global.GoatBot.botOff && role !== 2 && role !== 4 && !isBotAdmin)
                                 return;
                         const allOnChat = GoatBot.onChat || [];
                         const args = body ? body.split(/ +/) : [];
@@ -1306,6 +1334,8 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                  +------------------------------------------------+
                 */
                 async function onFirstChat() {
+                        if (global.GoatBot.botOff && role !== 2 && role !== 4 && !isBotAdmin)
+                                return;
                         if (!GoatBot.onFirstChat)
                                 return;
 
@@ -1390,7 +1420,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                  +------------------------------------------------+
                 */
                 async function onReply() {
-                        if (global.GoatBot.botOff && role !== 2 && role !== 4)
+                        if (global.GoatBot.botOff && role !== 2 && role !== 4 && !isBotAdmin)
                                 return;
 
                         // Never intercept commands
@@ -1483,6 +1513,9 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                                         Reply,
                                                         args,
                                                         commandName,
+                                                        rawCommandName,
+                                                        invokedName: rawCommandName,
+                                                        alias: rawCommandName !== commandName ? rawCommandName : undefined,
                                                         getLang: getText2,
                                                         getText: getText2
                                                 }),
@@ -1566,7 +1599,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                 } catch (_) {}
                         }
 
-                        if (global.GoatBot.botOff && role !== 2 && role !== 4)
+                        if (global.GoatBot.botOff && role !== 2 && role !== 4 && !isBotAdmin)
                                 return;
 
                         if (!Reaction)
@@ -1628,6 +1661,9 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                                         Reaction,
                                                         args,
                                                         commandName,
+                                                        rawCommandName,
+                                                        invokedName: rawCommandName,
+                                                        alias: rawCommandName !== commandName ? rawCommandName : undefined,
                                                         getLang: getText2,
                                                         getText: getText2
                                                 }),

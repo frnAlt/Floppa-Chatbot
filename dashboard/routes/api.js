@@ -434,6 +434,9 @@ module.exports = function ({ isAuthenticated, isVeryfiUserIDFacebook, checkHasAn
 				const botObj = global.FloppaBot || global.GoatBot;
 				if (botObj?.config) {
 					botObj.config.botOff = !botObj.config.botOff;
+					botObj.botOff = botObj.config.botOff;
+					if (global.GoatBot) global.GoatBot.botOff = botObj.config.botOff;
+					if (global.FloppaBot) global.FloppaBot.botOff = botObj.config.botOff;
 					const configPath = global.client?.dirConfig || path.join(process.cwd(), "config.json");
 					await fs.writeJSON(configPath, botObj.config, { spaces: 2 });
 					return res.json({

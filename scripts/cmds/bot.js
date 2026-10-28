@@ -18,12 +18,15 @@ module.exports = {
       en: "Control bot state, group events & reactions (ON/OFF/STATE)"
     },
     longDescription: {
-      en: "Toggle overall bot availability, group event triggers (welcome, leave, join), or reaction feedback.\n• When Bot is OFF: Only Bot Admins can use commands. Non-admin commands are silently ignored.\n• When Events are OFF (-offeve): Group join, welcome, leave, and update event commands remain completely silent.\n• When Reactions are OFF (-offreact): The bot will not send reactions to messages.\n• You can customize the reaction emoji (e.g. 👍, ❤️, 🔥) and trigger mode (media only vs all commands)."
+      en: "Toggle overall bot availability, group event triggers (welcome, leave, join), or reaction feedback.\n• Admin-Only Mode (DEFAULT): Only Bot Admins can use commands. Non-admin commands are silently ignored.\n• When Bot is ON: Available to all users.\n• When Events are OFF (-offeve): Group join, welcome, leave, and update event commands remain completely silent.\n• When Reactions are OFF (-offreact): The bot will not send reactions to messages.\n• You can customize the reaction emoji (e.g. 👍, ❤️, 🔥) and trigger mode (media only vs all commands)."
     },
     category: "admin",
     guide: {
       en: "• {pn} on : Turn bot ON (Available to all users)\n"
-        + "• {pn} off : Turn bot OFF (Admin-only mode; non-admins silently ignored)\n"
+        + "• {pn} off : Turn bot OFF (Admin-only mode - DEFAULT; non-admins silently ignored)\n"
+        + "• {pn} admin [on|off] : Explicitly toggle Admin-Only mode\n"
+        + "• {pn} public : Enable Public Online mode for all users\n"
+        + "• {pn} default : Reset to default Admin-Only mode\n"
         + "• {pn} -offeve / {pn} event off : Turn group events OFF (Mutes welcome, leave & group triggers)\n"
         + "• {pn} -oneve / {pn} event on : Turn group events ON (Enables welcome, leave & group triggers)\n"
         + "• {pn} -offreact / {pn} react off : Turn bot reactions OFF\n"
@@ -33,7 +36,8 @@ module.exports = {
         + "• {pn} react reset : Reset reaction settings to defaults (ON, 👍, media)\n"
         + "• {pn} state : View live bot status, event status, reaction status, memory & uptime\n"
         + "\n💡 Shortcut commands:\n"
-        + "• !on / !off : Directly toggle bot operational mode\n"
+        + "• !on / on : Turn bot ON for all users\n"
+        + "• !off / off : Turn bot OFF (Admin-only mode)\n"
         + "• !-offeve / !offeve / !eventoff : Mute all group events\n"
         + "• !-oneve / !oneve / !eventon : Enable all group events\n"
         + "• !-offreact / !offreact / !reactoff : Turn bot reactions OFF\n"
@@ -41,7 +45,7 @@ module.exports = {
     }
   },
 
-  onStart: async function ({ message, args, commandName, event, api, usersData, threadsData }) {
+  onStart: async function ({ message, args, commandName, rawCommandName, alias, invokedName, event, api, usersData, threadsData }) {
     const configPath = path.join(process.cwd(), "config.json");
     const currentOff = global.GoatBot.botOff === true;
 
@@ -55,19 +59,20 @@ module.exports = {
       } catch (_) {}
     };
 
-    const cmdLower = (commandName || "").toLowerCase();
-    const isOffEve = ["-offeve", "offeve", "-offevent", "offevent", "eventoff", "eventsoff"].includes(cmdLower);
-    const isOnEve = ["-oneve", "oneve", "-onevent", "onevent", "eventon", "eventson"].includes(cmdLower);
-    const isOffReact = ["-offreact", "offreact", "reactoff", "botreactoff"].includes(cmdLower);
-    const isOnReact = ["-onreact", "onreact", "reacton", "botreacton"].includes(cmdLower);
-    const isOffBot = ["off", "botoff"].includes(cmdLower);
-    const isOnBot = ["on", "boton"].includes(cmdLower);
+    const targetInvoked = (invokedName || rawCommandName || alias || commandName || "").toLowerCase();
+    const eventBodyLower = String(event?.body || "").trim().toLowerCase();
+    const isOffEve = ["-offeve", "offeve", "-offevent", "offevent", "eventoff", "eventsoff"].includes(targetInvoked);
+    const isOnEve = ["-oneve", "oneve", "-onevent", "onevent", "eventon", "eventson"].includes(targetInvoked);
+    const isOffReact = ["-offreact", "offreact", "reactoff", "botreactoff"].includes(targetInvoked);
+    const isOnReact = ["-onreact", "onreact", "reacton", "botreacton"].includes(targetInvoked);
+    const isOffBot = ["off", "botoff"].includes(targetInvoked) || eventBodyLower === "!off" || eventBodyLower === "off" || eventBodyLower === "-off";
+    const isOnBot = ["on", "boton"].includes(targetInvoked) || eventBodyLower === "!on" || eventBodyLower === "on" || eventBodyLower === "-on";
 
     const firstArg = (args[0] || "").toLowerCase();
     const secondArg = (args[1] || "").toLowerCase();
 
     // ─── Status / State Report ───────────────────────────────────────────────
-    if (["status", "state", "info", "details"].includes(firstArg) || ["status", "state"].includes(cmdLower)) {
+    if (["status", "state", "info", "details"].includes(firstArg) || ["status", "state"].includes(targetInvoked)) {
       const os = require("os");
       const config = global.GoatBot?.config || {};
       const commands = global.GoatBot?.commands || new Map();
@@ -89,8 +94,8 @@ module.exports = {
       const uptimeStr = `${d > 0 ? d + "d " : ""}${h > 0 ? h + "h " : ""}${m}m ${s}s`;
 
       const stateStatus = global.GoatBot?.botOff
-        ? "👎 OFF (Admin-Only Control)"
-        : "👍 ON (Available to All Users)";
+        ? "🔒 OFF (Admin-Only Control - Default)"
+        : "🌐 ON (Available to All Users)";
       const eventStatus = (global.GoatBot?.eventsOff ?? config.eventsOff)
         ? "👎 OFF (Disabled by config)"
         : "👍 ON (Active)";
@@ -441,51 +446,63 @@ System & Performance
       return await reactEmoji(nextEventsOff ? "👎" : "👍");
     }
 
-    // ─── Bot Operational Control (ON/OFF) ────────────────────────────────────
-    if (isOnBot || (firstArg === "on" && !secondArg)) {
-      global.GoatBot.botOff = false;
-      if (global.GoatBot.config) global.GoatBot.config.botOff = false;
+    // ─── Bot Operational Control (ON/OFF / ADMIN-ONLY) ───────────────────────
+    const setBotOff = (val) => {
+      global.GoatBot.botOff = val;
+      if (global.GoatBot.config) global.GoatBot.config.botOff = val;
       if (global.FloppaBot) {
-        global.FloppaBot.botOff = false;
-        if (global.FloppaBot.config) global.FloppaBot.config.botOff = false;
+        global.FloppaBot.botOff = val;
+        if (global.FloppaBot.config) global.FloppaBot.config.botOff = val;
       }
       try {
         const conf = fs.readJsonSync(configPath);
-        conf.botOff = false;
+        conf.botOff = val;
         fs.writeJsonSync(configPath, conf, { spaces: 2 });
       } catch (_) {}
+    };
+
+    // 1. Explicit admin mode commands: !bot admin, !bot admin on, !bot admin off, !bot adminonly, !bot onlyadmin
+    if (["admin", "adminonly", "onlyadmin", "adonly"].includes(firstArg)) {
+      if (secondArg === "off" || secondArg === "disable" || secondArg === "false") {
+        setBotOff(false);
+        await reactEmoji("👍");
+        return message.reply("👍 Admin-Only mode DISABLED. Bot is now available to all users (Public Online mode).");
+      } else {
+        setBotOff(true);
+        await reactEmoji("👎");
+        return message.reply("🔒 Admin-Only mode ENABLED (Default). Only Bot Admins can use commands. Non-admin commands are silently ignored.");
+      }
+    }
+
+    if (["public", "all", "user", "users"].includes(firstArg)) {
+      setBotOff(false);
+      await reactEmoji("👍");
+      return message.reply("🌐 Public Online mode ENABLED. Bot commands are now available to all chat members.");
+    }
+
+    if (["default", "reset"].includes(firstArg) && !["react", "events"].includes(secondArg)) {
+      setBotOff(true);
+      await reactEmoji("👎");
+      return message.reply("🔄 Bot operational mode reset to DEFAULT (Admin-Only mode). Only Bot Admins can use commands.");
+    }
+
+    // 2. Turn ON: !bot on, !on, on, !boton, boton
+    if (isOnBot || (firstArg === "on" && !secondArg)) {
+      setBotOff(false);
       return await reactEmoji("👍");
     }
 
+    // 3. Turn OFF: !bot off, !off, off, !botoff, botoff
     if (isOffBot || (firstArg === "off" && !secondArg)) {
-      global.GoatBot.botOff = true;
-      if (global.GoatBot.config) global.GoatBot.config.botOff = true;
-      if (global.FloppaBot) {
-        global.FloppaBot.botOff = true;
-        if (global.FloppaBot.config) global.FloppaBot.config.botOff = true;
-      }
-      try {
-        const conf = fs.readJsonSync(configPath);
-        conf.botOff = true;
-        fs.writeJsonSync(configPath, conf, { spaces: 2 });
-      } catch (_) {}
+      setBotOff(true);
       return await reactEmoji("👎");
     }
 
-    if (firstArg === "") {
-      // Toggle if invoked without arguments
-      global.GoatBot.botOff = !currentOff;
-      if (global.GoatBot.config) global.GoatBot.config.botOff = global.GoatBot.botOff;
-      if (global.FloppaBot) {
-        global.FloppaBot.botOff = global.GoatBot.botOff;
-        if (global.FloppaBot.config) global.FloppaBot.config.botOff = global.GoatBot.botOff;
-      }
-      try {
-        const conf = fs.readJsonSync(configPath);
-        conf.botOff = global.GoatBot.botOff;
-        fs.writeJsonSync(configPath, conf, { spaces: 2 });
-      } catch (_) {}
-      return await reactEmoji(global.GoatBot.botOff ? "👎" : "👍");
+    // 4. Toggle: !bot (without any arguments and when not called as on/off alias)
+    if (firstArg === "" && !isOnBot && !isOffBot) {
+      const nextOff = !currentOff;
+      setBotOff(nextOff);
+      return await reactEmoji(nextOff ? "👎" : "👍");
     }
 
     // Invalid argument

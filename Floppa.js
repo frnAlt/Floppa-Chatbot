@@ -146,7 +146,7 @@ global.FloppaBot = {
 	onAnyEvent: [],
 	config,
 	configCommands,
-	botOff: typeof config.botOff !== "undefined" ? Boolean(config.botOff) : false,
+	botOff: typeof config.botOff !== "undefined" ? Boolean(config.botOff) : true,
 	eventsOff: typeof config.eventsOff !== "undefined" ? Boolean(config.eventsOff) : (typeof config.events !== "undefined" ? !config.events : false),
 	reactOff: typeof config.reactOff !== "undefined" ? Boolean(config.reactOff) : (typeof config.botReact !== "undefined" ? !config.botReact : false),
 	commandReaction: config.commandReaction || {
@@ -258,6 +258,9 @@ const watchAndReloadConfig = (dir, type, prop, logName) => {
 						return;
 					}
 					global.FloppaBot[prop] = JSON.parse(fs.readFileSync(dir, 'utf-8'));
+					if (prop === 'config' && typeof global.FloppaBot.config.botOff !== "undefined") {
+						global.FloppaBot.botOff = Boolean(global.FloppaBot.config.botOff);
+					}
 					log.success(logName, `Reloaded ${dir.replace(process.cwd(), "")}`);
 				}
 				catch (err) {

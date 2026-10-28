@@ -20,7 +20,7 @@
     "enable": false,
     "ignoreCommand": []
   },
-  "botOff": false,
+  "botOff": true,
   "events": true,
   "eventsOff": false,
   "reactOff": false,

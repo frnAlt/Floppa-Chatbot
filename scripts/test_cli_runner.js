@@ -244,6 +244,7 @@ async function runDiagnostics() {
   global.FloppaBot.commands.set("ping", pingCmd);
   global.FloppaBot.commands.set("bot", botCmd);
   global.FloppaBot.commands.set("off", botCmd);
+  global.FloppaBot.commands.set("on", botCmd);
   global.FloppaBot.commands.set("music-gen", musicGenCmd);
   global.FloppaBot.commands.set("songen", musicGenCmd);
   global.FloppaBot.commands.set("bby", bbyCmd);
@@ -858,6 +859,137 @@ async function runDiagnostics() {
     const onNoTextMessage = lastReply === null;
     logTest("WORKFLOW", "!bot on sets botOff=false, reacts 👍 without text message", onIsSet && onReactedCheck && onNoTextMessage);
 
+    // 3b. Test direct !off shortcut sets botOff=true without toggling
+    lastReply = null;
+    lastReaction = null;
+    require(path.join(cwd, "func/cooldownManager.js")).clear();
+    const directOffEvent = {
+      type: "message",
+      body: "!off",
+      messageID: "msg_direct_off_01",
+      threadID: "10001",
+      senderID: "9999",
+      isGroup: true
+    };
+    const handlerDirectOff = await handlerEvents(directOffEvent, createMockMessage(directOffEvent));
+    if (handlerDirectOff && typeof handlerDirectOff.onStart === "function") {
+      await handlerDirectOff.onStart();
+    }
+    const directOffIsSet = global.FloppaBot.botOff === true;
+    logTest("WORKFLOW", "!off shortcut directly sets botOff=true without toggling", directOffIsSet && lastReaction === "👎");
+
+    // 3c. Test direct !on shortcut sets botOff=false without toggling
+    lastReply = null;
+    lastReaction = null;
+    require(path.join(cwd, "func/cooldownManager.js")).clear();
+    const directOnEvent = {
+      type: "message",
+      body: "!on",
+      messageID: "msg_direct_on_01",
+      threadID: "10001",
+      senderID: "9999",
+      isGroup: true
+    };
+    const handlerDirectOn = await handlerEvents(directOnEvent, createMockMessage(directOnEvent));
+    if (handlerDirectOn && typeof handlerDirectOn.onStart === "function") {
+      await handlerDirectOn.onStart();
+    }
+    const directOnIsSet = global.FloppaBot.botOff === false;
+    logTest("WORKFLOW", "!on shortcut directly sets botOff=false without toggling", directOnIsSet && lastReaction === "👍");
+
+    // 3d. Test non-prefix 'off' by admin sets botOff=true
+    lastReply = null;
+    lastReaction = null;
+    require(path.join(cwd, "func/cooldownManager.js")).clear();
+    const nonPrefixOffEvent = {
+      type: "message",
+      body: "off",
+      messageID: "msg_np_off_01",
+      threadID: "10001",
+      senderID: "9999",
+      isGroup: true
+    };
+    const handlerNpOff = await handlerEvents(nonPrefixOffEvent, createMockMessage(nonPrefixOffEvent));
+    if (handlerNpOff && typeof handlerNpOff.onStart === "function") {
+      await handlerNpOff.onStart();
+    }
+    const npOffIsSet = global.FloppaBot.botOff === true;
+    logTest("WORKFLOW", "Non-prefix 'off' command by admin directly sets botOff=true", npOffIsSet && lastReaction === "👎");
+
+    // 3e. Test non-prefix 'on' by admin sets botOff=false
+    lastReply = null;
+    lastReaction = null;
+    require(path.join(cwd, "func/cooldownManager.js")).clear();
+    const nonPrefixOnEvent = {
+      type: "message",
+      body: "on",
+      messageID: "msg_np_on_01",
+      threadID: "10001",
+      senderID: "9999",
+      isGroup: true
+    };
+    const handlerNpOn = await handlerEvents(nonPrefixOnEvent, createMockMessage(nonPrefixOnEvent));
+    if (handlerNpOn && typeof handlerNpOn.onStart === "function") {
+      await handlerNpOn.onStart();
+    }
+    const npOnIsSet = global.FloppaBot.botOff === false;
+    logTest("WORKFLOW", "Non-prefix 'on' command by admin directly sets botOff=false", npOnIsSet && lastReaction === "👍");
+
+    // 3f. Test casual chat starting with 'on' (e.g. 'on my way') is ignored and remains silent
+    lastReply = null;
+    lastReaction = null;
+    require(path.join(cwd, "func/cooldownManager.js")).clear();
+    const casualOnEvent = {
+      type: "message",
+      body: "on my way to the store",
+      messageID: "msg_casual_on_01",
+      threadID: "10001",
+      senderID: "9999",
+      isGroup: true
+    };
+    const handlerCasualOn = await handlerEvents(casualOnEvent, createMockMessage(casualOnEvent));
+    if (handlerCasualOn && typeof handlerCasualOn.onStart === "function") {
+      await handlerCasualOn.onStart();
+    }
+    logTest("WORKFLOW", "Casual phrase 'on my way...' is suppressed and does not trigger bot command", lastReaction === null && lastReply === null);
+
+    // 3g. Test !bot admin on and !bot admin off
+    lastReply = null;
+    lastReaction = null;
+    require(path.join(cwd, "func/cooldownManager.js")).clear();
+    const botAdminOnEvent = {
+      type: "message",
+      body: "!bot admin on",
+      messageID: "msg_bot_admin_on_01",
+      threadID: "10001",
+      senderID: "9999",
+      isGroup: true
+    };
+    const handlerAdminOn = await handlerEvents(botAdminOnEvent, createMockMessage(botAdminOnEvent));
+    if (handlerAdminOn && typeof handlerAdminOn.onStart === "function") {
+      await handlerAdminOn.onStart();
+    }
+    const botAdminOnSet = global.FloppaBot.botOff === true;
+    logTest("WORKFLOW", "!bot admin on sets botOff=true (Admin-Only mode)", botAdminOnSet && lastReaction === "👎");
+
+    lastReply = null;
+    lastReaction = null;
+    require(path.join(cwd, "func/cooldownManager.js")).clear();
+    const botAdminOffEvent = {
+      type: "message",
+      body: "!bot admin off",
+      messageID: "msg_bot_admin_off_01",
+      threadID: "10001",
+      senderID: "9999",
+      isGroup: true
+    };
+    const handlerAdminOff = await handlerEvents(botAdminOffEvent, createMockMessage(botAdminOffEvent));
+    if (handlerAdminOff && typeof handlerAdminOff.onStart === "function") {
+      await handlerAdminOff.onStart();
+    }
+    const botAdminOffSet = global.FloppaBot.botOff === false;
+    logTest("WORKFLOW", "!bot admin off sets botOff=false (Public mode)", botAdminOffSet && lastReaction === "👍");
+
     // 4. Test regular command execution delivers response without universal 👍 emoji reaction
     lastReply = null;
     lastReaction = null;
@@ -1007,11 +1139,11 @@ async function runDiagnostics() {
     const syntaxHasGuide = syntaxBody.includes("Usage guide") && syntaxBody.includes("!syntaxdemo <param1> <param2>");
     logTest("WORKFLOW", "message.SyntaxError() displays dynamic command guide without 👎 emoji reaction", syntaxNoCross && syntaxHasGuide);
 
-    // 7. Restore bot default state: ON (available to all users)
+    // 7. Keep bot in-memory state ON for remaining workflow tests, restore config.json default (Admin-Only mode: botOff=true)
     global.FloppaBot.botOff = false;
     try {
       const conf = JSON.parse(fs.readFileSync(global.client.dirConfig, "utf8"));
-      conf.botOff = false;
+      conf.botOff = true;
       fs.writeFileSync(global.client.dirConfig, JSON.stringify(conf, null, 2));
     } catch (_) {}
   } catch (err) {
